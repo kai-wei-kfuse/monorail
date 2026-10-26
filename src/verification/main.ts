@@ -3,6 +3,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { getCurrentWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/window';
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 import type { Ctx } from '../services/commit';
+import type { FileSystem } from '../data/fs';
 import type { RecordEntry } from '../domain/record/record';
 import { reconcile } from '../services/recordService';
 import { start } from '../services/cardService';
@@ -59,11 +60,12 @@ async function run(ctx: Ctx) {
   await cardReady;
   await emit('data-changed'); await emit('data-changed');
   await reconcile(ctx);
-  const cards = await ctx.cards.list();
+  const cards = await ctx.repos.cards.list();
   assert(cards.filter(c => c.value.id === cardId).length === 1, 'Duplicate reconciliation');
   await log('verification-hidden-record-passed', { recordId: id, cardId, mainVisible: await w.isVisible(), due: record.due_at });
   const at = new Date().toISOString(); await start(ctx, cardId, at);
-  const segment = (await ctx.times.all()).find(s => s.ended_at === null);
+  const openDay = (await ctx.repos.state.read()).open_segment_day!;
+  const segment = (await ctx.repos.times.readDay(openDay)).find(s => s.ended_at === null);
   assert(segment?.card_id === cardId, 'Verification timer did not start');
   await log('verification-background-start', { at, segmentId: segment!.id, mainVisible: await w.isVisible(), requiredMs: 600_000 });
   await new Promise<void>((resolve, reject) => {
@@ -71,7 +73,7 @@ async function run(ctx: Ctx) {
       void (async () => {
         const resumedAt = Date.now(), elapsed = resumedAt - Date.parse(at);
         assert(elapsed >= 600_000, `Main was resumed too early: ${elapsed}ms`);
-        const actual = (await ctx.times.all()).find(s => s.id === segment!.id);
+        const actual = (await ctx.repos.times.readDay(openDay)).find(s => s.id === segment!.id);
         assert(actual?.started_at === at && actual.ended_at === null, 'Background segment was modified');
         await log('verification-background-passed', { resumedAt, startedAt: Date.parse(at), elapsedMs: elapsed, segment: actual });
         resolve();
@@ -80,7 +82,7 @@ async function run(ctx: Ctx) {
   });
   await log('verification-complete');
 }
-export async function install(ctx: Ctx) {
+export async function install(ctx: Ctx, fs: FileSystem) {
   if (!await invoke<boolean>('verification_enabled')) throw new Error('Verification build required');
   let started = false;
   await listen('verification-start', () => {
@@ -88,6 +90,6 @@ export async function install(ctx: Ctx) {
     started = true;
     void run(ctx).catch(async error => { appStore.setState({ error: String(error) }); await log('verification-failed', String(error)); });
   });
-  await listen('verification-journal', () => { void prepareInterruptedJournal(ctx).catch(error => log('verification-journal-unexpected-error', String(error))); });
+  await listen('verification-journal', () => { void prepareInterruptedJournal(ctx, fs).catch(error => log('verification-journal-unexpected-error', String(error))); });
   await log('verification-ready-main');
 }

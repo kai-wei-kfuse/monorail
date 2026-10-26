@@ -1,0 +1,30 @@
+[
+  {
+    "at": 1793033650132,
+    "message": "journal-recovered:0"
+  },
+  {
+    "at": 1793033650204,
+    "message": "reconcile:0"
+  },
+  {
+    "at": 1793033650284,
+    "message": "reminder-plan:[]"
+  },
+  {
+    "at": 1793033650287,
+    "message": "connected:C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\.verification-data\\desktop:cards=1"
+  },
+  {
+    "at": 1793033652601,
+    "message": "visible:{\"now\":1793033652595,\"segment\":{\"id\":\"9641d8cc-eb98-4f65-ac24-1f72c37a8973\",\"seq\":2,\"started_at\":\"2026-10-26T16:19:39.448Z\",\"ended_at\":null,\"activity\":\"待机\",\"category\":\"待机\",\"card_id\":null,\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":2073147}"
+  },
+  {
+    "at": 1793033652693,
+    "message": "reconcile:0"
+  },
+  {
+    "at": 1793033652784,
+    "message": "reminder-plan:[]"
+  }
+]

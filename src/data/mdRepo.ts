@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { FileSystem } from './fs';
 import type { Write } from './journal';
+import { createWrite } from './journal';
 import { decode, encode } from './frontmatter';
 
 export interface Entity<T> { value: T; body: string; text: string; version: string }
@@ -30,7 +31,8 @@ export class MdRepo<T extends { id: string }> {
     const path = this.path(value.id), current = await this.fs.read(path);
     if ((current?.version ?? null) !== (original?.version ?? null)) throw new Error(`External edit (mtime): ${path}`);
     const meta = { ...(original ? decode(original.text, path).meta : {}), ...value };
-    this.schema.parse(meta);
-    return { path, before: original?.text ?? null, text: encode(meta, body) };
+    try { this.schema.parse(meta); }
+    catch (error) { throw new Error(`${path}: invalid entity`, { cause: error }); }
+    return createWrite(path, encode(meta, body), original?.text ?? null);
   }
 }

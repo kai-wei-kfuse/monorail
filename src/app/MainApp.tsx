@@ -26,7 +26,7 @@ export function MainApp() {
     const result = await bootstrap(directory);
     setCtx(result.ctx); setRoot(directory); setMessage('数据目录已连接');
     await invoke('evidence', { message: `connected:${directory}:cards=${appStore.getState().cards.length}` });
-    if (import.meta.env.VITE_VERIFY === 'true') await (await import('../verification/main')).install(result.ctx);
+    if (import.meta.env.VITE_VERIFY === 'true') await (await import('../verification/main')).install(result.ctx, result.fs);
     const lifecycle = await readLifecycle();
     if (lifecycle.previous_last_alive) setMessage(`离线追问：从 ${new Date(lifecycle.previous_last_alive).toISOString()} 到 ${new Date(lifecycle.startup_at).toISOString()} 在做什么？`);
   }

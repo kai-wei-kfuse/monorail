@@ -2,12 +2,19 @@ import { z } from 'zod';
 import type { FileSystem } from './fs';
 import { safeRelative } from './fs';
 
-export interface Write { path: string; text: string; before: string | null }
+declare const writeToken: unique symbol;
+/** Only data repositories construct writes; consumers cannot inspect or assemble paths. */
+export interface Write { readonly [writeToken]: true }
 const planSchema = z.object({ id: z.uuid(), writes: z.array(z.object({ path: z.string(), text: z.string(), before: z.string().nullable() })) });
+type WriteContent = z.infer<typeof planSchema>['writes'][number];
+export function createWrite(path: string, text: string, before: string | null): Write {
+  safeRelative(path);
+  return { path, text, before } as unknown as Write;
+}
 
 export class Journal {
   constructor(private fs: FileSystem) {}
-  private async apply(writes: Write[]) {
+  private async apply(writes: WriteContent[]) {
     for (const write of writes) {
       safeRelative(write.path);
       const actual = (await this.fs.read(write.path))?.text ?? null;
@@ -17,14 +24,15 @@ export class Journal {
     }
   }
   async run(id: string, writes: Write[]): Promise<void> {
-    planSchema.parse({ id, writes });
-    if (new Set(writes.map(w => w.path)).size !== writes.length) throw new Error('Duplicate path in transaction');
-    for (const write of writes) {
+    const plan = planSchema.parse({ id, writes });
+    if (new Set(plan.writes.map(w => w.path)).size !== writes.length) throw new Error('Duplicate path in transaction');
+    for (const write of plan.writes) {
+      safeRelative(write.path);
       if (((await this.fs.read(write.path))?.text ?? null) !== write.before) throw new Error(`External edit: ${write.path}`);
     }
     const path = `.journal/${id}.json`;
-    await this.fs.atomicWrite(path, JSON.stringify({ id, writes }));
-    await this.apply(writes);
+    await this.fs.atomicWrite(path, JSON.stringify(plan));
+    await this.apply(plan.writes);
     await this.fs.remove(path);
   }
   async recover(): Promise<number> {

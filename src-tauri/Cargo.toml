@@ -1,10 +1,10 @@
 [package]
-name = "task-terminal-skeleton"
+name = "pixel-record"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "task_terminal_lib"
+name = "pixel_record_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

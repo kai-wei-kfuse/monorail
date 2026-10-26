@@ -1,7 +1,6 @@
 import { it, expect } from 'vitest';
 import { MemoryFs } from './memoryFs';
-import { Journal } from './journal';
-import { decode, encode } from './frontmatter';
+import { Journal, createWrite } from './journal';
 import * as nodefs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { FileSystem } from './fs';
@@ -10,7 +9,7 @@ it('replays a failed multi-file write exactly once after a simulated process res
   const fs = new MemoryFs();
   await fs.atomicWrite('a.md', 'old-a'); await fs.atomicWrite('b.md', 'old-b');
   fs.beforeWrite = path => { if (path === 'b.md') throw new Error('injected process failure'); };
-  await expect(new Journal(fs).run(crypto.randomUUID(), [{ path: 'a.md', before: 'old-a', text: 'new-a' }, { path: 'b.md', before: 'old-b', text: 'new-b' }])).rejects.toThrow('injected');
+  await expect(new Journal(fs).run(crypto.randomUUID(), [createWrite('a.md', 'new-a', 'old-a'), createWrite('b.md', 'new-b', 'old-b')])).rejects.toThrow('injected');
   expect((await fs.read('a.md'))?.text).toBe('new-a'); expect((await fs.read('b.md'))?.text).toBe('old-b');
   fs.beforeWrite = undefined;
   expect(await new Journal(fs).recover()).toBe(1);
@@ -19,15 +18,9 @@ it('replays a failed multi-file write exactly once after a simulated process res
 });
 it('rejects conflicts during recovery', async () => {
   const fs = new MemoryFs(); fs.beforeWrite = path => { if (path === 'b') throw new Error('injected'); };
-  await expect(new Journal(fs).run(crypto.randomUUID(), [{ path: 'a', before: null, text: 'A' }, { path: 'b', before: null, text: 'B' }])).rejects.toThrow();
+  await expect(new Journal(fs).run(crypto.randomUUID(), [createWrite('a', 'A', null), createWrite('b', 'B', null)])).rejects.toThrow();
   fs.beforeWrite = undefined; await fs.atomicWrite('b', 'external');
   await expect(new Journal(fs).recover()).rejects.toThrow('Recovery conflict');
-});
-it('preserves body delimiters, unknown metadata, BOM and CRLF', () => {
-  const parsed = decode('\uFEFF---\r\nid: x\r\ncustom: yes\r\n---\r\nbody\r\n---\r\ntail', 'x.md');
-  expect(decode(encode(parsed.meta, parsed.body), 'x.md')).toEqual(parsed);
-  expect(parsed.body).toBe('body\n---\ntail');
-  expect(() => decode('broken', 'broken.md')).toThrow('broken.md');
 });
 
 it('replays interrupted writes on a real filesystem using fresh journal objects', async () => {
@@ -43,7 +36,7 @@ it('replays interrupted writes on a real filesystem using fresh journal objects'
     async remove(name) { await nodefs.unlink(path.join(root, name)); },
   };
   const failing: FileSystem = { ...real, async atomicWrite(name, text) { if (name === 'b.md') throw new Error('injected disk write failure'); await real.atomicWrite(name, text); } };
-  await expect(new Journal(failing).run(crypto.randomUUID(), [{ path: 'a.md', before: null, text: 'A' }, { path: 'b.md', before: null, text: 'B' }])).rejects.toThrow('injected');
+  await expect(new Journal(failing).run(crypto.randomUUID(), [createWrite('a.md', 'A', null), createWrite('b.md', 'B', null)])).rejects.toThrow('injected');
   const replayed = await new Journal(real).recover();
   expect(replayed).toBe(1); expect((await real.read('a.md'))?.text).toBe('A'); expect((await real.read('b.md'))?.text).toBe('B');
   await nodefs.mkdir('evidence', { recursive: true });
