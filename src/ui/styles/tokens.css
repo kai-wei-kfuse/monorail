@@ -1,0 +1,28 @@
+/* 设计系统唯一的颜色、字体、缓动来源（UI风格规范 §2、§3、§8.1）。强调色由设置覆盖 --yellow。 */
+:root {
+  --ink: #161616;
+  --ink-3: #2b2b2a;
+  --paper: #f6f6f3;
+  --paper-2: #fbfbf9;
+  --win: #e7e7e3;
+  --bar-bg: #dcdcd7;
+  --side: #efefeb;
+  --line: #d3d3ce;
+  --line-2: #bcbcb6;
+  --mute: #7a7a76;
+  --mute-2: #a3a39e;
+  --yellow: #fffa00;
+  --mint: #00ffa2;
+  --cyan: #00b4ff;
+  --red: #c42b1c;
+  --over: #ff5a3c;
+
+  --f-cn: "MiSans VF", "MiSans", "HarmonyOS Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --f-en: "Saira Variable", "Bahnschrift", "Segoe UI", "MiSans VF", "Microsoft YaHei UI", sans-serif;
+  --f-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --snap: cubic-bezier(.7, 0, .2, 1);
+  --fling: cubic-bezier(.6, 0, .9, .4);
+  --bar: 40px;
+}

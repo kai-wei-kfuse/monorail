@@ -1,0 +1,30 @@
+/* 演出层（UI风格规范 §8）：放在卡片里，盖住卡片内容，不接收点击 */
+.topo { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+.fx { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.scan { position: absolute; left: 0; right: 0; top: 0; z-index: 5; height: 2px; background: var(--ink); opacity: 0; pointer-events: none; }
+
+/* 8.4 达成目标：强调色斜带横幅 */
+.ci {
+  --h: clamp(118px, 28cqh, 220px);
+  position: absolute; left: -3%; right: -3%; top: calc(50% - var(--h) / 2); height: var(--h);
+  background: var(--yellow); color: var(--ink); transform: skewY(-3deg);
+}
+.ci::before { content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 7px; background: var(--ink); }
+.ci::after { content: ""; position: absolute; left: 14%; right: 0; bottom: -12px; height: 2px; background: var(--ink); }
+.ci-in { position: absolute; inset: 0; display: flex; align-items: center; gap: clamp(18px, 3cqi, 44px); padding: 0 calc(3% + clamp(26px, 4cqi, 58px)); transform: skewY(3deg); }
+.ci-bars { flex: none; width: clamp(56px, 10cqi, 150px); height: 44%; transform-origin: 0 50%; background: linear-gradient(90deg, var(--ink) 0 4px, transparent 4px) 0 0 / 9px 100% repeat-x; }
+.ci-cn { font: 630 clamp(40px, 10.5cqh, 92px)/1 var(--f-cn); letter-spacing: .1em; white-space: nowrap; }
+.ci-cn em { font-style: normal; display: inline-block; padding: 0 .12em .04em; margin-left: .06em; background: var(--ink); color: var(--yellow); }
+.ci-side { display: grid; justify-items: end; gap: 10px; margin-left: auto; text-align: right; }
+.ci-en { font: 600 expanded clamp(12px, 2cqh, 18px)/1 var(--f-en); letter-spacing: .3em; color: var(--ink); white-space: nowrap; }
+.ci-side small { font: 400 11px/1.4 var(--f-mono); color: rgb(0 0 0 / .6); letter-spacing: .04em; white-space: nowrap; }
+
+/* 8.3 整屏擦除（再抽一张）：强调色色块压着新卡的大号格号 */
+.wipe { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: clamp(20px, 3cqi, 48px); padding: 0 clamp(26px, 4cqi, 58px) clamp(28px, 7cqh, 60px) calc(clamp(26px, 4cqi, 58px) + 30px); background: var(--yellow); color: var(--ink); }
+.w-no { font: 700 expanded min(60cqh, 34cqi)/.76 var(--f-en); letter-spacing: -.04em; }
+.w-no.cn { font: 630 min(48cqh, 28cqi)/.9 var(--f-cn); letter-spacing: 0; }
+.w-side { display: grid; gap: 12px; padding-bottom: .4em; }
+.w-side .k { color: var(--ink); }
+.w-side strong { font: 630 clamp(18px, 3cqh, 26px)/1.2 var(--f-cn); }
+.w-t { font: 330 14px/1.4 var(--f-cn); }
+.w-bars { position: absolute; left: 0; right: 0; top: clamp(20px, 5cqh, 40px); height: 10px; background: linear-gradient(90deg, var(--ink) 0 3px, transparent 3px) 0 0 / 8px 100% repeat-x; transform-origin: 0 50%; }

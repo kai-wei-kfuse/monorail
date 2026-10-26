@@ -1,0 +1,92 @@
+/* 标志性元素（UI风格规范 §5）和用在它们身上的读数、磁贴 */
+
+/* 5.1 进度竖条带：两端 7 根渐疏引导条，中间是刻度格 */
+.meter { position: relative; padding-bottom: 16px; }
+.bars { height: clamp(40px, 9.5cqh, 80px); display: flex; align-items: flex-end; gap: clamp(2px, .36cqi, 5px); }
+.bars i { flex: 1 1 0; min-width: 1px; height: calc(100% - 14px); background: var(--yellow); transform-origin: 50% 100%; }
+.bars i.q { height: 100%; }
+.bars i.lead { flex-grow: var(--g); }
+.bars i.on { background: var(--ink); }
+.meter[data-state="run"] .bars i.now { animation: nowBlink 1s steps(1) infinite; }
+.ptr { position: absolute; bottom: 0; left: 0; width: 0; height: 10px; transition: left .5s var(--ease); }
+.ptr::before { content: ""; position: absolute; left: -6px; bottom: 0; border: solid transparent; border-width: 0 6px 9px; border-bottom-color: var(--ink); }
+.mbars { height: 5px; display: flex; gap: 2px; }
+.mbars i { flex: 1 1 0; background: var(--yellow); }
+.mbars i.on { background: var(--ink); }
+
+/* 5.2 竖排黑色标签条 */
+.vtab {
+  position: absolute; left: 0; top: 0; z-index: 2; width: 30px; height: clamp(160px, 40cqh, 300px);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 14px;
+  background: var(--ink); color: #f2f2ef; transform-origin: 50% 0;
+}
+.vtab span, .vtab b { writing-mode: vertical-rl; }
+.vt-t { font: 600 expanded 8px/1 var(--f-en); letter-spacing: .32em; color: #8f8f8a; }
+.vtab b { font: 600 expanded 15px/1 var(--f-en); letter-spacing: .04em; color: var(--yellow); }
+.vtab b.cn { font: 630 14px/1 var(--f-cn); letter-spacing: .1em; }
+.vt-of { font: 500 9px/1 var(--f-en); letter-spacing: .08em; color: #6f6f6a; }
+.vtab svg { width: 10px; height: 14px; color: var(--yellow); }
+.vt-hatch { margin-top: auto; width: 100%; height: 44px; background: repeating-linear-gradient(-45deg, #4a4a46 0 1px, transparent 1px 5px); }
+.vtab.mini { position: static; width: 24px; height: auto; justify-content: center; gap: 7px; padding: 0; }
+.vtab.mini b { font-size: 12px; }
+.vtab.mini svg { width: 8px; height: 11px; }
+
+/* 5.3 L 形角标 */
+.tbox { position: relative; max-width: 100%; padding: clamp(16px, 3.2cqh, 30px) clamp(20px, 2.4cqi, 34px); margin-left: calc(clamp(20px, 2.4cqi, 34px) * -1); }
+.br { position: absolute; width: clamp(18px, 2.6cqi, 34px); height: clamp(18px, 2.6cqi, 34px); border: 0 solid var(--yellow); }
+.br::after { content: ""; position: absolute; width: 7px; height: 7px; background: var(--ink); }
+.br.tl { left: 0; top: 0; border-width: 6px 0 0 6px; }
+.br.tl::after { left: -6px; top: -6px; }
+.br.bk { right: 0; bottom: 0; border-width: 0 6px 6px 0; }
+.br.bk::after { right: -6px; bottom: -6px; }
+
+/* 5.6 ◎ 任务追踪标记 */
+.mk { position: relative; flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--yellow); box-shadow: inset 0 0 0 2px var(--ink); }
+.mk::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--ink); }
+
+/* 标题栏状态块：7px 状态灯 + 活动名 + 计时 */
+.status { align-self: center; display: inline-flex; align-items: center; gap: 10px; height: 28px; padding: 0 14px 0 12px; background: var(--ink); color: #ececea; }
+button.status:hover { box-shadow: inset 0 -3px 0 var(--yellow); }
+.st-led { flex: none; width: 7px; height: 7px; background: var(--yellow); }
+.st-led[data-kind="focus"] { background: var(--mint); animation: blink 2s steps(1) infinite; }
+.st-led[data-kind="away"] { background: var(--cyan); }
+.st-label { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 520 13px/1 var(--f-cn); letter-spacing: .04em; }
+.st-time { min-width: 3.2em; text-align: right; font: 600 15px/1 var(--f-en); color: #fff; font-variant-numeric: tabular-nums; }
+
+/* 计时读数：状态行 + 大号数字；超时时状态行前面多一个黑底黄字小块 */
+.readout { display: flex; align-items: flex-end; gap: clamp(14px, 2cqi, 26px); }
+.t-state { display: grid; justify-items: end; gap: 9px; padding-bottom: 4px; }
+.t-row { display: flex; align-items: center; gap: 8px; }
+.t-row .dot { width: 8px; height: 8px; background: var(--line-2); }
+.t-row b { font: 520 13px/1 var(--f-cn); letter-spacing: .06em; }
+.t-row i { font: 500 9px/1 var(--f-en); letter-spacing: .22em; color: var(--mute); font-style: normal; }
+.readout[data-state="run"] .dot { background: var(--ink); box-shadow: 0 0 0 2px var(--yellow); animation: blink 1.6s steps(1) infinite; }
+.readout[data-state="away"] .dot { background: var(--cyan); }
+.readout[data-state="over"] .dot { background: var(--over); }
+.over { padding: 4px 7px; background: var(--ink); color: var(--yellow); font: 600 13px/1 var(--f-en); font-variant-numeric: tabular-nums; }
+.digits { font: 600 expanded min(15cqh, 8cqi, 128px)/.76 var(--f-en); letter-spacing: -.01em; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@container card (max-width: 1100px) { .t-state .k { display: none; } }
+
+/* 快捷活动磁贴 128×112 */
+.qa {
+  position: relative; width: 128px; height: 112px; padding: 12px;
+  display: grid; grid-template-rows: auto 1fr auto auto; justify-items: start; text-align: left;
+  border: 1px solid var(--line); background: #f0f0ec;
+  transition: border-color .15s, background .15s, transform .09s;
+}
+.qa:hover { border-color: var(--ink); }
+.qa:active { transform: translateY(2px); }
+.qa .qi { width: 40px; height: 40px; display: grid; place-items: center; background: #e1e1dc; }
+.qa .qi svg { width: 22px; height: 22px; }
+.qa b { grid-row: 3; font: 520 15px/1 var(--f-cn); letter-spacing: .06em; }
+.qa i { grid-row: 4; margin-top: 7px; font: 500 8px/1 var(--f-en); letter-spacing: .22em; font-style: normal; color: var(--mute); }
+.qa kbd { position: absolute; top: 10px; right: 10px; padding: 3px 5px; border: 1px solid var(--line-2); font: 400 10px/1 var(--f-mono); color: var(--mute); }
+.qa[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #f6f6f3; }
+.qa[aria-pressed="true"] .qi { background: var(--yellow); color: var(--ink); }
+.qa[aria-pressed="true"] i { color: #8a8a86; }
+.qa[aria-pressed="true"] kbd { color: #9a9a95; border-color: #444; }
+.qa.add { border-style: dashed; border-color: var(--line-2); background: transparent; }
+.qa.add .qi { background: transparent; border: 1px solid var(--line-2); }
+
+/* 5.5 ▽ 徽记 */
+.emblem { color: var(--ink); }

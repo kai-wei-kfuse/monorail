@@ -1,0 +1,32 @@
+@import "misans/lib/Normal/MiSansVF.min.css";
+@import "@fontsource-variable/saira/wdth.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "./tokens.css";
+
+[hidden] { display: none !important; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: var(--win); color: var(--ink);
+  font: 330 14px/1.5 var(--f-cn);
+  overflow: hidden; -webkit-font-smoothing: antialiased;
+  user-select: none; cursor: default;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: default; }
+input, textarea { font: inherit; color: inherit; }
+kbd { font: inherit; }
+svg { display: block; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* 英文小字：永远是中文的陪衬（§3） */
+.k { font: 500 9px/1 var(--f-en); letter-spacing: .22em; color: var(--mute); text-transform: uppercase; white-space: nowrap; }
+.k em { font: 520 11px/1 var(--f-cn); letter-spacing: .06em; color: var(--ink-3); font-style: normal; margin-left: 6px; }
+.hl { display: inline-block; line-height: 1.06; padding: 0 .14em .04em; margin: 0 .04em; background: var(--yellow); }
+
+@keyframes blink { 50% { opacity: .35; } }
+@keyframes nowBlink { 50% { background: var(--ink); } }
+
+/* 动效等级「关闭」或系统减少动态效果时，全部静止（§8.1） */
+:root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

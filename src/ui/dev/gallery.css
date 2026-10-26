@@ -1,0 +1,29 @@
+/* 只给预览页用的拼装样式；首页卡片的正式布局在 pages/home 里写 */
+.g-card { --pad: clamp(26px, 4cqi, 58px); --padL: calc(var(--pad) + 30px); position: relative; min-height: 0; overflow: hidden; container: card / size; background: var(--paper); border: 1px solid var(--line); }
+.g-in { position: absolute; inset: 0; z-index: 1; padding: calc(var(--pad) * .72) var(--pad) calc(var(--pad) * .6) var(--padL); display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; row-gap: clamp(12px, 2.6cqh, 26px); }
+.g-head { display: flex; align-items: center; gap: 12px; }
+.g-head b { font: 630 19px/1 var(--f-cn); letter-spacing: .05em; }
+.g-meta { display: flex; align-items: center; gap: 10px; font: 330 14px/1 var(--f-cn); color: var(--mute); }
+.g-meta::before { content: ""; width: 1px; height: 14px; background: var(--line-2); }
+.g-meta em { font-style: normal; font-weight: 520; color: var(--ink); }
+.g-hero { min-height: 0; display: grid; align-content: center; justify-items: start; }
+.g-title { margin: 0; font: 630 62px/1.2 var(--f-cn); }
+.g-title .ln { display: block; white-space: nowrap; }
+.g-meter { margin-inline: calc(var(--padL) * -1) calc(var(--pad) * -1); }
+.g-foot { display: flex; align-items: flex-end; gap: 24px; }
+.g-acts { display: flex; gap: 12px; padding-bottom: 3px; }
+.g-foot .readout { margin-left: auto; }
+.g-tray { display: flex; gap: 8px; }
+.g-mini { position: relative; width: 520px; height: 88px; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; background: var(--paper); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); filter: drop-shadow(0 8px 16px rgb(0 0 0 / .3)); }
+.g-mini-l { position: relative; min-width: 0; display: grid; align-content: center; gap: 7px; padding: 0 18px 12px 16px; overflow: hidden; box-shadow: inset 0 1px 0 var(--line-2), inset 0 -1px 0 var(--line-2); }
+.g-mini-l > :not(canvas) { position: relative; }
+.g-mini-l b { font: 630 16px/1.25 var(--f-cn); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-mini-l .mbars { position: absolute; left: 16px; right: 18px; bottom: 10px; }
+.g-mini-r { display: flex; align-items: center; gap: 8px; padding: 0 20px 0 22px; background: var(--ink); clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px); }
+.g-mini-r .k { font-size: 8px; color: #8a8a86; }
+.g-mini-time { font: 600 expanded 26px/1 var(--f-en); color: var(--yellow); font-variant-numeric: tabular-nums; }
+.g-mbtn { width: 34px; height: 34px; display: grid; place-items: center; background: #2e2e2d; color: #e8e8e4; }
+.g-mbtn.go { background: var(--yellow); color: var(--ink); }
+.g-mbtn svg { width: 14px; height: 14px; }
+.g-sheet { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; padding: 24px; }
+.g-emb { width: 120px; height: 112px; }

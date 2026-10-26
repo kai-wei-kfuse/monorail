@@ -12,10 +12,13 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fontsource-variable/saira": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
     "@tauri-apps/api": "2.12.4",
     "@tauri-apps/plugin-autostart": "2.7.0",
     "@tauri-apps/plugin-dialog": "2.8.3",
     "@tauri-apps/plugin-fs": "2.7.1",
+    "misans": "5.0.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "yaml": "2.9.1",

@@ -1,0 +1,29 @@
+/* 窗口外壳：标题栏 40px、底栏 40px（UI风格规范 §7.1） */
+.frame { height: 100%; display: grid; grid-template-rows: var(--bar) minmax(0, 1fr) var(--bar); background: var(--win); }
+.frame-stage { position: relative; min-height: 0; display: grid; padding: 14px 16px; }
+.frame-stage > * { grid-area: 1 / 1; }
+
+.titlebar { display: flex; align-items: center; gap: 14px; padding-left: 14px; background: var(--bar-bg); border-bottom: 1px solid var(--line); }
+.titlebar.inactive > * { opacity: .55; }
+.brand { display: flex; align-items: center; gap: 9px; }
+.brand > svg { width: 18px; height: 18px; }
+.brand b { font: 520 13px/1 var(--f-cn); letter-spacing: .08em; }
+.tabs { display: flex; align-self: stretch; margin-left: 6px; padding-left: 6px; border-left: 1px solid var(--line-2); }
+.tab-btn { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 14px; font: 520 13px/1 var(--f-cn); letter-spacing: .06em; color: var(--mute); }
+.tab-btn i { font: 500 8px/1 var(--f-en); letter-spacing: .2em; font-style: normal; color: var(--mute-2); }
+.tab-btn:hover { color: var(--ink); background: #d2d2cc; }
+.tab-btn[aria-selected="true"] { color: var(--ink); }
+.tab-btn[aria-selected="true"]::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px; background: var(--ink); }
+.tab-btn[aria-selected="true"]::before { content: ""; width: 5px; height: 5px; background: var(--ink); box-shadow: 0 0 0 1.5px var(--yellow); }
+.tb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; align-self: stretch; }
+
+.winctl { display: flex; align-self: stretch; }
+.wc { width: 46px; height: 100%; display: grid; place-items: center; color: #57574f; }
+.wc svg { width: 11px; height: 11px; }
+.wc.pin svg { width: 14px; height: 14px; }
+.wc:hover { background: #cdcdc7; color: var(--ink); }
+.wc.close:hover { background: var(--red); color: #fff; }
+.wc.pin[aria-pressed="true"] { color: var(--ink); background: var(--yellow); }
+
+.dock { position: relative; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--bar-bg); border-top: 1px solid var(--line); }
+.dock-right { margin-left: auto; display: flex; align-items: center; gap: 18px; font: 330 12px/1 var(--f-cn); color: var(--mute); letter-spacing: .04em; }
