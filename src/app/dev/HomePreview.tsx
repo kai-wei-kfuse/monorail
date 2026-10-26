@@ -15,8 +15,9 @@ import { playAfterWipe, playColdIntro } from '../../pages/home/intro';
 import { QuickActs } from '../shell/QuickActs';
 import { BaselineMarks } from '../shell/BaselineMarks';
 import { MiniWindow } from '../shell/MiniWindow';
+import { QuickBar } from '../../pages/quickbar/QuickBar';
 
-export const PREVIEW_PAGES = ['card', 'over', 'guide', 'rest', 'review', 'mini'];
+export const PREVIEW_PAGES = ['card', 'over', 'guide', 'rest', 'review', 'mini', 'quickbar'];
 const look = { topoMode: 'dynamic' as const, topoDepth: 60, paused: false };
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
 const min = (m: number) => m * 60_000;
@@ -33,6 +34,7 @@ export function HomePreview({ page }: { page: string }) {
   const [wipe, setWipe] = useState(false);
   const view = sample(page);
   useEffect(() => { if (stage.current && app.current) playColdIntro(app.current, stage.current, stage.current.querySelector('.digits'), () => {}); }, []);
+  if (page === 'quickbar') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><div style={{ width: 760 }}><QuickBar projects={[{ id: 'p1', name: '找工作' }]} onSave={async () => {}} onHide={() => {}} /></div></div>;
   if (page === 'mini') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><MiniWindow view={view} running topoDepth={60} onPrimary={() => {}} onRestore={() => {}} /></div>;
   const title = <TitleBar name="像素记录" tabs={TABS} active="home" onTab={() => {}}>
     <StatusTag kind={page === 'rest' ? 'away' : 'focus'} label={page === 'rest' ? '休息' : '沿 Python 往下学'} time={formatClock(view.elapsedMs)} onClick={() => {}} title="补记" />
