@@ -1,0 +1,13 @@
+
+> task-terminal-skeleton@0.1.0 test
+> node test-runner.mjs
+
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  00:01:42
+   Duration  1.35s (tests 64%, import 25%, transform 9%, worker 2%)
+

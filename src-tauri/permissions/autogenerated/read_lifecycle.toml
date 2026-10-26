@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-read-lifecycle"
+description = "Enables the read_lifecycle command without any pre-configured scope."
+commands.allow = ["read_lifecycle"]
+
+[[permission]]
+identifier = "deny-read-lifecycle"
+description = "Denies the read_lifecycle command without any pre-configured scope."
+commands.deny = ["read_lifecycle"]

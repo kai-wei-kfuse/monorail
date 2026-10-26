@@ -1,0 +1,21 @@
+{
+  "last_alive": 1793031265902,
+  "previous_last_alive": 1793031085729,
+  "startup_at": 1793031205898,
+  "events": [
+    {
+      "kind": "suspend",
+      "at": 1793030338877,
+      "simulated": true,
+      "suspended_at": 1793030338877,
+      "resumed_at": null
+    },
+    {
+      "kind": "resume",
+      "at": 1793030338888,
+      "simulated": true,
+      "suspended_at": 1793030338877,
+      "resumed_at": 1793030338888
+    }
+  ]
+}

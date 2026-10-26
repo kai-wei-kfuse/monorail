@@ -1,0 +1,4 @@
+{
+  "identifier": "quickbar", "windows": ["quickbar"],
+  "permissions": ["core:default", "core:window:allow-hide", "allow-save-quick-record", "allow-evidence"]
+}

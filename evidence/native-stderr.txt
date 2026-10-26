@@ -1,0 +1,5 @@
+
+thread 'main' (50416) panicked at C:\Users\kai_wei\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-2.12.5\src\app.rs:1444:11:
+Failed to setup app: error encountered during setup hook: HotKey already registered: HotKey { mods: Modifiers(ALT | CONTROL), key: KeyR, id: 589860 }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[1026/232946.859:ERROR:ui\gfx\win\window_impl.cc:172] Failed to unregister class Chrome_WidgetWin_0. Error = 1412

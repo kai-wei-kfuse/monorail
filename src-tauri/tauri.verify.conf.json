@@ -1,0 +1,4 @@
+{
+  "build": { "beforeBuildCommand": "npm run build:verify" },
+  "app": { "security": { "capabilities": ["main", "quickbar", { "identifier": "verification-only", "windows": ["main", "quickbar"], "permissions": ["allow-simulate-power", "allow-verification-enabled"] }] } }
+}

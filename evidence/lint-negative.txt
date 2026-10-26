@@ -1,0 +1,6 @@
+
+C:\Users\kai_wei\Documents\1026(4)\app\src\shared\reverse-import-probe.ts
+  1:8  error  Unexpected path "../app/bootstrap" imported in restricted zone  import/no-restricted-paths
+
+✖ 1 problem (1 error, 0 warnings)
+

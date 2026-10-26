@@ -1,0 +1,41 @@
+import { z } from 'zod';
+import type { FileSystem } from './fs';
+import { safeRelative } from './fs';
+
+export interface Write { path: string; text: string; before: string | null }
+const planSchema = z.object({ id: z.uuid(), writes: z.array(z.object({ path: z.string(), text: z.string(), before: z.string().nullable() })) });
+
+export class Journal {
+  constructor(private fs: FileSystem) {}
+  private async apply(writes: Write[]) {
+    for (const write of writes) {
+      safeRelative(write.path);
+      const actual = (await this.fs.read(write.path))?.text ?? null;
+      if (actual === write.text) continue;
+      if (actual !== write.before) throw new Error(`Recovery conflict: ${write.path}`);
+      await this.fs.atomicWrite(write.path, write.text);
+    }
+  }
+  async run(id: string, writes: Write[]): Promise<void> {
+    planSchema.parse({ id, writes });
+    if (new Set(writes.map(w => w.path)).size !== writes.length) throw new Error('Duplicate path in transaction');
+    for (const write of writes) {
+      if (((await this.fs.read(write.path))?.text ?? null) !== write.before) throw new Error(`External edit: ${write.path}`);
+    }
+    const path = `.journal/${id}.json`;
+    await this.fs.atomicWrite(path, JSON.stringify({ id, writes }));
+    await this.apply(writes);
+    await this.fs.remove(path);
+  }
+  async recover(): Promise<number> {
+    const paths = (await this.fs.list('.journal')).filter(p => p.endsWith('.json'));
+    for (const path of paths) {
+      const file = await this.fs.read(path);
+      if (!file) throw new Error(`Journal disappeared: ${path}`);
+      const plan = planSchema.parse(JSON.parse(file.text));
+      await this.apply(plan.writes);
+      await this.fs.remove(path);
+    }
+    return paths.length;
+  }
+}

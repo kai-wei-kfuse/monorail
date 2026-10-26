@@ -1,0 +1,11 @@
+{
+  "token": "943e39e3-761d-4722-b944-2e1b1308d1a2",
+  "first": "943e39e3-761d-4722-b944-2e1b1308d1a2",
+  "second": "943e39e3-761d-4722-b944-2e1b1308d1a2",
+  "remainingJournals": 0,
+  "startupRecovery": {
+    "at": 1793031369219,
+    "message": "journal-recovered:1"
+  },
+  "passed": true
+}

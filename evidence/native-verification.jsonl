@@ -1,0 +1,89 @@
+{"at":1793028714739,"message":"visible:{\"now\":1793028714619,\"elapsedMs\":null}"}
+{"at":1793028714741,"message":"visible:{\"now\":1793028714735,\"elapsedMs\":null}"}
+{"at":1793028727589,"message":"visible:{\"now\":1793028727577,\"elapsedMs\":null}"}
+{"at":1793028788824,"message":"visible:{\"now\":1793028788772,\"elapsedMs\":null}"}
+{"at":1793028788828,"message":"visible:{\"now\":1793028788822,\"elapsedMs\":null}"}
+{"at":1793029025416,"message":"快捷键 Ctrl+Alt+R 注册失败：HotKey already registered: HotKey { mods: Modifiers(ALT | CONTROL), key: KeyR, id: 589860 }"}
+{"at":1793029031824,"message":"visible:{\"now\":1793029031820,\"elapsedMs\":null}"}
+{"at":1793029031826,"message":"visible:{\"now\":1793029031821,\"elapsedMs\":null}"}
+{"at":1793029037167,"message":"visible:{\"now\":1793029037160,\"elapsedMs\":null}"}
+{"at":1793029151365,"message":"visible:{\"now\":1793029151282,\"elapsedMs\":null}"}
+{"at":1793029151367,"message":"visible:{\"now\":1793029151363,\"elapsedMs\":null}"}
+{"at":1793029514013,"message":"visible:{\"now\":1793029514000,\"elapsedMs\":null}"}
+{"at":1793029514251,"message":"journal-recovered:0"}
+{"at":1793029514279,"message":"reconcile:0"}
+{"at":1793029514373,"message":"reminder-plan:[]"}
+{"at":1793029514380,"message":"connected:C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\.verification-data\\desktop:cards=0"}
+{"at":1793029754959,"message":"visible:{\"now\":1793029754952,\"elapsedMs\":null}"}
+{"at":1793029755002,"message":"reconcile:0"}
+{"at":1793029755076,"message":"reminder-plan:[]"}
+{"at":1793030305796,"message":"journal-recovered:0"}
+{"at":1793030305834,"message":"reconcile:0"}
+{"at":1793030305936,"message":"verification-ready-quickbar"}
+{"at":1793030305973,"message":"reminder-plan:[]"}
+{"at":1793030305979,"message":"connected:C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\.verification-data\\desktop:cards=0"}
+{"at":1793030305992,"message":"verification-ready-main:null"}
+{"at":1793030331865,"message":"visible:{\"now\":1793030331855,\"elapsedMs\":null}"}
+{"at":1793030331871,"message":"visible:{\"now\":1793030331862,\"elapsedMs\":null}"}
+{"at":1793030331953,"message":"reconcile:0"}
+{"at":1793030332201,"message":"reminder-plan:[]"}
+{"at":1793030332340,"message":"reconcile:0"}
+{"at":1793030332521,"message":"reminder-plan:[]"}
+{"at":1793030338472,"message":"visible:{\"now\":1793030338465,\"elapsedMs\":null}"}
+{"at":1793030338585,"message":"reconcile:0"}
+{"at":1793030338731,"message":"verification-window-passed:{\"before\":{\"width\":1000,\"height\":720,\"x\":-1051,\"y\":335,\"max\":false,\"top\":false,\"visible\":true,\"scale\":1},\"small\":{\"width\":520,\"height\":88,\"x\":-1051,\"y\":335,\"max\":false,\"top\":true,\"visible\":true,\"scale\":1},\"restored\":{\"width\":1000,\"height\":720,\"x\":-1051,\"y\":335,\"max\":false,\"top\":false,\"visible\":true,\"scale\":1},\"maximizedRestored\":true}"}
+{"at":1793030338830,"message":"reminder-plan:[]"}
+{"at":1793030338871,"message":"verification-autostart-passed:{\"original\":false,\"enabledThenDisabled\":true,\"rebootTested\":false}"}
+{"at":1793030338900,"message":"verification-power-simulated-passed:{\"suspended\":{\"kind\":\"suspend\",\"at\":1793030338877,\"simulated\":true,\"suspended_at\":1793030338877,\"resumed_at\":null},\"resumed\":{\"kind\":\"resume\",\"at\":1793030338888,\"simulated\":true,\"suspended_at\":1793030338877,\"resumed_at\":1793030338888},\"realSleepTested\":false}"}
+{"at":1793030339001,"message":"verification-hidden-record-start:{\"recordId\":\"a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"mainVisible\":false}"}
+{"at":1793030339037,"message":"quickbar-saved:a63b7a0b-548e-4848-87b8-a341bb9f2466"}
+{"at":1793030339121,"message":"reconcile:1"}
+{"at":1793030339301,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793030339380,"message":"reconcile:0"}
+{"at":1793030339469,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793030339538,"message":"reconcile:0"}
+{"at":1793030339659,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793030339734,"message":"reconcile:0"}
+{"at":1793030339828,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793030339853,"message":"verification-hidden-record-passed:{\"recordId\":\"a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"cardId\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"mainVisible\":false,\"due\":\"2026-10-26T16:59:18.902Z\"}"}
+{"at":1793030340123,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793030340153,"message":"verification-background-start:{\"at\":\"2026-10-26T15:58:59.855Z\",\"segmentId\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"mainVisible\":false,\"requiredMs\":600000}"}
+{"at":1793030358986,"message":"notification-dispatched:deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z:1793030358902"}
+{"at":1793030966555,"message":"visible:{\"now\":1793030966535,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":626680}"}
+{"at":1793030966613,"message":"verification-background-passed:{\"resumedAt\":1793030966536,\"startedAt\":1793030339855,\"elapsedMs\":626681,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null}}"}
+{"at":1793030966619,"message":"verification-complete:null"}
+{"at":1793030966699,"message":"reconcile:0"}
+{"at":1793030966806,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031056127,"message":"visible:{\"now\":1793031056118,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":716263}"}
+{"at":1793031056170,"message":"verification-background-passed:{\"resumedAt\":1793031056118,\"startedAt\":1793030339855,\"elapsedMs\":716263,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null}}"}
+{"at":1793031056257,"message":"reconcile:0"}
+{"at":1793031056367,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031205972,"message":"journal-recovered:0"}
+{"at":1793031206074,"message":"verification-ready-quickbar"}
+{"at":1793031206098,"message":"reconcile:0"}
+{"at":1793031206192,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031206198,"message":"connected:C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\.verification-data\\desktop:cards=1"}
+{"at":1793031206214,"message":"verification-ready-main:null"}
+{"at":1793031206304,"message":"notification-dispatched:deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z:1793030358902"}
+{"at":1793031241707,"message":"visible:{\"now\":1793031241694,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":901839}"}
+{"at":1793031241805,"message":"reconcile:0"}
+{"at":1793031241903,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031271279,"message":"verification-journal-pending:{\"token\":\"943e39e3-761d-4722-b944-2e1b1308d1a2\",\"journals\":[\".journal/1f4cadb5-542d-4996-9cb7-86d3e331ce2c.json\"],\"first\":{\"text\":\"943e39e3-761d-4722-b944-2e1b1308d1a2\",\"version\":\"1793031271231:36\"},\"second\":null}"}
+{"at":1793031369219,"message":"journal-recovered:1"}
+{"at":1793031369295,"message":"reconcile:0"}
+{"at":1793031369390,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031369396,"message":"connected:C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\.verification-data\\desktop:cards=1"}
+{"at":1793031369482,"message":"notification-dispatched:deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z:1793030358902"}
+{"at":1793031494799,"message":"visible:{\"now\":1793031494765,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":1154910}"}
+{"at":1793031494801,"message":"visible:{\"now\":1793031494797,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":1154942}"}
+{"at":1793031495074,"message":"reconcile:0"}
+{"at":1793031495614,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031495773,"message":"reconcile:0"}
+{"at":1793031495885,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031579419,"message":"visible:{\"now\":1793031579403,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":1239548}"}
+{"at":1793031579420,"message":"visible:{\"now\":1793031579417,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null},\"elapsedMs\":1239562}"}
+{"at":1793031579528,"message":"reconcile:0"}
+{"at":1793031579620,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031579690,"message":"reconcile:0"}
+{"at":1793031579770,"message":"reminder-plan:[{\"id\":\"deadline:card-a63b7a0b-548e-4848-87b8-a341bb9f2466:2026-10-26T16:59:18.902Z\",\"at\":1793030358902,\"title\":\"待办期限提醒\",\"body\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\"}]"}
+{"at":1793031579977,"message":"reminder-plan:[]"}

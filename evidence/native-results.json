@@ -1,0 +1,42 @@
+[
+  {
+    "at": 1793030338731,
+    "message": "verification-window-passed:{\"before\":{\"width\":1000,\"height\":720,\"x\":-1051,\"y\":335,\"max\":false,\"top\":false,\"visible\":true,\"scale\":1},\"small\":{\"width\":520,\"height\":88,\"x\":-1051,\"y\":335,\"max\":false,\"top\":true,\"visible\":true,\"scale\":1},\"restored\":{\"width\":1000,\"height\":720,\"x\":-1051,\"y\":335,\"max\":false,\"top\":false,\"visible\":true,\"scale\":1},\"maximizedRestored\":true}"
+  },
+  {
+    "at": 1793030338871,
+    "message": "verification-autostart-passed:{\"original\":false,\"enabledThenDisabled\":true,\"rebootTested\":false}"
+  },
+  {
+    "at": 1793030338900,
+    "message": "verification-power-simulated-passed:{\"suspended\":{\"kind\":\"suspend\",\"at\":1793030338877,\"simulated\":true,\"suspended_at\":1793030338877,\"resumed_at\":null},\"resumed\":{\"kind\":\"resume\",\"at\":1793030338888,\"simulated\":true,\"suspended_at\":1793030338877,\"resumed_at\":1793030338888},\"realSleepTested\":false}"
+  },
+  {
+    "at": 1793030339001,
+    "message": "verification-hidden-record-start:{\"recordId\":\"a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"mainVisible\":false}"
+  },
+  {
+    "at": 1793030339853,
+    "message": "verification-hidden-record-passed:{\"recordId\":\"a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"cardId\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"mainVisible\":false,\"due\":\"2026-10-26T16:59:18.902Z\"}"
+  },
+  {
+    "at": 1793030340153,
+    "message": "verification-background-start:{\"at\":\"2026-10-26T15:58:59.855Z\",\"segmentId\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"mainVisible\":false,\"requiredMs\":600000}"
+  },
+  {
+    "at": 1793030966613,
+    "message": "verification-background-passed:{\"resumedAt\":1793030966536,\"startedAt\":1793030339855,\"elapsedMs\":626681,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null}}"
+  },
+  {
+    "at": 1793030966619,
+    "message": "verification-complete:null"
+  },
+  {
+    "at": 1793031056170,
+    "message": "verification-background-passed:{\"resumedAt\":1793031056118,\"startedAt\":1793030339855,\"elapsedMs\":716263,\"segment\":{\"id\":\"a9f3b63b-aa57-4c6c-b78c-129ec76b1a73\",\"seq\":1,\"started_at\":\"2026-10-26T15:58:59.855Z\",\"ended_at\":null,\"activity\":\"Native verification a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"category\":\"支线\",\"card_id\":\"card-a63b7a0b-548e-4848-87b8-a341bb9f2466\",\"kind\":\"普通\",\"source\":\"手动\",\"resume_card_id\":null}}"
+  },
+  {
+    "at": 1793031369219,
+    "message": "journal-recovered:1"
+  }
+]

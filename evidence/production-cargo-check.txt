@@ -1,0 +1,19 @@
+   Compiling tauri v2.12.5
+    Checking webview2-com-sys v0.39.1
+    Checking tao v0.37.2
+   Compiling tauri-macros v2.7.4
+    Checking tauri-winrt-notification v0.8.1
+   Compiling task-terminal-skeleton v0.1.0 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Checking notify-rust v4.18.2
+   Compiling tauri-plugin-fs v2.7.1
+   Compiling tauri-plugin-global-shortcut v2.4.1
+   Compiling tauri-plugin-notification v2.7.0
+   Compiling tauri-plugin-autostart v2.7.0
+   Compiling tauri-plugin-dialog v2.8.3
+    Checking webview2-com v0.39.1
+    Checking wry v0.57.1
+    Checking tauri-runtime v2.12.2
+    Checking tauri-runtime-wry v2.12.3
+    Checking tauri-plugin-single-instance v2.5.4
+    Checking tauri-plugin-persisted-scope v2.4.2
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 20.50s

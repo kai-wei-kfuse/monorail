@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-simulate-power"
+description = "Enables the simulate_power command without any pre-configured scope."
+commands.allow = ["simulate_power"]
+
+[[permission]]
+identifier = "deny-simulate-power"
+description = "Denies the simulate_power command without any pre-configured scope."
+commands.deny = ["simulate_power"]

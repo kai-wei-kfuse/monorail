@@ -1,0 +1,2 @@
+   Compiling task-terminal-skeleton v0.1.0 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 23.93s
