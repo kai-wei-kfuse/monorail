@@ -1,0 +1,44 @@
+/* 首页卡片（UI风格规范 §7.2）：项目行 / 标题区 / 进度竖条带 / 底部行，左侧竖排标签条，背景等高线 */
+.card {
+  --pad: clamp(26px, 4cqi, 58px);
+  --padL: calc(var(--pad) + 30px);
+  position: relative; min-height: 0; overflow: hidden;
+  container: card / size;
+  background: var(--paper); border: 1px solid var(--line);
+}
+.card-in {
+  position: absolute; inset: 0; z-index: 1;
+  padding: calc(var(--pad) * .72) var(--pad) calc(var(--pad) * .6) var(--padL);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto;
+  row-gap: clamp(12px, 2.6cqh, 26px);
+}
+
+.c-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.c-head > b { font: 630 19px/1 var(--f-cn); letter-spacing: .05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-meta { display: flex; align-items: center; gap: 10px; font: 330 14px/1 var(--f-cn); color: var(--mute); white-space: nowrap; }
+.c-meta::before { content: ""; width: 1px; height: 14px; background: var(--line-2); }
+.c-meta em { font-style: normal; font-weight: 520; color: var(--ink); }
+.c-corner { margin-left: auto; display: flex; align-items: center; gap: 14px; font: 330 12px/1 var(--f-cn); color: var(--mute); white-space: nowrap; }
+.c-hint { display: inline-flex; align-items: center; gap: 6px; }
+.c-hint::before { content: ""; width: 5px; height: 5px; background: var(--ink); box-shadow: 0 0 0 1.5px var(--yellow); }
+.c-link { color: var(--mute-2); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.c-link:hover { color: var(--ink); }
+
+.hero { position: relative; min-height: 0; display: grid; align-content: center; justify-items: start; }
+.title { position: relative; margin: 0; max-width: 100%; font: 630 var(--ts, 62px)/1.2 var(--f-cn); letter-spacing: .005em; color: var(--ink); overflow-wrap: anywhere; }
+.title .hl { line-height: 1.06; }
+.c-note { margin: 0 0 0 2px; max-width: 46em; font: 330 13px/1.6 var(--f-cn); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-note b { font-weight: 520; color: var(--ink-3); margin-right: 8px; }
+
+.card .meter { margin-inline: calc(var(--padL) * -1) calc(var(--pad) * -1); }
+.foot { display: flex; align-items: flex-end; gap: 24px; min-width: 0; }
+.actions { display: flex; align-items: center; gap: 12px; padding-bottom: 3px; }
+.foot .readout { margin-left: auto; }
+
+/* 引导卡、休息卡、回顾卡：同一张卡的样式，只有一个主按钮，不计时 */
+.alt-hero { min-height: 0; display: grid; align-content: center; gap: 18px; }
+.alt-hero .k { display: block; }
+.alt-hero h1 { margin: 0; font: 630 clamp(32px, 7.5cqh, 58px)/1.2 var(--f-cn); letter-spacing: .02em; }
+.alt-hero p { margin: 0; max-width: 40em; font: 330 15px/1.7 var(--f-cn); color: var(--ink-3); }
+.alt-ask { display: grid; gap: 10px; max-width: 520px; }
+.alt-ask label { font: 520 13px/1 var(--f-cn); letter-spacing: .04em; }

@@ -1,0 +1,50 @@
+/* 外壳部件：底栏快捷活动、底线标记、悬浮小窗（UI风格规范 §6、§7.1、§7.4） */
+.dock-toggle { display: inline-flex; align-items: center; gap: 9px; height: 28px; padding: 0 12px 0 4px; border: 1px solid var(--line-2); background: #f4f4f1; transition: border-color .2s; }
+.dock-toggle:hover { border-color: var(--ink); }
+.dock-toggle .chev { width: 20px; height: 20px; display: grid; place-items: center; background: var(--ink); color: #f2f2ef; transition: transform .3s var(--ease); }
+.dock-toggle .chev svg { width: 12px; height: 12px; }
+.dock-toggle[aria-expanded="true"] { border-color: var(--ink); }
+.dock-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); background: var(--yellow); color: var(--ink); }
+.dock-toggle .t-cn { font: 520 13px/1 var(--f-cn); letter-spacing: .06em; }
+.dock-toggle .cnt { font: 400 10px/1 var(--f-mono); color: var(--mute); padding-left: 9px; border-left: 1px solid var(--line-2); }
+.dock-toggle.has-act .cnt { color: var(--ink); font-family: var(--f-cn); font-weight: 520; }
+
+.tray {
+  position: absolute; left: 16px; bottom: calc(100% + 10px);
+  display: grid; gap: 12px; padding: 14px;
+  background: var(--paper-2); border: 1px solid var(--line); box-shadow: 0 24px 48px rgb(0 0 0 / .2);
+  animation: trayIn .3s var(--ease) both;
+}
+@keyframes trayIn { from { opacity: 0; transform: translateY(10px); } }
+.tray-head { display: flex; align-items: baseline; gap: 10px; padding: 0 2px; }
+.tray-head b { font: 520 14px/1 var(--f-cn); letter-spacing: .06em; }
+.tray-head span:last-child { margin-left: auto; padding-left: 24px; font: 330 11px/1 var(--f-cn); color: var(--mute); }
+.tray-row { display: flex; flex-wrap: wrap; gap: 8px; max-width: calc(128px * 6 + 8px * 5); }
+
+.baseline { display: inline-flex; align-items: center; gap: 12px; font: 520 12px/1 var(--f-cn); letter-spacing: .04em; color: var(--mute); }
+.baseline span { display: inline-flex; align-items: center; gap: 5px; }
+.baseline span i { font: 600 12px/1 var(--f-en); font-style: normal; width: 1em; text-align: center; }
+.baseline span.done { color: var(--ink); }
+.baseline span.done i { color: var(--ink); }
+
+.miniwin {
+  position: relative; width: 520px; height: 88px;
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto;
+  background: var(--paper); color: var(--ink);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+}
+.mini-l { position: relative; min-width: 0; display: grid; align-content: center; gap: 7px; padding: 0 18px 12px 16px; overflow: hidden; box-shadow: inset 0 1px 0 var(--line-2), inset 0 -1px 0 var(--line-2); }
+.mini-l > :not(canvas) { position: relative; }
+.mini-l .k { font-size: 8px; }
+.mini-l b { font: 630 16px/1.25 var(--f-cn); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-l b .hl { padding: 0 .14em; }
+.mini-l .mbars { position: absolute; left: 16px; right: 18px; bottom: 10px; }
+.mini-r { display: flex; align-items: center; gap: 8px; padding: 0 20px 0 22px; background: var(--ink); clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px); }
+.mini-read { display: grid; gap: 7px; margin-right: 8px; }
+.mini-read .k { font-size: 8px; color: #8a8a86; }
+.mini-time { font: 600 expanded 26px/1 var(--f-en); color: var(--yellow); font-variant-numeric: tabular-nums; }
+.mini-btn { width: 34px; height: 34px; display: grid; place-items: center; background: #2e2e2d; color: #e8e8e4; transition: transform .09s, background .15s; }
+.mini-btn:hover { background: #3c3c3a; }
+.mini-btn:active { transform: translateY(2px); }
+.mini-btn svg { width: 14px; height: 14px; }
+.mini-btn.go { background: var(--yellow); color: var(--ink); }
