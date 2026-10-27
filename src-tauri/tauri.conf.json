@@ -3,13 +3,44 @@
   "productName": "pixel-record",
   "version": "0.1.0",
   "identifier": "local.taskterminal.skeleton",
-  "build": { "beforeDevCommand": "npm run dev", "beforeBuildCommand": "npm run build", "devUrl": "http://127.0.0.1:1420", "frontendDist": "../dist" },
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist"
+  },
   "app": {
     "windows": [
-      { "label": "main", "title": "任务终端 · 验证骨架", "width": 1000, "height": 720, "minWidth": 960, "minHeight": 600 },
-      { "label": "quickbar", "title": "快速记录 · 验证骨架", "width": 620, "height": 320, "visible": false, "alwaysOnTop": true }
+      {
+        "label": "main",
+        "title": "像素记录",
+        "width": 1000,
+        "height": 720,
+        "minWidth": 960,
+        "minHeight": 600,
+        "decorations": false
+      },
+      {
+        "label": "quickbar",
+        "title": "快速记录",
+        "width": 760,
+        "height": 120,
+        "visible": false,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "dragDropEnabled": false,
+        "skipTaskbar": true
+      }
     ],
-    "security": { "capabilities": ["main", "quickbar"], "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:" }
+    "security": {
+      "capabilities": [
+        "main",
+        "quickbar"
+      ],
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:"
+    }
   },
-  "bundle": { "active": false }
+  "bundle": {
+    "active": false
+  }
 }

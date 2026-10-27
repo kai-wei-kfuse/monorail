@@ -1,4 +1,13 @@
 {
-  "identifier": "quickbar", "windows": ["quickbar"],
-  "permissions": ["core:default", "core:window:allow-hide", "allow-save-quick-record", "allow-evidence"]
+  "identifier": "quickbar",
+  "windows": [
+    "quickbar"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-hide",
+    "allow-save-quick-record",
+    "allow-evidence",
+    "core:window:allow-set-size"
+  ]
 }
