@@ -1,4 +1,10 @@
-export interface Review { id: string; period: string; status: '未开始' | '进行中' | '已完成' | '已被取代'; step: string }
+export interface Review {
+  id: string; period: string; status: '未开始' | '进行中' | '已完成' | '已被取代'; step: string;
+  done?: ('recap' | 'newIdeas' | 'arena' | 'coldPick' | 'bet')[];
+  started_at?: string | null; completed_at?: string | null; added_idea_ids?: string[];
+  bet_project_ids?: string[]; bet_done_ids?: string[]; cold_duel?: { left: string; right: string } | null;
+  timer_segment_id?: string | null;
+}
 export interface ReviewDue { period: string; resumeStep: string; betDue: boolean }
 export function isoWeek(day: string): string {
   const date = new Date(`${day}T00:00:00Z`);

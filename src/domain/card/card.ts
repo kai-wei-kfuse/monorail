@@ -5,5 +5,5 @@ export interface Card {
   timebox_minutes: number | null; no_shrink: boolean;
   shrunk_from: string | null; shrink_level: number; continued_from: string | null; skip_count: number;
   completed_at: string | null; completed_day: string | null;
-  completed_track: '主线' | '支线' | null; progress_note: string;
+  completed_track: '主线' | '支线' | null; progress_note: string; progress_noted_at?: string | null;
 }

@@ -45,7 +45,8 @@ export function expireInTx(tx: Transaction): number {
 export const expire = (ctx: Ctx, at: string) => run(ctx, async tx => expireInTx(tx), at);
 
 export type ReviveResult = { kind: 'restored' } | ({ kind: 'duel' } & Duel);
-export const revive = (ctx: Ctx, ids: string[], at: string, confirmed = false): Promise<ReviveResult> => run(ctx, async tx => {
+export function reviveInTx(tx: Transaction, ids: string[], confirmed = false): ReviveResult {
+  const at = tx.at;
   if (ids.length === 0 || new Set(ids).size !== ids.length) throw new Error('请选择不同的冷库想法');
   const ideas = ids.map(id => findIdea(tx, id));
   if (ideas.some(idea => idea.pool !== '冷库')) throw new Error('想法不在冷库');
@@ -61,9 +62,11 @@ export const revive = (ctx: Ctx, ids: string[], at: string, confirmed = false): 
   if (!opponent) throw new Error('没有可对决的池中想法');
   // Keep it cold until a winner is explicitly chosen; a cancelled dialog changes nothing.
   return { kind: 'duel', left: ideas[0], right: opponent };
-}, at);
+}
+export const revive = (ctx: Ctx, ids: string[], at: string, confirmed = false): Promise<ReviveResult> => run(ctx, async tx => reviveInTx(tx, ids, confirmed), at);
 
-export const resolveDuel = (ctx: Ctx, winnerId: string, loserId: string, at: string) => run(ctx, async tx => {
+export function resolveDuelInTx(tx: Transaction, winnerId: string, loserId: string): void {
+  const at = tx.at;
   const winner = findIdea(tx, winnerId), loser = findIdea(tx, loserId);
   const cold = [winner, loser].filter(idea => idea.pool === '冷库');
   if (cold.length) {
@@ -78,4 +81,5 @@ export const resolveDuel = (ctx: Ctx, winnerId: string, loserId: string, at: str
   const duel = pair(tx.records, tx.settings.ideaPoolLimit);
   if (!duel || ![duel.left.id, duel.right.id].every(id => id === winnerId || id === loserId)) throw new Error('对决配对已改变');
   decide(winner, loser, at).forEach(idea => tx.saveRecord(idea));
-}, at);
+}
+export const resolveDuel = (ctx: Ctx, winnerId: string, loserId: string, at: string) => run(ctx, async tx => resolveDuelInTx(tx, winnerId, loserId), at);

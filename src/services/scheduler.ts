@@ -55,6 +55,10 @@ export async function startScheduler(ctx: Ctx, deps: SchedulerDeps): Promise<() 
   const life = await deps.lifecycle.read();
   if (life.previous_last_alive !== null) await settle(ctx, { start: iso(life.previous_last_alive), end: iso(life.startup_at) });
   const off = await deps.lifecycle.onPower(onPower);
+  const offSettings = ctx.onSettingsChange(() => {
+    day = activityDay(ctx.now(), ctx.settings.dayBoundaryHour);
+    arm();
+  });
   arm();
-  return () => { clearTimeout(timer); off(); };
+  return () => { clearTimeout(timer); off(); offSettings(); };
 }

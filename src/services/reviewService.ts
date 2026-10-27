@@ -1,0 +1,122 @@
+import { isoWeek } from '../domain/review/schedule';
+import { progress, navigate, completeReview } from '../domain/review/flow';
+import type { ActiveReview, ReviewStep } from '../domain/review/flow';
+import { activityDay, splitAtDays } from '../domain/timeline/day';
+import { createRecord } from '../domain/record/record';
+import { releaseCard } from '../domain/card/transitions';
+import { inBackpack } from '../domain/project/project';
+import { activeIdeas, coldOffer } from '../domain/idea/pool';
+import type { MakeRoom, ProjectDraft } from '../shared/backpack';
+import type { Ctx, Transaction } from './commit';
+import { run } from './commit';
+import { refreshInTx } from './dealService';
+import { openSegmentInTx, switchInTx, idleTarget } from './timerService';
+import { reviveInTx, resolveDuelInTx } from './ideaService';
+import { createProjectInTx, restoreProjectInTx } from './backpackService';
+import { currentReview, recapStart } from './reviewProjection';
+
+const overLimit = (tx: Transaction) => activeIdeas(tx.records).length > tx.settings.ideaPoolLimit;
+function active(tx: Transaction, step?: ReviewStep): ActiveReview {
+  const review = currentReview(tx.reviews);
+  if (!review || review.status !== '进行中') throw new Error('请先进入回顾');
+  if (step && review.step !== step) throw new Error('当前不在这个回顾步骤');
+  return progress(review);
+}
+async function finishInTx(tx: Transaction, review: ActiveReview): Promise<void> {
+  tx.saveReview(completeReview(review, tx.at, overLimit(tx)));
+  if (openSegmentInTx(tx)?.id === review.timer_segment_id) await switchInTx(tx, tx.at, idleTarget(tx));
+  refreshInTx(tx);
+}
+async function coldDoneInTx(tx: Transaction, review: ActiveReview): Promise<void> {
+  const done = { ...review, cold_duel: null, done: [...new Set([...review.done, 'coldPick' as const])] };
+  if (review.bet_project_ids.length) tx.saveReview(navigate(done, 'bet', overLimit(tx)));
+  else await finishInTx(tx, done);
+}
+
+/** Enter explicitly: changing pages/hiding the window never calls a timer stop. */
+export const enter = (ctx: Ctx, at: string) => run(ctx, async tx => {
+  refreshInTx(tx);
+  const day = activityDay(at, tx.settings.dayBoundaryHour), period = isoWeek(day);
+  let row = currentReview(tx.reviews);
+  if (!row) {
+    if (tx.reviews.some(review => review.period === period && review.status === '已完成')) return;
+    row = { id: period, period, status: '未开始', step: 'recap' };
+  }
+  let review = progress(row);
+  if (!review.started_at) review = { ...review, started_at: at, bet_project_ids: tx.projects.filter(project =>
+    inBackpack(project) && project.slot === '主线' && project.bet_ends_at && Date.parse(project.bet_ends_at) <= Date.parse(at)).map(project => project.id) };
+  // A main changed from the backpack page already received its explicit decision.
+  review = { ...review, bet_done_ids: [...new Set([...review.bet_done_ids, ...review.bet_project_ids.filter(id =>
+    !tx.projects.some(project => project.id === id && inBackpack(project) && project.slot === '主线'))])] };
+  const from = recapStart(tx.reviews, tx.state.first_used_day!, tx.settings.dayBoundaryHour, at);
+  await tx.repos.times.readDays(splitAtDays(from, at, tx.settings.dayBoundaryHour).map(piece => piece.day));
+  if (openSegmentInTx(tx)?.id !== review.timer_segment_id) {
+    for (const card of tx.cards.filter(card => card.status === '进行中')) tx.saveCard(releaseCard(card));
+    tx.state.rest = null;
+    await switchInTx(tx, at, { activity: '每周回顾', category: '回顾', card_id: null, kind: '普通', resume_card_id: null });
+    review = { ...review, timer_segment_id: tx.state.open_segment };
+  }
+  tx.saveReview({ ...review, status: '进行中' });
+  if (review.step === 'bet' && review.bet_project_ids.every(id => review.bet_done_ids.includes(id))) {
+    await finishInTx(tx, review); return;
+  }
+  refreshInTx(tx);
+}, at);
+
+export const goto = (ctx: Ctx, step: ReviewStep, at: string) => run(ctx, async tx => {
+  tx.saveReview(navigate(active(tx), step, overLimit(tx)));
+}, at);
+export const addIdea = (ctx: Ctx, text: string, at: string) => run(ctx, async tx => {
+  const review = active(tx, 'newIdeas'), id = tx.id();
+  tx.saveRecord(createRecord({ id, text: text.trim(), kind: '想法', created_at: at, due_at: null,
+    blocking: false, project_id: null, card_id: null, tags: [], attachments: [] }));
+  tx.saveReview({ ...review, added_idea_ids: [...review.added_idea_ids, id], done: review.done.filter(step => step !== 'arena' && step !== 'coldPick' && step !== 'bet') });
+  return id;
+}, at);
+export const duel = (ctx: Ctx, winnerId: string, loserId: string, at: string) => run(ctx, async tx => {
+  const review = active(tx);
+  if (review.step !== 'arena' && review.step !== 'coldPick') throw new Error('当前不在想法对决步骤');
+  if (review.step === 'coldPick' && (!review.cold_duel || ![review.cold_duel.left, review.cold_duel.right].every(id => id === winnerId || id === loserId))) throw new Error('冷库对决配对已改变');
+  resolveDuelInTx(tx, winnerId, loserId);
+  if (review.cold_duel) await coldDoneInTx(tx, review);
+}, at);
+export const takeCold = (ctx: Ctx, ids: string[], at: string, confirmed = false) => run(ctx, async tx => {
+  const review = active(tx, 'coldPick');
+  if (review.cold_duel) throw new Error('请先完成冷库对决');
+  const offered = coldOffer(tx.records);
+  if (ids.some(id => !offered.some(idea => idea.id === id))) throw new Error('冷库提议已改变，请重新选择');
+  const result = reviveInTx(tx, ids, confirmed);
+  if (result.kind === 'duel') tx.saveReview({ ...review, cold_duel: { left: result.left.id, right: result.right.id } });
+  else await coldDoneInTx(tx, review);
+  return result;
+}, at);
+export const skipCold = (ctx: Ctx, at: string) => run(ctx, tx => coldDoneInTx(tx, active(tx, 'coldPick')), at);
+
+function betProject(tx: Transaction, review: ActiveReview) {
+  const id = review.bet_project_ids.find(id => !review.bet_done_ids.includes(id));
+  const project = tx.projects.find(project => project.id === id);
+  if (!project || !inBackpack(project) || project.slot !== '主线' || !project.bet_ends_at) throw new Error('到期主线已改变，请重新进入回顾');
+  return project;
+}
+async function betDoneInTx(tx: Transaction, review: ActiveReview, id: string) {
+  const changed = { ...review, bet_done_ids: [...review.bet_done_ids, id] };
+  if (changed.bet_project_ids.every(id => changed.bet_done_ids.includes(id))) await finishInTx(tx, changed);
+  else tx.saveReview(changed);
+}
+export const continueBet = (ctx: Ctx, at: string) => run(ctx, async tx => {
+  const review = active(tx, 'bet'), project = betProject(tx, review), end = new Date(project.bet_ends_at!);
+  end.setDate(end.getDate() + tx.settings.betWeeks * 7);
+  tx.saveProject({ ...project, bet_ends_at: end.toISOString() });
+  await betDoneInTx(tx, review, project.id);
+}, at);
+export const switchMain = (ctx: Ctx, draft: ProjectDraft | { restoreId: string; makeRoom: MakeRoom }, at: string) => run(ctx, async tx => {
+  const review = active(tx, 'bet'), project = betProject(tx, review);
+  if (draft.makeRoom?.id !== project.id) throw new Error('换主线必须冷藏或放弃当前复盘主线');
+  if ('restoreId' in draft) await restoreProjectInTx(tx, draft.restoreId, '主线', draft.makeRoom);
+  else {
+    if (draft.slot !== '主线') throw new Error('请选择新的主线');
+    await createProjectInTx(tx, draft);
+  }
+  await betDoneInTx(tx, review, project.id);
+}, at);
+export const finish = (ctx: Ctx, at: string) => run(ctx, tx => finishInTx(tx, active(tx)), at);

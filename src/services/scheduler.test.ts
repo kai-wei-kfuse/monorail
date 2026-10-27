@@ -7,6 +7,7 @@ import { createContext } from './commit';
 import { startScheduler, untilBoundary } from './scheduler';
 import { saveRecord, reconcile } from './recordService';
 import { start } from './cardService';
+import { change } from './settingsService';
 
 function setup(now: () => string) {
   return createContext({ repos: createRepos(new MemoryFs()), settings: structuredClone(defaults), id: () => crypto.randomUUID(), now,
@@ -16,6 +17,21 @@ const offline = async (ctx: ReturnType<typeof setup>) =>
   (await ctx.repos.times.scan()).flatMap(d => d.segments).filter(s => s.source === '离线追问');
 
 describe('scheduler', () => {
+  it('changing the boundary immediately rearms its existing timer and disposal removes the subscription', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 9, 27, 3, 0));
+      const ctx = setup(() => new Date().toISOString()), days: string[] = [];
+      const stop = await startScheduler(ctx, {
+        lifecycle: { read: async () => ({ last_alive: 0, previous_last_alive: null, startup_at: 0, events: [] }), onPower: async () => () => {} },
+        onDayChanged: async day => { days.push(day); }, report: e => { throw e; },
+      });
+      await change(ctx, 'dayBoundaryHour', 5, ctx.now());
+      await vi.advanceTimersByTimeAsync(60 * 60_000 + 1000); expect(days).toEqual([]);
+      await vi.advanceTimersByTimeAsync(60 * 60_000); expect(days).toEqual(['2026-10-27']);
+      stop(); await change(ctx, 'dayBoundaryHour', 6, ctx.now()); expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
   it('computes the wait until the next local boundary', () => {
     expect(untilBoundary(new Date(2026, 9, 27, 3, 0).toISOString(), 4)).toBe(60 * 60_000);
     expect(untilBoundary(new Date(2026, 9, 27, 4, 0).toISOString(), 4)).toBe(24 * 60 * 60_000);

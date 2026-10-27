@@ -12,6 +12,7 @@ fn main() {
             "show_quickbar",
             "dialog_active",
             "shortcut_error",
+            "set_shortcut",
             "verification_enabled",
         ]),
     ))

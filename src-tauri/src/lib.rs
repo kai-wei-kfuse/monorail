@@ -17,7 +17,7 @@ macro_rules! handlers {
     ($($extra:path),*) => {
         tauri::generate_handler![read_config, save_config, save_quick_record, save_attachment, evidence,
             power::read_lifecycle, reminders::set_reminders, windows::show_quickbar,
-            windows::dialog_active, windows::shortcut_error, $($extra),*]
+            windows::dialog_active, windows::shortcut_error, windows::set_shortcut, $($extra),*]
     };
 }
 

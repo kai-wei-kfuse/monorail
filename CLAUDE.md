@@ -19,6 +19,7 @@
 - InTx 只接 tx（自带 repos/settings/id/now/at）；run(tx, ...) 同步抛重入错误。
 - cardService → degradeService 的 InTx → timerService。
 - cardService → dealService；其余 service → timerService/dealService。
+- reviewService → backpackService/ideaService 的 InTx（主线与回顾进度同事务）；任何 service 不得反向调用 reviewService。
 - timerService/dealService 不调用其他 service；degrade 的「回来」只调 timerService。
 - picker 只由 dealService 调用；其余跨 service 调用禁止，评审检查方向。
 - Write 对 services 不透明：只能收集仓库生成的对象，不拼路径、不构造 Write。

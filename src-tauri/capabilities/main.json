@@ -12,6 +12,7 @@
     "allow-show-quickbar",
     "allow-dialog-active",
     "allow-shortcut-error",
+    "allow-set-shortcut",
     "core:default",
     "dialog:allow-open",
     "fs:allow-read-text-file",

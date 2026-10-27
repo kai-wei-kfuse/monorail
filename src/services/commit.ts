@@ -14,14 +14,18 @@ import { projectHome } from './homeProjection';
 import { projectBackpack } from './backpackProjection';
 import type { BackpackSlice } from '../store/backpackSlice';
 import { entityChanges } from './entityChanges';
+import type { SettingsPlatform } from '../platform/settings';
+import type { ReviewSlice } from '../store/reviewSlice';
+import { projectReview } from './reviewProjection';
 
-export interface Snapshot { state: AppState; cards: Card[]; segments: Segment[]; home: HomeSlice; backpack: BackpackSlice; notices: Notice[] }
+export interface Snapshot { state: AppState; cards: Card[]; segments: Segment[]; home: HomeSlice; backpack: BackpackSlice; review: ReviewSlice; settings: Settings; notices: Notice[] }
 export interface ContextOptions {
   repos: Repositories; settings: Settings; reminders: Reminders;
   id(): string; now(): string; publish(snapshot: Snapshot): void; log(message: string): Promise<void>;
   random?(): number;
+  settingsPlatform?: SettingsPlatform;
 }
-export interface Ctx extends ContextOptions { readonly scope: 'root' }
+export interface Ctx extends ContextOptions { readonly scope: 'root'; onSettingsChange(listener: (settings: Settings) => void): () => void }
 export interface Transaction {
   readonly scope: 'transaction'; readonly repos: Repositories; readonly settings: Settings;
   readonly at: string; readonly id: () => string; readonly now: () => string;
@@ -30,13 +34,17 @@ export interface Transaction {
   readonly cards: Card[]; readonly projects: Project[]; readonly reviews: Review[]; readonly records: RecordEntry[];
   random(): number; saveCard(card: Card): void; saveReview(review: Review): void; nextSeq(): number;
   saveProject(project: Project): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
+  saveSettings(settings: Settings): Promise<void>;
 }
 interface Queue { tail: Promise<unknown>; failure?: unknown; version: number }
 const queues = new WeakMap<Ctx, Queue>();
+const settingsListeners = new WeakMap<Ctx, Set<(settings: Settings) => void>>();
 
 export function createContext(options: ContextOptions): Ctx {
-  const ctx: Ctx = { ...options, scope: 'root' };
+  const listeners = new Set<(settings: Settings) => void>();
+  const ctx: Ctx = { ...options, scope: 'root', onSettingsChange(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; } };
   queues.set(ctx, { tail: Promise.resolve(), version: 0 });
+  settingsListeners.set(ctx, listeners);
   return ctx;
 }
 
@@ -62,27 +70,40 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
     const reviews = entityChanges(ctx.repos.reviews, reviewEntities);
     const records = entityChanges(ctx.repos.records, recordEntities, (record, original) =>
       !original || record.text !== original.value.text ? record.text : undefined);
+    let settings = structuredClone(ctx.settings);
+    let settingsWrite: Write | undefined;
     const tx: Transaction = {
-      scope: 'transaction', repos: ctx.repos, settings: structuredClone(ctx.settings),
+      scope: 'transaction', repos: ctx.repos, get settings() { return settings; },
       at: commandAt, id: ctx.id, now: ctx.now, log: ctx.log,
       state, segments, writes: [], notices: [],
       get cards() { return cards.values; }, get projects() { return projects.values; },
       get reviews() { return reviews.values; }, get records() { return records.values; },
       random: ctx.random ?? Math.random,
-      saveCard: card => cards.save(card), saveReview: review => reviews.save(review),
+      saveCard: card => {
+        const previous = cards.values.find(item => item.id === card.id);
+        cards.save(previous ? { ...card, progress_noted_at: previous.progress_note !== card.progress_note
+          ? commandAt : previous.progress_noted_at } : card);
+      }, saveReview: review => reviews.save(review),
       saveProject: project => projects.save(project), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
+      async saveSettings(value) { settingsWrite = await ctx.repos.settings.write(value); settings = structuredClone(value); },
       nextSeq() { return ++this.state.max_seq; },
     };
     const value = await work(tx);
+    if (settingsWrite) tx.writes.push(settingsWrite);
     tx.writes.push(...await cards.writes(), ...await projects.writes(), ...await reviews.writes(), ...await records.writes());
     tx.writes.push(await ctx.repos.state.write(tx.state));
     try { await ctx.repos.transact(ctx.id(), tx.writes); }
     catch (error) { queue.failure = error; throw error; }
+    if (settingsWrite) {
+      ctx.settings = settings;
+      for (const listener of settingsListeners.get(ctx)!) listener(settings);
+    }
     const visibleDays = [...new Set([...days, ...daysFor(tx.state, today)])];
     const visible = await ctx.repos.times.readDays(visibleDays);
     const home = projectHome({ cards: tx.cards, projects: tx.projects, reviews: tx.reviews, state: tx.state, settings: ctx.settings, segments: ctx.repos.times.snapshot(), at: ctx.now(), version: ++queue.version });
     const backpack = projectBackpack(tx.cards, tx.projects, tx.records);
-    ctx.publish({ state: tx.state, cards: tx.cards, segments: visible, home, backpack, notices: tx.notices });
+    const review = projectReview({ cards: tx.cards, projects: tx.projects, records: tx.records, reviews: tx.reviews, segments: ctx.repos.times.snapshot(), state: tx.state, settings: ctx.settings, at: ctx.now() });
+    ctx.publish({ state: tx.state, cards: tx.cards, segments: visible, home, backpack, review, settings: ctx.settings, notices: tx.notices });
     await ctx.reminders.update(planReminders({ cards: tx.cards, open: tx.segments.find(seg => seg.id === tx.state.open_segment && seg.ended_at === null) ?? null,
       deadlineLeadMinutes: ctx.settings.deadlineLeadMinutes, longActivityMinutes: ctx.settings.longActivityMinutes }));
     return value;

@@ -34,14 +34,16 @@ async function makeRoomInTx(tx: Transaction, slot: Project['slot'], room: MakeRo
   await removeProjectInTx(tx, room.id, room.action === '放弃' ? '已放弃' : '冷藏');
 }
 
-export const createProject = (ctx: Ctx, draft: ProjectDraft, at: string) => run(ctx, async tx => {
+export async function createProjectInTx(tx: Transaction, draft: ProjectDraft): Promise<string> {
+  const at = tx.at;
   if (!draft.name.trim()) throw new Error('项目名不能为空');
   await makeRoomInTx(tx, draft.slot, draft.makeRoom);
   let project: Project = { id: tx.id(), name: draft.name.trim(), slot: '不在背包', slot_index: null, status: '进行中', created_at: at, bet_ends_at: null };
   if (draft.slot !== '不在背包') project = putInBackpack(project, draft.slot, tx.projects, tx.settings, at);
   tx.saveProject(project); refreshInTx(tx);
   return project.id;
-}, at);
+}
+export const createProject = (ctx: Ctx, draft: ProjectDraft, at: string) => run(ctx, tx => createProjectInTx(tx, draft), at);
 
 export const freezeProject = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {
   await removeProjectInTx(tx, id, '冷藏'); refreshInTx(tx);
@@ -49,12 +51,14 @@ export const freezeProject = (ctx: Ctx, id: string, at: string) => run(ctx, asyn
 export const abandonProject = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {
   await removeProjectInTx(tx, id, '已放弃'); refreshInTx(tx);
 }, at);
-export const restoreProject = (ctx: Ctx, id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => run(ctx, async tx => {
+export async function restoreProjectInTx(tx: Transaction, id: string, slot: BackpackSlot, makeRoom?: MakeRoom): Promise<void> {
+  const at = tx.at;
   const project = findProject(tx, id);
   if (makeRoom?.id === id) throw new Error('不能用当前项目给自己腾位');
   await makeRoomInTx(tx, slot, makeRoom);
   tx.saveProject(putInBackpack(project, slot, tx.projects, tx.settings, at)); refreshInTx(tx);
-}, at);
+}
+export const restoreProject = (ctx: Ctx, id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => run(ctx, tx => restoreProjectInTx(tx, id, slot, makeRoom), at);
 
 export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at: string) => run(ctx, async tx => {
   if (fields.projectId !== null) findProject(tx, fields.projectId);

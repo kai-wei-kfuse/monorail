@@ -33,7 +33,7 @@ const currentCardSchema = z.object({
   timebox_minutes: z.number().positive().nullable(), no_shrink: z.boolean(), shrunk_from: nullableText,
   shrink_level: z.number().int().nonnegative(), continued_from: nullableText, skip_count: z.number().int().nonnegative(),
   completed_at: iso.nullable(), completed_day: nullableText,
-  completed_track: z.enum(['主线', '支线']).nullable(), progress_note: z.string(),
+  completed_track: z.enum(['主线', '支线']).nullable(), progress_note: z.string(), progress_noted_at: iso.nullable().optional(),
 }).passthrough().refine(card => card.type !== '时间盒卡' || card.timebox_minutes !== null, '时间盒缺少目标时长');
 export const cardSchema = z.preprocess(value => {
   if (value && typeof value === 'object' && !Array.isArray(value) && 'type' in value && value.type === '结果卡' && !('timebox_minutes' in value) && !('shrunk_from' in value)) {
@@ -48,7 +48,17 @@ export const projectSchema = z.object({
   slot_index: z.number().int().positive().nullable(), status: z.enum(['进行中', '冷藏', '已放弃']),
   created_at: iso, bet_ends_at: iso.nullable(),
 }).passthrough();
-export const reviewSchema = z.object({ id: z.string().min(1), period: z.string().regex(/^\d{4}-W\d{2}$/), status: z.enum(['未开始', '进行中', '已完成', '已被取代']), step: z.string().min(1) }).passthrough();
+const reviewStep = z.enum(['recap', 'newIdeas', 'arena', 'coldPick', 'bet']);
+export const reviewSchema = z.object({
+  id: z.string().min(1), period: z.string().regex(/^\d{4}-W\d{2}$/), status: z.enum(['未开始', '进行中', '已完成', '已被取代']),
+  step: z.union([reviewStep, z.literal('done')]), done: z.array(reviewStep).optional(),
+  started_at: iso.nullable().optional(), completed_at: iso.nullable().optional(),
+  added_idea_ids: z.array(z.string()).optional(), bet_project_ids: z.array(z.string()).optional(), bet_done_ids: z.array(z.string()).optional(),
+  cold_duel: z.object({ left: z.string(), right: z.string() }).nullable().optional(),
+  timer_segment_id: z.uuid().nullable().optional(),
+}).passthrough().refine(row => row.done === undefined || (row.started_at !== undefined && row.completed_at !== undefined &&
+  row.added_idea_ids !== undefined && row.bet_project_ids !== undefined && row.bet_done_ids !== undefined && row.cold_duel !== undefined), '回顾进度字段不完整')
+  .refine(row => row.done === undefined || row.status !== '已完成' || row.completed_at !== null, '已完成回顾缺少完成时间');
 export const segmentSchema = z.object({
   id: z.uuid(), seq: z.number().int().positive(), started_at: iso, ended_at: iso.nullable(),
   activity: z.string(), category: z.string(), card_id: nullableText,
