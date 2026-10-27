@@ -8,7 +8,7 @@ export function Readout({ state, stateCn, stateEn, digits, over, digitsRef, en =
   return <div className="readout" data-state={state}>
     <div className="t-state">
       <span className="k" data-fx="decode">{en}<em>{cn}</em></span>
-      <div className="t-row">{over && <span className="over">{over}</span>}<i className="dot" /><b>{stateCn}</b><i>{stateEn}</i></div>
+      <div className="t-row">{over && <span className="over">{over}</span>}<span className="dot" /><b>{stateCn}</b><i>{stateEn}</i></div>
     </div>
     <span className="digits" ref={digitsRef} role="timer" aria-live="off">{digits}</span>
   </div>;

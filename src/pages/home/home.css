@@ -34,6 +34,12 @@
 .foot { display: flex; align-items: flex-end; gap: 24px; min-width: 0; }
 .actions { display: flex; align-items: center; gap: 12px; padding-bottom: 3px; }
 .foot .readout { margin-left: auto; }
+/* 卡片宽度 1100 以下：按钮收窄、去掉英文小字（「ELAPSED」在 Readout 里处理） */
+@container card (max-width: 1100px) {
+  .actions .abtn { gap: 12px; padding-left: 14px; }
+  .actions .abtn .lbl { min-width: 0; }
+  .actions .abtn .lbl i { display: none; }
+}
 
 /* 引导卡、休息卡、回顾卡：同一张卡的样式，只有一个主按钮，不计时 */
 .alt-hero { min-height: 0; display: grid; align-content: center; gap: 18px; }
