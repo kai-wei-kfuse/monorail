@@ -7,7 +7,7 @@ import type { Segment } from '../domain/timeline/segment';
 import { createContext } from './commit';
 import { saveRecord, reconcile } from './recordService';
 import { start } from './cardService';
-import { insert, resume, backfillRange, backfillSwitch, settleOffline, answerOffline, wake } from './timerService';
+import { insert, resume, backfillRange, backfillSwitch, settleOffline, answerOffline, sleep, wake } from './timerService';
 
 function fixture() {
   const settings = structuredClone(defaults);
@@ -83,7 +83,10 @@ describe('timerService', () => {
     expect(await settleOffline(ctx, gap)).toBeNull();
     expect(await settleOffline(ctx, { start: '2026-10-27T11:00:00.000Z', end: '2026-10-27T11:04:00.000Z' })).toBeNull();
     let view = effective(await all(ctx), '2026-10-27T12:00:00Z');
-    expect(total(view, s => s.card_id === card)).toBe(120);
+    expect(total(view, s => s.card_id === card)).toBe(60);
+    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ category: '待机', started_at: gap.end });
+    expect((await ctx.repos.cards.get(card))?.value.status).toBe('待做');
+    expect((await ctx.repos.state.read()).current_card).toBeNull();
     await answerOffline(ctx, gap, '睡觉', '2026-10-27T12:00:00Z');
     view = effective(await all(ctx), '2026-10-27T12:00:00Z');
     expect(total(view, s => s.activity === '睡觉' && s.category === '睡眠')).toBe(120);
@@ -94,6 +97,14 @@ describe('timerService', () => {
     await insert(ctx, ' 拿快递 ', '2026-10-27T07:00:00Z');
     expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '拿快递', category: '生活' });
     await expect(insert(ctx, '  ', '2026-10-27T07:01:00Z')).rejects.toThrow('不能为空');
+  });
+  it('sleep releases the card in progress and stops dealing for the activity day', async () => {
+    const ctx = fixture(), card = await startedCard(ctx, '2026-10-27T13:00:00Z');
+    await sleep(ctx, '2026-10-27T15:00:00Z');
+    expect((await ctx.repos.cards.get(card))?.value.status).toBe('待做');
+    const state = await ctx.repos.state.read();
+    expect(state).toMatchObject({ current_card: null, stopped_day: '2026-10-27' });
+    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '睡觉', category: '睡眠' });
   });
   it('wake switches to idle', async () => {
     const ctx = fixture();

@@ -1,6 +1,7 @@
 import { closeSegment } from '../domain/timeline/segment';
 import type { Segment } from '../domain/timeline/segment';
 import { activityDay, splitAtDays } from '../domain/timeline/day';
+import { releaseCard } from '../domain/card/transitions';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 
@@ -94,10 +95,17 @@ export async function insertInTx(tx: Transaction, at: string, activity: Activity
 export async function resumeInTx(tx: Transaction, at: string) {
   const current = openSegmentInTx(tx);
   if (!current || current.kind !== '插入') throw new Error('没有插入活动');
-  const card = current.resume_card_id ? (await tx.repos.cards.get(current.resume_card_id))?.value : null;
+  const card = current.resume_card_id ? tx.cards.find(c => c.id === current.resume_card_id) : undefined;
   if (!card || card.status !== '进行中' || tx.state.current_card !== card.id) return switchInTx(tx, at, idleTarget(tx));
   const before = tx.segments.filter(s => s.card_id === card.id).sort((a, b) => b.seq - a.seq)[0];
   await switchInTx(tx, at, { activity: card.content, category: before?.category ?? '支线', card_id: card.id, kind: '普通', resume_card_id: null });
+}
+
+/** The card in progress goes back to 待做 and stops being current (sleep, offline). */
+function releaseCurrentInTx(tx: Transaction) {
+  const card = tx.cards.find(c => c.id === tx.state.current_card);
+  if (card) tx.saveCard(releaseCard(card));
+  tx.state.current_card = null;
 }
 
 /** A past interval with known bounds. It never changes the current activity. */
@@ -118,7 +126,17 @@ export async function settleOfflineInTx(tx: Transaction, gap: Range): Promise<Se
   const day = activityDay(gap.start, tx.settings.dayBoundaryHour);
   const known = [...tx.segments, ...await tx.repos.times.readDay(day)];
   if (known.some(s => s.source === '离线追问' && ms(s.started_at) === ms(gap.start))) return null;
-  return backfillRangeInTx(tx, gap.end, gap, { activity: '离线', category: '离线', card_id: null, kind: '普通', resume_card_id: null }, '离线追问');
+  const segment = await backfillRangeInTx(tx, gap.end, gap, { activity: '离线', category: '离线', card_id: null, kind: '普通', resume_card_id: null }, '离线追问');
+  // After a gap nobody knows what is going on: stop the old activity rather than keep counting it.
+  const open = openSegmentInTx(tx);
+  if (open && open.category !== '待机' && ms(open.started_at) <= ms(gap.end)) {
+    releaseCurrentInTx(tx);
+    await switchInTx(tx, gap.end, idleTarget(tx));
+  }
+  tx.notices.push({ id: tx.id(), kind: 'offlineAsk', data: {
+    from: gap.start, to: gap.end, activities: tx.settings.lists.quickActivities.map(a => ({ id: a.id, name: a.name })),
+  } });
+  return segment;
 }
 
 export const insert = (ctx: Ctx, activity: string, at: string) => run(ctx, tx => insertInTx(tx, at, lookup(tx, activity)), at);
@@ -138,5 +156,12 @@ export const answerOffline = (ctx: Ctx, gap: Range, activity: string, at: string
   run(ctx, tx => { const a = lookup(tx, activity); return backfillRangeInTx(tx, at, gap, { activity: a.name, category: a.category, card_id: null, kind: '普通', resume_card_id: null }, '离线追问'); }, at);
 
 export const settleOffline = (ctx: Ctx, gap: Range) => run(ctx, tx => settleOfflineInTx(tx, gap), gap.end);
+
+/** 睡觉 ends the day's dealing (A5) and releases any card in progress. */
+export const sleep = (ctx: Ctx, at: string) => run(ctx, async tx => {
+  releaseCurrentInTx(tx);
+  await switchInTx(tx, at, { activity: '睡觉', category: '睡眠', card_id: null, kind: '普通', resume_card_id: null });
+  tx.state.stopped_day = activityDay(at, tx.settings.dayBoundaryHour);
+}, at);
 
 export const wake = (ctx: Ctx, at: string) => run(ctx, tx => switchInTx(tx, at, idleTarget(tx)), at);
