@@ -9,6 +9,7 @@ import { start, complete } from './cardService';
 import { insert, resume } from './timerService';
 import { splitAtDays } from '../domain/timeline/day';
 import type { Segment } from '../domain/timeline/segment';
+import { initialState } from '../data/stateRepo';
 
 function fixture() {
   const fs = new MemoryFs();
@@ -110,7 +111,7 @@ it('a routine action only reads today and the open segment date, never scans his
   const open: Segment = { id: crypto.randomUUID(), seq: 1, started_at: oldAt, ended_at: null, activity: '生活', category: '生活', card_id: null, kind: '普通', source: '手动', resume_card_id: null };
   await repos.transact(crypto.randomUUID(), [
     ...await repos.times.writes([{ day: '2026-10-25', segment: open }]),
-    await repos.state.write({ max_seq: 1, open_segment: open.id, open_segment_day: '2026-10-25', current_card: null, seen: [], stopped_day: null }),
+    await repos.state.write({ ...structuredClone(initialState), max_seq: 1, open_segment: open.id, open_segment_day: '2026-10-25' }),
   ]);
   // An unrelated broken history file must not be silently read by a routine action.
   await fs.atomicWrite('timelog/2025-01-01.md', 'not valid history');

@@ -4,6 +4,7 @@ export function startCard(card: Card): Card {
   if (card.status !== '待做' && card.status !== '进行中') throw new Error('卡片不可开始');
   return { ...card, status: '进行中' };
 }
+export function releaseCard(card: Card): Card { return card.status === '进行中' ? { ...card, status: '待做' } : card; }
 export function completeCard(card: Card, at: string, day: string, track: '主线' | '支线', note: string): Card {
   if (card.status !== '进行中') throw new Error('只有进行中的卡可以完成');
   return { ...card, status: '已完成', completed_at: at, completed_day: day, completed_track: track, progress_note: note };

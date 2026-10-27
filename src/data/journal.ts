@@ -7,6 +7,8 @@ declare const writeToken: unique symbol;
 export interface Write { readonly [writeToken]: true }
 const planSchema = z.object({ id: z.uuid(), writes: z.array(z.object({ path: z.string(), text: z.string(), before: z.string().nullable() })) });
 type WriteContent = z.infer<typeof planSchema>['writes'][number];
+/** Data-layer commit observers only; never expose contents on the service interface. */
+export function committedWrite(write: Write): WriteContent { return write as unknown as WriteContent; }
 export function createWrite(path: string, text: string, before: string | null): Write {
   safeRelative(path);
   return { path, text, before } as unknown as Write;

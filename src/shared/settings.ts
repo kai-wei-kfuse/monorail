@@ -1,6 +1,7 @@
 export interface QuickActivity { id: string; name: string; category: string }
 export interface RestItem { id: string; name: string }
 export const settingDefinitions = {
+  mainSlots: { type: 'number', default: 1, min: 1, max: 3, step: 1, unit: 'slots' },
   sideSlots: { type: 'number', default: 2, min: 0, max: 6, step: 1, unit: 'slots' },
   betWeeks: { type: 'number', default: 4, min: 1, max: 12, step: 1, unit: 'weeks' },
   dueSoonHours: { type: 'number', default: 24, min: 1, max: 168, step: 1, unit: 'hours' },

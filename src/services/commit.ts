@@ -5,25 +5,34 @@ import { planReminders } from '../domain/reminders';
 import type { Settings } from '../shared/settings';
 import type { Reminders } from '../platform/reminders';
 import type { AppState, Repositories, Write } from '../data/repos';
+import type { Entity } from '../data/repos';
+import type { Project } from '../domain/project/project';
+import type { Review } from '../domain/review/schedule';
+import type { Notice } from '../shared/notices';
+import type { HomeSlice } from '../store/homeSlice';
+import { projectHome } from './homeProjection';
 
-export interface Snapshot { state: AppState; cards: Card[]; segments: Segment[] }
+export interface Snapshot { state: AppState; cards: Card[]; segments: Segment[]; home: HomeSlice; notices: Notice[] }
 export interface ContextOptions {
   repos: Repositories; settings: Settings; reminders: Reminders;
   id(): string; now(): string; publish(snapshot: Snapshot): void; log(message: string): Promise<void>;
+  random?(): number;
 }
 export interface Ctx extends ContextOptions { readonly scope: 'root' }
 export interface Transaction {
   readonly scope: 'transaction'; readonly repos: Repositories; readonly settings: Settings;
   readonly at: string; readonly id: () => string; readonly now: () => string;
   readonly log: (message: string) => Promise<void>;
-  state: AppState; segments: Segment[]; writes: Write[]; nextSeq(): number;
+  state: AppState; segments: Segment[]; writes: Write[]; notices: Notice[];
+  cards: Card[]; projects: Project[]; reviews: Review[];
+  random(): number; saveCard(card: Card): void; nextSeq(): number;
 }
-interface Queue { tail: Promise<unknown>; failure?: unknown }
+interface Queue { tail: Promise<unknown>; failure?: unknown; version: number }
 const queues = new WeakMap<Ctx, Queue>();
 
 export function createContext(options: ContextOptions): Ctx {
   const ctx: Ctx = { ...options, scope: 'root' };
-  queues.set(ctx, { tail: Promise.resolve() });
+  queues.set(ctx, { tail: Promise.resolve(), version: 0 });
   return ctx;
 }
 
@@ -44,18 +53,27 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
     const today = activityDay(ctx.now(), ctx.settings.dayBoundaryHour);
     const days = daysFor(state, today);
     const segments = await ctx.repos.times.readDays(days);
+    const [entities, projectEntities, reviewEntities] = await Promise.all([ctx.repos.cards.list(), ctx.repos.projects.list(), ctx.repos.reviews.list()]);
+    const originals = new Map<string, Entity<Card>>(entities.map(entity => [entity.value.id, entity]));
+    const changed = new Map<string, Card>();
     const tx: Transaction = {
       scope: 'transaction', repos: ctx.repos, settings: structuredClone(ctx.settings),
       at: commandAt, id: ctx.id, now: ctx.now, log: ctx.log,
-      state, segments, writes: [], nextSeq() { return ++this.state.max_seq; },
+      state, segments, writes: [], notices: [], cards: entities.map(entity => entity.value), projects: projectEntities.map(entity => entity.value), reviews: reviewEntities.map(entity => entity.value),
+      random: ctx.random ?? Math.random,
+      saveCard(card) { changed.set(card.id, card); this.cards = [...this.cards.filter(item => item.id !== card.id), card]; },
+      nextSeq() { return ++this.state.max_seq; },
     };
     const value = await work(tx);
+    for (const card of changed.values()) tx.writes.push(await ctx.repos.cards.write(card, originals.get(card.id) ?? null));
     tx.writes.push(await ctx.repos.state.write(tx.state));
     try { await ctx.repos.transact(ctx.id(), tx.writes); }
     catch (error) { queue.failure = error; throw error; }
     const cards = (await ctx.repos.cards.list()).map(e => e.value);
     const visibleDays = [...new Set([...days, ...daysFor(tx.state, today)])];
-    ctx.publish({ state: tx.state, cards, segments: await ctx.repos.times.readDays(visibleDays) });
+    const visible = await ctx.repos.times.readDays(visibleDays);
+    const home = projectHome({ cards, projects: tx.projects, reviews: tx.reviews, state: tx.state, settings: ctx.settings, segments: ctx.repos.times.snapshot(), at: ctx.now(), version: ++queue.version });
+    ctx.publish({ state: tx.state, cards, segments: visible, home, notices: tx.notices });
     await ctx.reminders.update(planReminders({ cards, open: tx.segments.find(seg => seg.id === tx.state.open_segment && seg.ended_at === null) ?? null,
       deadlineLeadMinutes: ctx.settings.deadlineLeadMinutes, longActivityMinutes: ctx.settings.longActivityMinutes }));
     return value;

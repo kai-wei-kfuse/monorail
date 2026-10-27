@@ -31,6 +31,7 @@ export const projectSchema = z.object({
   slot_index: z.number().int().positive().nullable(), status: z.enum(['进行中', '冷藏', '已放弃']),
   created_at: iso, bet_ends_at: iso.nullable(),
 }).passthrough();
+export const reviewSchema = z.object({ id: z.string().min(1), period: z.string().regex(/^\d{4}-W\d{2}$/), status: z.enum(['未开始', '进行中', '已完成']), step: z.string().min(1) }).passthrough();
 export const segmentSchema = z.object({
   id: z.uuid(), seq: z.number().int().positive(), started_at: iso, ended_at: iso.nullable(),
   activity: z.string(), category: z.string(), card_id: nullableText,
