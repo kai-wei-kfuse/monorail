@@ -4,10 +4,15 @@ import { tauriFs } from '../data/fs';
 import { createRepos } from '../data/repos';
 import type { Repositories } from '../data/repos';
 import { effective } from '../domain/timeline/effective';
+import { nativeLifecycle } from '../platform/lifecycle';
 import { nativeReminders } from '../platform/reminders';
-import { createContext } from '../services/commit';
+import type { ReminderPlan } from '../domain/reminders';
+import { createContext, run } from '../services/commit';
+import type { Ctx } from '../services/commit';
 import { reconcile } from '../services/recordService';
-import { appStore } from '../store/appStore';
+import { startScheduler } from '../services/scheduler';
+import { appStore, publishProjection } from '../store/appStore';
+import { appendNotices } from '../store/noticeSlice';
 
 export async function restoreRepositories(repos: Repositories, id: () => string, now: () => string) {
   const recovered = await repos.recover();
@@ -26,6 +31,15 @@ export async function restoreRepositories(repos: Repositories, id: () => string,
   return { recovered, settings };
 }
 
+/** The native scheduler delivered a long-activity reminder; surface it as an in-app notice too. */
+function notifyLongActivity(ctx: Ctx, plan: ReminderPlan) {
+  if (!plan.id.startsWith('long:')) return;
+  const open = appStore.getState().segments.find(segment => segment.ended_at === null);
+  if (!open) return;
+  const notice = { id: plan.id, kind: 'longActivity' as const, data: { activity: open.activity, startedAt: open.started_at, hours: ctx.settings.longActivityMinutes / 60 } };
+  appStore.setState(previous => ({ notices: appendNotices(previous.notices, [notice]) }));
+}
+
 export async function bootstrap(root: string) {
   const fs = await tauriFs(root);
   const repos = createRepos(fs);
@@ -33,7 +47,7 @@ export async function bootstrap(root: string) {
   const restored = await restoreRepositories(repos, id, now);
   const ctx = createContext({
     repos, settings: restored.settings, reminders: nativeReminders, id, now,
-    publish: value => appStore.setState({ cards: value.cards, segments: value.segments, currentCard: value.state.current_card, ready: true }),
+    publish: publishProjection,
     log: message => invoke('evidence', { message }),
   });
   const report = (error: unknown) => appStore.setState({ error: String(error) });
@@ -45,13 +59,16 @@ export async function bootstrap(root: string) {
     if (booting) { dirty = true; return; }
     void reconcile(ctx).catch(report);
   };
-  const offChanged = await listen('data-changed', refresh);
-  const offVisible = await listen('main-visible', refresh);
+  const offs = [await listen('data-changed', refresh), await listen('main-visible', refresh),
+    await listen<ReminderPlan>('reminder-fired', event => notifyLongActivity(ctx, event.payload))];
+  const dispose = () => offs.forEach(off => off());
   try {
     await ctx.log(`journal-recovered:${restored.recovered}`);
     await reconcile(ctx);
     booting = false;
     if (dirty) await reconcile(ctx);
-  } catch (error) { offChanged(); offVisible(); throw error; }
-  return { ctx, fs, dispose: () => { offChanged(); offVisible(); } };
+    // TODO(M1): call dealService.refresh once it lands; an empty commit republishes the projection for the new day.
+    offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: () => run(ctx, async () => undefined), report }));
+  } catch (error) { dispose(); throw error; }
+  return { ctx, fs, dispose };
 }
