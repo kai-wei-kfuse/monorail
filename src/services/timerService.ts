@@ -72,9 +72,16 @@ export function idleTarget(tx: Transaction): Target {
   return { activity: tx.settings.lists.idleName, category: '待机', card_id: null, kind: '普通', resume_card_id: null };
 }
 
+/** Built-in activities that are not user-defined quick activities. */
+const RESERVED: Record<string, string> = { 离线: '离线', 睡觉: '睡眠' };
+
+/** A quick activity id, a reserved name, or a free-typed name (category 生活). */
 function lookup(tx: Transaction, activity: string): Activity {
   const quick = tx.settings.lists.quickActivities.find(a => a.id === activity);
-  return quick ? { name: quick.name, category: quick.category } : { name: activity, category: '生活' };
+  if (quick) return { name: quick.name, category: quick.category };
+  const name = activity.trim();
+  if (!name) throw new Error('活动名不能为空');
+  return { name, category: RESERVED[name] ?? '生活' };
 }
 
 /** Appendix A2: only one return target. Nested inserts keep the original card. */

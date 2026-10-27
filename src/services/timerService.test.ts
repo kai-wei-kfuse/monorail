@@ -86,8 +86,14 @@ describe('timerService', () => {
     expect(total(view, s => s.card_id === card)).toBe(120);
     await answerOffline(ctx, gap, '睡觉', '2026-10-27T12:00:00Z');
     view = effective(await all(ctx), '2026-10-27T12:00:00Z');
-    expect(total(view, s => s.activity === '睡觉')).toBe(120);
+    expect(total(view, s => s.activity === '睡觉' && s.category === '睡眠')).toBe(120);
     expect(total(view, s => s.activity === '离线')).toBe(0);
+  });
+  it('free-typed names are accepted and blank ones rejected', async () => {
+    const ctx = fixture();
+    await insert(ctx, ' 拿快递 ', '2026-10-27T07:00:00Z');
+    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '拿快递', category: '生活' });
+    await expect(insert(ctx, '  ', '2026-10-27T07:01:00Z')).rejects.toThrow('不能为空');
   });
   it('wake switches to idle', async () => {
     const ctx = fixture();
