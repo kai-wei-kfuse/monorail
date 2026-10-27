@@ -13,8 +13,8 @@ function setup(now: () => string) {
   return createContext({ repos: createRepos(new MemoryFs()), settings: structuredClone(defaults), id: () => crypto.randomUUID(), now,
     publish: () => {}, log: async () => {}, reminders: { update: async () => {} } });
 }
-const offline = async (ctx: ReturnType<typeof setup>) =>
-  (await ctx.repos.times.scan()).flatMap(d => d.segments).filter(s => s.source === '离线追问');
+const offlineIds = async (ctx: ReturnType<typeof setup>) =>
+  [...new Set((await ctx.repos.times.scan()).flatMap(d => d.segments).filter(s => s.source === '离线追问').map(s => s.id))];
 
 describe('scheduler', () => {
   it('changing the boundary immediately rearms its existing timer and disposal removes the subscription', async () => {
@@ -46,9 +46,21 @@ describe('scheduler', () => {
       },
       onDayChanged: async () => {}, report: e => { throw e; },
     });
-    expect(await offline(ctx)).toHaveLength(1);
+    expect(await offlineIds(ctx)).toHaveLength(1);
     power({ kind: 'resume', at: 0, simulated: true, suspended_at: Date.parse('2026-10-27T09:00:00Z'), resumed_at: Date.parse('2026-10-27T10:00:00Z') });
-    await vi.waitFor(async () => expect(await offline(ctx)).toHaveLength(2));
+    await vi.waitFor(async () => expect(await offlineIds(ctx)).toHaveLength(2));
+    stop();
+  });
+  it('one shutdown gap stays one logical interval when split at the activity-day boundary', async () => {
+    const startAt = new Date(2026, 9, 27, 3).getTime(), endAt = new Date(2026, 9, 27, 5).getTime();
+    const ctx = setup(() => new Date(endAt).toISOString());
+    const stop = await startScheduler(ctx, {
+      lifecycle: { read: async () => ({ last_alive: 0, previous_last_alive: startAt, startup_at: endAt, events: [] }), onPower: async () => () => {} },
+      onDayChanged: async () => {}, report: error => { throw error; },
+    });
+    const physical = (await ctx.repos.times.scan()).flatMap(day => day.segments).filter(segment => segment.source === '离线追问');
+    expect(physical).toHaveLength(2);
+    expect(await offlineIds(ctx)).toHaveLength(1);
     stop();
   });
   it('a startup gap releases the running card and re-deals it as 待开始', async () => {

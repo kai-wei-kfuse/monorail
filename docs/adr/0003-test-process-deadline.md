@@ -10,3 +10,7 @@
 在 Vitest 配置中将 testTimeout 设为 0，移除重复的单项期限。继续通过 npm test/test-runner.mjs 执行，保留原有 60 秒进程硬上限及失败日志；不跳过断言、不增加任意超时或改变业务行为。
 
 证据：evidence/private-updater/check-tls-fix.txt、check-tls-isolated.txt、stress-with-process-deadline.txt。后续全套与 CI 检查继续验证该统一期限。
+
+## 云端时区验收补充
+
+首次 Windows CI 在 UTC 环境暴露 scheduler 测试将离线区间的物理文件片段数误当成逻辑区间数。按现有架构，跨活动日的片段共享同一逻辑 id，因此测试助手改为统计唯一 id，并增加跨日拆成两个物理片段仍只有一个逻辑离线区间的回归；业务计时实现不变。在 UTC 与 Asia/Shanghai 分别运行完整检查。
