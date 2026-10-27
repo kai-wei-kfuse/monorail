@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-27T11:00:05.792Z",
+  "files": [
+    {
+      "path": "cards/card-bb086079-9e09-4b77-8dc0-552721e4176e.md",
+      "size": 474,
+      "sha256": "f322a170e88a049de1c7a8a9fb058bf74a9b67ab062a3e50621d31e97ce1d549"
+    },
+    {
+      "path": "records/bb086079-9e09-4b77-8dc0-552721e4176e.md",
+      "size": 394,
+      "sha256": "f742b01fce8cc098dbd9babd34e294a13d8db58080cc0c4bf707b25148537f58"
+    },
+    {
+      "path": "settings.yaml",
+      "size": 641,
+      "sha256": "fae2618485aab311ac5c732c45d51a4ef4a0ac8b59cf003971bbde463293e45b"
+    },
+    {
+      "path": "state.yaml",
+      "size": 320,
+      "sha256": "7210ec7cac73c5058cc679c0b52cb24512ce202831d1c7cab809fd610fcef4fe"
+    },
+    {
+      "path": "timelog/2026-10-27.md",
+      "size": 290,
+      "sha256": "196f12270cc0defcd3f3a88d7f9dbddcac670fce8246376d701211ee25fa47a3"
+    }
+  ],
+  "state": {
+    "schemaVersion": 1,
+    "max_seq": 1,
+    "current_card": "card-bb086079-9e09-4b77-8dc0-552721e4176e",
+    "open_segment": "3c009131-faea-4320-bda7-bfe8aea278b1",
+    "seen": [],
+    "stopped_day": null,
+    "open_segment_day": "2026-10-27",
+    "home_mode": "task",
+    "first_used_day": "2026-10-27",
+    "review_period": null,
+    "refusals": [],
+    "last_rest_ended_at": null,
+    "rest_answers": {},
+    "rest": null
+  }
+}

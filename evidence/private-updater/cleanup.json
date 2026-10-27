@@ -1,0 +1,6 @@
+{
+  "isolatedAcceptanceClosed": true,
+  "pendingUserFileIncludedInOurCommits": false,
+  "matchesEarlierRenameSnapshot": false,
+  "note": "The comparison refers to an earlier rename-turn hash, not a start-of-this-task snapshot. The pre-existing pending file remains outside all our commits."
+}

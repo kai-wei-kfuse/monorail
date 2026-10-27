@@ -1,0 +1,24 @@
+{
+  "installedBytes": 21772800,
+  "builtBytes": 21772800,
+  "differingBytes": 3,
+  "firstOffset": 18006456,
+  "lastOffset": 18006458,
+  "examples": [
+    {
+      "offset": 18006456,
+      "installed": 78,
+      "built": 85
+    },
+    {
+      "offset": 18006457,
+      "installed": 83,
+      "built": 78
+    },
+    {
+      "offset": 18006458,
+      "installed": 83,
+      "built": 75
+    }
+  ]
+}

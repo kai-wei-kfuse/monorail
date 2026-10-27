@@ -1,0 +1,37 @@
+
+> pixel-record@0.1.1 check
+> tsc --noEmit && eslint src && npm test
+
+
+> pixel-record@0.1.1 test
+> node test-runner.mjs
+
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+ ❯ src/services/commit.test.ts (8 tests | 1 failed) 6209ms
+   × 20 rapid start/complete pairs keep sequence unique and effective intervals disjoint 5185ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/services/commit.test.ts > 20 rapid start/complete pairs keep sequence unique and effective intervals disjoint
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/services/commit.test.ts:37:1
+     35|   expect(await restarted.repos.cards.list()).toHaveLength(1);
+     36| });
+     37| it('20 rapid start/complete pairs keep sequence unique and effective i…
+       | ^
+     38|   const ctx = fixture(), items = Array.from({ length: 20 }, (_, i) => …
+     39|   await Promise.all(items.map(item => saveRecord(ctx, item))); await r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 35 passed (36)
+      Tests  1 failed | 219 passed (220)
+   Start at  19:12:58
+   Duration  8.56s (tests 50%, import 31%, transform 18%, worker 1%)
+
+    Isolate  36 workers spawned · ~734ms startup each (spawn + environment, per file)
+             at least ~1.67s faster with isolate: false — reuses workers across files instead of one per file

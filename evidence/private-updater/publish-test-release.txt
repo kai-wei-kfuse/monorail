@@ -1,0 +1,27 @@
+https://github.com/kai-wei-kfuse/monorail/releases/tag/untagged-afa7405183290b48e322
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: gh api repos/kai-wei-kfuse/monorail/releases/tags/update-test-v0.1.2
+gh: Not Found (HTTP 404)
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:925:11)
+    at execFileSync (node:child_process:961:15)
+    at gh (file:///C:/Users/kai_wei/Documents/1026(4)/app/scripts/publish-release.mjs:14:20)
+    at file:///C:/Users/kai_wei/Documents/1026(4)/app/scripts/publish-release.mjs:30:28 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '{"message":"Not Found","documentation_url":"https://docs.github.com/rest/releases/releases#get-a-release-by-tag-name","status":"404"}',
+    'gh: Not Found (HTTP 404)\n'
+  ],
+  pid: 28068,
+  stdout: '{"message":"Not Found","documentation_url":"https://docs.github.com/rest/releases/releases#get-a-release-by-tag-name","status":"404"}',
+  stderr: 'gh: Not Found (HTTP 404)\n'
+}
+
+Node.js v24.13.1

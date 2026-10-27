@@ -1,14 +1,22 @@
-# 单轨（MONORAIL）0.1.0 Windows 发布
+# 单轨（MONORAIL）Windows 发布
 
 ## 打包配置
 
-- 产品名：单轨；英文名：MONORAIL；版本：0.1.0；应用标识：`local.pixelrecord.app`。
+- 产品名：单轨；英文名：MONORAIL；当前版本以 package.json 为准（本次 0.1.3）；应用标识：`local.pixelrecord.app`。
 - 目标：Windows x64 NSIS 安装包；按当前用户安装；安装器语言为简体中文、英文。
 - 图标：从 `src/ui/marks/Emblem.tsx` 的 ▽ 徽记几何生成，配色取现有 tokens。源文件 `icons/app.svg`；应用、安装器及托盘共用生成的 PNG/ICO。
 - 图标重建：在 app 根目录执行 `npm exec tauri -- icon src-tauri/icons/app.svg --output src-tauri/icons`。只需提交 app.svg、icon.png、icon.ico，其他平台图标由既有 .gitignore 忽略。
 - 托盘菜单：显示主窗口、快速记录、退出。显示主窗口会先恢复最小化；快捷活动菜单不显示可能过期的默认快捷键。
 
-## 本次名称变更（2026-10-27）
+## 应用内更新与 0.1.3 发布（2026-10-27）
+
+私有仓库：https://github.com/kai-wei-kfuse/monorail 。版本 tag 驱动 Windows CI 检查、签名构建和 Release 发布；先上传 exe/sig，再上传含资产 API URL 的 latest.json，最后发布完整版本。客户端原生端复用本机 gh 登录读取私有发布资产，官方 Tauri updater 完成下载、验签和 NSIS 安装。使用及手动发版命令见 `../docs/updates.md`。
+
+本机日常包位于 `发布/单轨_0.1.3_x64-setup.exe`（相对于 app）。隔离验收已从已安装 0.1.1 经私有 Release 升到 0.1.3：路径不变、6 个业务文件哈希一致、任务计时及目录授权保留，草稿保护和升级后再次检查均通过。UTC 与上海时区各 221 项测试、Rust 5 项测试通过。详细证据及本机产物哈希见 `../修改日志.md`。
+
+正式 v0.1.3 已由 [Windows CI](https://github.com/kai-wei-kfuse/monorail/actions/runs/40499049292) 成功发布至 [私有 Release](https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.1.3)。云端安装包下载到 `发布/GitHub-CI/monorail_0.1.3_windows-x86_64_setup.exe`，与 GitHub 的 SHA-256 摘要一致；对应 latest.json 和 sig 已核对。客户端读取的 latest 正式版本为 0.1.3。
+
+## 名称变更的历史记录（2026-10-27）
 
 「像素记录 / PIXEL RECORD」改为「单轨 / MONORAIL」。内部 npm/Cargo 包名和应用 exe 文件名仍为 `pixel-record`，Rust 库名仍为 `pixel_record_lib`。保留应用 identifier，使配置和持久化目录授权继续使用原有路径；业务数据目录没有移动。
 

@@ -1,0 +1,117 @@
+
+> pixel-record@0.1.3 tauri
+> tauri build --config src-tauri/tauri.update-test.conf.json
+
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `npm run build`
+
+> pixel-record@0.1.3 build
+> tsc --noEmit && vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 391 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                   0.36 kB │ gzip:   0.29 kB
+dist/assets/jetbrains-mono-greek-400-normal-C190GLew.woff2        4.23 kB
+dist/assets/jetbrains-mono-cyrillic-400-normal-BEIGL1Tu.woff2     5.33 kB
+dist/assets/jetbrains-mono-vietnamese-400-normal-CqNFfHCs.woff    5.37 kB
+dist/assets/jetbrains-mono-greek-400-normal-B9oWc5Lo.woff         5.66 kB
+dist/assets/jetbrains-mono-cyrillic-400-normal-ugxPyKxw.woff      6.98 kB
+dist/assets/jetbrains-mono-latin-ext-400-normal-Bc8Ftmh3.woff2    7.34 kB
+dist/assets/MiSansVF.7d084b054b54abc1.55-D-niG1Cm.woff2           8.42 kB
+dist/assets/jetbrains-mono-latin-ext-400-normal-fXTG6kC5.woff    10.13 kB
+dist/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2       21.17 kB
+dist/assets/MiSansVF.ca620abda1b076bd.53-BGSdC53c.woff2          22.79 kB
+dist/assets/MiSansVF.4f81f745e2c3159d.51-Dh0pBHy9.woff2          24.80 kB
+dist/assets/MiSansVF.517a94fe8dd5692a.54-ChdNRa0W.woff2          25.60 kB
+dist/assets/saira-vietnamese-wdth-normal-Dabr_kLY.woff2          26.80 kB
+dist/assets/jetbrains-mono-latin-400-normal-6-qcROiO.woff        27.50 kB
+dist/assets/MiSansVF.d525a1349c7ec9e4.52-Cv3HvKJa.woff2          29.22 kB
+dist/assets/MiSansVF.16240990c6f7f7dd.0-hYNu36zK.woff2           50.04 kB
+dist/assets/MiSansVF.3ee7f36171786397.50-B2mtXAXw.woff2          50.71 kB
+dist/assets/MiSansVF.1fa3a293a561985c.1-Ik97Bnim.woff2           60.19 kB
+dist/assets/MiSansVF.235af3ebfd0343d5.2-9YwKK7yC.woff2           66.63 kB
+dist/assets/saira-latin-ext-wdth-normal-3Ba4ICIc.woff2           67.19 kB
+dist/assets/MiSansVF.53744263f2939586.3-DT-x9XRC.woff2           68.91 kB
+dist/assets/MiSansVF.8ac4bbc96a6db0e2.4-CLvgMvHJ.woff2           70.22 kB
+dist/assets/MiSansVF.0915b4d5a6f0ee33.49-LMn5Q4GP.woff2          71.49 kB
+dist/assets/MiSansVF.73924789affc3080.5-O0rdDs3A.woff2           72.45 kB
+dist/assets/MiSansVF.52728aa7bc854270.6-BmPMmo-Q.woff2           75.71 kB
+dist/assets/MiSansVF.d77855c75a78e271.7-C_C7j9eS.woff2           78.32 kB
+dist/assets/MiSansVF.18220753c89aeaa7.9-ClfyzM_W.woff2           78.57 kB
+dist/assets/MiSansVF.c06909dbc78c83aa.8-9EM0gbMF.woff2           78.63 kB
+dist/assets/MiSansVF.91d6994ea01c40e1.10-DEcCGd-1.woff2          79.27 kB
+dist/assets/MiSansVF.a597bc0d89a7e9de.12-BbvMbbeG.woff2          81.58 kB
+dist/assets/MiSansVF.4432f1e8b9c6afb6.11-4ZdC0IHJ.woff2          81.85 kB
+dist/assets/MiSansVF.799303268bd0a8c8.13-DwvW2pYT.woff2          81.90 kB
+dist/assets/MiSansVF.c626836af9104d5f.16-Cn-uDijZ.woff2          81.99 kB
+dist/assets/MiSansVF.00d0682c24b9e852.15-2e6f7JpF.woff2          82.13 kB
+dist/assets/MiSansVF.7f4670c6ddefc0b7.17-JNBV3-bJ.woff2          82.51 kB
+dist/assets/MiSansVF.353f733c1a9d24dd.14-DsPHSW78.woff2          82.71 kB
+dist/assets/MiSansVF.cfcb48d0933e0ec5.20-DtJGSCz-.woff2          84.14 kB
+dist/assets/MiSansVF.a068ef4539a6cd96.23-2lDk_Pzi.woff2          84.37 kB
+dist/assets/MiSansVF.868ff10381a4fff7.21-COM3rrf8.woff2          84.86 kB
+dist/assets/MiSansVF.e4ea5bc4c8993992.25-QCrSaZfC.woff2          86.67 kB
+dist/assets/MiSansVF.0aa19e2394367e45.28-BA6TmvoL.woff2          86.86 kB
+dist/assets/MiSansVF.8739e6cdf2007d9e.18-CW9JsvXP.woff2          86.94 kB
+dist/assets/MiSansVF.30106979750ad8e7.27-COo67qta.woff2          86.98 kB
+dist/assets/MiSansVF.184e5227db3e935f.22--LBj-Hb3.woff2          87.06 kB
+dist/assets/MiSansVF.3581642e24f576d7.26-DFSukXV9.woff2          88.72 kB
+dist/assets/MiSansVF.e2fb4df3666402bd.30-CBTjEOGS.woff2          89.14 kB
+dist/assets/MiSansVF.a397ccbbda85fd60.19-Drtf84UU.woff2          89.64 kB
+dist/assets/MiSansVF.43a930e968cb0514.29-D4pA0GF5.woff2          90.64 kB
+dist/assets/MiSansVF.77773797e06e14c0.24-CIwq3smS.woff2          90.75 kB
+dist/assets/MiSansVF.92c0f158f1d0c43b.32-D_nHOWsY.woff2          91.94 kB
+dist/assets/MiSansVF.f08d1f83ff0dabdd.31-B-qHDOHs.woff2          94.47 kB
+dist/assets/MiSansVF.c6c390a740763363.34-5N4-3NiL.woff2          96.60 kB
+dist/assets/MiSansVF.081b771213563eae.33-DNyn2Gkt.woff2          96.80 kB
+dist/assets/MiSansVF.5ebd323d44595044.36-Geeq6vWV.woff2          97.57 kB
+dist/assets/MiSansVF.b8965049ba77d8e5.35-CKrADHFj.woff2          98.46 kB
+dist/assets/saira-latin-wdth-normal-X2eA-qfZ.woff2               98.91 kB
+dist/assets/MiSansVF.aa995a1ea7837593.37-BOzYTkrh.woff2          99.85 kB
+dist/assets/MiSansVF.00ed8f01da81647e.47-il558wcj.woff2          99.99 kB
+dist/assets/MiSansVF.d6a0497045ed1170.38-B1422lRy.woff2         101.42 kB
+dist/assets/MiSansVF.def9fc53240b0bba.40-CCG-FJFi.woff2         102.89 kB
+dist/assets/MiSansVF.b666094020110d0a.45-DXPbajQH.woff2         103.29 kB
+dist/assets/MiSansVF.a3d4bcfd8dba2e50.44-VKMPAliQ.woff2         103.43 kB
+dist/assets/MiSansVF.bc2b7bd40e327658.46-B-h4q1nN.woff2         104.93 kB
+dist/assets/MiSansVF.c4a48795fdedf3a5.42-DbwfVnRu.woff2         105.62 kB
+dist/assets/MiSansVF.71c7e77bac6a2786.39-CPjeTgzL.woff2         106.03 kB
+dist/assets/MiSansVF.ef133bbc03cec415.43-i4UGVXA_.woff2         106.40 kB
+dist/assets/MiSansVF.182a224825bf167c.41-CYo6GT10.woff2         108.94 kB
+dist/assets/MiSansVF.4f3d21c8b761cd08.48-BF9KcnIc.woff2         109.83 kB
+dist/assets/index-CK61RO0i.css                                  138.04 kB │ gzip:  48.05 kB
+dist/assets/path-C6bMXoVe.js                                      0.83 kB │ gzip:   0.43 kB
+dist/assets/index-BRISwQr6.js                                     7.05 kB │ gzip:   1.81 kB
+dist/assets/index-uncZCFfi.js                                   608.02 kB │ gzip: 192.17 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.79s
+   Compiling pixel-record v0.1.3 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `release` profile [optimized] target(s) in 3m 00s
+       Built application at: C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\release\pixel-record.exe
+        Info Patching C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\release\pixel-record.exe with bundle type information: nsis
+        Info Target: x64
+     Running makensis to produce C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\release\bundle\nsis\单轨更新验收_0.1.3_x64-setup.exe
+    Finished 1 bundle at:
+        C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\release\bundle\nsis\单轨更新验收_0.1.3_x64-setup.exe (8.45 MiB)
+
+    Finished 1 updater signature at:
+        C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\release\bundle\nsis\单轨更新验收_0.1.3_x64-setup.exe.sig

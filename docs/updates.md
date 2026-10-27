@@ -17,11 +17,11 @@
 `package.json.version` 是发布输入；`tauri.conf.json.version` 指向 `../package.json`。Cargo 及两个锁文件由脚本同步，关于页使用 Tauri 的实际应用版本。
 
 ```powershell
-npm run version:set -- 0.1.3
+npm run version:set -- 0.1.4
 npm run version:check
 ```
 
-将该版本修改说明写入 `docs/releases/0.1.3.md`，检查并提交代码，推送 `v0.1.3` tag。版本号仅为示例，不重复使用已经发布的 tag。
+将该版本修改说明写入 `docs/releases/0.1.4.md`，检查并提交代码，推送 `v0.1.4` tag。版本号为下一版示例，不重复使用已经发布的 tag。
 
 ## 自动发版
 
@@ -41,7 +41,7 @@ npm run tauri -- build
 发布已有产物时：
 
 ```powershell
-npm run release:publish -- --tag v0.1.3 --notes docs/releases/0.1.3.md --installer 'src-tauri/target/release/bundle/nsis/单轨_0.1.3_x64-setup.exe'
+npm run release:publish -- --tag v0.1.4 --notes docs/releases/0.1.4.md --installer 'src-tauri/target/release/bundle/nsis/单轨_0.1.4_x64-setup.exe'
 ```
 
 ## 真实原地更新验收

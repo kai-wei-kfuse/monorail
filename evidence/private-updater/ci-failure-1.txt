@@ -1,0 +1,105 @@
+release	Run npm test	﻿2026-10-27T11:42:26.1778181Z ##[group]Run npm test
+release	Run npm test	2026-10-27T11:42:26.1778727Z ^[[36;1mnpm test^[[0m
+release	Run npm test	2026-10-27T11:42:26.1844907Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+release	Run npm test	2026-10-27T11:42:26.1845280Z env:
+release	Run npm test	2026-10-27T11:42:26.1845478Z   RELEASE_TAG: v0.1.3
+release	Run npm test	2026-10-27T11:42:26.1845725Z   VITE_VERIFY: false
+release	Run npm test	2026-10-27T11:42:26.1846023Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+release	Run npm test	2026-10-27T11:42:26.1846338Z   CARGO_INCREMENTAL: 0
+release	Run npm test	2026-10-27T11:42:26.1846817Z   CARGO_TERM_COLOR: always
+release	Run npm test	2026-10-27T11:42:26.1847063Z   CACHE_ON_FAILURE: false
+release	Run npm test	2026-10-27T11:42:26.1847292Z ##[endgroup]
+release	Run npm test	2026-10-27T11:42:26.9511831Z
+release	Run npm test	2026-10-27T11:42:26.9512282Z > pixel-record@0.1.3 test
+release	Run npm test	2026-10-27T11:42:26.9513261Z > node test-runner.mjs
+release	Run npm test	2026-10-27T11:42:26.9522587Z
+release	Run npm test	2026-10-27T11:42:27.5701266Z
+release	Run npm test	2026-10-27T11:42:29.0988053Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv5.0.5 ^[[39m^[[90mD:/a/monorail/monorail^[[39m
+release	Run npm test	2026-10-27T11:42:29.0988694Z
+release	Run npm test	2026-10-27T11:42:29.0990084Z  ^[[32m✓^[[39m src/services/reviewService.test.ts ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[33m 664^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:29.8720725Z  ^[[32m✓^[[39m src/services/backpackService.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[33m 428^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:30.4989586Z  ^[[32m✓^[[39m src/services/ideaService.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 277^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:32.7928889Z  ^[[32m✓^[[39m src/services/commit.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[33m 1971^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:32.7930724Z    ^[[33m^[[2m✓^[[22m^[[39m 20 rapid start/complete pairs keep sequence unique and effective intervals disjoint^[[33m 1814^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:33.4118201Z  ^[[32m✓^[[39m src/services/timerService.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 275^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:34.2036766Z  ^[[32m✓^[[39m src/services/cardService.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 458^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:34.6912629Z  ^[[32m✓^[[39m src/services/settingsService.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 135^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:35.2576707Z  ^[[32m✓^[[39m src/services/dealService.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[32m 226^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:35.9244454Z  ^[[32m✓^[[39m src/services/degradeService.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[33m 324^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:36.4219356Z  ^[[31m❯^[[39m src/services/scheduler.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m | ^[[22m^[[31m1 failed^[[39m^[[2m)^[[22m^[[32m 155^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:36.4221245Z    ^[[31m❯^[[39m scheduler ^[[2m(5)^[[22m
+release	Run npm test	2026-10-27T11:42:36.4222887Z      ^[[32m✓^[[39m changing the boundary immediately rearms its existing timer and disposal removes the subscription^[[32m 39^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:36.4224520Z      ^[[32m✓^[[39m computes the wait until the next local boundary^[[32m 0^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:36.4226333Z ^[[31m     ^[[31m×^[[31m settles the shutdown gap on startup and a sleep gap on resume^[[39m^[[32m 16^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:36.4265250Z      ^[[32m✓^[[39m a startup gap releases the running card and re-deals it as 待开始^[[32m 44^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:36.4286052Z      ^[[32m✓^[[39m reports a day change once when the boundary has passed^[[32m 52^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:36.7160073Z  ^[[32m✓^[[39m src/data/journal.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 22^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:37.0467011Z  ^[[32m✓^[[39m src/services/updateController.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 8^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:37.2562473Z  ^[[32m✓^[[39m src/domain/picker/pick.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 20^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:37.6057125Z  ^[[32m✓^[[39m src/services/updateService.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 42^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:37.8104634Z  ^[[32m✓^[[39m src/ui/controls/controls.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 8^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:38.5588766Z  ^[[32m✓^[[39m src/app/readoutRegression.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 97^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:39.0452706Z  ^[[32m✓^[[39m src/services/homeProjection.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 149^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:39.3441367Z  ^[[32m✓^[[39m src/data/schemas.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 24^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:39.5185931Z  ^[[32m✓^[[39m src/domain/card/card.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 11^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:39.9297489Z  ^[[32m✓^[[39m src/app/bootstrap.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 61^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:40.3499340Z  ^[[32m✓^[[39m src/services/recordService.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 107^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:40.7035908Z  ^[[32m✓^[[39m src/data/mdRepo.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 40^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:41.0976692Z  ^[[32m✓^[[39m src/data/settingsRepo.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 73^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:41.2624502Z  ^[[32m✓^[[39m src/domain/review/schedule.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:41.4242491Z  ^[[32m✓^[[39m src/domain/reminders.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:41.8092944Z  ^[[32m✓^[[39m src/data/timelogIndex.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 36^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:42.0104660Z  ^[[32m✓^[[39m src/ui/effects/effects.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 24^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:42.1972637Z  ^[[32m✓^[[39m src/domain/timeline/effective.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:42.3868866Z  ^[[32m✓^[[39m src/ui/effects/reveal.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:42.7330340Z  ^[[32m✓^[[39m src/pages/review/ReviewPage.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:42.9019220Z  ^[[32m✓^[[39m src/widgets/cardProgress.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.0664433Z  ^[[32m✓^[[39m src/domain/degrade/refusal.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.2580101Z  ^[[32m✓^[[39m src/domain/timeline/stats.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.4276034Z  ^[[32m✓^[[39m src/pages/home/title.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.6460032Z  ^[[32m✓^[[39m src/data/frontmatter.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 20^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.8369044Z  ^[[32m✓^[[39m src/domain/record/record.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.8579657Z
+release	Run npm test	2026-10-27T11:42:43.8579756Z
+release	Run npm test	2026-10-27T11:42:43.8581495Z ^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m^[[1m^[[41m Failed Tests 1 ^[[49m^[[22m^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m
+release	Run npm test	2026-10-27T11:42:43.8583147Z ^[[2m Test Files ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m35 passed^[[39m^[[22m^[[90m (36)^[[39m
+release	Run npm test	2026-10-27T11:42:43.8584145Z
+release	Run npm test	2026-10-27T11:42:43.8584882Z ^[[2m      Tests ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m219 passed^[[39m^[[22m^[[90m (220)^[[39m
+release	Run npm test	2026-10-27T11:42:43.8586968Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/services/scheduler.test.ts^[[2m > ^[[22mscheduler^[[2m > ^[[22msettles the shutdown gap on startup and a sleep gap on resume
+release	Run npm test	2026-10-27T11:42:43.8590099Z ^[[2m   Start at ^[[22m 11:42:27
+release	Run npm test	2026-10-27T11:42:43.8591492Z ^[[31m^[[1mAssertionError^[[22m: expected [ { …(10) }, { …(10) } ] to have a length of 1 but got 2^[[39m
+release	Run npm test	2026-10-27T11:42:43.8593031Z ^[[2m   Duration ^[[22m 16.26s^[[2m (tests 53%, import 32%, transform 13%, worker 2%)^[[22m
+release	Run npm test	2026-10-27T11:42:43.8593820Z
+release	Run npm test	2026-10-27T11:42:43.8593839Z
+release	Run npm test	2026-10-27T11:42:43.8594280Z ^[[32m- Expected^[[39m
+release	Run npm test	2026-10-27T11:42:43.8595331Z ^[[2m    Isolate ^[[22m ^[[33m36 workers spawned^[[39m^[[2m · ~142ms startup each (spawn + environment, per file)^[[22m
+release	Run npm test	2026-10-27T11:42:43.8596366Z ^[[31m+ Received^[[39m
+release	Run npm test	2026-10-27T11:42:43.8597404Z ^[[2m            ^[[22m ^[[2mat least ~4.96s faster with ^[[22m^[[33misolate: false^[[39m^[[2m — reuses workers across files instead of one per file^[[22m
+release	Run npm test	2026-10-27T11:42:43.8599480Z
+release	Run npm test	2026-10-27T11:42:43.8599502Z
+release	Run npm test	2026-10-27T11:42:43.8600018Z ^[[32m- 1^[[39m
+release	Run npm test	2026-10-27T11:42:43.8600208Z
+release	Run npm test	2026-10-27T11:42:43.8600584Z ^[[31m+ 2^[[39m
+release	Run npm test	2026-10-27T11:42:43.8659081Z ##[error]AssertionError: expected [ { …(10) }, { …(10) } ] to have a length of 1 but got 2
+release	Run npm test
+release	Run npm test	- Expected
+release	Run npm test	+ Received
+release	Run npm test
+release	Run npm test	- 1
+release	Run npm test	+ 2
+release	Run npm test
+release	Run npm test	 ❯ src/services/scheduler.test.ts:49:32
+release	Run npm test
+release	Run npm test
+release	Run npm test	2026-10-27T11:42:43.8669698Z
+release	Run npm test	2026-10-27T11:42:43.8674275Z ^[[36m ^[[2m❯^[[22m src/services/scheduler.test.ts:^[[2m49:32^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.8681770Z     ^[[90m 47|^[[39m       onDayChanged: async () => {}, report: e => { throw e; },
+release	Run npm test	2026-10-27T11:42:43.8685681Z     ^[[90m 48|^[[39m     });
+release	Run npm test	2026-10-27T11:42:43.8729055Z     ^[[90m 49|^[[39m     expect(await offline(ctx)).toHaveLength(1);
+release	Run npm test	2026-10-27T11:42:43.8730026Z     ^[[90m   |^[[39m                                ^[[31m^^[[39m
+release	Run npm test	2026-10-27T11:42:43.8731274Z     ^[[90m 50|^[[39m     power({ kind: 'resume', at: 0, simulated: true, suspended_at: Date…
+release	Run npm test	2026-10-27T11:42:43.8732466Z     ^[[90m 51|^[[39m     await vi.waitFor(async () => expect(await offline(ctx)).toHaveLeng…
+release	Run npm test	2026-10-27T11:42:43.8733101Z
+release	Run npm test	2026-10-27T11:42:43.8733618Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯^[[22m^[[39m
+release	Run npm test	2026-10-27T11:42:43.8734086Z
+release	Run npm test	2026-10-27T11:42:43.9435975Z ##[error]Process completed with exit code 1.

@@ -1,0 +1,4 @@
+
+thread 'tokio-rt-worker' (49140) panicked at C:\Users\kai_wei\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\reqwest-0.13.5\src\async_impl\client.rs:2501:5:
+No rustls crypto provider is configured. When using the `rustls-no-provider` feature you must install a crypto provider before building a Client. For example: `rustls::crypto::aws_lc_rs::default_provider().install_default().unwrap();` See https://docs.rs/rustls/latest/rustls/#cryptography-providers for details.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

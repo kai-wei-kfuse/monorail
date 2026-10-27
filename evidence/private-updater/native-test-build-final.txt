@@ -1,0 +1,3 @@
+   Compiling pixel-record v0.1.3 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 20.56s
+  Executable unittests src\lib.rs (src-tauri\target\debug\deps\pixel_record_lib-c0ce7973bb90749c.exe)
