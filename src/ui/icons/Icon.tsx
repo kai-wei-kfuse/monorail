@@ -7,6 +7,7 @@ const PATHS = {
   pause: <path fill="currentColor" d="M3.8 3h3v10h-3zM9.2 3h3v10h-3z" />,
   check: <path {...S} strokeWidth="1.8" d="M2.8 8.4 6.4 12l6.8-7.6" />,
   shrink: <path {...S} strokeWidth="1.7" d="M2.5 13.5 6.8 9.2M7 13.2V9H2.8M13.5 2.5 9.2 6.8M9 2.8V7h4.2" />,
+  lower: <path {...S} strokeWidth="1.7" d="M8 2.5v8M4.6 7.2 8 10.6l3.4-3.4M3 13.6h10" />,
   expand: <path {...S} strokeWidth="1.7" d="M6.8 9.2 2.5 13.5M2.5 9.3v4.2h4.2M9.2 6.8l4.3-4.3M9.3 2.5h4.2v4.2" />,
   swap: <path {...S} strokeWidth="1.7" d="M2 5.5h10.5M9.8 2.7l2.8 2.8-2.8 2.8M14 10.5H3.5M6.2 7.7l-2.8 2.8 2.8 2.8" />,
   plus: <path {...S} strokeWidth="1.7" d="M8 2.5v11M2.5 8h11" />,

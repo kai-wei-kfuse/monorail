@@ -55,3 +55,7 @@
 .dlg-pat div { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 12px; }
 .dlg-pat dt { font-weight: 520; color: var(--ink-3); }
 .dlg-pat dd { margin: 0; }
+
+/* 首页舞台：铺满内容区 */
+.home-stage { display: grid; min-height: 0; }
+.home-stage > .card { grid-area: 1 / 1; }

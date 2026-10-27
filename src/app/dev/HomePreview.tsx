@@ -58,7 +58,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
   if (page === 'quickbar') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><div style={{ width: 760 }}><QuickBar projects={[{ id: 'p1', name: '找工作' }]} onSave={async () => {}} onHide={() => {}} /></div></div>;
   if (page === 'mini') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><MiniWindow view={view} running topoDepth={60} onPrimary={() => {}} onRestore={() => {}} /></div>;
   const title = <TitleBar name="像素记录" tabs={TABS} active="home" onTab={() => {}}>
-    <StatusBlock kind={page === 'rest' ? 'away' : 'focus'} label={page === 'rest' ? '休息' : '沿 Python 往下学'} startedAt={new Date(Date.now() - view.elapsedMs).toISOString()} activities={ACTS} onBackfill={() => {}} />
+    <StatusBlock kind={page === 'rest' ? 'away' : 'focus'} label={page === 'rest' ? '休息' : '沿 Python 往下学'} startedAt={new Date(Date.now() - view.elapsedMs).toISOString()} onClick={() => {}} />
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
   const dock = <StatusBar left={<QuickActs acts={[{ id: 'wc', name: '厕所', icon: 'wc' }, { id: 'p', name: '拿快递', icon: 'parcel' }]} current={null} onPick={() => {}} onSleep={() => {}} onAdd={() => {}} />}

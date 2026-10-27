@@ -13,7 +13,7 @@ export function CardActions({ running, shrink, busy, compact, onStart, onComplet
     {running
       ? <ActionButton primary compact={compact} cn="完成" en="COMPLETE" icon="check" disabled={busy} onClick={() => onComplete(now())} />
       : <ActionButton primary compact={compact} cn="开始" en="START" icon="play" disabled={busy} onClick={() => onStart(now())} />}
-    <ActionButton compact={compact} cn="缩小" en="SHRINK" icon="shrink" title={shrinkTip} disabled={busy || shrink !== 'ok'} onClick={() => onShrink(now())} />
+    <ActionButton compact={compact} cn="缩小" en="SHRINK" icon="lower" title={shrinkTip} disabled={busy || shrink !== 'ok'} onClick={() => onShrink(now())} />
     <ActionButton compact={compact} cn="再抽一张" en="NEXT" icon="swap" disabled={busy} onClick={() => onRedraw(now())} />
   </>;
 }

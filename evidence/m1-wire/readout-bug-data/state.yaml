@@ -1,0 +1,14 @@
+schemaVersion: 1
+max_seq: 10
+current_card: null
+open_segment: 74f02f74-208f-4b36-9ae1-bbb82c5853ab
+seen: []
+stopped_day: null
+open_segment_day: 2026-10-27
+home_mode: guide
+first_used_day: 2026-10-27
+review_period: null
+refusals: []
+last_rest_ended_at: null
+rest_answers: {}
+rest: null

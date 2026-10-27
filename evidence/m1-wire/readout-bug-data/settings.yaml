@@ -1,0 +1,36 @@
+mainSlots: 1
+sideSlots: 2
+betWeeks: 4
+dueSoonHours: 24
+timeboxDefaultMinutes: 60
+shrinkMaxLevel: 2
+refusalThreshold: 4
+refusalWindowMinutes: 30
+refusalResetMinutes: 60
+inputHintWindowMinutes: 30
+skipSignalCount: 3
+subconsciousCount: 3
+ideaPoolLimit: 10
+ideaExpireDays: 60
+reviewWeekday: 7
+dayBoundaryHour: 4
+longActivityMinutes: 240
+deadlineLeadMinutes: 60
+offlineAskMinMinutes: 5
+accent: "#fffa00"
+titleScale: 65
+topoMode: dynamic
+topoDepth: 60
+motion: full
+quickbarHotkey: Ctrl+Alt+Shift+R
+mainHotkey: Ctrl+Alt+Shift+M
+autostart: true
+alwaysOnTop: false
+schemaVersion: 1
+lists:
+  quickActivities:
+    - id: qa-wc
+      name: 厕所
+      category: 生活
+  restPool: []
+  idleName: 待机
