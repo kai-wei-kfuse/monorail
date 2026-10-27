@@ -25,3 +25,14 @@ NSIS 产物位于 `src-tauri/target/release/bundle/nsis/`，交付副本放在 `
 ## 发布前修复
 
 经 lead 授权，回顾投影 `bet` 增加 `projectId`，ReviewPage 用 ID 定位旧主线；页面类型复用 store 合同。两个项目同名时不会再把另一个项目传给换主线对话框。补充页面组件与服务连续复盘两项回归，源代码不会因为这项修复引入新的 UI 流程。
+
+## 本次交付记录
+
+- 构建日期：2026-10-27；生产源码提交：`4673332549ac89a42bb9f97825e69199dd12b0ae`，已包含 M3 全部页面接线及上述修复。
+- `npm run check` 通过：34 个测试文件、210 项测试、TypeScript、ESLint。
+- `npm run tauri build` 成功生成 Windows x64 NSIS 安装包；Rust release 优化构建成功。仅保留既有第三方 PURE 注释和 bundle 大小提示，没有调整警告阈值。
+- 交付文件：`发布/像素记录_0.1.0_x64-setup.exe`（相对于 app 根目录）。大小 **7,797,399 字节，7.436 MiB**；交付副本与原始 bundle 的 SHA-256 完全相同。
+- SHA-256：`4eefe21c5deddc1df23ffd8798745eb186ca92e555c9bcd6f1ace681cc72d46b`。
+- Windows PE 产品名为「像素记录」，产品与文件版本均为 0.1.0；安装器签名状态为 `NotSigned`。
+- Cargo 产物 fingerprint 显示应用未启用 verify，Tauri 已启用 custom-protocol（生产资源嵌入）。扫描 3 个生产 JavaScript 文件与 release 应用二进制，没有验证触发事件/测试标记；生产 capabilities 不含验证权限。
+- 应用 exe、安装器均未执行；未进行安装、UI 验收或补做历史冒烟项。安装包是本地交付产物，不放入 Git；源码、日志和核验清单已提交。

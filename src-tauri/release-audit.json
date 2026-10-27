@@ -1,0 +1,82 @@
+{
+  "sourceCommit": "4673332549ac89a42bb9f97825e69199dd12b0ae",
+  "checkedAt": "2026-10-27T08:14:58.754Z",
+  "command": "VITE_VERIFY=false npm run tauri build",
+  "productName": "像素记录",
+  "version": "0.1.0",
+  "identifier": "local.pixelrecord.app",
+  "target": "Windows x64 NSIS",
+  "installMode": "currentUser",
+  "languages": [
+    "SimpChinese",
+    "English"
+  ],
+  "installer": {
+    "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\发布\\像素记录_0.1.0_x64-setup.exe",
+    "bytes": 7797399,
+    "mebibytes": 7.436,
+    "sha256": "4eefe21c5deddc1df23ffd8798745eb186ca92e555c9bcd6f1ace681cc72d46b"
+  },
+  "builtInstaller": {
+    "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\src-tauri\\target\\release\\bundle\\nsis\\像素记录_0.1.0_x64-setup.exe",
+    "bytes": 7797399,
+    "mebibytes": 7.436,
+    "sha256": "4eefe21c5deddc1df23ffd8798745eb186ca92e555c9bcd6f1ace681cc72d46b"
+  },
+  "application": {
+    "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\src-tauri\\target\\release\\pixel-record.exe",
+    "bytes": 18102272,
+    "mebibytes": 17.264,
+    "sha256": "0eadd64434835e6e71877d35460636ce9c8f02fd8d2e1b390d1668729965f637"
+  },
+  "verificationIsolation": {
+    "applicationFeatures": [],
+    "tauriFeatures": [
+      "common-controls-v6",
+      "compression",
+      "custom-protocol",
+      "dbus",
+      "default",
+      "dynamic-acl",
+      "tauri-runtime-wry",
+      "tray-icon",
+      "webkit2gtk",
+      "webview2-com",
+      "wry",
+      "x11"
+    ],
+    "checkedFiles": [
+      "src-tauri/target/release/pixel-record.exe",
+      "dist/assets/index-BE395RsA.js",
+      "dist/assets/index-BfuW07oM.js",
+      "dist/assets/path-C3ZPa_h9.js"
+    ],
+    "markers": [
+      "verification-start",
+      "verification-journal",
+      "verification-ready-main",
+      "verification-create-record",
+      "EXPECTED_NATIVE_JOURNAL_WRITE_FAILURE",
+      "--verify-start",
+      "--verify-journal"
+    ],
+    "markerMatches": [],
+    "productionCapabilitiesExcludeVerification": true
+  },
+  "tests": {
+    "files": 34,
+    "passed": 210,
+    "typescript": true,
+    "eslint": true
+  },
+  "applicationExecuted": false,
+  "installerExecuted": false,
+  "installed": false,
+  "migration": "No automatic migration: reselect the original data directory; data files remain in place.",
+  "windowsVersionInfo": {
+    "ProductName": "像素记录",
+    "ProductVersion": "0.1.0",
+    "FileVersion": "0.1.0"
+  },
+  "installerSignatureStatus": "NotSigned"
+}
