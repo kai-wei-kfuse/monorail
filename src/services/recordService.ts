@@ -2,6 +2,7 @@ import type { RecordEntry } from '../domain/record/record';
 import { convert } from '../domain/record/convert';
 import type { Ctx } from './commit';
 import { run } from './commit';
+import { refreshInTx } from './dealService';
 
 export async function saveRecord(ctx: Ctx, record: RecordEntry): Promise<void> {
   await run(ctx, async tx => {
@@ -12,15 +13,15 @@ export async function saveRecord(ctx: Ctx, record: RecordEntry): Promise<void> {
 
 export async function reconcile(ctx: Ctx): Promise<number> {
   return run(ctx, async tx => {
-    const records = await tx.repos.records.list(), cards = await tx.repos.cards.list();
-    let order = Math.max(0, ...cards.map(c => c.value.order)), created = 0;
+    const records = await tx.repos.records.list();
+    let order = Math.max(0, ...tx.cards.map(card => card.order)), created = 0;
     for (const record of records) {
       if (record.value.kind !== '待办') continue;
-      const card = convert(record.value, ++order), existing = await tx.repos.cards.get(card.id);
-      if (!existing) { tx.writes.push(await tx.repos.cards.write(card, null)); created++; }
+      const card = convert(record.value, ++order), existing = tx.cards.find(item => item.id === card.id);
+      if (!existing) { tx.saveCard(card); created++; }
       if (record.value.card_id !== card.id) tx.writes.push(await tx.repos.records.write({ ...record.value, card_id: card.id }, record));
-      if (!tx.state.current_card && (!existing || existing.value.status === '待做')) tx.state.current_card = card.id;
     }
+    refreshInTx(tx);
     await tx.log(`reconcile:${created}`);
     return created;
   });
