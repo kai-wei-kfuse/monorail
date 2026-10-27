@@ -2,7 +2,7 @@ import type { Card } from '../domain/card/card';
 import { startCard, completeCard, continueCard, releaseCard, abandonCard } from '../domain/card/transitions';
 import { shrinkCard, restoreParent } from '../domain/card/shrink';
 import { skipCard } from '../domain/degrade/signals';
-import { inBackpack } from '../domain/project/project';
+import { inBackpack, trackOf } from '../domain/project/project';
 import { cardMilliseconds } from '../domain/timeline/stats';
 import { activityDay } from '../domain/timeline/day';
 import type { Ctx, Transaction } from './commit';
@@ -16,18 +16,18 @@ function getCard(tx: Transaction, id: string): Card {
   if (!card) throw new Error('卡片不存在');
   return card;
 }
-function track(tx: Transaction, card: Card): '主线' | '支线' {
-  return tx.projects.some(project => project.id === card.project_id && inBackpack(project) && project.slot === '主线') ? '主线' : '支线';
-}
 function nextOrder(tx: Transaction): number { return Math.max(0, ...tx.cards.map(card => card.order)) + 1; }
 function restoreInTx(tx: Transaction, card: Card): void {
-  if (card.shrunk_from) tx.saveCard(restoreParent(card, getCard(tx, card.shrunk_from), card.progress_note));
+  if (!card.shrunk_from) return;
+  const parent = getCard(tx, card.shrunk_from);
+  // A child may move to another project; finishing it cannot revive an abandoned ancestor.
+  if (parent.status === '已缩小') tx.saveCard(restoreParent(card, parent, card.progress_note));
 }
 function requireCurrent(tx: Transaction, card: Card): void {
   if (tx.state.current_card !== card.id || tx.state.rest) throw new Error('首页卡片已改变');
 }
 function target(tx: Transaction, card: Card) {
-  return { activity: card.content, category: track(tx, card), card_id: card.id, kind: '普通' as const, resume_card_id: null };
+  return { activity: card.content, category: trackOf(card.project_id, tx.projects), card_id: card.id, kind: '普通' as const, resume_card_id: null };
 }
 
 export const start = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx => {
@@ -54,7 +54,7 @@ export const complete = (ctx: Ctx, cardId: string, at: string, note: string, kee
   const card = getCard(tx, cardId);
   if (card.status === '已完成') return;
   requireCurrent(tx, card);
-  const done = completeCard(card, at, activityDay(at, tx.settings.dayBoundaryHour), track(tx, card), note);
+  const done = completeCard(card, at, activityDay(at, tx.settings.dayBoundaryHour), trackOf(card.project_id, tx.projects), note);
   tx.saveCard(done);
   restoreInTx(tx, done);
   if (keepGoing) tx.saveCard(continueCard(done, tx.id(), at, nextOrder(tx)));

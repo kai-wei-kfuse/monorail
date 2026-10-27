@@ -1,7 +1,7 @@
-import type { RecordEntry } from './record';
+import type { RecordInput } from './record';
 import type { Card } from '../card/card';
 
-export function convert(record: RecordEntry, order: number): Card {
+export function convert(record: RecordInput, order: number): Card {
   if (record.kind !== '待办') throw new Error('只有待办可以自动转换');
   return {
     id: `card-${record.id}`, source_record_id: record.id, content: record.text,

@@ -13,7 +13,10 @@ export class TimelogRepo {
   acceptCommitted(writes: Write[]): void {
     for (const opaque of writes) {
       const write = committedWrite(opaque), match = /^timelog\/(\d{4}-\d{2}-\d{2})\.md$/.exec(write.path);
-      if (match) this.index.set(match[1], this.decode(write.text, write.path));
+      if (match) {
+        if (write.text === null) throw new Error('Timelog deletion is not supported');
+        this.index.set(match[1], this.decode(write.text, write.path));
+      }
     }
   }
   private path(day: string): string {

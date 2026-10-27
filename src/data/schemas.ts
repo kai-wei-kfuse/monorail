@@ -1,14 +1,31 @@
 import { z } from 'zod';
 import { settingEntries } from '../shared/settings';
 import type { SettingKey, SettingValues } from '../shared/settings';
+import { safeRelative } from './fs';
 
 const iso = z.iso.datetime({ offset: true });
 const nullableText = z.string().nullable();
-export const recordSchema = z.object({
+const attachmentPath = z.string().refine(value => {
+  // Attachments are copied into the data directory by the platform boundary.
+  try { return safeRelative(value).startsWith('attachments/'); } catch { return false; }
+}, '附件必须是 attachments/ 下的相对路径');
+const currentRecordSchema = z.object({
   id: z.uuid(), text: z.string(), kind: z.enum(['待办', '想法']), created_at: iso,
   due_at: iso.nullable(), blocking: z.boolean(), project_id: nullableText,
-  card_id: nullableText, tags: z.array(z.string()), attachments: z.array(z.string()),
-}).passthrough();
+  card_id: nullableText, tags: z.array(z.string()), attachments: z.array(attachmentPath),
+  needs: nullableText, pool: z.enum(['活跃池', '冷库', '已转待办']).nullable(),
+  last_touched_at: iso, cold_since: iso.nullable(),
+}).passthrough().refine(record => record.kind === '想法' ? record.pool !== null : record.pool === null, '记录类型与想法池状态不一致')
+  .refine(record => record.pool === '冷库' ? record.cold_since !== null : record.cold_since === null, '冷库时间与状态不一致')
+  .refine(record => record.pool !== '已转待办' || record.card_id !== null, '已转待办的想法缺少卡片');
+export const recordSchema = z.preprocess(value => {
+  if (value && typeof value === 'object' && !Array.isArray(value) && !('last_touched_at' in value) && 'created_at' in value && 'kind' in value) {
+    // M0/M1 records had no lifecycle metadata. Their creation is the only known touch.
+    return { needs: null, pool: value.kind === '想法' ? '活跃池' : null, cold_since: null,
+      ...value, last_touched_at: value.created_at };
+  }
+  return value;
+}, currentRecordSchema);
 const currentCardSchema = z.object({
   id: z.string().min(1), source_record_id: z.uuid().nullable(), content: z.string(), created_at: iso,
   due_at: iso.nullable(), blocking: z.boolean(), project_id: nullableText,

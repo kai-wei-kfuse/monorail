@@ -2,9 +2,9 @@ import { expect, it, vi } from 'vitest';
 import { at, card, fixture, getCard, project, seed } from './serviceFixture';
 import { saveRecord, reconcile } from './recordService';
 import { run } from './commit';
-import type { RecordEntry } from '../domain/record/record';
+import type { RecordInput } from '../domain/record/record';
 
-function record(): RecordEntry {
+function record(): RecordInput {
   return { id: crypto.randomUUID(), text: '原始待办', kind: '待办', created_at: at(), due_at: at(90),
     blocking: true, project_id: null, card_id: null, tags: ['tag'], attachments: [] };
 }

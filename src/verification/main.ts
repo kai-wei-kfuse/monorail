@@ -4,7 +4,7 @@ import { getCurrentWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/ap
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 import type { Ctx } from '../services/commit';
 import type { FileSystem } from '../data/fs';
-import type { RecordEntry } from '../domain/record/record';
+import type { RecordInput } from '../domain/record/record';
 import { reconcile } from '../services/recordService';
 import { start } from '../services/cardService';
 import { setMini } from '../platform/windowMode';
@@ -48,7 +48,7 @@ async function run(ctx: Ctx) {
   const w = getCurrentWindow();
   await windows(); await native();
   const id = crypto.randomUUID(), cardId = `card-${id}`;
-  const record: RecordEntry = { id, text: `Native verification ${id}`, kind: '待办', created_at: new Date().toISOString(),
+  const record: RecordInput = { id, text: `Native verification ${id}`, kind: '待办', created_at: new Date().toISOString(),
     due_at: new Date(Date.now() + ctx.settings.deadlineLeadMinutes * 60_000 + 20_000).toISOString(), blocking: true, project_id: null, card_id: null, tags: [], attachments: [] };
   const cardReady = new Promise<void>(resolve => {
     const off = appStore.subscribe(state => { if (state.cards.some(c => c.id === cardId)) { off(); resolve(); } });

@@ -20,6 +20,7 @@ export interface EntityRepo<T> {
   get(id: string): Promise<Entity<T> | null>;
   list(): Promise<Entity<T>[]>;
   write(value: T, original: Entity<T> | null, body?: string): Promise<Write>;
+  remove(original: Entity<T>): Promise<Write>;
 }
 export interface Repositories {
   records: EntityRepo<RecordEntry>;

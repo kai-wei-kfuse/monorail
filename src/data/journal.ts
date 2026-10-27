@@ -5,11 +5,11 @@ import { safeRelative } from './fs';
 declare const writeToken: unique symbol;
 /** Only data repositories construct writes; consumers cannot inspect or assemble paths. */
 export interface Write { readonly [writeToken]: true }
-const planSchema = z.object({ id: z.uuid(), writes: z.array(z.object({ path: z.string(), text: z.string(), before: z.string().nullable() })) });
+const planSchema = z.object({ id: z.uuid(), writes: z.array(z.object({ path: z.string(), text: z.string().nullable(), before: z.string().nullable() })) });
 type WriteContent = z.infer<typeof planSchema>['writes'][number];
 /** Data-layer commit observers only; never expose contents on the service interface. */
 export function committedWrite(write: Write): WriteContent { return write as unknown as WriteContent; }
-export function createWrite(path: string, text: string, before: string | null): Write {
+export function createWrite(path: string, text: string | null, before: string | null): Write {
   safeRelative(path);
   return { path, text, before } as unknown as Write;
 }
@@ -22,7 +22,8 @@ export class Journal {
       const actual = (await this.fs.read(write.path))?.text ?? null;
       if (actual === write.text) continue;
       if (actual !== write.before) throw new Error(`Recovery conflict: ${write.path}`);
-      await this.fs.atomicWrite(write.path, write.text);
+      if (write.text === null) await this.fs.remove(write.path);
+      else await this.fs.atomicWrite(write.path, write.text);
     }
   }
   async run(id: string, writes: Write[]): Promise<void> {

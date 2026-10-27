@@ -22,6 +22,17 @@ it('rejects conflicts during recovery', async () => {
   fs.beforeWrite = undefined; await fs.atomicWrite('b', 'external');
   await expect(new Journal(fs).recover()).rejects.toThrow('Recovery conflict');
 });
+it('replays an interrupted deletion idempotently without restoring or deleting externally changed data', async () => {
+  const fs = new MemoryFs(); await fs.atomicWrite('idea.md', 'idea');
+  fs.beforeWrite = path => { if (path === 'state.yaml') throw new Error('interrupted after delete'); };
+  await expect(new Journal(fs).run(crypto.randomUUID(), [createWrite('idea.md', null, 'idea'), createWrite('state.yaml', 'next', null)])).rejects.toThrow('interrupted');
+  expect(await fs.read('idea.md')).toBeNull();
+  fs.beforeWrite = undefined;
+  expect(await new Journal(fs).recover()).toBe(1); expect(await new Journal(fs).recover()).toBe(0);
+  await fs.atomicWrite('idea.md', 'new external content');
+  await expect(new Journal(fs).run(crypto.randomUUID(), [createWrite('idea.md', null, 'idea')])).rejects.toThrow('External edit');
+  expect((await fs.read('idea.md'))!.text).toBe('new external content');
+});
 
 it('replays interrupted writes on a real filesystem using fresh journal objects', async () => {
   const base = path.resolve('.verification-data'); await nodefs.mkdir(base, { recursive: true });

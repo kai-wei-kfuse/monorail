@@ -7,6 +7,17 @@ it('record schema preserves unknown fields and rejects wrong types', () => {
   expect(recordSchema.parse(value).external).toBe('kept');
   for (const change of [{ id: '../escape' }, { kind: '稍后看' }, { created_at: 'yesterday' }, { blocking: 'false' }]) expect(recordSchema.safeParse({ ...value, ...change }).success).toBe(false);
 });
+it('migrates known M1 idea records and rejects partial new lifecycle metadata and unsafe attachment paths', () => {
+  const legacy = { id: crypto.randomUUID(), text: '旧想法', kind: '想法', created_at: '2026-10-27T00:00:00Z', due_at: null, blocking: false,
+    project_id: null, card_id: null, tags: [], attachments: [] };
+  const value = recordSchema.parse(legacy);
+  expect(value).toMatchObject({ needs: null, pool: '活跃池', last_touched_at: legacy.created_at, cold_since: null });
+  expect(recordSchema.safeParse({ ...legacy, last_touched_at: legacy.created_at }).success).toBe(false);
+  for (const attachment of ['../secret.txt', 'C:/secret.txt', 'attachments/../secret.txt', 'attachments\\x.txt', '/secret']) {
+    expect(recordSchema.safeParse({ ...value, attachments: [attachment] }).success).toBe(false);
+  }
+  expect(recordSchema.safeParse({ ...value, pool: '冷库', cold_since: null }).success).toBe(false);
+});
 it('card schema enforces required state and timestamps', () => {
   const id = crypto.randomUUID();
   const value = { id: `card-${id}`, source_record_id: id, content: 'x', created_at: '2026-10-27T00:00:00Z', due_at: null, blocking: false, project_id: null, status: '待做', type: '结果卡', order: 1, completed_at: null, completed_day: null, completed_track: null, progress_note: '' };
