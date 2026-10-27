@@ -1,0 +1,7 @@
+2026-10-27 eslint 同层互不引用规则验证（Claude Pro B）
+故意写了 3 个违规 import，eslint 输出：
+src/pages/backpack/probe.ts       1:26 error Unexpected path "../home/TaskCard" imported in restricted zone  import/no-restricted-paths
+src/widgets/ProbeWidget.ts        1:28 error Unexpected path "./CardEditor" imported in restricted zone      import/no-restricted-paths
+src/widgets/notices/probe3.ts     1:28 error Unexpected path "../CardEditor" imported in restricted zone     import/no-restricted-paths
+✖ 3 problems (3 errors, 0 warnings)
+删除探针后 `npx eslint src` 无错误。
