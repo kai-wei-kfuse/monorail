@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="#202020"/><path d="M24 24h80L64 104z" fill="#ffeb00"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 128 128">
+  <!-- Geometry from src/ui/marks/Emblem.tsx; colors from ui/styles/tokens.css. -->
+  <rect width="128" height="128" rx="20" fill="#161616"/>
+  <defs>
+    <clipPath id="emblem-clip"><path d="M18 18h84L60 92z"/></clipPath>
+    <path id="ring" d="M58 26C68 23 82 27 85 36S80 54 68 57 40 58 35 50 38 30 58 26z"/>
+  </defs>
+  <g transform="translate(10 12) scale(.9)" fill="none" stroke="#fffa00" stroke-width="2">
+    <path d="M6 12h108L60 104zM6 3v9M114 3v9M60 104v6"/>
+    <g clip-path="url(#emblem-clip)">
+      <use href="#ring" transform="translate(66 38) scale(2.3) translate(-60 -42)"/>
+      <use href="#ring" transform="translate(66 38) scale(1.85) translate(-60 -42)"/>
+      <use href="#ring" transform="translate(66 38) scale(1.45) translate(-60 -42)"/>
+      <use href="#ring" transform="translate(66 38) scale(1.1) translate(-60 -42)"/>
+      <use href="#ring" transform="translate(66 38) scale(.78) translate(-60 -42)"/>
+      <use href="#ring" transform="translate(66 38) scale(.48) translate(-60 -42)"/>
+      <use href="#ring" transform="translate(36 30) scale(.5) translate(-60 -42) rotate(-20 60 42)"/>
+      <use href="#ring" transform="translate(36 30) scale(.26) translate(-60 -42) rotate(-20 60 42)"/>
+    </g>
+  </g>
+</svg>

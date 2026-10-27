@@ -3,19 +3,17 @@ import { SideNav, SplitLayout } from '../../ui/layout/SideNav';
 import { PanelHeader } from '../../ui/layout/PanelHeader';
 import { Button } from '../../ui/controls/Button';
 import { Emblem } from '../../ui/marks/Emblem';
-import type { DuelIdea } from '../../widgets/Arena';
 import { Arena } from '../../widgets/Arena';
-import type { ColdIdea } from '../../widgets/ColdPick';
 import { ColdPick } from '../../widgets/ColdPick';
 import type { SwitchMainDraft } from './SwitchMain';
 import { SwitchMain } from './SwitchMain';
-import type { RecapData } from './Recap';
+import type { ReviewData, ReviewStep } from '../../store/reviewSlice';
+export type { ReviewData, ReviewStep } from '../../store/reviewSlice';
 import { Recap } from './Recap';
 import { NewIdeas } from './NewIdeas';
 import { BetReview } from './BetReview';
 import './review.css';
 
-export type ReviewStep = 'recap' | 'newIdeas' | 'arena' | 'coldPick' | 'bet';
 const STEPS: { id: ReviewStep; cn: string; en: string; desc: string }[] = [
   { id: 'recap', cn: '回看', en: 'RECAP', desc: '这周做了什么。只看，不做决定。' },
   { id: 'newIdeas', cn: '新想法入池', en: 'NEW IDEAS', desc: '有新想法就加进来，全部进入活跃池。' },
@@ -23,19 +21,6 @@ const STEPS: { id: ReviewStep; cn: string; en: string; desc: string }[] = [
   { id: 'coldPick', cn: '冷库捞取', en: 'COLD STORAGE', desc: '可选。从冷库拿出两个老想法，带回一个、两个或都不要。' },
   { id: 'bet', cn: '主线复盘', en: 'MAINLINE BET', desc: '主线押注到期：继续还是换。' },
 ];
-
-export interface ReviewData {
-  period: string;                         // 例如 2026-W44
-  step: ReviewStep;                       // 当前做到的步骤，由 service 持久化（附录 A8）
-  done: ReviewStep[];                     // 已经做完的步骤
-  betDue: boolean;                        // 这一期要不要主线复盘
-  recap: RecapData;
-  addedIdeas: string[];
-  duel: { left: DuelIdea; right: DuelIdea; over: number } | null;   // null：池子在上限以内
-  cold: { offered: ColdIdea[]; poolFree: number };
-  bet: { project: string; betEndsAt: string; betWeeks: number } | null;
-  backpack: { inBackpack: { id: string; name: string; slot: '主线' | '支线'; slotIndex?: number }[]; sideFree: boolean };
-}
 
 export interface ReviewActions {
   goto: (step: ReviewStep, at: string) => void;              // 进入某一步（标记前面做完、保存进度）
@@ -65,8 +50,7 @@ export function ReviewPage({ data, actions, parked = [] }: { data: ReviewData; a
   // 决定之前捞回的那个仍在冷库提议里，用它区分冷库对决和普通的超额配对
   const offeredIds = new Set(data.cold.offered.map(c => c.id));
   const coldDuel = cur.id === 'coldPick' && data.duel && (offeredIds.has(data.duel.left.id) || offeredIds.has(data.duel.right.id)) ? data.duel : null;
-  // 正在复盘的主线（复盘数据里只有名字，从背包里找到它的 id）
-  const betMain = data.bet ? data.backpack.inBackpack.find(p => p.slot === '主线' && p.name === data.bet!.project) ?? null : null;
+  const betMain = data.bet ? data.backpack.inBackpack.find(p => p.slot === '主线' && p.id === data.bet!.projectId) ?? null : null;
   return <>
     <SplitLayout nav={<SideNav en={`REVIEW ${data.period}`} cn="每周回顾" items={nav} active={data.step}
       onSelect={id => { if (reachable(id as ReviewStep)) actions.goto(id as ReviewStep, at()); }}

@@ -66,7 +66,7 @@ export function projectReview(input: Input): ReviewSlice {
     addedIdeas: review.added_idea_ids.flatMap(id => { const idea = records.find(r => r.id === id); return idea ? [idea.text] : []; }),
     duel: duel?.left && duel.right ? { left: ideaView(duel.left), right: ideaView(duel.right), over: Math.max(review.cold_duel ? 1 : 0, activeIdeas(records).length - settings.ideaPoolLimit) } : null,
     cold: { offered: coldOffer(records).map(idea => ({ id: idea.id, text: idea.text, needs: idea.needs, coldSince: idea.cold_since! })), poolFree: Math.max(0, settings.ideaPoolLimit - activeIdeas(records).length) },
-    bet: bet?.bet_ends_at ? { project: bet.name, betEndsAt: bet.bet_ends_at, betWeeks: settings.betWeeks } : null,
+    bet: bet?.bet_ends_at ? { projectId: bet.id, project: bet.name, betEndsAt: bet.bet_ends_at, betWeeks: settings.betWeeks } : null,
     backpack: { inBackpack: active.map(p => ({ id: p.id, name: p.name, slot: p.slot as '主线' | '支线' })), sideFree: active.filter(p => p.slot === '支线').length < settings.sideSlots },
   };
 }

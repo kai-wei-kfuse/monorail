@@ -35,8 +35,8 @@ function reviewData(step: ReviewStep): ReviewData {
       right: { id: 'i2', text: '把读过的 Agent 文章整理成一份对比表', needs: '大量 token', lastTouchedAt: ago(48), isNew: false }, over: 2 },
     cold: { offered: [{ id: 'k1', text: '用树莓派做家里的温湿度看板', needs: '空闲树莓派', coldSince: ago(30) },
       { id: 'k2', text: '给常用命令写一个速查小工具', needs: null, coldSince: ago(75) }], poolFree: 1 },
-    bet: { project: '找工作', betEndsAt: ago(0), betWeeks: 4 },
-    backpack: { inBackpack: [{ id: 'p1', name: '找工作', slot: '主线', slotIndex: 1 }, { id: 'p2', name: '小游戏房间系统', slot: '支线', slotIndex: 2 }], sideFree: true },
+    bet: { projectId: 'p1', project: '找工作', betEndsAt: ago(0), betWeeks: 4 },
+    backpack: { inBackpack: [{ id: 'p1', name: '找工作', slot: '主线' }, { id: 'p2', name: '小游戏房间系统', slot: '支线' }], sideFree: true },
   };
 }
 

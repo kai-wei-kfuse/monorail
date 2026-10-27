@@ -136,6 +136,17 @@ it('A8 continue extends the original deadline by one bet period and finishes aft
   await continueBet(f.ctx, at()); expect((await saved(f))[0].status).toBe('已完成');
 });
 
+it('review projection keeps the exact id when advancing between identically named mains', async () => {
+  const f = fixture(); f.ctx.settings.mainSlots = 2;
+  await seed(f, [], ['first', 'second'].map((id, index) => ({ ...project(id, '主线', index + 1), name: '同名主线', bet_ends_at: at(-1) })));
+  await toCold(f); await skipCold(f.ctx, at());
+  expect(view(f).bet).toMatchObject({ projectId: 'first', project: '同名主线' });
+  await continueBet(f.ctx, at()); expect(view(f).bet).toMatchObject({ projectId: 'second', project: '同名主线' });
+  await switchMain(f.ctx, { name: 'new', slot: '主线', makeRoom: { id: view(f).bet!.projectId, action: '冷藏' } }, at());
+  expect((await f.ctx.repos.projects.get('first'))!.value.status).toBe('进行中');
+  expect((await f.ctx.repos.projects.get('second'))!.value.status).toBe('冷藏');
+});
+
 it.each(['冷藏', '放弃'] as const)('A8 changing main via create shares one commit with review completion (%s)', async action => {
   const f = fixture(); await seed(f, [card('old-card', { project_id: 'old' })], [{ ...project('old'), bet_ends_at: at(-1) }]);
   await toCold(f); await skipCold(f.ctx, at());

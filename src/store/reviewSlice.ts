@@ -10,7 +10,7 @@ export interface ReviewData {
   period: string; step: ReviewStep; done: ReviewStep[]; betDue: boolean; recap: RecapData;
   addedIdeas: string[]; duel: { left: DuelIdea; right: DuelIdea; over: number } | null;
   cold: { offered: { id: string; text: string; needs: string | null; coldSince: string }[]; poolFree: number };
-  bet: { project: string; betEndsAt: string; betWeeks: number } | null;
+  bet: { projectId: string; project: string; betEndsAt: string; betWeeks: number } | null;
   backpack: { inBackpack: { id: string; name: string; slot: '主线' | '支线' }[]; sideFree: boolean };
 }
 export type ReviewSlice = ReviewData | null;
