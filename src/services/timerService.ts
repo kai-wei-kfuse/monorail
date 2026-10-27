@@ -2,6 +2,7 @@ import { closeSegment } from '../domain/timeline/segment';
 import type { Segment } from '../domain/timeline/segment';
 import { activityDay, splitAtDays } from '../domain/timeline/day';
 import { releaseCard } from '../domain/card/transitions';
+import { trackOf } from '../domain/project/project';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 
@@ -102,8 +103,8 @@ export async function resumeInTx(tx: Transaction, at: string) {
   if (!current || current.kind !== '插入') throw new Error('没有插入活动');
   const card = current.resume_card_id ? tx.cards.find(c => c.id === current.resume_card_id) : undefined;
   if (!card || card.status !== '进行中' || tx.state.current_card !== card.id) return switchInTx(tx, at, idleTarget(tx));
-  const before = tx.segments.filter(s => s.card_id === card.id).sort((a, b) => b.seq - a.seq)[0];
-  await switchInTx(tx, at, { activity: card.content, category: before?.category ?? '支线', card_id: card.id, kind: '普通', resume_card_id: null });
+  // Category follows the card's current project, which may have changed while away.
+  await switchInTx(tx, at, { activity: card.content, category: trackOf(card.project_id, tx.projects), card_id: card.id, kind: '普通', resume_card_id: null });
 }
 
 /** The card in progress goes back to 待做 and stops being current (sleep, offline). */
