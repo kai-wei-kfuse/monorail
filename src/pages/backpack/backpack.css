@@ -20,17 +20,3 @@
 .slot.empty .slot-no b { color: var(--mute-2); }
 .slot.empty .slot-body { align-content: center; justify-items: start; color: var(--mute); }
 .slot.main { border-color: var(--ink); box-shadow: inset 0 3px 0 var(--yellow); }
-
-/* 列表行：队列卡片、想法、冷藏项目 */
-.bp-list { list-style: none; margin: 8px 0 0; padding: 0; }
-.bp-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; min-height: 58px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.bp-item b { font: 520 14px/1.4 var(--f-cn); overflow-wrap: anywhere; }
-.bp-item b .hl { padding: 0 .12em; margin: 0; line-height: 1.2; }
-.bp-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 5px; font: 330 12px/1.4 var(--f-cn); color: var(--mute); }
-.bp-meta .tag-block { padding: 2px 5px; background: var(--ink); color: var(--yellow); font: 600 10px/1 var(--f-en); letter-spacing: .12em; }
-.bp-meta .run { color: var(--ink); font-weight: 520; }
-.bp-meta .run::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; background: var(--ink); box-shadow: 0 0 0 1.5px var(--yellow); vertical-align: 1px; }
-.bp-acts { display: flex; gap: 6px; }
-.bp-item.done b { color: var(--mute); }
-.bp-empty { padding: 18px 0; font: 330 13px/1.6 var(--f-cn); color: var(--mute); }
-.bp-warn { margin-top: 14px; padding: 10px 12px; border-left: 4px solid var(--yellow); background: var(--paper-2); font: 330 12px/1.6 var(--f-cn); color: var(--ink-3); box-shadow: -1px 0 0 var(--ink); }

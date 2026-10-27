@@ -41,3 +41,17 @@
 .r-l b { font: 520 14px/1.3 var(--f-cn); letter-spacing: .04em; }
 .r-l p { margin: 5px 0 0; font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
 .ctl { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+
+/* 列表行：一行一个条目，左边标题和小字，右边按钮（背包、回顾等页面共用） */
+.ls { list-style: none; margin: 8px 0 0; padding: 0; }
+.ls-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; min-height: 58px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ls-item b { font: 520 14px/1.4 var(--f-cn); overflow-wrap: anywhere; }
+.ls-item b .hl { padding: 0 .12em; margin: 0; line-height: 1.2; }
+.ls-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 5px; font: 330 12px/1.4 var(--f-cn); color: var(--mute); }
+.ls-meta .tag-block { padding: 2px 5px; background: var(--ink); color: var(--yellow); font: 600 10px/1 var(--f-en); letter-spacing: .12em; }
+.ls-meta .run { color: var(--ink); font-weight: 520; }
+.ls-meta .run::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; background: var(--ink); box-shadow: 0 0 0 1.5px var(--yellow); vertical-align: 1px; }
+.ls-acts { display: flex; gap: 6px; }
+.ls-item.done b { color: var(--mute); }
+.ls-empty { padding: 18px 0; font: 330 13px/1.6 var(--f-cn); color: var(--mute); }
+.ls-warn { margin-top: 14px; padding: 10px 12px; border-left: 4px solid var(--yellow); background: var(--paper-2); font: 330 12px/1.6 var(--f-cn); color: var(--ink-3); box-shadow: -1px 0 0 var(--ink); }

@@ -1,0 +1,17 @@
+/* 设置页里的自定义部件：列表编辑器、数据目录、关于、已保存提示 */
+.le { display: grid; gap: 8px; width: min(620px, 100%); }
+.le-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto auto auto; align-items: center; gap: 8px; }
+.le-row .sel-btn { min-width: 110px; }
+.le-add { grid-template-columns: 28px minmax(0, 1fr) auto; }
+.le-no { font: 600 12px/1 var(--f-en); color: var(--mute-2); font-variant-numeric: tabular-nums; }
+.st-block .row { grid-template-columns: 1fr; }
+.st-block .ctl { justify-content: flex-start; }
+.st-path { padding: 6px 10px; border: 1px solid var(--line); background: var(--paper-2); font: 400 11px/1.5 var(--f-mono); color: var(--ink-3); user-select: text; }
+.st-about { display: flex; gap: 32px; padding: 10px 0 8px; }
+.st-about > svg { flex: none; width: 120px; height: 112px; }
+.st-about h4 { margin: 10px 0 0; font: 630 24px/1 var(--f-cn); letter-spacing: .08em; }
+.st-about p { margin: 10px 0 0; max-width: 34em; font: 330 13px/1.7 var(--f-cn); color: var(--ink-3); }
+.st-about small { display: block; margin-top: 10px; font: 400 11px/1.4 var(--f-mono); color: var(--mute); letter-spacing: .04em; }
+.saved { padding: 5px 8px; border: 1px solid var(--line-2); font: 330 11px/1 var(--f-cn); color: var(--mute); transition: background .2s, color .2s, border-color .2s; }
+.saved.ok { background: var(--ink); border-color: var(--ink); color: #f6f6f3; }
+.st-err { font: 330 12px/1.4 var(--f-cn); color: var(--red); }

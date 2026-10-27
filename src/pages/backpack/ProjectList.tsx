@@ -42,10 +42,10 @@ export function ProjectList({ projects, mainSlots, sideSlots, onNew, onSetMain, 
         <span className="bp-cnt">{!freeMain && !freeSide ? '背包满了：要开新坑，先冷藏或放弃一个' : ''}</span></div>
     </Group>
     <Group cn="冷藏" en="PARKED">
-      {parked.length === 0 ? <p className="bp-empty">没有冷藏的项目。冷藏的项目不进想法池，也不占想法池的上限。</p>
-        : <ul className="bp-list">{parked.map(p => <li key={p.id} className="bp-item">
-          <div><b>{p.name}</b><div className="bp-meta">{p.status === '冷藏' ? '冷藏中' : '没放进背包'} · {p.openCards} 张待做</div></div>
-          <div className="bp-acts"><Button size="sm" disabled={!freeSide && !freeMain} title={!freeSide && !freeMain ? '背包满了' : undefined}
+      {parked.length === 0 ? <p className="ls-empty">没有冷藏的项目。冷藏的项目不进想法池，也不占想法池的上限。</p>
+        : <ul className="ls">{parked.map(p => <li key={p.id} className="ls-item">
+          <div><b>{p.name}</b><div className="ls-meta">{p.status === '冷藏' ? '冷藏中' : '没放进背包'} · {p.openCards} 张待做</div></div>
+          <div className="ls-acts"><Button size="sm" disabled={!freeSide && !freeMain} title={!freeSide && !freeMain ? '背包满了' : undefined}
             onClick={() => onRestore(p.id, at())}>放回背包</Button></div>
         </li>)}</ul>}
     </Group>

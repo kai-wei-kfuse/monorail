@@ -24,18 +24,18 @@ export function IdeaPool({ ideas, limit, onConvert, onDelete }:
       <span className={`bp-cnt${active > limit ? ' over' : ''}`}><b>{active}</b>/ {limit}</span>
     </div>
     {needs.length > 0 && <div className="bp-tools">{needs.map(n => <Chip key={n} label={`需要：${n}`} on={need === n} onClick={() => setNeed(need === n ? null : n)} />)}</div>}
-    {active > limit && <p className="bp-warn">想法池超出上限 {active - limit} 个。下次回顾时会用擂台两两对决，压回到 {limit} 个以内。</p>}
-    {shown.length === 0 ? <p className="bp-empty">{ideas.length ? '没有符合筛选的想法。' : '还没有想法。在快速记录条里写一行，不选类型就是想法。'}</p>
-      : <ul className="bp-list">{shown.map(i => <li key={i.id} className={`bp-item${i.pool === '已转待办' ? ' done' : ''}`}>
+    {active > limit && <p className="ls-warn">想法池超出上限 {active - limit} 个。下次回顾时会用擂台两两对决，压回到 {limit} 个以内。</p>}
+    {shown.length === 0 ? <p className="ls-empty">{ideas.length ? '没有符合筛选的想法。' : '还没有想法。在快速记录条里写一行，不选类型就是想法。'}</p>
+      : <ul className="ls">{shown.map(i => <li key={i.id} className={`ls-item${i.pool === '已转待办' ? ' done' : ''}`}>
         <div>
           <b>{i.text}</b>
-          <div className="bp-meta">
+          <div className="ls-meta">
             {i.tags.map(t => <span key={t}>#{t}</span>)}
             {i.needs && <span>需要：{i.needs}</span>}
             <span>{i.pool === '已转待办' ? '已转待办' : `${days(i.lastTouchedAt)} 天没动`}</span>
           </div>
         </div>
-        <div className="bp-acts">
+        <div className="ls-acts">
           <Button size="sm" tone="ink" disabled={i.pool === '已转待办'} onClick={() => onConvert(i)}>{i.pool === '已转待办' ? '已转' : '转为待办'}</Button>
           <Button size="sm" tone="danger" onClick={() => onDelete(i)}>删除</Button>
         </div>

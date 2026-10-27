@@ -1,0 +1,18 @@
+/* 擂台和冷库捞取：两张想法卡并排 */
+.duel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 18px; margin-top: 22px; }
+.duel-vs { align-self: center; font: 700 expanded 28px/1 var(--f-en); color: var(--mute-2); letter-spacing: -.02em; }
+.idea-card { position: relative; display: grid; grid-template-rows: auto 1fr auto; gap: 14px; min-height: 220px; padding: 22px 22px 18px; text-align: left;
+  border: 1px solid var(--line-2); background: var(--paper-2); box-shadow: 0 3px 0 var(--line-2); transition: border-color .2s, transform .09s, box-shadow .09s; }
+.idea-card:hover { border-color: var(--ink); }
+.idea-card:active { transform: translateY(3px); box-shadow: none; }
+.idea-card .k { display: flex; align-items: center; gap: 8px; }
+.idea-card .k b { padding: 3px 6px; background: var(--ink); color: var(--yellow); font: 600 10px/1 var(--f-en); letter-spacing: .14em; }
+.idea-card h4 { margin: 0; font: 630 22px/1.35 var(--f-cn); letter-spacing: .02em; overflow-wrap: anywhere; }
+.idea-card p { margin: 0; font: 330 12px/1.6 var(--f-cn); color: var(--mute); }
+.idea-card kbd { position: absolute; top: 16px; right: 16px; }
+.idea-card[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #f6f6f3; box-shadow: 0 3px 0 #000; }
+.idea-card[aria-pressed="true"] p { color: #a3a39e; }
+.idea-card[aria-pressed="true"] .k b { background: var(--yellow); color: var(--ink); }
+.duel-foot { display: flex; align-items: center; gap: 12px; margin-top: 18px; font: 330 12px/1.6 var(--f-cn); color: var(--mute); }
+.duel-foot b { font: 600 18px/1 var(--f-en); color: var(--ink); margin: 0 2px; font-variant-numeric: tabular-nums; }
+.duel-foot .sbtn { margin-left: auto; }

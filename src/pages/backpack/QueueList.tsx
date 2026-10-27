@@ -8,13 +8,13 @@ const due = (iso: string) => { const d = new Date(iso); return `${d.getMonth() +
 
 /** 任务队列：按项目分组（主线、支线、散件），每组按队列顺序列出卡。点「编辑」打开 CardEditor，「拆一张卡」新建。 */
 export function QueueList({ groups, onEdit, onAdd }: { groups: QueueGroup[]; onEdit: (card: QueueCard) => void; onAdd: (projectId: string | null) => void }) {
-  if (!groups.length) return <p className="bp-empty">背包里还没有项目，也没有散件。先建一个项目，再给它拆卡。</p>;
+  if (!groups.length) return <p className="ls-empty">背包里还没有项目，也没有散件。先建一个项目，再给它拆卡。</p>;
   return <>{groups.map(g => <Group key={g.projectId ?? 'loose'} cn={`${g.slotLabel} · ${g.name}`} en={`${g.cards.length} CARDS`}>
-    {g.cards.length === 0 ? <p className="bp-empty">这里还没有卡。</p>
-      : <ul className="bp-list">{g.cards.map(c => <li key={c.id} className="bp-item">
+    {g.cards.length === 0 ? <p className="ls-empty">这里还没有卡。</p>
+      : <ul className="ls">{g.cards.map(c => <li key={c.id} className="ls-item">
         <div>
           <b><MarkedText content={c.fields.content} /></b>
-          <div className="bp-meta">
+          <div className="ls-meta">
             {c.fields.blocking && <span className="tag-block">BLOCK</span>}
             {c.status === '进行中' && <span className="run">进行中</span>}
             <span>{c.fields.type === '时间盒卡' ? `时间盒 ${c.fields.timeboxMinutes} 分钟` : '结果卡'}</span>
@@ -24,7 +24,7 @@ export function QueueList({ groups, onEdit, onAdd }: { groups: QueueGroup[]; onE
             {c.progressNote && <span>上次做到：{c.progressNote}</span>}
           </div>
         </div>
-        <div className="bp-acts"><Button size="sm" onClick={() => onEdit(c)}>编辑</Button></div>
+        <div className="ls-acts"><Button size="sm" onClick={() => onEdit(c)}>编辑</Button></div>
       </li>)}</ul>}
     <div className="bp-tools"><Button size="sm" onClick={() => onAdd(g.projectId)}>拆一张卡</Button></div>
   </Group>)}</>;

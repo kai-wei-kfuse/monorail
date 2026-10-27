@@ -37,7 +37,7 @@ export function BackpackPreview({ tab: initial, overlay }: { tab: string; overla
   const [tab, setTab] = useState<BackpackTab>((['projects', 'queue', 'ideas'].includes(initial) ? initial : 'projects') as BackpackTab);
   useEffect(() => {
     // 用点击模拟打开对话框，走的是页面里真实的打开路径
-    const pick = { project: '.bp-tools .sbtn.ink', card: '.bp-acts .sbtn', idea: '.bp-acts .sbtn.ink', abandon: '.slot-acts .sbtn.danger' }[overlay ?? ''];
+    const pick = { project: '.bp-tools .sbtn.ink', card: '.ls-acts .sbtn', idea: '.ls-acts .sbtn.ink', abandon: '.slot-acts .sbtn.danger' }[overlay ?? ''];
     if (pick) setTimeout(() => document.querySelector<HTMLButtonElement>(pick)?.click(), 50);
   }, [overlay]);
   const title = <TitleBar name="像素记录" tabs={TABS} active="backpack" onTab={() => {}}>
