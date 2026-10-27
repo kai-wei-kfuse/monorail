@@ -14,3 +14,9 @@
 .rv-bet { margin-top: 22px; padding: 20px 22px; border: 1px solid var(--ink); background: var(--paper-2); box-shadow: inset 0 3px 0 var(--yellow); }
 .rv-bet h4 { margin: 8px 0 0; font: 630 24px/1.3 var(--f-cn); }
 .rv-bet p { margin: 8px 0 0; font: 330 13px/1.7 var(--f-cn); color: var(--ink-3); }
+
+/* 回顾页的空状态：本期已完成 / 正在进入 */
+.rv-empty { height: 100%; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; background: var(--paper); border: 1px solid var(--line); }
+.rv-empty svg { width: 56px; height: 52px; }
+.rv-empty h3 { margin: 0; font: 630 24px/1.3 var(--f-cn); letter-spacing: .04em; }
+.rv-empty p { margin: 0; font: 330 13px/1.6 var(--f-cn); color: var(--mute); }
