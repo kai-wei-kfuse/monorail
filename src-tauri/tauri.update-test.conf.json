@@ -5,5 +5,5 @@
     { "label": "main", "title": "单轨更新验收", "width": 1000, "height": 720, "minWidth": 960, "minHeight": 600, "decorations": false },
     { "label": "quickbar", "title": "单轨更新验收 · 快速记录", "width": 760, "height": 120, "visible": false, "alwaysOnTop": true, "decorations": false, "dragDropEnabled": false, "skipTaskbar": true }
   ] },
-  "plugins": { "privateUpdater": { "releaseTag": "update-test-v0.1.2" } }
+  "plugins": { "privateUpdater": { "releaseTag": "update-test-v0.1.3" } }
 }

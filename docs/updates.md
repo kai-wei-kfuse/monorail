@@ -46,8 +46,10 @@ npm run release:publish -- --tag v0.1.3 --notes docs/releases/0.1.3.md --install
 
 ## 真实原地更新验收
 
-使用 `src-tauri/tauri.update-test.conf.json` 构建独立产品「单轨更新验收」，identifier 为 `local.pixelrecord.update-test`。该配置指向私有 prerelease `update-test-v0.1.2`；正式应用读取最新正式 Release。两者公钥相同，原生下载、验签、安装与前端业务代码相同，测试构建不启用 verify feature。
+使用 `src-tauri/tauri.update-test.conf.json` 构建独立产品「单轨更新验收」，identifier 为 `local.pixelrecord.update-test`。该配置指向私有 prerelease `update-test-v0.1.3`；正式应用读取最新正式 Release。两者公钥相同，原生下载、验签、安装与前端业务代码相同，测试构建不启用 verify feature。
 
-安装 0.1.1 到独立验收路径，并选择独立测试数据目录，保留用户正在运行的旧版。发布已签名的 0.1.2 验收资产后，在已安装的 0.1.1 界面点击检查、下载和安装。记录安装路径、exe 版本、安装前后数据快照与持久化目录授权，确认真实覆盖。验收版本不会成为正式 latest。
+安装 0.1.1 到独立验收路径，并选择独立测试数据目录，保留用户正在运行的旧版。发布已签名的 0.1.3 验收资产后，在已安装的 0.1.1 界面点击检查、下载和安装。记录安装路径、exe 版本、安装前后数据快照与持久化目录授权，确认真实覆盖。验收版本不会成为正式 latest。
+
+0.1.2 的真实检查暴露额外 reqwest 客户端未配置 TLS provider 的原生异常。当前只由 gh 读取 Release 元数据，官方 updater 在创建自身 HTTP 客户端前配置加密提供器。gh 子进程不继承 GH_DEBUG，避免把 HTTP 认证头带入界面错误。旧故障验收资产保留，不覆盖已有版本。
 
 结果和日志：`evidence/private-updater/`；最终结论写入 `修改日志.md`。旧产品名「像素记录」迁移到「单轨」的安装记录兼容性不属于此次同产品升级结论。

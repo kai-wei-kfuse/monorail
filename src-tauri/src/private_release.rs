@@ -1,4 +1,5 @@
-use reqwest::{header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION}, Url};
+use http::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION};
+use url::Url;
 use serde::Deserialize;
 use std::{os::windows::process::CommandExt, process::Command};
 use tauri_plugin_updater::{Update, UpdaterExt};
@@ -38,15 +39,20 @@ fn validate_asset(url: &Url, repository: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn credentials() -> Result<HeaderMap, String> {
-    // Private developer builds reuse the user's gh login. CREATE_NO_WINDOW avoids a console popup.
-    let output = Command::new("gh").args(["auth", "token", "--hostname", "github.com"])
+fn github(args: &[&str]) -> Result<Vec<u8>, String> {
+    // Reuse gh's private-repository transport; the official updater owns its own TLS initialization.
+    // Do not inherit HTTP debug logging into errors that may reach the UI with authentication headers.
+    let output = Command::new("gh").args(args).env_remove("GH_DEBUG")
         .creation_flags(0x08000000).output()
         .map_err(|error| format!("私有更新需要 GitHub CLI：{error}。请安装 gh 并执行 gh auth login"))?;
     if !output.status.success() {
-        return Err("无法读取 GitHub 登录，请执行 gh auth login 并确认账号可访问私有仓库".into());
+        return Err(format!("GitHub CLI 请求失败：{}", String::from_utf8_lossy(&output.stderr).trim()));
     }
-    let token = String::from_utf8(output.stdout).map_err(|_| "GitHub 登录凭据编码无效")?;
+    Ok(output.stdout)
+}
+
+fn credentials() -> Result<HeaderMap, String> {
+    let token = String::from_utf8(github(&["auth", "token", "--hostname", "github.com"])?).map_err(|_| "GitHub 登录凭据编码无效")?;
     let token = token.trim();
     if token.is_empty() { return Err("GitHub CLI 返回了空凭据，请重新登录".into()); }
     let mut authorization = HeaderValue::from_str(&format!("Bearer {token}"))
@@ -78,15 +84,10 @@ pub async fn check(app: &tauri::AppHandle, progress: impl Fn(Step) -> Result<(),
     let headers = tauri::async_runtime::spawn_blocking(credentials).await
         .map_err(|error| error.to_string())??;
     progress(Step::Github)?;
-    let response = reqwest::Client::builder().user_agent("Monorail-Updater")
-        .default_headers(headers.clone()).build().map_err(|error| error.to_string())?
-        .get(url).header(ACCEPT, "application/vnd.github+json").send().await
-        .map_err(|error| format!("连接 GitHub 失败：{error}"))?;
-    if !response.status().is_success() {
-        return Err(format!("读取 GitHub 发布失败（HTTP {}）：请确认仓库已有发布版本，且当前账号有读取权限", response.status()));
-    }
+    let response = tauri::async_runtime::spawn_blocking(move || github(&["api", "--hostname", "github.com", url.as_str()]))
+        .await.map_err(|error| error.to_string())??;
     progress(Step::Release)?;
-    let release: Release = response.json().await.map_err(|error| format!("Release 数据无效：{error}"))?;
+    let release: Release = serde_json::from_slice(&response).map_err(|error| format!("Release 数据无效：{error}"))?;
     let manifest = release.assets.iter().find(|asset| asset.name == "latest.json")
         .ok_or("该 Release 缺少 latest.json，发布尚未完整")?;
     validate_asset(&manifest.url, &config.repository)?;

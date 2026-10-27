@@ -35,6 +35,7 @@
 
 ## 验证与协作
 - `npm run check`：tsc → eslint → vitest；`npm test` 对整个测试进程限制 60 秒。
+- 测试期限仅由 test-runner.mjs 控制；Vitest 不另加单项 5 秒默认期限，防止并发负载误报。
 - `npm run tauri -- build --debug --no-bundle`：普通 Windows 构建。
 - 使用已安装 Rust 1.95.0，不改全局默认；npm/Cargo 锁文件必须提交。
 - 验证入口只在 Cargo verify feature/Vite verify mode；不进生产包。
