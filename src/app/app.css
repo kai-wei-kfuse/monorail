@@ -1,5 +1,6 @@
 /* 外壳：首次使用、页面切换、小窗宿主、标题栏里的小窗按钮 */
-.first { position: relative; height: 100%; display: grid; place-items: center; overflow: hidden; background: var(--paper); }
+.first-frame { height: 100%; display: grid; grid-template-rows: var(--bar) minmax(0, 1fr); background: var(--win); }
+.first { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; background: var(--paper); }
 .first-in { position: relative; display: grid; justify-items: start; gap: 16px; max-width: 560px; padding: 40px 44px; background: var(--paper-2); border: 1px solid var(--line-2); box-shadow: inset 0 3px 0 var(--yellow); }
 .first-in h1 { margin: 0; font: 630 30px/1.25 var(--f-cn); letter-spacing: .04em; }
 .first-in p { margin: 0; font: 330 14px/1.7 var(--f-cn); color: var(--ink-3); }

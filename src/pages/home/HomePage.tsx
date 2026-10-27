@@ -39,7 +39,8 @@ export function cardView(home: HomeSlice, now: number): TaskCardView | null {
   if (!c) return null;
   const elapsedMs = home.closedEffectiveMs + (home.currentSegStartedAt ? now - Date.parse(home.currentSegStartedAt) : 0);
   const away = home.awayActivity !== null;
-  return { slotNo: c.slotNo, slotOf: c.slotOf, project: c.project, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
+  // 散件不占背包格，不显示「/03」
+  return { slotNo: c.slotNo, slotOf: c.slotNo === '散' ? undefined : c.slotOf, project: c.project, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
     progressNote: c.progressNote || undefined, elapsedMs, awayActivity: home.awayActivity ?? undefined,
     progress: cardProgress(elapsedMs, c.goalMinutes, c.status === '进行中' && !away, away) };
 }

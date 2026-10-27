@@ -82,7 +82,12 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const stage = useRef<HTMLDivElement>(null);
-  const info = (title: string, text: string) => setToasts(t => [...t, { id: crypto.randomUUID(), en: 'NOTE', title, text }]);
+  // 说明性通知 6 秒后自己消失；出错通知要用户手动关
+  const info = (title: string, text: string) => {
+    const id = crypto.randomUUID();
+    setToasts(t => [...t, { id, en: 'NOTE', title, text }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000);
+  };
 
   const acts: QuickAct[] = useMemo(() => settings.lists.quickActivities.map(a => ({ id: a.id, name: a.name, icon: iconFor(a.name) })), [settings]);
   const activityOptions = settings.lists.quickActivities.map(a => ({ id: a.id, name: a.name }));
