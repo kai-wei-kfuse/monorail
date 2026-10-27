@@ -10,10 +10,10 @@
 - lead 已提交 5e908f1（sleep/offline 释放卡）及 1c368fc（bootstrap 投影、scheduler、长提醒）；不要覆盖。
 - 本次 npm run check：21 文件、92 测试通过，tsc/eslint 通过；尚未针对新增 service 补测试，尚未普通构建/冒烟。
 ## 工作区未提交
-- 本人 service WIP 已按要求提交；本交接文件新建，另行提交。
+- 本人 service WIP 已按要求提交；交接文件暂存期间被并发提交 81b4755 收入，此处更新交接时的最终状态。
 - evidence/journal-real.json：早先验证生成的修改，不属于本次，禁止顺手暂存。
-- src/app/dev/BackpackPreview.tsx、src/pages/backpack/{IdeaPool,ProjectList,QueueList}.tsx、backpack.css：Pro B 正在做视觉，勿改/暂存。
-- src/ui/layout/layout.css、src/pages/{review,settings}/、src/widgets/{Arena,ColdPick}.tsx、review.css：Pro B 的工作区，勿改/暂存。
+- Pro B 的 backpack/review/settings/widgets/UI 变更已于交接期间提交 81b4755；不要覆盖这些文件。
+- 最终 git status 只剩 evidence/journal-real.json（以及本交接状态更新，单独提交后消失）。
 ## M1 剩余（WIP 是起点，不代表验收）
 - cardService：已写 start/complete/checkComplete/shrink/redraw/pass/leaveTo；补 A2 插入中动作、早完成点击时刻、续卡、A6 链恢复测试与边界核验。
 - dealService：已写 refresh(ctx,at)/refreshInTx(tx)/stopInTx(tx)；补新阻塞顶替待做且不计拒绝、运行中不打断、跨日/轮次/权重/空引导测试。
