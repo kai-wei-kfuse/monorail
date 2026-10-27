@@ -26,7 +26,12 @@ const staged = new WeakMap<Transaction, { changes: Change[]; writes: Transaction
 /** All timelog changes of one transaction become one write per day file. */
 async function stage(tx: Transaction, changes: Change[]) {
   const entry = staged.get(tx) ?? { changes: [], writes: [] };
-  entry.changes.push(...changes);
+  // A segment opened earlier in this transaction and closed later is written once, closed:
+  // the repository only sees it as a new row, never as a history mutation.
+  for (const change of changes) {
+    const same = entry.changes.findIndex(c => c.day === change.day && c.segment.id === change.segment.id && c.segment.started_at === change.segment.started_at);
+    if (same >= 0) entry.changes[same] = change; else entry.changes.push(change);
+  }
   tx.writes = tx.writes.filter(w => !entry.writes.includes(w));
   entry.writes = await tx.repos.times.writes(entry.changes);
   tx.writes.push(...entry.writes);

@@ -1,7 +1,10 @@
 import { activityDay } from '../domain/timeline/day';
 import type { LifecycleSource, PowerEvent } from '../platform/lifecycle';
 import type { Ctx } from './commit';
-import { settleOffline } from './timerService';
+import { run } from './commit';
+import { refreshInTx } from './dealService';
+import { settleOfflineInTx } from './timerService';
+import type { Range } from './timerService';
 
 export interface SchedulerDeps {
   lifecycle: LifecycleSource;
@@ -10,6 +13,13 @@ export interface SchedulerDeps {
   report(error: unknown): void;
 }
 const iso = (ms: number) => new Date(ms).toISOString();
+
+/** Settling may release the card in progress, so the home card is re-dealt in the same transaction. */
+const settle = (ctx: Ctx, gap: Range) => run(ctx, async tx => {
+  const segment = await settleOfflineInTx(tx, gap);
+  if (segment) refreshInTx(tx);
+  return segment;
+}, gap.end);
 
 /** Milliseconds from `now` until the next local day boundary. */
 export function untilBoundary(now: string, boundaryHour: number): number {
@@ -38,12 +48,12 @@ export async function startScheduler(ctx: Ctx, deps: SchedulerDeps): Promise<() 
   };
   const onPower = (event: PowerEvent) => {
     if (event.kind !== 'resume' || event.suspended_at === null || event.resumed_at === null) return;
-    void settleOffline(ctx, { start: iso(event.suspended_at), end: iso(event.resumed_at) })
+    void settle(ctx, { start: iso(event.suspended_at), end: iso(event.resumed_at) })
       .then(checkDay).catch(deps.report).finally(arm);
   };
 
   const life = await deps.lifecycle.read();
-  if (life.previous_last_alive !== null) await settleOffline(ctx, { start: iso(life.previous_last_alive), end: iso(life.startup_at) });
+  if (life.previous_last_alive !== null) await settle(ctx, { start: iso(life.previous_last_alive), end: iso(life.startup_at) });
   const off = await deps.lifecycle.onPower(onPower);
   arm();
   return () => { clearTimeout(timer); off(); };

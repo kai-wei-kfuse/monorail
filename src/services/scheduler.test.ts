@@ -5,6 +5,8 @@ import { defaults } from '../shared/settings';
 import type { PowerEvent } from '../platform/lifecycle';
 import { createContext } from './commit';
 import { startScheduler, untilBoundary } from './scheduler';
+import { saveRecord, reconcile } from './recordService';
+import { start } from './cardService';
 
 function setup(now: () => string) {
   return createContext({ repos: createRepos(new MemoryFs()), settings: structuredClone(defaults), id: () => crypto.randomUUID(), now,
@@ -31,6 +33,20 @@ describe('scheduler', () => {
     expect(await offline(ctx)).toHaveLength(1);
     power({ kind: 'resume', at: 0, simulated: true, suspended_at: Date.parse('2026-10-27T09:00:00Z'), resumed_at: Date.parse('2026-10-27T10:00:00Z') });
     await vi.waitFor(async () => expect(await offline(ctx)).toHaveLength(2));
+    stop();
+  });
+  it('a startup gap releases the running card and re-deals it as 待开始', async () => {
+    const ctx = setup(() => '2026-10-27T12:00:00.000Z'), id = crypto.randomUUID();
+    await saveRecord(ctx, { id, text: '学 Python', kind: '待办', created_at: '2026-10-27T07:00:00Z', due_at: null, blocking: false, project_id: null, card_id: null, tags: [], attachments: [] });
+    await reconcile(ctx);
+    await start(ctx, `card-${id}`, '2026-10-27T07:30:00Z');
+    const stop = await startScheduler(ctx, {
+      lifecycle: { read: async () => ({ last_alive: 0, previous_last_alive: Date.parse('2026-10-27T08:00:00Z'), startup_at: Date.parse('2026-10-27T11:00:00Z'), events: [] }), onPower: async () => () => {} },
+      onDayChanged: async () => {}, report: e => { throw e; },
+    });
+    const state = await ctx.repos.state.read();
+    expect((await ctx.repos.cards.get(`card-${id}`))?.value.status).toBe('待做');
+    expect(state).toMatchObject({ home_mode: 'task', current_card: `card-${id}` });
     stop();
   });
   it('reports a day change once when the boundary has passed', async () => {

@@ -4,10 +4,10 @@ import { createRepos } from '../data/repos';
 import { defaults } from '../shared/settings';
 import { effective } from '../domain/timeline/effective';
 import type { Segment } from '../domain/timeline/segment';
-import { createContext } from './commit';
+import { createContext, run } from './commit';
 import { saveRecord, reconcile } from './recordService';
 import { start } from './cardService';
-import { insert, resume, backfillRange, backfillSwitch, settleOffline, answerOffline, sleep, wake } from './timerService';
+import { insertInTx, resumeInTx, insert, resume, backfillRange, backfillSwitch, settleOffline, answerOffline, sleep, wake } from './timerService';
 
 function fixture() {
   const settings = structuredClone(defaults);
@@ -105,6 +105,16 @@ describe('timerService', () => {
     const state = await ctx.repos.state.read();
     expect(state).toMatchObject({ current_card: null, stopped_day: '2026-10-27' });
     expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '睡觉', category: '睡眠' });
+  });
+  it('a segment opened and closed in one transaction is written once', async () => {
+    const ctx = fixture(), card = await startedCard(ctx, '2026-10-27T10:00:00Z');
+    await run(ctx, async tx => {
+      await insertInTx(tx, '2026-10-27T10:10:00Z', { name: '厕所', category: '生活' });
+      await resumeInTx(tx, '2026-10-27T10:10:00Z');
+    }, '2026-10-27T10:10:00Z');
+    const rows = await all(ctx);
+    expect(rows.filter(s => s.activity === '厕所')).toHaveLength(1);
+    expect(rows.find(s => s.ended_at === null)?.card_id).toBe(card);
   });
   it('wake switches to idle', async () => {
     const ctx = fixture();
