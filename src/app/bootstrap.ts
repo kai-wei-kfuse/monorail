@@ -9,8 +9,9 @@ import { nativeReminders } from '../platform/reminders';
 import { onQuickbarReady, pushQuickbarContext } from '../platform/quickbarContext';
 import { inBackpack } from '../domain/project/project';
 import type { ReminderPlan } from '../domain/reminders';
-import { createContext } from '../services/commit';
-import * as dealService from '../services/dealService';
+import { createContext, run } from '../services/commit';
+import { refreshInTx } from '../services/dealService';
+import { expireInTx } from '../services/ideaService';
 import type { Ctx } from '../services/commit';
 import { reconcile } from '../services/recordService';
 import { startScheduler } from '../services/scheduler';
@@ -76,7 +77,10 @@ export async function bootstrap(root: string) {
     await reconcile(ctx);
     booting = false;
     if (dirty) await reconcile(ctx);
-    offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: () => dealService.refresh(ctx, ctx.now()), report }));
+    // A new activity day archives stale ideas and re-deals the home card in one transaction; also once at startup.
+    const newDay = () => run(ctx, async tx => { expireInTx(tx); refreshInTx(tx); }, ctx.now());
+    await newDay();
+    offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: newDay, report }));
   } catch (error) { dispose(); throw error; }
   return { ctx, fs, dispose };
 }

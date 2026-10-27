@@ -4,6 +4,7 @@ import { emit } from '@tauri-apps/api/event';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { encode } from '../data/frontmatter';
 import { recordSchema } from '../data/schemas';
+import { createRecord } from '../domain/record/record';
 import type { RecordEntry } from '../domain/record/record';
 import { QuickBar } from '../pages/quickbar/QuickBar';
 import type { Draft } from '../pages/quickbar/QuickBar';
@@ -31,12 +32,11 @@ async function save(draft: Draft) {
   await persistRecord(toRecord(draft, id, paths));
 }
 
-/** 记录条的草稿 → 记录。阻塞、期限只对待办有意义；想法的「需要的资源」作为 needs 字段保存。 */
-function toRecord(d: Draft, id: string, attachments: string[]): RecordEntry & { needs?: string } {
+/** 记录条的草稿 → 记录。阻塞、期限只对待办有意义；tags 和想法的生命周期字段由 createRecord 统一生成。 */
+function toRecord(d: Draft, id: string, attachments: string[]): RecordEntry {
   const todo = d.kind === '待办';
-  // TODO(domain): #标签 的提取应由 domain/record 提供（架构 §3.1），落地后改为调用它。
-  return { id, text: d.text, kind: d.kind, created_at: d.at, due_at: todo ? d.dueAt : null, blocking: todo && d.blocking,
-    project_id: d.projectId, card_id: null, tags: [], attachments, ...(d.kind === '想法' && d.needs.trim() ? { needs: d.needs.trim() } : {}) };
+  return createRecord({ id, text: d.text, kind: d.kind, created_at: d.at, due_at: todo ? d.dueAt : null, blocking: todo && d.blocking,
+    project_id: d.projectId, card_id: null, tags: [], attachments, needs: d.kind === '想法' ? d.needs : null });
 }
 
 export function QuickBarApp() {
