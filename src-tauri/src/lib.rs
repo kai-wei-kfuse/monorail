@@ -1,3 +1,4 @@
+mod attachments;
 mod power;
 mod reminders;
 mod tray;
@@ -14,7 +15,7 @@ fn verification_enabled() -> bool { true }
 
 macro_rules! handlers {
     ($($extra:path),*) => {
-        tauri::generate_handler![read_config, save_config, save_quick_record, evidence,
+        tauri::generate_handler![read_config, save_config, save_quick_record, save_attachment, evidence,
             power::read_lifecycle, reminders::set_reminders, windows::show_quickbar,
             windows::dialog_active, windows::shortcut_error, $($extra),*]
     };
@@ -72,6 +73,15 @@ fn save_quick_record(app: tauri::AppHandle, id: String, text: String) -> Result<
     file.write_all(text.as_bytes())
         .and_then(|_| file.sync_all())
         .map_err(|e| e.to_string())
+}
+
+/// Quick bar's only other write: attachments under attachments/<record>/, written before the record.
+#[tauri::command]
+fn save_attachment(app: tauri::AppHandle, record: String, name: String, bytes: Vec<u8>) -> Result<String, String> {
+    let config = read_config(app)?.ok_or("No data directory")?;
+    let value: serde_json::Value = serde_json::from_str(&config).map_err(|e| e.to_string())?;
+    let root = PathBuf::from(value["root"].as_str().ok_or("Invalid config")?);
+    attachments::save(&root, &record, &name, &bytes)
 }
 
 #[tauri::command]

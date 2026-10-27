@@ -6,6 +6,8 @@ import type { Repositories } from '../data/repos';
 import { effective } from '../domain/timeline/effective';
 import { nativeLifecycle } from '../platform/lifecycle';
 import { nativeReminders } from '../platform/reminders';
+import { onQuickbarReady, pushQuickbarContext } from '../platform/quickbarContext';
+import { inBackpack } from '../domain/project/project';
 import type { ReminderPlan } from '../domain/reminders';
 import { createContext } from '../services/commit';
 import * as dealService from '../services/dealService';
@@ -46,12 +48,17 @@ export async function bootstrap(root: string) {
   const repos = createRepos(fs);
   const id = () => crypto.randomUUID(), now = () => new Date().toISOString();
   const restored = await restoreRepositories(repos, id, now);
+  const report = (error: unknown) => appStore.setState({ error: String(error) });
+  const quickbarContext = async () => pushQuickbarContext({
+    projects: (await repos.projects.list()).map(e => e.value).filter(inBackpack).map(p => ({ id: p.id, name: p.name })),
+    accent: ctx.settings.accent,
+  });
   const ctx = createContext({
     repos, settings: restored.settings, reminders: nativeReminders, id, now,
-    publish: publishProjection,
+    publish: value => { publishProjection(value); void quickbarContext().catch(report); },
     log: message => invoke('evidence', { message }),
   });
-  const report = (error: unknown) => appStore.setState({ error: String(error) });
+
   // Register before the initial reconcile; its full record scan covers earlier notifications.
   let booting = true;
   let dirty = false;
@@ -61,7 +68,8 @@ export async function bootstrap(root: string) {
     void reconcile(ctx).catch(report);
   };
   const offs = [await listen('data-changed', refresh), await listen('main-visible', refresh),
-    await listen<ReminderPlan>('reminder-fired', event => notifyLongActivity(ctx, event.payload))];
+    await listen<ReminderPlan>('reminder-fired', event => notifyLongActivity(ctx, event.payload)),
+    await onQuickbarReady(() => void quickbarContext().catch(report))];
   const dispose = () => offs.forEach(off => off());
   try {
     await ctx.log(`journal-recovered:${restored.recovered}`);

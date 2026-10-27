@@ -4,6 +4,7 @@ fn main() {
             "read_config",
             "save_config",
             "save_quick_record",
+            "save_attachment",
             "evidence",
             "read_lifecycle",
             "simulate_power",

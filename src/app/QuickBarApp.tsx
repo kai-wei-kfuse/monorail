@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
@@ -7,6 +7,9 @@ import { recordSchema } from '../data/schemas';
 import type { RecordEntry } from '../domain/record/record';
 import { QuickBar } from '../pages/quickbar/QuickBar';
 import type { Draft } from '../pages/quickbar/QuickBar';
+import { saveAttachment } from '../platform/attachments';
+import { subscribeQuickbarContext } from '../platform/quickbarContext';
+import type { QuickbarContext } from '../platform/quickbarContext';
 import '../ui/styles/base.css';
 
 /** 记录条只能经窄命令 save_quick_record 新建 records/<uuid>.md（架构 §3.2），写完发 data-changed，主窗口负责 reconcile。 */
@@ -17,13 +20,23 @@ async function persistRecord(input: RecordEntry) {
   await emit('data-changed', { recordId: value.id });
 }
 
+/** Attachments first, then the record (#51): a crash in between leaves orphan files, never a record pointing at nothing. */
+async function save(draft: Draft) {
+  const id = crypto.randomUUID();
+  const paths: string[] = [];
+  for (const item of draft.attachments) {
+    if (!item.blob) throw new Error(`读不到附件内容：${item.name}`);
+    paths.push(await saveAttachment(id, item.name, item.blob));
+  }
+  await persistRecord(toRecord(draft, id, paths));
+}
+
 /** 记录条的草稿 → 记录。阻塞、期限只对待办有意义；想法的「需要的资源」作为 needs 字段保存。 */
-function toRecord(d: Draft): RecordEntry & { needs?: string } {
-  if (d.attachments.length) throw new Error('附件下一步才支持，先把附件去掉再保存');
+function toRecord(d: Draft, id: string, attachments: string[]): RecordEntry & { needs?: string } {
   const todo = d.kind === '待办';
   // TODO(domain): #标签 的提取应由 domain/record 提供（架构 §3.1），落地后改为调用它。
-  return { id: crypto.randomUUID(), text: d.text, kind: d.kind, created_at: d.at, due_at: todo ? d.dueAt : null, blocking: todo && d.blocking,
-    project_id: d.projectId, card_id: null, tags: [], attachments: [], ...(d.kind === '想法' && d.needs.trim() ? { needs: d.needs.trim() } : {}) };
+  return { id, text: d.text, kind: d.kind, created_at: d.at, due_at: todo ? d.dueAt : null, blocking: todo && d.blocking,
+    project_id: d.projectId, card_id: null, tags: [], attachments, ...(d.kind === '想法' && d.needs.trim() ? { needs: d.needs.trim() } : {}) };
 }
 
 export function QuickBarApp() {
@@ -39,7 +52,13 @@ export function QuickBarApp() {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  // Projects and accent come from the main window; the quick bar has no read access to the data folder.
+  const [context, setContext] = useState<QuickbarContext>({ projects: [], accent: '' });
+  useEffect(() => {
+    const off = subscribeQuickbarContext(setContext);
+    return () => { void off.then(fn => fn()); };
+  }, []);
+  useEffect(() => { if (context.accent) document.documentElement.style.setProperty('--yellow', context.accent); }, [context.accent]);
   const hide = () => void getCurrentWindow().hide();
-  // 项目列表要读 projects/，记录条现在只有窄写命令、没有读权限，先不提供；M2 接线时补
-  return <div ref={box}><QuickBar projects={[]} onHide={hide} onSave={async draft => { await persistRecord(toRecord(draft)); hide(); }} /></div>;
+  return <div ref={box}><QuickBar projects={context.projects} onHide={hide} onSave={async draft => { await save(draft); hide(); }} /></div>;
 }

@@ -8,6 +8,7 @@
     "core:window:allow-hide",
     "allow-save-quick-record",
     "allow-evidence",
-    "core:window:allow-set-size"
+    "core:window:allow-set-size",
+    "allow-save-attachment"
   ]
 }
