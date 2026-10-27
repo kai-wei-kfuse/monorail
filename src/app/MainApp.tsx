@@ -23,6 +23,9 @@ import { createActions } from './actions';
 import type { Actions } from './actions';
 import { readyRoutes } from './routes';
 import { BackpackScreen } from './BackpackScreen';
+import { SettingsScreen } from './SettingsScreen';
+import { SavedBadge } from '../pages/settings/SettingsPage';
+import type { SettingsErrors } from '../services/settingsService';
 import type { Route } from './routes';
 import { FirstRun } from './FirstRun';
 import { StatusBlock } from './shell/StatusBlock';
@@ -39,7 +42,7 @@ const ICONS: [RegExp, IconName][] = [[/厕所|洗手间/, 'wc'], [/快递|取件
 const iconFor = (name: string): IconName => ICONS.find(([re]) => re.test(name))?.[1] ?? 'break';
 const now = () => new Date().toISOString();
 
-type Phase = { kind: 'loading' } | { kind: 'first'; error: string | null } | { kind: 'ready'; ctx: Ctx; actions: Actions };
+type Phase = { kind: 'loading' } | { kind: 'first'; error: string | null } | { kind: 'ready'; ctx: Ctx; actions: Actions; root: string; platformErrors: SettingsErrors };
 
 /** 主窗口外壳：标题栏 + 页面区 + 底栏；首次使用；小窗；提示。页面只登记在 routes.ts。 */
 export function MainApp() {
@@ -53,13 +56,14 @@ export function MainApp() {
       const result = await bootstrap(root);
       setMotionLevel(result.ctx.settings.motion);
       document.documentElement.style.setProperty('--yellow', result.ctx.settings.accent);
-      setPhase({ kind: 'ready', ctx: result.ctx, actions: createActions(result.ctx, report) });
+      setPhase({ kind: 'ready', ctx: result.ctx, actions: createActions(result.ctx, report), root, platformErrors: result.platformErrors });
+      const failed = Object.values(result.platformErrors);
+      if (failed.length) report(`有 ${failed.length} 项设置没有生效，详见设置页：${failed.join('；')}`);
       await invoke('evidence', { message: `connected:${root}:cards=${appStore.getState().cards.length}` });
       if (import.meta.env.VITE_VERIFY === 'true') await (await import('../verification/main')).install(result.ctx, result.fs);
     } catch (error) { setPhase({ kind: 'first', error: `打不开这个数据目录：${error instanceof Error ? error.message : String(error)}` }); }
   }
   useEffect(() => {
-    void invoke<string | null>('shortcut_error').then(e => { if (e) report(e); }).catch(report);
     void invoke<string | null>('read_config')
       .then(value => (value ? connect((JSON.parse(value) as { root: string }).root) : setPhase({ kind: 'first', error: null })))
       .catch(error => setPhase({ kind: 'first', error: String(error) }));
@@ -69,12 +73,17 @@ export function MainApp() {
 
   if (phase.kind === 'loading') return <div className="loading">正在打开数据目录…</div>;
   if (phase.kind === 'first') return <FirstRun error={phase.error} onReady={root => { setPhase({ kind: 'loading' }); void connect(root); }} />;
-  return <Shell ctx={phase.ctx} actions={phase.actions} errors={errors} onErrorClose={id => setErrors(list => list.filter(e => e.id !== id))} />;
+  return <Shell ctx={phase.ctx} actions={phase.actions} root={phase.root} platformErrors={phase.platformErrors} report={report}
+    errors={errors} onErrorClose={id => setErrors(list => list.filter(e => e.id !== id))} />;
 }
 
-function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Actions; errors: ToastItem[]; onErrorClose: (id: string) => void }) {
+function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClose }: { ctx: Ctx; actions: Actions; root: string;
+  platformErrors: SettingsErrors; report: (error: unknown) => void; errors: ToastItem[]; onErrorClose: (id: string) => void }) {
   const home = useStore(appStore, s => s.home), notices = useStore(appStore, s => s.notices);
-  const settings: Settings = ctx.settings;
+  const settings: Settings = useStore(appStore, s => (s.ready ? s.settings : ctx.settings));
+  const [saves, setSaves] = useState(0);
+  // Appearance settings apply as soon as they are saved.
+  useEffect(() => { setMotionLevel(settings.motion); document.documentElement.style.setProperty('--yellow', settings.accent); }, [settings.motion, settings.accent]);
   const nowMs = useNow();
   const [page, setPage] = useState<Route['id']>('home');
   const [mini, setMiniState] = useState(false), [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
@@ -164,7 +173,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
   const statusBar = <StatusBar
     left={<QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)} />}
-    right={<BaselineMarks main={home.baseline.main} side={home.baseline.side} />} />;
+    right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;
 
   return <>
     <Frame titleBar={titleBar} statusBar={statusBar}>
@@ -173,6 +182,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
           onGuide={onGuide} onOpenReview={() => info('每周回顾还不能用', '回顾页还在做，做好后从这里进入。')} />}
+        {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} />}
         {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} />}
       </div>
     </Frame>

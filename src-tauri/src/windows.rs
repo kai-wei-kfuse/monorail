@@ -3,7 +3,6 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager, WindowEvent};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 static DIALOG: AtomicBool = AtomicBool::new(false);
-static SHORTCUT_ERROR: Mutex<Option<String>> = Mutex::new(None);
 static SHORTCUTS: Mutex<Vec<(String, Shortcut)>> = Mutex::new(Vec::new());
 
 #[tauri::command]
@@ -44,11 +43,6 @@ pub fn set_shortcut(app: tauri::AppHandle, key: String, shortcut: String) -> Res
     bindings.retain(|(k, _)| k != &key);
     bindings.push((key, parsed));
     Ok(())
-}
-
-#[tauri::command]
-pub fn shortcut_error() -> Result<Option<String>, String> {
-    Ok(SHORTCUT_ERROR.lock().map_err(|e| e.to_string())?.clone())
 }
 
 #[tauri::command]

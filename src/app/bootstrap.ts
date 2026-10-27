@@ -7,6 +7,8 @@ import { effective } from '../domain/timeline/effective';
 import { nativeLifecycle } from '../platform/lifecycle';
 import { nativeReminders } from '../platform/reminders';
 import { onQuickbarReady, pushQuickbarContext } from '../platform/quickbarContext';
+import { nativeSettingsPlatform } from '../platform/settings';
+import { applyPlatform } from '../services/settingsService';
 import { inBackpack } from '../domain/project/project';
 import type { ReminderPlan } from '../domain/reminders';
 import { createContext, run } from '../services/commit';
@@ -55,7 +57,7 @@ export async function bootstrap(root: string) {
     accent: ctx.settings.accent,
   });
   const ctx = createContext({
-    repos, settings: restored.settings, reminders: nativeReminders, id, now,
+    repos, settings: restored.settings, reminders: nativeReminders, settingsPlatform: nativeSettingsPlatform, id, now,
     publish: value => { publishProjection(value); void quickbarContext().catch(report); },
     log: message => invoke('evidence', { message }),
   });
@@ -81,6 +83,8 @@ export async function bootstrap(root: string) {
     const newDay = () => run(ctx, async tx => { expireInTx(tx); refreshInTx(tx); }, ctx.now());
     await newDay();
     offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: newDay, report }));
+    // Hotkeys and autostart follow settings.yaml; per-key failures are shown on the settings page.
+    const platformErrors = await applyPlatform(ctx);
+    return { ctx, fs, dispose, platformErrors };
   } catch (error) { dispose(); throw error; }
-  return { ctx, fs, dispose };
 }

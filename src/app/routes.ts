@@ -7,7 +7,7 @@ export const ROUTES: Route[] = [
   { id: 'home', cn: '首页', en: 'HOME', ready: true },
   { id: 'backpack', cn: '背包', en: 'BACKPACK', ready: true },
   { id: 'review', cn: '回顾', en: 'REVIEW', ready: false },
-  { id: 'settings', cn: '设置', en: 'SETTINGS', ready: false },
+  { id: 'settings', cn: '设置', en: 'SETTINGS', ready: true },
 ];
 
 export const readyRoutes = () => ROUTES.filter(r => r.ready);
