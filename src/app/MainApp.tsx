@@ -22,6 +22,7 @@ import { bootstrap } from './bootstrap';
 import { createActions } from './actions';
 import type { Actions } from './actions';
 import { readyRoutes } from './routes';
+import { BackpackScreen } from './BackpackScreen';
 import type { Route } from './routes';
 import { FirstRun } from './FirstRun';
 import { StatusBlock } from './shell/StatusBlock';
@@ -111,9 +112,9 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
     try { await setMini(on); setMiniState(on); } catch (error) { info('小窗切换失败', String(error)); }
   }
   function onGuide(kind: GuideKind) {
+    // 建项目、设主线、给主线拆卡都在背包页做；卡都做完了就去写一条
     if (kind === 'allDone') { void actions.showQuickbar(); return; }
-    info('先写一条待办', '项目功能还在做。先在记录条里写一条待办，它会直接出卡。');
-    void actions.showQuickbar();
+    setPage('backpack');
   }
   function onResolve(n: Notice, r: NoticeResult[keyof NoticeResult]) {
     const at = (r as { at: string }).at;
@@ -126,7 +127,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
         else if (choice === 'split') { setPage('home'); setShrinkFor(cardId); }
         break;
       }
-      case 'subconscious': if ((r as NoticeResult['subconscious']).accept) info('支线项目还不能新建', '可以先在记录条里把它记成一条想法。'); break;
+      case 'subconscious': if ((r as NoticeResult['subconscious']).accept) setPage('backpack'); break;
       case 'restReturn': void actions.returnFromRest((r as NoticeResult['restReturn']).answer, at); break;
       case 'backfill': void actions.backfill(r as NoticeResult['backfill']); break;
       default: break;
@@ -172,6 +173,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
           onGuide={onGuide} onOpenReview={() => info('每周回顾还不能用', '回顾页还在做，做好后从这里进入。')} />}
+        {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} />}
       </div>
     </Frame>
     <NoticeHost notices={notices} onResolve={onResolve} onDismiss={n => dismissNotice(n.id)} extra={[...errors, ...toasts]}
