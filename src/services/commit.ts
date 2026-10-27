@@ -1,6 +1,7 @@
 import type { Card } from '../domain/card/card';
 import type { Segment } from '../domain/timeline/segment';
 import { activityDay } from '../domain/timeline/day';
+import { planReminders } from '../domain/reminders';
 import type { Settings } from '../shared/settings';
 import type { Reminders } from '../platform/reminders';
 import type { AppState, Repositories, Write } from '../data/repos';
@@ -55,10 +56,8 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
     const cards = (await ctx.repos.cards.list()).map(e => e.value);
     const visibleDays = [...new Set([...days, ...daysFor(tx.state, today)])];
     ctx.publish({ state: tx.state, cards, segments: await ctx.repos.times.readDays(visibleDays) });
-    await ctx.reminders.update(cards.filter(c => c.due_at && c.status !== '已完成').map(c => ({
-      id: `deadline:${c.id}:${c.due_at}`, at: Date.parse(c.due_at!) - ctx.settings.deadlineLeadMinutes * 60_000,
-      title: '待办期限提醒', body: c.content,
-    })));
+    await ctx.reminders.update(planReminders({ cards, open: tx.segments.find(seg => seg.id === tx.state.open_segment && seg.ended_at === null) ?? null,
+      deadlineLeadMinutes: ctx.settings.deadlineLeadMinutes, longActivityMinutes: ctx.settings.longActivityMinutes }));
     return value;
   });
   // The caller observes errors. Only partial writes block subsequent commands.
