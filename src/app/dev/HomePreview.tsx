@@ -25,7 +25,7 @@ export const PREVIEW_PAGES = ['card', 'over', 'guide', 'rest', 'review', 'mini',
 const look = { topoMode: 'dynamic' as const, topoDepth: 60, paused: false };
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
 const min = (m: number) => m * 60_000;
-const ACTS = ['厕所', '拿快递', '刷视频'];
+const ACTS = [{ id: 'qa-wc', name: '厕所' }, { id: 'qa-parcel', name: '拿快递' }, { id: 'qa-video', name: '刷视频' }];
 const iso = (msAgo: number) => new Date(Date.now() - msAgo).toISOString();
 function notices(o: string | null): Notice[] {
   const toasts: Notice[] = [

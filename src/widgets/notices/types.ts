@@ -1,11 +1,14 @@
 // 提示的种类、内容和回答（架构 §5.6）。noticeSlice 里放 {id, kind, data}；用户回答后 NoticeHost 把 result 交回调用方。
 // 所有结果都带 at：用户点下的那一刻（timeboxShort 例外，见下）。
+// 结果里的 activity：点选的是快捷活动的 id，手写的是名字；「离线」「睡觉」传名字。timerService 两种都认。
+
+export interface ActivityOption { id: string; name: string }
 
 export interface NoticeData {
   /** 关机、休眠、崩溃后追问「从 X 到 Y 在做什么」。系统已经按「离线」记下，这里只是修改。 */
-  offlineAsk: { from: string; to: string; activities: string[] };
+  offlineAsk: { from: string; to: string; activities: ActivityOption[] };
   /** 补记（用户从状态块主动打开）。now 用来限制补记不能超过现在。 */
-  backfill: { activities: string[]; now: string };
+  backfill: { activities: ActivityOption[]; now: string };
   /** 同一活动持续太久的轻提醒。 */
   longActivity: { activity: string; startedAt: string; hours: number };
   /** 同一张卡被「再抽一张」跳过多次。 */

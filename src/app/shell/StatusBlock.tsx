@@ -3,7 +3,7 @@ import type { LedKind } from '../../ui/marks/StatusLed';
 import { StatusTag } from '../../ui/marks/StatusLed';
 import { formatClock } from '../../widgets/cardProgress';
 import { Backfill } from '../../widgets/notices/Backfill';
-import type { BackfillResult } from '../../widgets/notices/types';
+import type { ActivityOption, BackfillResult } from '../../widgets/notices/types';
 
 /**
  * 标题栏状态块：当前活动名 + 已持续多久 + 状态灯（待机强调色、专注 mint 闪烁、离开 cyan）。
@@ -11,7 +11,7 @@ import type { BackfillResult } from '../../widgets/notices/types';
  * 点它打开补记；补记是用户自己发起的，在这里本地渲染，不走 noticeSlice（架构 §5.6）。
  */
 export function StatusBlock({ kind, label, startedAt, activities, onBackfill }:
-  { kind: LedKind; label: string; startedAt: string; activities: string[]; onBackfill: (result: BackfillResult) => void }) {
+  { kind: LedKind; label: string; startedAt: string; activities: ActivityOption[]; onBackfill: (result: BackfillResult) => void }) {
   const [now, setNow] = useState(() => Date.now()), [open, setOpen] = useState(false);
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
