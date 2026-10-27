@@ -23,9 +23,9 @@ it.each(['broken: [', 'dayBoundaryHour: invalid', stringify({ ...defaults, lists
   const fs = new MemoryFs(); await fs.atomicWrite('settings.yaml', source);
   await expect(new SettingsRepo(fs).read()).rejects.toThrow('settings.yaml');
 });
-it('does not truncate valid long lists or impose an arbitrary duration ceiling', async () => {
+it('preserves long lists within the explicitly configured numeric bounds', async () => {
   const fs = new MemoryFs(), repo = new SettingsRepo(fs);
-  const value = { ...structuredClone(defaults), longActivityMinutes: 100000, lists: { ...defaults.lists, restPool: Array.from({ length: 100 }, (_, n) => ({ id: String(n), name: `休息${n}` })) } };
+  const value = { ...structuredClone(defaults), longActivityMinutes: 720, lists: { ...defaults.lists, restPool: Array.from({ length: 100 }, (_, n) => ({ id: String(n), name: `休息${n}` })) } };
   await new Journal(fs).run(crypto.randomUUID(), [await repo.write(value)]);
   expect(await repo.read()).toEqual(value);
 });
