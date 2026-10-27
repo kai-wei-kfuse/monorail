@@ -4,7 +4,7 @@ import { Button } from '../../ui/controls/Button';
 import { Segmented } from '../../ui/controls/Segmented';
 import { Slider } from '../../ui/controls/Slider';
 import { TextInput } from '../../ui/controls/TextInput';
-import { plainTitle } from './title';
+import { plainText } from '../../ui/marks/MarkedText';
 import './home.css';
 
 /** 设计文档「降级链」里的缩小常见模式，只作参考。 */
@@ -33,7 +33,7 @@ export function ShrinkDialog({ original, type, timeboxMinutes, level, maxLevel, 
   const submit = () => { if (ok) onConfirm({ content: content.trim(), type: kind, timeboxMinutes: kind === '时间盒卡' ? minutes : null, at: new Date().toISOString() }); };
   return <Dialog en={`SHRINK ${level + 1} / ${maxLevel}`} title="缩小成什么" onClose={onCancel}
     footer={<><Button onClick={onCancel}>不缩了</Button><Button tone="ink" disabled={!ok} onClick={submit}>缩小</Button></>}>
-    自我感觉无法完成，可以主动降低标准。原来是「{plainTitle(original)}」。
+    自我感觉无法完成，可以主动降低标准。原来是「{plainText(original)}」。
     <div className="dlg-field">
       <label htmlFor="shrink-to">缩小后（第 {level + 1} 级，最多 {maxLevel} 级）</label>
       <TextInput id="shrink-to" autoFocus value={content} placeholder="例如把「学 Python」改成「学 1 小时 Python」"

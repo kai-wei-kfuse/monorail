@@ -1,0 +1,16 @@
+/* 卡片、项目、想法转待办这几个编辑对话框共用的表单排版 */
+.fm { display: grid; gap: 14px; margin-top: 4px; }
+.fm-f { display: grid; gap: 7px; }
+.fm-f > label, .fm-f > span { font: 520 13px/1 var(--f-cn); letter-spacing: .04em; color: var(--ink); }
+.fm-f > small { font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+.fm-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.fm-check { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0; border-top: 1px solid var(--line); }
+.fm-check b { font: 520 13px/1.3 var(--f-cn); color: var(--ink); }
+.fm-check p { margin: 3px 0 0; font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+.fm-danger { display: flex; align-items: center; gap: 12px; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+.fm-err { margin: 0; font: 330 12px/1.4 var(--f-cn); color: var(--red); }
+.fm-pick { display: grid; gap: 6px; }
+.fm-pick button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line-2); background: var(--paper-2); text-align: left; font: 520 13px/1.2 var(--f-cn); }
+.fm-pick button:hover { border-color: var(--ink); }
+.fm-pick button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #f6f6f3; }
+.fm-pick button i { margin-left: auto; font: 500 10px/1 var(--f-en); font-style: normal; letter-spacing: .16em; color: var(--mute); }

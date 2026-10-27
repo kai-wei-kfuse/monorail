@@ -32,6 +32,7 @@
 .sbtn:disabled { color: var(--mute-2); box-shadow: none; }
 .sbtn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
 .sbtn.ink { background: var(--ink); border-color: var(--ink); color: #f6f6f3; box-shadow: 0 2px 0 #000; }
+.sbtn.ink:disabled { background: #e4e4df; border-color: var(--line-2); color: var(--mute-2); box-shadow: none; }
 .sbtn.danger { color: var(--red); }
 .sbtn.danger:hover:not(:disabled) { background: var(--red); border-color: var(--red); color: #fff; }
 

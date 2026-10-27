@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fitTitleSize, parseMarks, plainTitle } from './title';
+import { fitTitleSize } from './title';
+import { parseMarks, plainText as plainTitle } from '../../ui/marks/MarkedText';
 
 describe('parseMarks', () => {
   it('拆出重点词', () => {

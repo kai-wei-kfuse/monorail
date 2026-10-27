@@ -8,7 +8,8 @@ import { VBars } from '../../ui/marks/VBars';
 import { Readout } from '../../ui/marks/Readout';
 import type { CardLook } from './CardFrame';
 import { CardFrame } from './CardFrame';
-import { fitTitleSize, parseMarks } from './title';
+import { fitTitleSize } from './title';
+import { MarkedText } from '../../ui/marks/MarkedText';
 
 export interface TaskCardView {
   slotNo: string;              // 背包格号，例如「01」；散件是「散」
@@ -63,7 +64,7 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     <div className="hero" ref={hero}>
       <Corners>
         <h1 className="title" ref={title} data-fx="title">
-          {parseMarks(view.content).map((p, i) => p.mark ? <span key={i} className="hl">{p.text}</span> : p.text)}
+          <MarkedText content={view.content} />
         </h1>
       </Corners>
       {view.progressNote && <p className="c-note"><b>上次做到</b>{view.progressNote}</p>}

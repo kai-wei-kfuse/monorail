@@ -1,23 +1,4 @@
-// 首页标题：[词] 重点词解析 + 字号自适应（UI风格规范 §3、§9.3）。
-
-export interface TitlePart { text: string; mark: boolean }
-
-/** 把「沿 [Python] 往下学」拆成普通段和重点词段。没配对的方括号按原文保留。 */
-export function parseMarks(content: string): TitlePart[] {
-  const parts: TitlePart[] = [];
-  const re = /\[([^\]\n]+)\]/g;
-  let last = 0;
-  for (let m = re.exec(content); m; m = re.exec(content)) {
-    if (m.index > last) parts.push({ text: content.slice(last, m.index), mark: false });
-    parts.push({ text: m[1], mark: true });
-    last = m.index + m[0].length;
-  }
-  if (last < content.length) parts.push({ text: content.slice(last), mark: false });
-  return parts;
-}
-
-/** 其他地方显示卡片内容时去掉方括号。 */
-export const plainTitle = (content: string) => parseMarks(content).map(p => p.text).join('');
+// 首页标题的字号自适应（UI风格规范 §3、§9.3）。[词] 的解析在 ui/marks/MarkedText。
 
 export const TITLE_MAX = 96;
 export const TITLE_MIN = 26;

@@ -1,5 +1,5 @@
 import type { TaskCardView } from '../../pages/home/TaskCard';
-import { parseMarks } from '../../pages/home/title';
+import { MarkedText } from '../../ui/marks/MarkedText';
 import { formatMinutes } from '../../widgets/cardProgress';
 import { Icon } from '../../ui/icons/Icon';
 import { Topo } from '../../ui/effects/Topo';
@@ -22,7 +22,7 @@ export function MiniWindow({ view, running, topoDepth, onPrimary, onRestore }:
     <div className="mini-l" data-tauri-drag-region>
       <Topo cell={8} alpha={.85} depth={topoDepth} running={running} />
       <span className="k">{meta}</span>
-      <b>{parseMarks(view.content).map((p, i) => p.mark ? <span key={i} className="hl">{p.text}</span> : p.text)}</b>
+      <b><MarkedText content={view.content} /></b>
       <MiniBars filled={progress.miniFilled} />
     </div>
     <div className="mini-r">
