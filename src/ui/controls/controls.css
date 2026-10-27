@@ -102,7 +102,6 @@
 .inp:hover { border-color: var(--mute); }
 .inp:focus { border-color: var(--ink); box-shadow: inset 4px 0 0 var(--yellow); outline: none; }
 .inp[aria-invalid="true"] { border-color: var(--red); }
-.inp.dt { width: auto; font: 500 14px/1 var(--f-en); font-variant-numeric: tabular-nums; }
 .inp.hk { width: auto; min-width: 160px; font: 400 12px/1.5 var(--f-mono); text-align: center; caret-color: transparent; }
 .inp.hk.rec { border-color: var(--ink); background: var(--ink); color: var(--yellow); }
 
@@ -113,3 +112,19 @@
 .chip .rm { width: 14px; height: 14px; display: grid; place-items: center; color: var(--mute); }
 .chip .rm:hover { color: var(--ink); background: var(--yellow); }
 .chip .rm svg { width: 9px; height: 9px; }
+
+/* 日期时间：一个框里两格手写 + 「今天/明天」或清除；聚焦时和输入框一样，黑边 + 左侧强调色 */
+.dtw { display: inline-flex; align-items: stretch; height: 34px; border: 1px solid var(--line-2); background: var(--paper-2); transition: border-color .2s, box-shadow .2s; }
+.dtw:hover { border-color: var(--mute); }
+.dtw:focus-within { border-color: var(--ink); box-shadow: inset 4px 0 0 var(--yellow); }
+.dtw[data-invalid] { border-color: var(--red); }
+.dt-k { display: flex; align-items: center; padding: 0 2px 0 10px; font: 520 13px/1 var(--f-cn); letter-spacing: .04em; color: var(--ink-3); }
+.dt-seg { min-width: 0; border: 0; background: transparent; padding: 0 8px; font: 500 14px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink); text-align: center; outline: none; user-select: text; }
+.dt-seg::placeholder { font: 330 13px/1 var(--f-cn); color: var(--mute-2); }
+.dt-d { width: 7ch; }
+.dt-t { width: 6ch; border-left: 1px solid var(--line); }
+.dt-q { padding: 0 8px; border-left: 1px solid var(--line); font: 520 12px/1 var(--f-cn); letter-spacing: .04em; color: var(--mute); transition: background .15s, color .15s; }
+.dt-q:hover { background: var(--yellow); color: var(--ink); }
+.dt-x { width: 30px; display: grid; place-items: center; border-left: 1px solid var(--line); color: var(--mute); }
+.dt-x:hover { background: #ececE8; color: var(--ink); }
+.dt-x svg { width: 11px; height: 11px; }

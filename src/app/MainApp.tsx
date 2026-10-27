@@ -112,7 +112,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
   }
   function onGuide(kind: GuideKind) {
     if (kind === 'allDone') { void actions.showQuickbar(); return; }
-    info('背包页还没接上', '项目和拆卡在背包页里做，M2 接线。现在可以先用快速记录条写一条待办，它会作为散件出卡。');
+    info('先写一条待办', '项目功能还在做。先在记录条里写一条待办，它会直接出卡。');
     void actions.showQuickbar();
   }
   function onResolve(n: Notice, r: NoticeResult[keyof NoticeResult]) {
@@ -126,7 +126,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
         else if (choice === 'split') { setPage('home'); setShrinkFor(cardId); }
         break;
       }
-      case 'subconscious': if ((r as NoticeResult['subconscious']).accept) info('放进支线格', '在背包页新建一个支线项目（M2 接线）。'); break;
+      case 'subconscious': if ((r as NoticeResult['subconscious']).accept) info('支线项目还不能新建', '可以先在记录条里把它记成一条想法。'); break;
       case 'restReturn': void actions.returnFromRest((r as NoticeResult['restReturn']).answer, at); break;
       case 'backfill': void actions.backfill(r as NoticeResult['backfill']); break;
       default: break;
@@ -161,7 +161,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
       onMaximize={() => void windowControls.toggleMaximize().then(() => windowControls.isMaximized()).then(setMaximized)} onClose={() => void windowControls.hide()} />
   </TitleBar>;
   const statusBar = <StatusBar
-    left={<QuickActs acts={acts} current={awayId} onAdd={() => info('添加快捷活动', '快捷活动在设置页里添加（M3 接线）。')}
+    left={<QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)} />}
     right={<BaselineMarks main={home.baseline.main} side={home.baseline.side} />} />;
 
@@ -171,7 +171,7 @@ function Shell({ ctx, actions, errors, onErrorClose }: { ctx: Ctx; actions: Acti
         {page === 'home' && <HomePage actions={actions} intro={intro} completeAt={completeAt} onCompleteConsumed={() => setCompleteAt(null)}
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
-          onGuide={onGuide} onOpenReview={() => info('每周回顾', '回顾页 M3 接线。')} onAddRest={() => info('添加休息项', '休息池在设置页里添加（M3 接线）。')} />}
+          onGuide={onGuide} onOpenReview={() => info('每周回顾还不能用', '回顾页还在做，做好后从这里进入。')} />}
       </div>
     </Frame>
     <NoticeHost notices={notices} onResolve={onResolve} onDismiss={n => dismissNotice(n.id)} extra={[...errors, ...toasts]}

@@ -15,6 +15,7 @@ import { ShrinkDialog } from './ShrinkDialog';
 import { GuideCard } from './GuideCard';
 import type { GuideKind } from './GuideCard';
 import { RestCard } from './RestCard';
+import { ConfirmLink } from './ConfirmLink';
 import { ReviewCard } from './ReviewCard';
 import { CardFrame } from './CardFrame';
 import { playAfterWipe, playColdIntro, playResumeIntro } from './intro';
@@ -62,7 +63,7 @@ type Dialog = { kind: 'short'; cardId: string; remaining: number; at: string } |
 export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview, onAddRest }:
   { actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: string | null; onCompleteConsumed: () => void;
     shrinkFor: string | null; onShrinkConsumed: () => void;
-    onGuide: (kind: GuideKind) => void; onOpenReview: () => void; onAddRest: () => void }) {
+    onGuide: (kind: GuideKind) => void; onOpenReview: () => void; onAddRest?: () => void }) {
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   const now = useNow();
   const stage = useRef<HTMLDivElement>(null);
@@ -131,7 +132,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     const corner = <>
       {away && <button type="button" className="c-link" onClick={() => void act(() => actions.resume(new Date().toISOString()))}>回来 · {home.awayActivity}</button>}
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
-      {doneBaseline && <button type="button" className="c-link" onClick={() => void act(() => actions.stopToday(new Date().toISOString()))}>今天不再出卡</button>}
+      {doneBaseline && <ConfirmLink label="今天不再出卡" confirmLabel="确认今天不再出卡？" onConfirm={at => void act(() => actions.stopToday(at))} />}
     </>;
     body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner}
       actions={<CardActions running={running} shrink={home.card.shrink} busy={busy || !!wipe}

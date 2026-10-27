@@ -1,6 +1,7 @@
 /* 弹层：通知、右键菜单、对话框（UI风格规范 §6、§8.6） */
 
-.toasts { position: fixed; right: 12px; bottom: 52px; z-index: 70; display: grid; gap: 10px; pointer-events: none; }
+/* 通知叠在右上、标题栏下面：放右下会盖住首页的大号读数 */
+.toasts { position: fixed; right: 12px; top: 52px; z-index: 70; display: grid; gap: 10px; pointer-events: none; }
 .toast {
   width: 372px; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: start;
   position: relative; padding: 16px 12px 16px 0; overflow: hidden; pointer-events: auto;
