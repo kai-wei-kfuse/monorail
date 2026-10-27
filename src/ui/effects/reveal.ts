@@ -14,16 +14,16 @@ export function popBars(bars: Iterable<Element>, delay = 0) {
   return [...bars].map((b, i) => play(b, [{ transform: 'scaleY(0)' }, { transform: 'none' }], { duration: 300, delay: delay + i * 6, ease: 'snap' }));
 }
 
-/** 数字先随机乱跳（每 45ms 换一次），dur 后交还给 onDone 写回真实值。返回取消函数。 */
-export function scrambleDigits(el: HTMLElement | null, delay: number, dur: number, onDone: () => void): () => void {
-  if (!el || motionLevel() !== 'full') { onDone(); return () => {}; }
+/** 随机数字仅覆盖在伪元素上，真实 textContent 始终由 React 管理。返回取消函数。 */
+export function scrambleDigits(el: HTMLElement | null, delay: number, dur: number): () => void {
+  if (!el || motionLevel() !== 'full') return () => {};
   const t0 = performance.now() + delay, end = t0 + dur, rnd = () => Math.floor(Math.random() * 10);
   let last = 0, id = 0;
   const step = (now: number) => {
-    if (now >= end) { onDone(); return; }
-    if (now >= t0 && now - last > 45) { last = now; el.textContent = `${rnd()}${rnd()}:${rnd()}${rnd()}`; }
+    if (now >= end) { delete el.dataset.scramble; return; }
+    if (now >= t0 && now - last > 45) { last = now; el.dataset.scramble = `${rnd()}${rnd()}:${rnd()}${rnd()}`; }
     id = requestAnimationFrame(step);
   };
   id = requestAnimationFrame(step);
-  return () => { cancelAnimationFrame(id); onDone(); };
+  return () => { cancelAnimationFrame(id); delete el.dataset.scramble; };
 }

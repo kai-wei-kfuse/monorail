@@ -9,7 +9,7 @@ const $$ = (root: ParentNode, fx: string) => [...root.querySelectorAll(`[data-fx
 const bars = (root: ParentNode) => $(root, 'bars')?.children ?? [];
 
 /** 冷启动：标题栏依次落下 → 扫描线划过、等高线铺开、标签条伸出 → 竖条一道波 → 标题升起 → 角标飞入 → 按钮上浮 → 数字乱跳归位。 */
-export function playColdIntro(app: ParentNode, card: ParentNode, digits: HTMLElement | null, renderDigits: () => void) {
+export function playColdIntro(app: ParentNode, card: ParentNode, digits: HTMLElement | null) {
   const level = motionLevel();
   if (level === 'off') return;
   if (level === 'reduced') { fadeIn($(card, 'card')); return; }
@@ -23,8 +23,9 @@ export function playColdIntro(app: ParentNode, card: ParentNode, digits: HTMLEle
   play($(card, 'corner-tl'), [{ opacity: 0, transform: 'translate(-16px, -16px)' }, { opacity: 1, transform: 'none' }], { duration: 480, delay: 660 });
   play($(card, 'corner-bk'), [{ opacity: 0, transform: 'translate(16px, 16px)' }, { opacity: 1, transform: 'none' }], { duration: 480, delay: 700 });
   [...($(card, 'actions')?.children ?? [])].forEach((b, i) => play(b, [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 480, delay: 640 + i * 70 }));
-  scrambleDigits(digits, 420, 520, renderDigits);
+  const cancelDigits = scrambleDigits(digits, 420, 520);
   $$(card, 'decode').forEach(el => decode(el, 520));
+  return cancelDigits;
 }
 
 /** 从托盘唤回：只做 320ms 内的轻量入场。 */

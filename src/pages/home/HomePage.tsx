@@ -75,7 +75,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
 
   useLayoutEffect(() => {
     if (!stage.current || !intro) return;
-    if (intro.kind === 'cold') playColdIntro(document, stage.current, stage.current.querySelector('.digits'), () => {});
+    if (intro.kind === 'cold') return playColdIntro(document, stage.current, stage.current.querySelector('.digits'));
     else playResumeIntro(stage.current);
   }, [intro]);
 

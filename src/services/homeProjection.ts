@@ -16,7 +16,7 @@ export interface ProjectionInput { cards: Card[]; projects: Project[]; reviews: 
 export function projectHome(input: ProjectionInput): HomeSlice {
   const { cards, projects, reviews, segments, state, settings, at, version } = input;
   const day = activityDay(at, settings.dayBoundaryHour), active = projects.filter(inBackpack);
-  const main = active.find(project => project.slot === '主线');
+  const mains = active.filter(project => project.slot === '主线');
   const selected = cards.find(card => card.id === state.current_card);
   const current = segments.find(segment => segment.id === state.open_segment && segment.ended_at === null);
   const rows = selected ? effective(segments, at).filter(row => row.card_id === selected.id) : [];
@@ -32,11 +32,12 @@ export function projectHome(input: ProjectionInput): HomeSlice {
   const mode = state.stopped_day === day ? 'stopped' : state.home_mode;
   return {
     mode, card, guideKind: guide(cards, projects), closedEffectiveMs,
-    currentSegStartedAt: tail?.started_at ?? (current?.card_id === selected?.id ? current?.started_at ?? null : null),
+    // A newer overlay may cover the entire current tail. Future ticks begin at this snapshot.
+    currentSegStartedAt: tail?.started_at ?? (current && selected && current.card_id === selected.id ? at : null),
     awayActivity: current?.kind === '插入' ? current.activity : null,
-    baseline: baseline(cards, day, !!main), noMainHint: !main && !!card,
+    baseline: baseline(cards, day, mains.length > 0), noMainHint: mains.length === 0 && !!card,
     rest: state.rest ? { suggestion: state.rest.suggestion } : null,
-    review: state.first_used_day ? dueReview(day, state.first_used_day, settings.reviewWeekday, reviews, !!main?.bet_ends_at && Date.parse(main.bet_ends_at) <= Date.parse(at)) : null,
+    review: state.first_used_day ? dueReview(day, state.first_used_day, settings.reviewWeekday, reviews, mains.some(main => main.bet_ends_at !== null && Date.parse(main.bet_ends_at) <= Date.parse(at))) : null,
     activity: { kind: current?.kind === '插入' ? 'away' : current?.card_id ? 'focus' : 'idle', label: current?.activity ?? settings.lists.idleName, startedAt: current?.started_at ?? null },
     dataVersion: version,
   };

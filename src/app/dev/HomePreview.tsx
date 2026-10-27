@@ -54,7 +54,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
   const stage = useRef<HTMLDivElement>(null), app = useRef<HTMLDivElement>(null);
   const [wipe, setWipe] = useState(false);
   const view = sample(page);
-  useEffect(() => { if (stage.current && app.current) playColdIntro(app.current, stage.current, stage.current.querySelector('.digits'), () => {}); }, []);
+  useEffect(() => { if (stage.current && app.current) return playColdIntro(app.current, stage.current, stage.current.querySelector('.digits')); }, []);
   if (page === 'quickbar') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><div style={{ width: 760 }}><QuickBar projects={[{ id: 'p1', name: '找工作' }]} onSave={async () => {}} onHide={() => {}} /></div></div>;
   if (page === 'mini') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><MiniWindow view={view} running topoDepth={60} onPrimary={() => {}} onRestore={() => {}} /></div>;
   const title = <TitleBar name="像素记录" tabs={TABS} active="home" onTab={() => {}}>

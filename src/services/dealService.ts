@@ -1,5 +1,5 @@
 import { pick } from '../domain/picker/pick';
-import { dueReview } from '../domain/review/schedule';
+import { dueReview, reviewUpdates } from '../domain/review/schedule';
 import { activityDay } from '../domain/timeline/day';
 import { inBackpack } from '../domain/project/project';
 import type { Ctx, Transaction } from './commit';
@@ -11,6 +11,7 @@ const MAIN_CARD_WEIGHT = 1.5;
 export function refreshInTx(tx: Transaction): void {
   const day = activityDay(tx.at, tx.settings.dayBoundaryHour);
   tx.state.first_used_day ??= day;
+  for (const review of reviewUpdates(day, tx.state.first_used_day, tx.settings.reviewWeekday, tx.reviews)) tx.saveReview(review);
   if (tx.state.stopped_day === day) { tx.state.home_mode = 'stopped'; return; }
   if (tx.state.rest) { tx.state.home_mode = 'rest'; return; }
   const current = tx.cards.find(card => card.id === tx.state.current_card);

@@ -7,7 +7,8 @@ import { effective } from '../domain/timeline/effective';
 import { nativeLifecycle } from '../platform/lifecycle';
 import { nativeReminders } from '../platform/reminders';
 import type { ReminderPlan } from '../domain/reminders';
-import { createContext, run } from '../services/commit';
+import { createContext } from '../services/commit';
+import * as dealService from '../services/dealService';
 import type { Ctx } from '../services/commit';
 import { reconcile } from '../services/recordService';
 import { startScheduler } from '../services/scheduler';
@@ -67,8 +68,7 @@ export async function bootstrap(root: string) {
     await reconcile(ctx);
     booting = false;
     if (dirty) await reconcile(ctx);
-    // TODO(M1): call dealService.refresh once it lands; an empty commit republishes the projection for the new day.
-    offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: () => run(ctx, async () => undefined), report }));
+    offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: () => dealService.refresh(ctx, ctx.now()), report }));
   } catch (error) { dispose(); throw error; }
   return { ctx, fs, dispose };
 }
