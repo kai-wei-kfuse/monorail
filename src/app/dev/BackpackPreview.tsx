@@ -32,12 +32,15 @@ const IDEAS: IdeaView[] = [
 const noop: BackpackActions = { createProject() {}, freezeProject() {}, abandonProject() {}, restoreProject() {}, saveCard() {}, passCard() {}, convertIdea() {}, deleteIdea() {} };
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
 
-/** 背包页预览（只在开发时用）：?tab=projects|queue|ideas，?o=project|card|idea|abandon 打开对应对话框。 */
+// ?full：支线只有 1 格，背包两格都满（看放回背包时的腾位交互）
+const FULL = new URLSearchParams(location.search).has('full');
+
+/** 背包页预览（只在开发时用）：?tab=projects|queue|ideas，?o=project|card|idea|abandon|restore 打开对应对话框。 */
 export function BackpackPreview({ tab: initial, overlay }: { tab: string; overlay: string | null }) {
   const [tab, setTab] = useState<BackpackTab>((['projects', 'queue', 'ideas'].includes(initial) ? initial : 'projects') as BackpackTab);
   useEffect(() => {
     // 用点击模拟打开对话框，走的是页面里真实的打开路径
-    const pick = { project: '.bp-tools .sbtn.ink', card: '.ls-acts .sbtn', idea: '.ls-acts .sbtn.ink', abandon: '.slot-acts .sbtn.danger' }[overlay ?? ''];
+    const pick = { project: '.bp-tools .sbtn.ink', card: '.ls-acts .sbtn', idea: '.ls-acts .sbtn.ink', abandon: '.slot-acts .sbtn.danger', restore: '.ls-acts .sbtn' }[overlay ?? ''];
     if (pick) setTimeout(() => document.querySelector<HTMLButtonElement>(pick)?.click(), 50);
   }, [overlay]);
   const title = <TitleBar name="像素记录" tabs={TABS} active="backpack" onTab={() => {}}>
@@ -45,6 +48,6 @@ export function BackpackPreview({ tab: initial, overlay }: { tab: string; overla
   </TitleBar>;
   return <Frame titleBar={title} statusBar={<StatusBar right={<BaselineMarks main side={false} />} />}>
     <BackpackPage tab={tab} onTab={setTab} projects={PROJECTS} queue={QUEUE} ideas={IDEAS}
-      mainSlots={1} sideSlots={2} ideaLimit={10} defaultTimebox={60} actions={noop} />
+      mainSlots={1} sideSlots={FULL ? 1 : 2} ideaLimit={10} defaultTimebox={60} actions={noop} />
   </Frame>;
 }

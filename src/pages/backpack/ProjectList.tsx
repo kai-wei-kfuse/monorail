@@ -8,11 +8,11 @@ const day = (iso: string) => { const d = new Date(iso); return `${d.getMonth() +
 
 /**
  * 背包的格子：主线格（格号 01）和支线格（从 02 起），空格虚线；格号分配后固定，空出来的给下一个放进来的项目。
- * 下面是冷藏的项目，随时可以放回背包（有空格时）。已放弃的不显示。
+ * 下面是冷藏的项目，随时可以放回背包：放进哪一格由用户在对话框里选，满了就先腾位。已放弃的不显示。
  */
 export function ProjectList({ projects, mainSlots, sideSlots, onNew, onSetMain, onFreeze, onAbandon, onRestore }:
   { projects: ProjectView[]; mainSlots: number; sideSlots: number;
-    onNew: () => void; onSetMain: () => void; onFreeze: (id: string, at: string) => void; onAbandon: (p: ProjectView) => void; onRestore: (id: string, at: string) => void }) {
+    onNew: () => void; onSetMain: () => void; onFreeze: (id: string, at: string) => void; onAbandon: (p: ProjectView) => void; onRestore: (p: ProjectView) => void }) {
   const active = projects.filter(p => p.status === '进行中' && p.slot !== '不在背包');
   const mains = active.filter(p => p.slot === '主线'), sides = active.filter(p => p.slot === '支线');
   const parked = projects.filter(p => p.status === '冷藏' || (p.status === '进行中' && p.slot === '不在背包'));
@@ -45,8 +45,7 @@ export function ProjectList({ projects, mainSlots, sideSlots, onNew, onSetMain, 
       {parked.length === 0 ? <p className="ls-empty">没有冷藏的项目。冷藏的项目不进想法池，也不占想法池的上限。</p>
         : <ul className="ls">{parked.map(p => <li key={p.id} className="ls-item">
           <div><b>{p.name}</b><div className="ls-meta">{p.status === '冷藏' ? '冷藏中' : '没放进背包'} · {p.openCards} 张待做</div></div>
-          <div className="ls-acts"><Button size="sm" disabled={!freeSide && !freeMain} title={!freeSide && !freeMain ? '背包满了' : undefined}
-            onClick={() => onRestore(p.id, at())}>放回背包</Button></div>
+          <div className="ls-acts"><Button size="sm" onClick={() => onRestore(p)}>放回背包</Button></div>
         </li>)}</ul>}
     </Group>
   </>;

@@ -6,8 +6,9 @@ import { Button } from '../../ui/controls/Button';
 import { Emblem } from '../../ui/marks/Emblem';
 import type { CardFields } from '../../widgets/CardEditor';
 import { CardEditor, NEW_CARD } from '../../widgets/CardEditor';
-import type { ProjectDraft, SlotProject } from '../../widgets/ProjectDialog';
-import { ProjectDialog } from '../../widgets/ProjectDialog';
+import type { BackpackSlot, MakeRoom, ProjectDraft } from '../../shared/backpack';
+import type { SlotProject } from '../../widgets/ProjectDialog';
+import { ProjectDialog, RestoreDialog } from '../../widgets/ProjectDialog';
 import { ConvertIdea } from '../../widgets/ConvertIdea';
 import { ProjectList } from './ProjectList';
 import { QueueList } from './QueueList';
@@ -20,7 +21,8 @@ export interface BackpackActions {
   createProject: (draft: ProjectDraft, at: string) => void;
   freezeProject: (id: string, at: string) => void;
   abandonProject: (id: string, at: string) => void;
-  restoreProject: (id: string, at: string) => void;
+  /** 放回背包：用户选主线格还是支线格；那一格满了时带上腾位的选择。 */
+  restoreProject: (id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => void;
   saveCard: (cardId: string | null, fields: CardFields, at: string) => void;
   passCard: (cardId: string, at: string) => void;
   convertIdea: (ideaId: string, r: { content: string; projectId: string | null; at: string }) => void;
@@ -32,6 +34,7 @@ type Open =
   | { kind: 'card'; card: QueueCard | null; projectId: string | null }
   | { kind: 'idea'; idea: IdeaView }
   | { kind: 'abandon'; project: ProjectView }
+  | { kind: 'restore'; project: ProjectView }
   | { kind: 'delete'; idea: IdeaView }
   | null;
 
@@ -44,6 +47,7 @@ export function BackpackPage({ tab, onTab, projects, queue, ideas, mainSlots, si
   const inBackpack: SlotProject[] = projects.filter(p => p.status === '进行中' && p.slot !== '不在背包')
     .map(p => ({ id: p.id, name: p.name, slot: p.slot as '主线' | '支线', slotIndex: p.slotIndex ?? 0 }));
   const choices = inBackpack.map(p => ({ id: p.id, name: p.name }));
+  const mainFree = inBackpack.filter(p => p.slot === '主线').length < mainSlots, sideFree = inBackpack.filter(p => p.slot === '支线').length < sideSlots;
   const activeIdeas = ideas.filter(i => i.pool === '活跃池').length;
   const nav = [
     { id: 'projects', no: '01', cn: '项目', en: 'PROJECTS', count: inBackpack.length },
@@ -61,15 +65,17 @@ export function BackpackPage({ tab, onTab, projects, queue, ideas, mainSlots, si
       <PanelHeader no={head[0]} en={head[1]} cn={head[2]} desc={head[3]} />
       {tab === 'projects' && <ProjectList projects={projects} mainSlots={mainSlots} sideSlots={sideSlots}
         onNew={() => setOpen({ kind: 'project', mode: 'new' })} onSetMain={() => setOpen({ kind: 'project', mode: 'setMain' })}
-        onFreeze={actions.freezeProject} onRestore={actions.restoreProject} onAbandon={project => setOpen({ kind: 'abandon', project })} />}
+        onFreeze={actions.freezeProject} onRestore={project => setOpen({ kind: 'restore', project })} onAbandon={project => setOpen({ kind: 'abandon', project })} />}
       {tab === 'queue' && <QueueList groups={queue} onEdit={card => setOpen({ kind: 'card', card, projectId: card.fields.projectId })}
         onAdd={projectId => setOpen({ kind: 'card', card: null, projectId })} />}
       {tab === 'ideas' && <IdeaPool ideas={ideas} limit={ideaLimit} onConvert={idea => setOpen({ kind: 'idea', idea })} onDelete={idea => setOpen({ kind: 'delete', idea })} />}
     </SplitLayout>
 
     {open?.kind === 'project' && <ProjectDialog mode={open.mode} inBackpack={inBackpack}
-      mainFree={inBackpack.filter(p => p.slot === '主线').length < mainSlots} sideFree={inBackpack.filter(p => p.slot === '支线').length < sideSlots}
+      mainFree={mainFree} sideFree={sideFree}
       onCancel={close} onSave={(draft, at) => { close(); actions.createProject(draft, at); }} />}
+    {open?.kind === 'restore' && <RestoreDialog project={open.project} inBackpack={inBackpack} mainFree={mainFree} sideFree={sideFree}
+      onCancel={close} onRestore={(slot, at, makeRoom) => { close(); actions.restoreProject(open.project.id, slot, at, makeRoom); }} />}
     {open?.kind === 'card' && <CardEditor isNew={!open.card} projects={choices} defaultTimebox={defaultTimebox}
       initial={open.card?.fields ?? { ...NEW_CARD, projectId: open.projectId }} passBlocked={open.card?.passBlocked}
       onCancel={close} onSave={(fields, at) => { close(); actions.saveCard(open.card?.id ?? null, fields, at); }}
