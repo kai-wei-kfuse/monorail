@@ -1,7 +1,11 @@
 mod attachments;
 mod power;
 mod reminders;
+mod private_release;
+mod quick_save;
 mod tray;
+mod updates;
+mod update_state;
 mod windows;
 
 use std::{fs, path::PathBuf};
@@ -17,7 +21,11 @@ macro_rules! handlers {
     ($($extra:path),*) => {
         tauri::generate_handler![read_config, save_config, save_quick_record, save_attachment, evidence,
             power::read_lifecycle, reminders::set_reminders, windows::show_quickbar,
-            windows::dialog_active, windows::set_shortcut, $($extra),*]
+            windows::dialog_active, windows::set_shortcut,
+            updates::check_update, updates::download_update, updates::install_update,
+            updates::read_update_state, updates::prepare_update_install, updates::cancel_update_install,
+            quick_save::quickbar_update_ready, quick_save::ack_quickbar_update,
+            quick_save::begin_quick_save, quick_save::end_quick_save, $($extra),*]
     };
 }
 
@@ -55,6 +63,7 @@ fn save_config(app: tauri::AppHandle, root: String) -> Result<(), String> {
 // scopes are app-wide; giving quickbar generic fs write would also expose cards.
 #[tauri::command]
 fn save_quick_record(app: tauri::AppHandle, id: String, text: String) -> Result<(), String> {
+    quick_save::ensure_active(&app, &id)?;
     if id.len() != 36 || !id.chars().all(|c| c.is_ascii_hexdigit() || c == '-') {
         return Err("Invalid record ID".into());
     }
@@ -78,6 +87,7 @@ fn save_quick_record(app: tauri::AppHandle, id: String, text: String) -> Result<
 /// Quick bar's only other write: attachments under attachments/<record>/, written before the record.
 #[tauri::command]
 fn save_attachment(app: tauri::AppHandle, record: String, name: String, bytes: Vec<u8>) -> Result<String, String> {
+    quick_save::ensure_active(&app, &record)?;
     let config = read_config(app)?.ok_or("No data directory")?;
     let value: serde_json::Value = serde_json::from_str(&config).map_err(|e| e.to_string())?;
     let root = PathBuf::from(value["root"].as_str().ok_or("Invalid config")?);
@@ -102,6 +112,9 @@ fn evidence(app: tauri::AppHandle, message: String) -> Result<(), String> {
 
 pub fn run() {
     let builder = tauri::Builder::default()
+        .manage(update_state::Updates::default())
+        .manage(quick_save::QuickSaves::default())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _| {
             #[cfg(feature = "verify")]
             if _args.iter().any(|a| a == "--verify-start") {

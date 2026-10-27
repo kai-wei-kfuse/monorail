@@ -31,6 +31,13 @@ pub struct PowerEvent {
 }
 static APP: OnceLock<tauri::AppHandle> = OnceLock::new();
 static STATE: OnceLock<Mutex<Lifecycle>> = OnceLock::new();
+
+pub fn checkpoint() -> Result<(), String> {
+    let app = APP.get().ok_or("Power monitor not initialized")?;
+    let mut state = STATE.get().ok_or("Missing lifecycle")?.lock().map_err(|error| error.to_string())?;
+    state.last_alive = now_ms();
+    save(app, &state)
+}
 pub fn now_ms() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

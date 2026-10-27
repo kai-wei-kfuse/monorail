@@ -1,0 +1,15 @@
+
+> pixel-record@0.1.0 test
+> node test-runner.mjs
+
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+
+ Test Files  35 passed (35)
+      Tests  214 passed (214)
+   Start at  18:04:22
+   Duration  4.65s (tests 40%, import 35%, transform 24%, worker 1%)
+
+    Isolate  35 workers spawned · ~404ms startup each (spawn + environment, per file)
+             at least ~881ms faster with isolate: false — reuses workers across files instead of one per file

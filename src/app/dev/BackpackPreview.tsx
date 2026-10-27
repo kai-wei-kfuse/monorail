@@ -43,7 +43,7 @@ export function BackpackPreview({ tab: initial, overlay }: { tab: string; overla
     const pick = { project: '.bp-tools .sbtn.ink', card: '.ls-acts .sbtn', idea: '.ls-acts .sbtn.ink', abandon: '.slot-acts .sbtn.danger', restore: '.ls-acts .sbtn' }[overlay ?? ''];
     if (pick) setTimeout(() => document.querySelector<HTMLButtonElement>(pick)?.click(), 50);
   }, [overlay]);
-  const title = <TitleBar name="像素记录" tabs={TABS} active="backpack" onTab={() => {}}>
+  const title = <TitleBar name="单轨" tabs={TABS} active="backpack" onTab={() => {}}>
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
   return <Frame titleBar={title} statusBar={<StatusBar right={<BaselineMarks main side={false} />} />}>

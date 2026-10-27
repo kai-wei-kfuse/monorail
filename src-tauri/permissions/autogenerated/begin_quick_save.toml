@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-begin-quick-save"
+description = "Enables the begin_quick_save command without any pre-configured scope."
+commands.allow = ["begin_quick_save"]
+
+[[permission]]
+identifier = "deny-begin-quick-save"
+description = "Denies the begin_quick_save command without any pre-configured scope."
+commands.deny = ["begin_quick_save"]

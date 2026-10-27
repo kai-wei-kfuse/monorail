@@ -42,7 +42,7 @@ const ACCENTS = [{ value: '#fffa00', name: '信号黄' }, { value: '#00f5a0', na
 /** 设计系统预览页（只在开发时用）：?page=home|settings|parts，加 ?still 关掉动效方便截图。 */
 export function Gallery({ page: initial }: { page: string }) {
   const [page, setPage] = useState(initial), [pinned, setPinned] = useState(false);
-  const titleBar = <TitleBar name="像素记录" tabs={TABS} active={page} onTab={setPage}>
+  const titleBar = <TitleBar name="单轨" tabs={TABS} active={page} onTab={setPage}>
     <StatusTag kind="focus" label="沿 Python 往下学" time="47:12" />
     <WindowButtons pinned={pinned} maximized={false} onPin={() => setPinned(!pinned)} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
@@ -87,7 +87,7 @@ function SettingsMock() {
     ['acts', '快捷活动与休息池', 'LISTS'], ['look', '外观', 'APPEARANCE'], ['keys', '快捷键', 'HOTKEYS'], ['data', '窗口与数据', 'DATA'], ['about', '关于', 'ABOUT']]
     .map(([id, cn, en], i) => ({ id, cn, en, no: String(i + 1).padStart(2, '0') }));
   return <SplitLayout nav={<SideNav en="SETTINGS" cn="设置" items={items} active={sec} onSelect={setSec}
-    foot={<><Emblem /><div><b>像素记录</b><span>v0.1.0</span></div></>} />}>
+    foot={<><Emblem /><div><b>单轨</b><span>v0.1.0</span></div></>} />}>
     <PanelHeader no="04" en="TIMER" cn="计时" desc="计时一直开着，任何时刻只有一项活动在计时。下面的数字都是初始值，用过一段时间后再校准。" />
     <Group cn="基本" en="BASIC">
       <Row title="待机名称" desc="亮卡到点开始之间记成这个名字"><TextInput defaultValue="待机" style={{ width: 200 }} /></Row>

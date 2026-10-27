@@ -18,7 +18,7 @@ pub fn setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     TrayIconBuilder::new()
         .icon(app.default_window_icon().ok_or("Missing application icon")?.clone())
         .menu(&menu)
-        .tooltip("像素记录")
+        .tooltip("单轨")
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => {
                 if let Some(w) = app.get_webview_window("main") {

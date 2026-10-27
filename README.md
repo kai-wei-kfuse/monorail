@@ -1,6 +1,10 @@
-# pixel-record：首期开发起点
+# 单轨（MONORAIL）
 
-此工程已完成技术骨架验证及 M0 基础整顿，不是完整产品。目录遵循上级 `架构设计.md` v1.1；附件、完整选卡/降级/回顾、离线回答落账等尚未实现。
+个人任务 / 计时桌面软件。目录遵循上级 `架构设计.md` v1.1。
+
+产品原名「像素记录」，现统一使用「单轨 / MONORAIL」。内部 npm/Cargo 包名 `pixel-record`、Rust 库名 `pixel_record_lib` 及应用标识 `local.pixelrecord.app` 保留；它们不是界面显示名。更名范围和验证结果见 `修改日志.md`，打包说明见 `src-tauri/RELEASE.md`。
+
+私有源码与发布仓库：https://github.com/kai-wei-kfuse/monorail 。安装带更新功能的版本后，在「设置 → 关于」检查更新、下载并重启安装。当前私有开发版复用本机 GitHub CLI 登录，先安装 gh 并执行 `gh auth login`；账号必须能读取此仓库。接入、发版及验收方法见 `docs/updates.md`。
 
 ## 运行
 
@@ -19,7 +23,7 @@
 
 验证入口位于 `src/verification/`，只由 Vite verify mode 引入；原生模拟电源和触发入口由 Cargo `verify` feature 编译隔离。普通生产前端包不包含验证入口，普通 Rust 构建没有对应命令处理器。
 
-原生运行证据：`%APPDATA%/local.taskterminal.skeleton/evidence.jsonl`、`lifecycle.json`；本次归档在 `evidence/`。测试数据在 `.verification-data/`，不提交。
+原生运行证据：`%APPDATA%/local.pixelrecord.app/evidence.jsonl`、`lifecycle.json`；验证归档在 `evidence/`。测试数据在 `.verification-data/`，不提交。早期骨架使用的 `local.taskterminal.skeleton` 标识仅见历史记录。
 
 ## 一致性约定
 

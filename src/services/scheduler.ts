@@ -1,7 +1,7 @@
 import { activityDay } from '../domain/timeline/day';
 import type { LifecycleSource, PowerEvent } from '../platform/lifecycle';
 import type { Ctx } from './commit';
-import { run } from './commit';
+import { run, whenCommitsOpen } from './commit';
 import { refreshInTx } from './dealService';
 import { settleOfflineInTx } from './timerService';
 import type { Range } from './timerService';
@@ -36,19 +36,23 @@ export function untilBoundary(now: string, boundaryHour: number): number {
 export async function startScheduler(ctx: Ctx, deps: SchedulerDeps): Promise<() => void> {
   let day = activityDay(ctx.now(), ctx.settings.dayBoundaryHour);
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const checkDay = async () => {
+  let stopped = false;
+  const checkDay = () => whenCommitsOpen(ctx, async () => {
+    if (stopped) return;
     const current = activityDay(ctx.now(), ctx.settings.dayBoundaryHour);
     if (current === day) return;
-    day = current;
     await deps.onDayChanged(current);
-  };
+    day = current;
+  });
   const arm = () => {
     clearTimeout(timer);
+    if (stopped) return;
     timer = setTimeout(() => { void checkDay().catch(deps.report).finally(arm); }, untilBoundary(ctx.now(), ctx.settings.dayBoundaryHour) + 1000);
   };
   const onPower = (event: PowerEvent) => {
     if (event.kind !== 'resume' || event.suspended_at === null || event.resumed_at === null) return;
-    void settle(ctx, { start: iso(event.suspended_at), end: iso(event.resumed_at) })
+    const gap = { start: iso(event.suspended_at), end: iso(event.resumed_at) };
+    void whenCommitsOpen(ctx, async () => { if (!stopped) await settle(ctx, gap); })
       .then(checkDay).catch(deps.report).finally(arm);
   };
 
@@ -60,5 +64,5 @@ export async function startScheduler(ctx: Ctx, deps: SchedulerDeps): Promise<() 
     arm();
   });
   arm();
-  return () => { clearTimeout(timer); off(); offSettings(); };
+  return () => { stopped = true; clearTimeout(timer); off(); offSettings(); };
 }

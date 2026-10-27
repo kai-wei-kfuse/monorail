@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ack-quickbar-update"
+description = "Enables the ack_quickbar_update command without any pre-configured scope."
+commands.allow = ["ack_quickbar_update"]
+
+[[permission]]
+identifier = "deny-ack-quickbar-update"
+description = "Denies the ack_quickbar_update command without any pre-configured scope."
+commands.deny = ["ack_quickbar_update"]

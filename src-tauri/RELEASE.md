@@ -1,14 +1,22 @@
-# 像素记录 0.1.0 Windows 发布
+# 单轨（MONORAIL）0.1.0 Windows 发布
 
 ## 打包配置
 
-- 产品名：像素记录；版本：0.1.0；应用标识：`local.pixelrecord.app`。
+- 产品名：单轨；英文名：MONORAIL；版本：0.1.0；应用标识：`local.pixelrecord.app`。
 - 目标：Windows x64 NSIS 安装包；按当前用户安装；安装器语言为简体中文、英文。
 - 图标：从 `src/ui/marks/Emblem.tsx` 的 ▽ 徽记几何生成，配色取现有 tokens。源文件 `icons/app.svg`；应用、安装器及托盘共用生成的 PNG/ICO。
 - 图标重建：在 app 根目录执行 `npm exec tauri -- icon src-tauri/icons/app.svg --output src-tauri/icons`。只需提交 app.svg、icon.png、icon.ico，其他平台图标由既有 .gitignore 忽略。
 - 托盘菜单：显示主窗口、快速记录、退出。显示主窗口会先恢复最小化；快捷活动菜单不显示可能过期的默认快捷键。
 
-## 从旧版本升级
+## 本次名称变更（2026-10-27）
+
+「像素记录 / PIXEL RECORD」改为「单轨 / MONORAIL」。内部 npm/Cargo 包名和应用 exe 文件名仍为 `pixel-record`，Rust 库名仍为 `pixel_record_lib`。保留应用 identifier，使配置和持久化目录授权继续使用原有路径；业务数据目录没有移动。
+
+NSIS 按产品名生成默认安装目录、卸载注册键和快捷方式名称。更名并不保证沿用旧版「像素记录」的安装记录；旧版覆盖升级、自启项迁移需另行实测。详情及本次构建结果见上级 `修改日志.md`。下方旧安装包的路径、哈希和验证结果保留为历史记录。
+
+本次重新构建并交付 `发布/单轨_0.1.0_x64-setup.exe`（相对于 app 根目录）。应用及安装器的 Windows PE 产品名、文件描述均已核验为「单轨」；34 个测试文件、210 项测试、TypeScript 和 ESLint 检查通过。新产物哈希和核验记录见 `修改日志.md` 及 `evidence/rename-monorail/`。
+
+## 从早期验证骨架升级（历史说明）
 
 旧标识为 `local.taskterminal.skeleton`。新标识改变了 `app_config_dir` 和保存目录访问授权的 `app_data_dir`。本次没有自动迁移旧配置：只复制 config.json 无法同时恢复 persisted-scope 的独立目录授权。
 
@@ -26,7 +34,7 @@ NSIS 产物位于 `src-tauri/target/release/bundle/nsis/`，交付副本放在 `
 
 经 lead 授权，回顾投影 `bet` 增加 `projectId`，ReviewPage 用 ID 定位旧主线；页面类型复用 store 合同。两个项目同名时不会再把另一个项目传给换主线对话框。补充页面组件与服务连续复盘两项回归，源代码不会因为这项修复引入新的 UI 流程。
 
-## 本次交付记录
+## 历史交付记录：像素记录 0.1.0
 
 - 构建日期：2026-10-27；生产源码提交：`4673332549ac89a42bb9f97825e69199dd12b0ae`，已包含 M3 全部页面接线及上述修复。
 - `npm run check` 通过：34 个测试文件、210 项测试、TypeScript、ESLint。

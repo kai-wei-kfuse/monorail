@@ -30,7 +30,7 @@ export function FirstRun({ onReady, error }: { onReady: (root: string) => void; 
     finally { setBusy(false); }
   }
   return <div className="first-frame">
-    <TitleBar name="像素记录" tabs={[]} active="" onTab={() => {}}>
+    <TitleBar name="单轨" tabs={[]} active="" onTab={() => {}}>
       <WindowButtons pinned={pinned} maximized={maximized}
         onPin={() => void windowControls.setPinned(!pinned).then(() => setPinned(!pinned))} onMinimize={() => void windowControls.minimize()}
         onMaximize={() => void windowControls.toggleMaximize().then(() => windowControls.isMaximized()).then(setMaximized)}

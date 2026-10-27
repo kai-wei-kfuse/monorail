@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-quickbar-update-ready"
+description = "Enables the quickbar_update_ready command without any pre-configured scope."
+commands.allow = ["quickbar_update_ready"]
+
+[[permission]]
+identifier = "deny-quickbar-update-ready"
+description = "Denies the quickbar_update_ready command without any pre-configured scope."
+commands.deny = ["quickbar_update_ready"]

@@ -8,3 +8,11 @@ src-tauri/icons/*
 !src-tauri/icons/app.svg
 !src-tauri/icons/icon.ico
 !src-tauri/icons/icon.png
+/发布/
+.env
+.env.*
+!.env.verify
+*.key
+*.key.pub
+/evidence/update-test-data/
+/evidence/update-test-install/

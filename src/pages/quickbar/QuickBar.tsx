@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Tri2 } from '../../ui/icons/Icon';
 import { TextArea } from '../../ui/controls/TextArea';
 import { Keycap } from '../../ui/controls/Keycap';
@@ -15,11 +15,16 @@ export interface Draft extends DraftFields { text: string; attachments: PendingA
  * 快速记录条：写一行，Enter 保存；Shift+Enter 换行，记录条随之变高；Esc 隐藏。
  * 保存成功后清空，由调用方隐藏窗口并发 data-changed。保存失败时内容保留，显示原因。
  */
-export function QuickBar({ projects, onSave, onHide }:
-  { projects: { id: string; name: string }[]; onSave: (draft: Draft) => Promise<void>; onHide: () => void }) {
+export function QuickBar({ projects, onSave, onHide, onDirtyChange }:
+  { projects: { id: string; name: string }[]; onSave: (draft: Draft) => Promise<void>; onHide: () => void;
+    onDirtyChange?: (dirty: boolean) => void }) {
   const [text, setText] = useState(''), [fields, setFields] = useState<DraftFields>(EMPTY_FIELDS);
   const [saving, setSaving] = useState(false), [error, setError] = useState('');
   const att = useAttachments();
+  useLayoutEffect(() => {
+    if (!onDirtyChange) return;
+    onDirtyChange(Boolean(text.trim()) || att.items.length > 0);
+  }, [text, att.items.length, onDirtyChange]);
   async function save() {
     if (saving || (!text.trim() && !att.items.length)) return;
     setSaving(true); setError('');

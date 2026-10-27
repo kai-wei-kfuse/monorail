@@ -7,16 +7,18 @@ import { change, changeDataDirectory, changeLists } from '../services/settingsSe
 import type { SettingsErrors } from '../services/settingsService';
 import { chooseRoot } from '../platform/dialog';
 import type { SettingKey, Settings } from '../shared/settings';
+import { UpdatePanel } from '../widgets/UpdatePanel';
+import type { useUpdates } from './useUpdates';
 
-const VERSION = '0.1.0';
 const now = () => new Date().toISOString();
 
 /**
  * Binds the settings page to settingsService. Changes apply immediately; a platform failure (e.g. a
  * hotkey taken by another app) shows on its own row and is not saved. Changing the data folder reloads the app.
  */
-export function SettingsScreen({ ctx, root, initialErrors, onSaved, report }:
-  { ctx: Ctx; root: string; initialErrors: SettingsErrors; onSaved: () => void; report: (error: unknown) => void }) {
+export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, updates }:
+  { ctx: Ctx; root: string; initialErrors: SettingsErrors; onSaved: () => void; report: (error: unknown) => void;
+    updates: ReturnType<typeof useUpdates> }) {
   const settings = useStore(appStore, s => (s.ready ? s.settings : ctx.settings));
   const [section, setSection] = useState('deal');
   const [errors, setErrors] = useState<SettingsErrors>(initialErrors);
@@ -35,5 +37,7 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report }:
     void changeDataDirectory({ async changeDataDirectory() { if (await chooseRoot()) window.location.reload(); } }).catch(report);
   };
   return <SettingsPage section={section} onSection={setSection} settings={settings} onChange={onChange}
-    onListsChange={onListsChange} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={VERSION} />;
+    onListsChange={onListsChange} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}
+    aboutExtras={<UpdatePanel state={updates.state} connectionError={updates.connectionError} onCheck={() => void updates.check()}
+      onDownload={() => void updates.download()} onInstall={() => void updates.install()} onReconnect={() => void updates.reconnect()} />} />;
 }

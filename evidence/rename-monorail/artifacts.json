@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-27T09:10:14.7404611+00:00",
+  "productName": "单轨",
+  "englishName": "MONORAIL",
+  "identifier": "local.pixelrecord.app",
+  "version": "0.1.0",
+  "installer": {
+    "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\发布\\单轨_0.1.0_x64-setup.exe",
+    "bytes": 7738067,
+    "sha256": "4f018263b799f671db330c8645e88d8f5cbe445c1b7b44f2db1b1432fc294517",
+    "productName": "单轨",
+    "fileDescription": "单轨"
+  },
+  "application": {
+    "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\src-tauri\\target\\release\\pixel-record.exe",
+    "bytes": 18045440,
+    "sha256": "f487208fceb70e7ccc99dc9fe877bae44b433f2d073d1d4d736f0d21aa12568a",
+    "productName": "单轨",
+    "fileDescription": "单轨"
+  },
+  "deliveryHashMatchesBuild": true,
+  "existingModifiedEvidencePreserved": true,
+  "tests": {
+    "files": 34,
+    "passed": 210,
+    "typeScript": "passed",
+    "eslint": "passed"
+  },
+  "applicationExecuted": false,
+  "installerExecuted": false,
+  "installed": false,
+  "upgradeAndAutostartMigrationTested": false
+}

@@ -13,6 +13,16 @@ fn main() {
             "dialog_active",
             "set_shortcut",
             "verification_enabled",
+            "check_update",
+            "download_update",
+            "install_update",
+            "read_update_state",
+            "prepare_update_install",
+            "cancel_update_install",
+            "quickbar_update_ready",
+            "ack_quickbar_update",
+            "begin_quick_save",
+            "end_quick_save",
         ]),
     ))
     .expect("Tauri build configuration failed");

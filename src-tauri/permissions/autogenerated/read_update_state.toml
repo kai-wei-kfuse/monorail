@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-read-update-state"
+description = "Enables the read_update_state command without any pre-configured scope."
+commands.allow = ["read_update_state"]
+
+[[permission]]
+identifier = "deny-read-update-state"
+description = "Denies the read_update_state command without any pre-configured scope."
+commands.deny = ["read_update_state"]

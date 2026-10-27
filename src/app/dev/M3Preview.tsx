@@ -13,7 +13,7 @@ import { BaselineMarks } from '../shell/BaselineMarks';
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
 const ago = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
 const shell = (active: string, body: ReactElement, right?: ReactElement) => <Frame
-  titleBar={<TitleBar name="像素记录" tabs={TABS} active={active} onTab={() => {}}>
+  titleBar={<TitleBar name="单轨" tabs={TABS} active={active} onTab={() => {}}>
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>}
   statusBar={<StatusBar right={<>{right}<BaselineMarks main side /></>} />}>{body}</Frame>;
@@ -53,7 +53,7 @@ export function SettingsPreview({ sec: initial }: { sec: string }) {
   const [s, setS] = useState<Settings>({ ...defaults, lists: { idleName: '待机',
     quickActivities: [{ id: 'q1', name: '厕所', category: '生活' }, { id: 'q2', name: '拿快递', category: '生活' }, { id: 'q3', name: '刷视频', category: '休息' }],
     restPool: [{ id: 'r1', name: '眺望窗外' }, { id: 'r2', name: '走走' }] } });
-  return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.1.0" dataDir="D:\\Notes\\pixel-record"
+  return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.1.0" dataDir="D:\\Notes\\monorail"
     onChange={(k, v) => { setS({ ...s, [k]: v }); setSaves(n => n + 1); }} onListsChange={lists => { setS({ ...s, lists }); setSaves(n => n + 1); }}
     onChangeDir={() => {}} errors={sec === 'keys' ? { mainHotkey: 'Ctrl+Alt+Shift+M 已被其他软件占用，没有生效' } : {}} />, <SavedBadge saves={saves} />);
 }

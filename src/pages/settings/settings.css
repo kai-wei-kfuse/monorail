@@ -15,3 +15,13 @@
 .saved { padding: 5px 8px; border: 1px solid var(--line-2); font: 330 11px/1 var(--f-cn); color: var(--mute); transition: background .2s, color .2s, border-color .2s; }
 .saved.ok { background: var(--ink); border-color: var(--ink); color: #f6f6f3; }
 .st-err { font: 330 12px/1.4 var(--f-cn); color: var(--red); }
+.st-update { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+.st-update-head { display: flex; align-items: center; gap: 24px; justify-content: space-between; }
+.st-update .st-update-notes { white-space: pre-wrap; user-select: text; }
+.st-update progress { width: 100%; margin-top: 14px; accent-color: var(--ink); }
+.st-update .sbtn { margin-top: 10px; }
+.st-update-status { margin-top: 14px; padding: 12px; border-left: 3px solid var(--ink); background: var(--paper-2); }
+.st-update-history { margin-top: 16px; font: 400 12px/1.8 var(--f-cn); }
+.st-update-history summary { cursor: pointer; }
+.st-update-history time { font-family: var(--f-mono); color: var(--mute); }
+.update-shield { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: var(--paper); font: 400 16px/1.7 var(--f-cn); }

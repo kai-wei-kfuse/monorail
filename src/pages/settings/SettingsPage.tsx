@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { SettingKey, Settings } from '../../shared/settings';
 import { settingDefinitions } from '../../shared/settings';
 import { SideNav, SplitLayout } from '../../ui/layout/SideNav';
@@ -25,10 +26,10 @@ type Change = <K extends SettingKey>(key: K, value: Settings[K]) => void;
  * 设置页：左侧 9 个分类，右侧面板。改动即时生效：每次改动都直接交给 onChange，由调用方保存，并在底栏闪一下「已保存 ✓」（见 SavedBadge）。
  * 快捷键冲突等保存失败的原因，通过 errors 按 key 显示在对应那一行。
  */
-export function SettingsPage({ section, onSection, settings, onChange, onListsChange, dataDir, onChangeDir, errors = {}, version }:
+export function SettingsPage({ section, onSection, settings, onChange, onListsChange, dataDir, onChangeDir, errors = {}, version, aboutExtras }:
   { section: string; onSection: (id: string) => void; settings: Settings; onChange: Change;
     onListsChange: (lists: Settings['lists']) => void; dataDir: string; onChangeDir: () => void;
-    errors?: Partial<Record<SettingKey, string>>; version: string }) {
+    errors?: Partial<Record<SettingKey, string>>; version: string; aboutExtras?: ReactNode }) {
   const sec = SECTIONS.find(s => s.id === section) ?? SECTIONS[0];
   const lists = settings.lists;
   const control = (row: SettingRow) => {
@@ -61,12 +62,13 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
   };
   const nav = SECTIONS.map(s => ({ id: s.id, no: s.no, cn: s.cn, en: s.en }));
   return <SplitLayout nav={<SideNav en="SETTINGS" cn="设置" items={nav} active={sec.id} onSelect={onSection}
-    foot={<><Emblem /><div><b>像素记录</b><span>v{version}</span></div></>} />}>
+    foot={<><Emblem /><div><b>单轨</b><span>v{version}</span></div></>} />}>
     <PanelHeader no={sec.no} en={sec.en} cn={sec.cn} desc={sec.desc || undefined} />
     {sec.id === 'about' ? <div className="st-about"><Emblem strokeWidth={1.6} /><div>
-      <span className="k">PIXEL RECORD</span><h4>像素记录</h4>
+      <span className="k">MONORAIL</span><h4>单轨</h4>
       <p>帮你做减法的决策系统：写一行，剩下的交给提前定好的规则。首页只显示一件事。</p>
       <small>v{version} · 数据是一个文件夹里的 Markdown 文件</small>
+      {aboutExtras}
     </div></div>
       : sec.groups.map(g => <Group key={g.cn} cn={g.cn} en={g.en}>
         {g.rows.map(r => {

@@ -1,7 +1,7 @@
 {
   "name": "pixel-record",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -9,7 +9,10 @@
     "build:verify": "tsc --noEmit && vite build --mode verify",
     "test": "node test-runner.mjs",
     "check": "tsc --noEmit && eslint src && npm test",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "version:set": "node scripts/version.mjs",
+    "version:check": "node scripts/version.mjs --check",
+    "release:publish": "node scripts/publish-release.mjs"
   },
   "dependencies": {
     "@fontsource-variable/saira": "5.3.0",

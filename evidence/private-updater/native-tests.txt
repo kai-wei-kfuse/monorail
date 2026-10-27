@@ -1,0 +1,9 @@
+
+running 5 tests
+test reminders::tests::delivered_ids_are_not_due_again ... ok
+test reminders::tests::prune_keeps_only_planned_ids ... ok
+test private_release::tests::credentials_only_go_to_the_configured_https_asset_api ... ok
+test attachments::tests::rejects_bad_record_ids_and_empty_names ... ok
+test attachments::tests::names_cannot_escape_and_are_deduplicated ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s

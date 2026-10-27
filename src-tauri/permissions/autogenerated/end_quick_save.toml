@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-end-quick-save"
+description = "Enables the end_quick_save command without any pre-configured scope."
+commands.allow = ["end_quick_save"]
+
+[[permission]]
+identifier = "deny-end-quick-save"
+description = "Denies the end_quick_save command without any pre-configured scope."
+commands.deny = ["end_quick_save"]

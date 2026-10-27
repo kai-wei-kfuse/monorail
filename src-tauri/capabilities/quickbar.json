@@ -9,6 +9,10 @@
     "allow-save-quick-record",
     "allow-evidence",
     "core:window:allow-set-size",
-    "allow-save-attachment"
+    "allow-save-attachment",
+    "allow-quickbar-update-ready",
+    "allow-ack-quickbar-update",
+    "allow-begin-quick-save",
+    "allow-end-quick-save"
   ]
 }

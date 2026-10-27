@@ -36,7 +36,7 @@ export interface Transaction {
   saveProject(project: Project): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
   saveSettings(settings: Settings): Promise<void>;
 }
-interface Queue { tail: Promise<unknown>; failure?: unknown; version: number }
+interface Queue { tail: Promise<unknown>; failure?: unknown; version: number; paused?: { resumed: Promise<void>; release(): void } }
 const queues = new WeakMap<Ctx, Queue>();
 const settingsListeners = new WeakMap<Ctx, Set<(settings: Settings) => void>>();
 
@@ -46,6 +46,28 @@ export function createContext(options: ContextOptions): Ctx {
   queues.set(ctx, { tail: Promise.resolve(), version: 0 });
   settingsListeners.set(ctx, listeners);
   return ctx;
+}
+
+/** Atomically stop admission, then drain every command accepted before the update barrier. */
+export function pauseCommits(ctx: Ctx): { ready: Promise<void>; resume(): void } {
+  const queue = queues.get(ctx);
+  if (!queue) throw new Error('未初始化的提交上下文');
+  if (queue.paused) throw new Error('提交队列已经在安装更新');
+  let release!: () => void;
+  const resumed = new Promise<void>(resolve => { release = resolve; });
+  queue.paused = { resumed, release };
+  return {
+    ready: queue.tail.then(() => { if (queue.failure) throw new Error('提交已阻塞；请重启以恢复 journal', { cause: queue.failure }); }),
+    resume() { delete queue.paused; release(); },
+  };
+}
+
+/** Background producers wait for a cancelled install instead of losing a day/power event. */
+export async function whenCommitsOpen<T>(ctx: Ctx, work: () => Promise<T>): Promise<T> {
+  const queue = queues.get(ctx);
+  if (!queue) throw new Error('未初始化的提交上下文');
+  while (queue.paused) await queue.paused.resumed;
+  return work();
 }
 
 function daysFor(state: AppState, today: string): string[] {
@@ -58,6 +80,7 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
   if (ctx.scope === 'transaction') throw new Error('事务重入：请调用 InTx 函数');
   const queue = queues.get(ctx);
   if (!queue) throw new Error('未初始化的提交上下文');
+  if (queue.paused) return Promise.reject(new Error('正在安装更新，暂时不能提交新操作'));
   const commandAt = at ?? ctx.now();
   const result = queue.tail.then(async () => {
     if (queue.failure) throw new Error('提交已阻塞；请重启以恢复 journal', { cause: queue.failure });

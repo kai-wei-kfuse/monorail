@@ -1,0 +1,2 @@
+   Compiling pixel-record v0.1.2 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.22s

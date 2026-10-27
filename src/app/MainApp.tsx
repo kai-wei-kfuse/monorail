@@ -5,6 +5,7 @@ import { listen } from '@tauri-apps/api/event';
 import { appStore, dismissNotice } from '../store/appStore';
 import type { Notice, NoticeResult } from '../shared/notices';
 import type { Settings } from '../shared/settings';
+import { updatePhaseLabels, updateStepLabels } from '../shared/updates';
 import { setMini } from '../platform/windowMode';
 import { windowControls } from '../platform/windowControls';
 import type { Ctx } from '../services/commit';
@@ -36,6 +37,7 @@ import { BaselineMarks } from './shell/BaselineMarks';
 import { MiniWindow } from './shell/MiniWindow';
 import { NoticeHost } from './shell/NoticeHost';
 import { useHotkeys } from './shell/hotkeys';
+import { useUpdates } from './useUpdates';
 import '../ui/styles/base.css';
 import './app.css';
 
@@ -81,6 +83,7 @@ export function MainApp() {
 function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClose }: { ctx: Ctx; actions: Actions; root: string;
   platformErrors: SettingsErrors; report: (error: unknown) => void; errors: ToastItem[]; onErrorClose: (id: string) => void }) {
   const home = useStore(appStore, s => s.home), notices = useStore(appStore, s => s.notices);
+  const updates = useUpdates(ctx);
   const settings: Settings = useStore(appStore, s => (s.ready ? s.settings : ctx.settings));
   const [saves, setSaves] = useState(0);
   // Appearance settings apply as soon as they are saved.
@@ -164,7 +167,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
       }} /></div>;
   }
 
-  const titleBar = <TitleBar name="像素记录" tabs={routes.map(r => ({ id: r.id, cn: r.cn, en: r.en }))} active={page} onTab={id => setPage(id as Route['id'])}>
+  const titleBar = <TitleBar name="单轨" tabs={routes.map(r => ({ id: r.id, cn: r.cn, en: r.en }))} active={page} onTab={id => setPage(id as Route['id'])}>
     <StatusBlock kind={home.activity.kind} label={home.activity.label || settings.lists.idleName} startedAt={home.activity.startedAt} onClick={() => setBackfill(true)} />
     {page === 'home' && <button type="button" className="wc mini-btn-tb" aria-label="缩成悬浮小窗" title="缩成悬浮小窗（M）" onClick={() => void toggleMini(true)}><Icon name="shrink" /></button>}
     <WindowButtons pinned={pinned} maximized={maximized}
@@ -184,7 +187,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
           onGuide={onGuide} onOpenReview={() => setPage('review')} />}
         {page === 'review' && <ReviewScreen ctx={ctx} report={report} />}
-        {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} />}
+        {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} updates={updates} />}
         {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} />}
       </div>
     </Frame>
@@ -192,5 +195,10 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
       onExtraClose={id => { onErrorClose(id); setToasts(t => t.filter(x => x.id !== id)); }} />
     {backfill && <Backfill data={{ activities: activityOptions, now: now() }} dismiss={() => setBackfill(false)}
       resolve={r => { setBackfill(false); void actions.backfill(r); }} />}
+    {updates.state && ['preparing', 'installing'].includes(updates.state.phase) && <div className="update-shield" role="alert"><div>
+      <b>{updatePhaseLabels[updates.state.phase]}</b><p>{updateStepLabels[updates.state.step]}</p>
+      <p>已等待 {Math.max(0, Math.floor((nowMs - (updates.state.history.at(-1)?.at ?? nowMs)) / 1000))} 秒</p>
+      {updates.connectionError && <p>{updates.connectionError}</p>}
+    </div></div>}
   </>;
 }
