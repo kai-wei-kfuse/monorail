@@ -24,6 +24,7 @@ import type { Actions } from './actions';
 import { readyRoutes } from './routes';
 import { BackpackScreen } from './BackpackScreen';
 import { SettingsScreen } from './SettingsScreen';
+import { ReviewScreen } from './ReviewScreen';
 import { SavedBadge } from '../pages/settings/SettingsPage';
 import type { SettingsErrors } from '../services/settingsService';
 import type { Route } from './routes';
@@ -181,7 +182,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
         {page === 'home' && <HomePage actions={actions} intro={intro} completeAt={completeAt} onCompleteConsumed={() => setCompleteAt(null)}
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
-          onGuide={onGuide} onOpenReview={() => info('每周回顾还不能用', '回顾页还在做，做好后从这里进入。')} />}
+          onGuide={onGuide} onOpenReview={() => setPage('review')} />}
+        {page === 'review' && <ReviewScreen ctx={ctx} report={report} />}
         {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} />}
         {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} />}
       </div>
