@@ -8,4 +8,4 @@ import '../../ui/styles/base.css';
 
 const q = new URLSearchParams(location.search), page = q.get('page') ?? 'home';
 if (q.has('still')) setMotionLevel('off');
-createRoot(document.getElementById('root')!).render(PREVIEW_PAGES.includes(page) ? <HomePreview page={page} /> : <Gallery page={page} />);
+createRoot(document.getElementById('root')!).render(PREVIEW_PAGES.includes(page) ? <HomePreview page={page} overlay={q.get('o')} /> : <Gallery page={page} />);

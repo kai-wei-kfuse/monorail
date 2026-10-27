@@ -1,0 +1,8 @@
+/* 提示内容里的小部件：时间区间、活动选择、模式表 */
+.nt-span { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.nt-span b { font: 600 22px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink); }
+.nt-span i { font-style: normal; color: var(--mute); }
+.nt-field { display: grid; gap: 8px; margin-top: 14px; }
+.nt-field > label, .nt-field > span { font: 520 13px/1 var(--f-cn); letter-spacing: .04em; color: var(--ink); }
+.nt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.nt-err { margin: 10px 0 0; font: 330 12px/1.4 var(--f-cn); color: var(--red); }

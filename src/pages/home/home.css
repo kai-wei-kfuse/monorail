@@ -42,3 +42,16 @@
 .alt-hero p { margin: 0; max-width: 40em; font: 330 15px/1.7 var(--f-cn); color: var(--ink-3); }
 .alt-ask { display: grid; gap: 10px; max-width: 520px; }
 .alt-ask label { font: 520 13px/1 var(--f-cn); letter-spacing: .04em; }
+
+/* 完成、缩小对话框里的字段 */
+.dlg-field { display: grid; gap: 8px; margin-top: 16px; }
+.dlg-field > label { font: 520 13px/1 var(--f-cn); letter-spacing: .04em; color: var(--ink); }
+.dlg-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.dlg-switch { display: flex; align-items: center; gap: 20px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.dlg-switch b { font: 520 14px/1.3 var(--f-cn); color: var(--ink); }
+.dlg-switch p { margin: 4px 0 0; font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+.dlg-switch .tgl { margin-left: auto; }
+.dlg-pat { display: grid; gap: 4px; margin: 16px 0 0; padding: 10px 12px; border: 1px solid var(--line); background: var(--paper-2); font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+.dlg-pat div { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 12px; }
+.dlg-pat dt { font-weight: 520; color: var(--ink-3); }
+.dlg-pat dd { margin: 0; }

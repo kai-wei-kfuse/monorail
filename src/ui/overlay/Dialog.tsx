@@ -7,7 +7,8 @@ export function Dialog({ en, title, children, footer, onClose }: { en: string; t
   const ref = useRef<HTMLDivElement>(null), id = useId();
   useEffect(() => {
     const el = ref.current!, before = document.activeElement as HTMLElement | null;
-    (el.querySelector<HTMLElement>('[autofocus], input, textarea, button') ?? el).focus();
+    // 子元素用了 autoFocus 时已经拿到焦点，不再抢；否则先找输入框，再找按钮
+    if (!el.contains(document.activeElement)) (el.querySelector<HTMLElement>('input, textarea') ?? el.querySelector<HTMLElement>('button') ?? el).focus();
     return () => before?.focus?.();
   }, []);
   function onKey(e: KeyboardEvent) {
