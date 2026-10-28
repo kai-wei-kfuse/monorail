@@ -1,5 +1,12 @@
 # 单轨 MONORAIL
 
+[![release](https://img.shields.io/github/v/release/kai-wei-kfuse/monorail?label=release)](https://github.com/kai-wei-kfuse/monorail/releases/latest)
+![Windows](https://img.shields.io/badge/Windows-native-0078D6?logo=windows11&logoColor=white)
+![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+[![build](https://github.com/kai-wei-kfuse/monorail/actions/workflows/release.yml/badge.svg)](https://github.com/kai-wei-kfuse/monorail/actions/workflows/release.yml)
+
 一个 Windows 桌面上的「现在做什么」：写下手头的事就开始计时，不知道做什么就从任务池里抽一张卡。所有时间都落成可以改的条目，数据是本地的 Markdown 文件。
 
 ![写下一件事开始计时，停止，再抽一张卡开始做](docs/assets/demo.gif)
