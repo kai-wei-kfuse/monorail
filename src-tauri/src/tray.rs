@@ -14,7 +14,8 @@ pub fn setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         None::<&str>,
     )?;
     let exit = MenuItem::with_id(app, "exit", "退出", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open, &quick, &exit])?;
+    let mini = MenuItem::with_id(app, "mini", "开启 / 关闭小窗口", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&open, &quick, &mini, &exit])?;
     TrayIconBuilder::new()
         .icon(app.default_window_icon().ok_or("Missing application icon")?.clone())
         .menu(&menu)
@@ -33,6 +34,12 @@ pub fn setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             "exit" => app.exit(0),
+            "mini" => {
+                let app = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(error) = super::mini_window::toggle_mini(app).await { eprintln!("mini: {error}"); }
+                });
+            }
             _ => {}
         })
         .build(app)?;

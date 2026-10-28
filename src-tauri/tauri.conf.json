@@ -30,12 +30,28 @@
         "decorations": false,
         "dragDropEnabled": false,
         "skipTaskbar": true
+      },
+      {
+        "label": "mini",
+        "title": "单轨 · 小窗口",
+        "url": "mini.html",
+        "create": false,
+        "width": 520,
+        "height": 88,
+        "minWidth": 320,
+        "minHeight": 88,
+        "visible": false,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "dragDropEnabled": false,
+        "skipTaskbar": true
       }
     ],
     "security": {
       "capabilities": [
         "main",
-        "quickbar"
+        "quickbar",
+        "mini"
       ],
       "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:"
     }

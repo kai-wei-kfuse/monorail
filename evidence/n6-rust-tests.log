@@ -1,0 +1,31 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running unittests src\lib.rs (target\debug\deps\pixel_record_lib-6dac5209170ba8cf.exe)
+
+running 12 tests
+test quick_save::tests::migration_blocks_new_saves_and_preserves_existing_sessions ... ok
+test reminders::tests::prune_keeps_only_planned_ids ... ok
+test reminders::tests::delivered_ids_are_not_due_again ... ok
+test windows::tests::other_registration_errors_keep_their_details ... ok
+test windows::tests::win_modifier_order_does_not_change_the_shortcut ... ok
+test windows::tests::registration_conflict_preserves_the_displayed_win_name ... ok
+test windows::tests::normalization_only_replaces_whole_modifier_tokens ... ok
+test windows::tests::win_modifier_matches_super ... ok
+test private_release::tests::credentials_only_go_to_the_configured_https_asset_api ... ok
+test mini_window::tests::geometry_round_trip_and_corruption_are_explicit ... ok
+test attachments::tests::rejects_bad_record_ids_and_empty_names ... ok
+test attachments::tests::names_cannot_escape_and_are_deduplicated ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src\main.rs (target\debug\deps\pixel_record-2b7c72ac776d48bf.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests pixel_record_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

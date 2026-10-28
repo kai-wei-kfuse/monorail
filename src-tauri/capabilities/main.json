@@ -10,6 +10,8 @@
     "allow-read-lifecycle",
     "allow-set-reminders",
     "allow-show-quickbar",
+    "allow-toggle-mini",
+    "allow-show-main",
     "allow-dialog-active",
     "allow-set-shortcut",
     "allow-check-update",

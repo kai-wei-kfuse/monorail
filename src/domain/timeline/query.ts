@@ -9,7 +9,7 @@ export function inRange(entries: readonly TimeEntry[], start: string, end: strin
 }
 export function overlaps(entries: readonly TimeEntry[], start: string, end: string, at: string): Coverage[] {
   return inRange(entries, start, end, at).filter(entry => entry.project !== '待机').map(entry => ({
-    id: entry.id, description: entry.description, project: entry.project, tags: entry.tags, card_id: entry.card_id,
+    id: entry.id, description: entry.description, project: entry.project, tags: [...entry.tags], card_id: entry.card_id,
     from: new Date(Math.max(Date.parse(start), Date.parse(entry.started_at))).toISOString(),
     to: new Date(Math.min(Date.parse(end), Date.parse(entry.ended_at ?? at))).toISOString(),
   }));

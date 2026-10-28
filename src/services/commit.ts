@@ -26,8 +26,13 @@ export interface ContextOptions {
   random?(): number;
   settingsPlatform?: SettingsPlatform;
 }
-export interface Ctx extends ContextOptions { readonly scope: 'root'; onSettingsChange(listener: (settings: Settings) => void): () => void }
+export interface Ctx extends ContextOptions {
+  readonly scope: 'root'; onSettingsChange(listener: (settings: Settings) => void): () => void;
+  onSnapshot(listener: (snapshot: Snapshot) => void): () => void;
+  snapshot(): Snapshot | null;
+}
 export interface Transaction {
+  readonly revision: number;
   readonly scope: 'transaction'; readonly repos: Repositories; readonly settings: Settings;
   readonly at: string; readonly id: () => string; readonly now: () => string;
   readonly log: (message: string) => Promise<void>;
@@ -43,7 +48,14 @@ const settingsListeners = new WeakMap<Ctx, Set<(settings: Settings) => void>>();
 
 export function createContext(options: ContextOptions): Ctx {
   const listeners = new Set<(settings: Settings) => void>();
-  const ctx: Ctx = { ...options, scope: 'root', onSettingsChange(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; } };
+  const snapshots = new Set<(snapshot: Snapshot) => void>();
+  let latest: Snapshot | null = null;
+  const ctx: Ctx = { ...options, scope: 'root',
+    onSettingsChange(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
+    onSnapshot(listener) { snapshots.add(listener); return () => { snapshots.delete(listener); }; },
+    snapshot: () => latest,
+    publish(snapshot) { latest = snapshot; options.publish(snapshot); for (const listener of snapshots) listener(snapshot); },
+  };
   queues.set(ctx, { tail: Promise.resolve(), version: 0 });
   settingsListeners.set(ctx, listeners);
   return ctx;
@@ -90,7 +102,7 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
     let settings = structuredClone(ctx.settings);
     let settingsWrite: Write | undefined;
     const tx: Transaction = {
-      scope: 'transaction', repos: ctx.repos, get settings() { return settings; },
+      scope: 'transaction', revision: queue.version, repos: ctx.repos, get settings() { return settings; },
       at: commandAt, id: ctx.id, now: ctx.now, log: ctx.log,
       state, entries, writes: [], notices: [],
       get cards() { return cards.values; }, get tasks() { return tasks.values; },

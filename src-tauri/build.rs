@@ -10,6 +10,8 @@ fn main() {
             "simulate_power",
             "set_reminders",
             "show_quickbar",
+            "toggle_mini",
+            "show_main",
             "dialog_active",
             "set_shortcut",
             "verification_enabled",
