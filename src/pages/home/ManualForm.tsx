@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseEntryText } from '../../shared/tags';
 import { ActionButton } from '../../ui/controls/Button';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
@@ -19,11 +19,14 @@ const TIMES = [['start', 'START', '开始', '9:30'], ['end', 'END', '结束', '1
 /**
  * 计时条的「手动补录」（UI 规范 §11.2，方案 §7.2）：写一段做过的事，开始、结束、时长填两项。
  * 和已有记录重叠时两条共存（E1），下面一行先说会和哪些并排；overlaps 由接线按条目查。onAdd 交 ISO 时刻。
+ * prefill 换了一个新对象时，用它填描述、项目、标签（手动补录时点收藏），时间不动。
  */
-export function ManualForm({ projects, knownTags, overlaps, onAdd, onCreateProject, onCreateTag }:
+export function ManualForm({ projects, knownTags, overlaps, onAdd, onCreateProject, onCreateTag, prefill }:
   { projects: ProjectOption[]; knownTags: string[]; overlaps: (start: string, end: string) => Cover[];
-    onAdd: (value: EntryValue, start: string, end: string) => void; onCreateProject: (name: string) => void; onCreateTag: (tag: string) => void }) {
+    onAdd: (value: EntryValue, start: string, end: string) => void; onCreateProject: (name: string) => void; onCreateTag: (tag: string) => void;
+    prefill?: EntryValue | null }) {
   const [f, setF] = useState({ text: '', project: '未分类', tags: [] as string[], start: '', end: '', dur: '' });
+  useEffect(() => { if (prefill) setF(x => ({ ...x, text: prefill.description, project: prefill.project, tags: prefill.tags })); }, [prefill]);
   const r = manualRange(f.start, f.end, f.dur, Date.now());
   const p = parseEntryText(f.text, projects.map(o => o.name));
   const hit = 'error' in r ? [] : overlaps(new Date(r.start).toISOString(), new Date(r.end).toISOString());

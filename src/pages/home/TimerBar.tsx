@@ -48,6 +48,8 @@ export interface TimerActions {
   startFavorite: (presetId: string) => void;
   startCard: (cardId: string) => void;
   continueEntry: (entryId: string) => void;
+  /** 把这一条的描述、项目、标签存成收藏（预设，位置计时条）。 */
+  favorite: (entryId: string) => void;
   readout: (req: ReadoutRequest, seen: unknown) => Promise<ReadoutOutcome>;
   createProject: (name: string) => void;
   createTag: (tag: string) => void;
@@ -143,6 +145,10 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
               {running.kind !== '普通' && <span className="tbar-pill">{running.kind === '插入' ? '离开中' : '暂停中'}</span>}
               {cardRun && <span className="tbar-pill is-card">卡</span>}
             </span>}
+            {/* 设为收藏：收藏不关联卡，带卡的这条不给。按下时不抢焦点，免得进到「改这一条」 */}
+            {running && !cardRun && !focused && !deciding && <button type="button" className="tbar-fav" tabIndex={-1} aria-label="设为收藏"
+              title={`把「${running.description}」设为收藏（描述、项目、标签）`} onMouseDown={e => e.preventDefault()}
+              onClick={() => actions.favorite(running.id)}><Icon name="pin" /></button>}
             {focused && !editing && !locked && <Suggest query={text} data={view.suggest}
               onFavorite={id => choose(() => actions.startFavorite(id))} onCard={id => choose(() => actions.startCard(id))}
               onRecent={id => choose(() => actions.continueEntry(id))} />}

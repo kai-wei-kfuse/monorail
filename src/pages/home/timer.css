@@ -41,6 +41,27 @@
 .tbar-sub { display: flex; flex-wrap: wrap; gap: 4px 18px; min-height: 18px; padding: 0 2px; font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
 .tbar-sub b { font: 600 12px/1 var(--f-en); color: var(--ink); font-variant-numeric: tabular-nums; }
 
+/* 正在计的那条设为收藏：输入框右端的图钉，和自动完成里收藏的图标一样 */
+.tbar-fav { position: absolute; right: 6px; width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid transparent; color: var(--mute); }
+.tbar-fav svg { width: 13px; height: 13px; }
+.tbar-fav:hover { border-color: var(--ink); background: var(--yellow); color: var(--ink); }
+.tbar-input:has(.tbar-fav) .tbar-pills { right: 40px; }
+
+/* 收藏行：计时条下面一行，键帽是启动它的数字键 */
+.fav-row { display: flex; align-items: center; gap: 8px; min-height: 34px; flex-wrap: wrap; }
+.fav-row > .k { margin-right: 4px; }
+.fav-empty { font: 330 12px/1.4 var(--f-cn); color: var(--mute); }
+.fav { display: inline-flex; align-items: center; gap: 8px; height: 32px; max-width: 220px; padding: 0 12px 0 5px; border: 1px solid var(--line-2); border-bottom-width: 3px; background: var(--paper-2);
+  font: 520 13px/1 var(--f-cn); color: var(--ink); cursor: pointer; transition: border-color .2s, transform .09s; }
+.fav kbd { flex: none; display: grid; place-items: center; width: 20px; height: 20px; background: var(--ink); color: var(--yellow); font: 400 11px/1 var(--f-mono); }
+.fav i { flex: none; width: 6px; height: 6px; }
+.fav span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fav:hover { border-color: var(--ink); }
+.fav:active { transform: translateY(2px); }
+.fav.dragging { opacity: .4; }
+.fav.over { box-shadow: -4px 0 0 var(--yellow); }
+.fav.over.after { box-shadow: 4px 0 0 var(--yellow); }
+
 /* 自动完成：收藏 / 待做的卡 / 最近的记录。弹层沿用下拉的 .sel-pop */
 .sug { left: 0; right: auto; top: calc(100% + 6px); width: min(560px, 100%); max-height: 430px; overflow: auto; z-index: 30; }
 .sug li::before { display: none; }
