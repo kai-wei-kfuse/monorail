@@ -28,6 +28,7 @@ export interface HomeActions {
   complete(cardId: string, at: string, note: string, keepGoing: boolean): Promise<unknown>;
   shrink(cardId: string, input: { content: string; type: '结果卡' | '时间盒卡'; minutes: number | null }, at: string): Promise<unknown>;
   redraw(cardId: string | null, at: string): Promise<unknown>;
+  editContent(cardId: string, content: string, at: string): Promise<unknown>;
   stopToday(at: string): Promise<unknown>;
   resume(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
@@ -42,7 +43,7 @@ export function cardView(home: HomeSlice, now: number): TaskCardView | null {
   const elapsedMs = home.closedEffectiveMs + (home.currentSegStartedAt ? now - Date.parse(home.currentSegStartedAt) : 0);
   const away = home.awayActivity !== null;
   // 不属于项目的卡不占背包格，不显示「/03」
-  return { slotNo: c.slotNo, slotOf: c.slotNo === LOOSE.slot ? undefined : c.slotOf, project: c.project, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
+  return { id: c.id, slotNo: c.slotNo, slotOf: c.slotNo === LOOSE.slot ? undefined : c.slotOf, project: c.project, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
     progressNote: c.progressNote || undefined, elapsedMs, awayActivity: home.awayActivity ?? undefined,
     progress: cardProgress(elapsedMs, c.goalMinutes, c.status === '进行中' && !away, away) };
 }
@@ -135,7 +136,9 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
       {doneBaseline && <ConfirmLink label="今天不再出卡" confirmLabel="确认今天不再出卡？" onConfirm={at => void act(() => actions.stopToday(at))} />}
     </>;
+    // 再抽一张的擦除演出期间，画面上还是旧卡，不让改
     body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner}
+      onEditContent={frozen || wipe ? undefined : (cardId, content) => void act(() => actions.editContent(cardId, content, new Date().toISOString()))}
       actions={<CardActions running={running} shrink={home.card.shrink} busy={busy || !!wipe}
         onStart={at => void act(() => actions.start(home.card!.id, at))}
         onComplete={at => void beginComplete(home.card!.id, at)}

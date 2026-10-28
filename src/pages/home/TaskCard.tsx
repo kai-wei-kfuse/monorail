@@ -1,5 +1,5 @@
 import type { ReactNode, Ref } from 'react';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { Progress } from '../../widgets/cardProgress';
 import { formatMinutes } from '../../widgets/cardProgress';
 import { Corners } from '../../ui/marks/Corners';
@@ -12,7 +12,8 @@ import { fitTitleSize } from './title';
 import { MarkedText } from '../../ui/marks/MarkedText';
 
 export interface TaskCardView {
-  slotNo: string;              // 背包格号，例如「01」；不属于项目的卡是「支」（LOOSE.slot）
+  id?: string;                 // 卡的 id；有它才能双击改内容
+  slotNo: string;             // 背包格号，例如「01」；不属于项目的卡是「支」（LOOSE.slot）
   slotOf?: string;             // 「/03」
   project: string;             // 项目名；不属于项目的卡显示「支线」
   type: '结果卡' | '时间盒卡';
@@ -28,17 +29,36 @@ const STATE = {
   ready: ['待开始', 'READY'], run: ['进行中', 'RUNNING'], away: ['离开中', 'AWAY'], over: ['已超出目标', 'OVERTIME'],
 } as const;
 
-/** 首页的任务卡。按钮、右上角的小字（「还没有主线」「今天不再出卡」）和演出层都由外面传进来。 */
-export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef, innerRef }:
+/**
+ * 首页的任务卡。按钮、右上角的小字（「还没有主线」「今天不再出卡」）和演出层都由外面传进来。
+ * 给了 onEditContent，双击标题就能就地改卡的内容：[词] 标记照原文显示，也能改；回车或点别处保存，Esc 不改。
+ */
+export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef, innerRef, onEditContent }:
   { view: TaskCardView; look: CardLook; titleScale: number; actions: ReactNode; corner?: ReactNode; fx?: ReactNode;
-    cardRef?: Ref<HTMLElement>; innerRef?: Ref<HTMLDivElement> }) {
+    cardRef?: Ref<HTMLElement>; innerRef?: Ref<HTMLDivElement>; onEditContent?: (cardId: string, content: string) => void }) {
   const hero = useRef<HTMLDivElement>(null), title = useRef<HTMLHeadingElement>(null);
+  const [draft, setDraft] = useState<string | null>(null), done = useRef(false), editing = useRef<{ id: string; content: string } | null>(null);
   const { progress } = view;
   const [cn, en] = STATE[progress.state];
   const stateCn = progress.state === 'away' && view.awayActivity ? `${cn} · ${view.awayActivity}` : cn;
+  const canEdit = !!onEditContent && view.id !== undefined;
+  // 双击时就记下改的是哪张卡：编辑期间首页换了卡，保存时仍交出原来那张的 id。
+  // 回车保存后输入框被卸掉，还会再收到一次失焦；done 保证只交出一次
+  const beginEdit = () => { done.current = false; editing.current = { id: view.id!, content: view.content }; setDraft(view.content); };
+  const finish = (keep: boolean) => {
+    if (done.current || !editing.current) return;
+    done.current = true;
+    const text = draft?.trim(), { id, content } = editing.current;
+    if (keep && text && text !== content) onEditContent?.(id, text);
+    editing.current = null;
+    setDraft(null);
+  };
 
   useLayoutEffect(() => {
-    const h = hero.current!, t = title.current!, box = t.parentElement!;
+    // 编辑时标题换成了输入框，不用排字号；换回来以后重新排
+    const h = hero.current, t = title.current;
+    if (!h || !t) return;
+    const box = t.parentElement!;
     const fit = () => {
       if (!h.clientWidth) return;
       const bs = getComputedStyle(box);
@@ -53,7 +73,7 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     const ro = new ResizeObserver(fit);
     ro.observe(h);
     return () => ro.disconnect();
-  }, [view.content, titleScale, view.progressNote]);
+  }, [view.content, titleScale, view.progressNote, draft === null]);
 
   return <CardFrame look={look} running={progress.state === 'run'} slotNo={view.slotNo} slotOf={view.slotOf} cardRef={cardRef} innerRef={innerRef} fx={fx}>
     <div className="c-head" data-fx="head">
@@ -63,9 +83,16 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     </div>
     <div className="hero" ref={hero}>
       <Corners>
-        <h1 className="title" ref={title} data-fx="title">
-          <MarkedText content={view.content} />
-        </h1>
+        {draft !== null
+          ? <input className="title-edit" aria-label="卡的内容" value={draft} autoFocus onChange={e => setDraft(e.target.value)} onBlur={() => finish(true)}
+              onKeyDown={e => {
+                if (e.nativeEvent.isComposing) return;
+                if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+                if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+              }} />
+          : <h1 className="title" ref={title} data-fx="title" title={canEdit ? '双击编辑' : undefined} onDoubleClick={canEdit ? beginEdit : undefined}>
+              <MarkedText content={view.content} />
+            </h1>}
       </Corners>
       {view.progressNote && <p className="c-note"><b>上次做到</b>{view.progressNote}</p>}
     </div>

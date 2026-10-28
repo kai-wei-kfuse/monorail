@@ -23,6 +23,7 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     shrink: guard((cardId: string, input: ShrinkCommand, at: string) => card.shrink(ctx, cardId, input, at)),
     redraw: guard((cardId: string | null, at: string) => card.redraw(ctx, cardId, at)),
     pass: guard((cardId: string, at: string) => card.pass(ctx, cardId, at)),
+    editContent: guard((cardId: string, content: string, at: string) => card.editContent(ctx, cardId, content, at)),
     stopToday: guard((at: string) => card.stopToday(ctx, at)),
     // 计时（timerService）。activity 是快捷活动的 id，或者手写的活动名
     insert: guard((activity: string, at: string) => timer.insert(ctx, activity, at)),

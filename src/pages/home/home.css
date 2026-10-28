@@ -28,6 +28,10 @@
 .hero { position: relative; min-height: 0; display: grid; align-content: center; justify-items: start; }
 .title { position: relative; margin: 0; max-width: 100%; font: 630 var(--ts, 62px)/1.2 var(--f-cn); letter-spacing: .005em; color: var(--ink); overflow-wrap: anywhere; }
 .title .hl { line-height: 1.06; }
+/* 双击标题就地编辑（原型 new.css 的 .title-edit）。外面的角标框按内容定宽，所以输入框跟着字数伸缩 */
+.title-edit { field-sizing: content; min-width: 8em; max-width: 900px; padding: 4px 12px; border: 1px solid var(--ink); background: var(--paper-2); box-shadow: inset 6px 0 0 var(--yellow);
+  font: 630 42px/1.25 var(--f-cn); color: var(--ink); user-select: text; }
+.title-edit:focus { outline: none; }
 .c-note { margin: 0 0 0 2px; max-width: 46em; font: 330 13px/1.6 var(--f-cn); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .c-note b { font-weight: 520; color: var(--ink-3); margin-right: 8px; }
 
