@@ -9,12 +9,13 @@ export type { TrackingTransaction, TrackingState } from './transaction';
 export type { EntryTemplate, TimeEntry } from '../../domain/timeline/entry';
 export type { ReadoutRequest, ReadoutPlan } from '../../domain/timeline/edit';
 export { inRange, overlaps } from '../../domain/timeline/query';
-export { addFavoriteInTx, favoriteInTx, editFavoriteInTx, removeFavoriteInTx, reorderFavoritesInTx, createProjectInTx } from './presetService';
+export { addFavoriteInTx, favoriteInTx, editFavoriteInTx, removeFavoriteInTx, reorderFavoritesInTx, createProjectInTx, createTagInTx } from './presetService';
 export type { FavoriteValue } from './presetService';
 export { openInTx } from './transaction';
 export { startInTx, startSystemInTx, pauseInTx, insertInTx, resumeInTx, stopRefInTx, renameRefInTx, retagRefInTx } from './timerService';
 export { settleOfflineInTx } from './timerService';
 export { manualInTx, editInTx, deleteInTx, previewReadoutInTx, setReadoutInTx, setRefTotalInTx } from './timeEditService';
+export { updateRangeInTx, moveInTx, copyInTx, patchMetadataInTx, setStartInTx, setEndInTx, setDurationInTx } from './timeEditService';
 export const startRefInTx = (tx: TrackingTransaction, ref: string, template: EntryTemplate, from = tx.at) =>
   startInTx(tx, { ...template, card_id: ref }, from);
 export const refElapsedInTx = (tx: Pick<TrackingTransaction, 'entries' | 'at'>, ref: string) => refElapsed(tx.entries, ref, tx.at);

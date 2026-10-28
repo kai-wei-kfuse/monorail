@@ -4,6 +4,61 @@ import type { EntryTemplate, TimeEntry } from '../../domain/timeline/entry';
 import { place } from '../../domain/timeline/place';
 import type { TrackingTransaction } from './transaction';
 import { acceptInTx } from './transaction';
+import { parseClock, parseDuration } from '../../shared/duration';
+import { addDays } from '../../shared/time';
+
+function findEntry(tx: TrackingTransaction, id: string): TimeEntry {
+  const entry = tx.entries.find(entry => entry.id === id);
+  if (!entry) throw new Error('计时条目不存在');
+  return entry;
+}
+export function updateRangeInTx(tx: TrackingTransaction, id: string, start: string, end: string | null): void {
+  const entry = findEntry(tx, id);
+  if ((end === null) !== (entry.ended_at === null)) throw new Error('不能改变条目的计时状态');
+  editInTx(tx, id, entry.ended_at === null ? { started_at: start } : { started_at: start, ended_at: end });
+}
+export function moveInTx(tx: TrackingTransaction, id: string, start: string): void {
+  const entry = findEntry(tx, id);
+  if (entry.ended_at === null) throw new Error('正在计时的条目只能调整开始边');
+  const end = new Date(Date.parse(start) + Date.parse(entry.ended_at) - Date.parse(entry.started_at)).toISOString();
+  updateRangeInTx(tx, id, start, end);
+}
+export function copyInTx(tx: TrackingTransaction, id: string, start?: string): string {
+  const entry = findEntry(tx, id);
+  if (entry.ended_at === null) throw new Error('正在计时的条目不能复制');
+  const length = Date.parse(entry.ended_at) - Date.parse(entry.started_at);
+  const from = start === undefined ? (Date.parse(entry.ended_at) + length <= Date.parse(tx.at)
+    ? Date.parse(entry.ended_at) : Date.parse(entry.started_at) - length) : Date.parse(start);
+  return manualInTx(tx, entry, new Date(from).toISOString(), new Date(from + length).toISOString(), '日历').id;
+}
+export function patchMetadataInTx(tx: TrackingTransaction, id: string, patch: Partial<Pick<EntryTemplate, 'description' | 'project' | 'tags'>>): void {
+  const entry = findEntry(tx, id);
+  if (entry.card_id && (patch.description !== undefined || patch.project !== undefined)) throw new Error('来自卡的描述和项目请在卡上修改');
+  editInTx(tx, id, patch);
+}
+function atClock(text: string, base: string): string {
+  const endOfDay = new Date(base); endOfDay.setHours(23, 59, 59, 999);
+  const parsed = parseClock(text, endOfDay.getTime());
+  if (parsed === null || !Number.isFinite(parsed)) throw new Error('无法识别时刻，请输入 9:30');
+  return new Date(parsed).toISOString();
+}
+export function setStartInTx(tx: TrackingTransaction, id: string, text: string): void {
+  const entry = findEntry(tx, id);
+  editInTx(tx, id, { started_at: atClock(text, entry.started_at) });
+}
+export function setEndInTx(tx: TrackingTransaction, id: string, text: string): void {
+  const entry = findEntry(tx, id);
+  if (entry.ended_at === null) throw new Error('正在计时的条目不能修改结束时间');
+  let end = atClock(text, entry.started_at);
+  if (Date.parse(end) <= Date.parse(entry.started_at)) end = new Date(addDays(Date.parse(end), 1)).toISOString();
+  editInTx(tx, id, { ended_at: end });
+}
+export function setDurationInTx(tx: TrackingTransaction, id: string, text: string): void {
+  const entry = findEntry(tx, id), length = parseDuration(text);
+  if (entry.ended_at === null) throw new Error('正在计时的条目不能修改时长');
+  if (length === null || !Number.isFinite(length) || length <= 0) throw new Error('无法识别正数时长，请输入 1h 30m');
+  editInTx(tx, id, { ended_at: new Date(Date.parse(entry.started_at) + length).toISOString() });
+}
 
 export const previewReadoutInTx = (tx: TrackingTransaction, request: ReadoutRequest) => previewReadout(tx.entries, request);
 export function setReadoutInTx(tx: TrackingTransaction, request: ReadoutRequest, seen: ReadoutPlan | null) {

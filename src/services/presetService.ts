@@ -9,3 +9,4 @@ export const editFavorite = (ctx: Ctx, id: string, value: FavoriteValue, at: str
 export const removeFavorite = (ctx: Ctx, id: string, at: string) => run(ctx, tx => tracking.removeFavoriteInTx(tx, id), at);
 export const reorderFavorites = (ctx: Ctx, ids: string[], at: string) => run(ctx, tx => tracking.reorderFavoritesInTx(tx, ids), at);
 export const createProject = (ctx: Ctx, name: string, at: string) => run(ctx, tx => tracking.createProjectInTx(tx, name), at);
+export const createTag = (ctx: Ctx, name: string, at: string) => run(ctx, tx => tracking.createTagInTx(tx, name), at);

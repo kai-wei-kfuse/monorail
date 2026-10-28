@@ -48,3 +48,8 @@ export async function createProjectInTx(tx: PresetTransaction, name: string) {
   await tx.saveSettings({ ...tx.settings, lists: { ...tx.settings.lists, projects: [...tx.settings.lists.projects, project] } });
   return project;
 }
+export async function createTagInTx(tx: PresetTransaction, input: string): Promise<void> {
+  const tag = input.trim();
+  if (!tag || /[\s#@]/.test(tag)) throw new Error('标签不能为空，也不能包含空白、# 或 @');
+  if (!tx.settings.lists.tags.includes(tag)) await tx.saveSettings({ ...tx.settings, lists: { ...tx.settings.lists, tags: [...tx.settings.lists.tags, tag] } });
+}
