@@ -121,3 +121,16 @@ Claude：替换 actions 中的临时 addFavorite/reorderFavorites；启用 Manua
 验证：npm run check 通过（52 个文件、341 条测试）；npm run build 通过。证据：n3-check.log、n3-build.log。
 
 N4 增量：homeSlice 新增 knownTags（按使用次数排序）；首页项目选择可取 backpack.pool.projects（包含系统五项、未分类和自定义项目）。详见 n4-contracts.md。
+
+## aab32f0 后续交接：任务卡「记到」（2026-10-28）
+
+`home.card` 非 null 时新增必填字段：
+
+```ts
+project: string;             // 当前实际计时项目：卡自身 → 任务默认 → 未分类
+tags: string[];              // 卡自身标签，已复制，不借用历史条目
+projectOverridden: boolean;  // 卡自身 project !== null；即使与任务项目同名也为 true
+```
+
+待开始、进行中、暂停/离开时都按卡和任务的当前数据计算。显示和开始计时共用 `domain/card/edit.ts` 的 `cardTiming`；暂停时编辑立即反映在卡头，历史条目不变。
+Claude：将这些字段接到 TaskCard 卡头；保存沿用 `homeService.editMeta(ctx, cardId, project: string | null, tags, at)`。选择继承任务时传 null，不要把解析后的项目名写成卡自己的覆盖值。

@@ -2,6 +2,8 @@ export interface HomeCard {
   id: string; slotNo: string; slotOf: string; task: string;
   type: '结果卡' | '时间盒卡'; goalMinutes: number | null; content: string; progressNote: string;
   status: '待做' | '进行中'; shrink: 'ok' | 'max' | 'locked';
+  /** Resolved timing project, card tags, and whether the card explicitly overrides its task. */
+  project: string; tags: string[]; projectOverridden: boolean;
 }
 export interface HomeSlice {
   mode: 'blank' | 'task' | 'guide' | 'rest' | 'review';

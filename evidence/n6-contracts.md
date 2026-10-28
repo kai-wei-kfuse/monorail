@@ -48,3 +48,18 @@
 - **未做/未测**：mini.html 与 MiniApp 接线、MainApp 旧缩窗 UI 移除、windowMode.ts 删除、verification/main.ts 旧缩窗冒烟替换；这些需要 Claude 先改引用。真实双窗并存、主窗口隐藏后小窗操作、位置跨重启恢复、三秒提示实际可见、覆盖确认外观均未实测。构建通过不代表这些冒烟通过。
 - Claude 完成接线后，先删除旧 windowMode 的两个引用，再删除文件；接上新小窗冒烟后用户实测上述 Windows 场景。逻辑线没有修改 UI/app 或验证入口。
 - 未推送/未发版。下一次发布应包含 cbe1b11。
+
+## aab32f0 后续修复（2026-10-28）
+
+本节覆盖上面尚待 UI 接线的历史状态：Claude 已提交独立 MiniApp、多页构建、主窗口接线与替换后的原生冒烟入口。
+
+- mini capability 增加 `core:window:allow-set-size`、`core:window:allow-hide`，供现有 MiniApp 根据内容调高和关闭按钮隐藏使用。权限仍只匹配 mini，不增加数据目录或通用文件能力。
+- 原生 mini 默认高度和最小高度均为 110；内容更高时由现有 ResizeObserver 调整。已有 mini-window.json 继续保留，系统最小高度仍生效。
+- 已确认源码没有旧 windowMode 模块引用，删除 platform/windowMode.ts；MainApp 的同名 React 状态 setter 不属于旧模块。
+- 首页卡项目、标签与覆盖标记已提供，详见 n3-contracts.md 新增小节。MiniSnapshot.card.project 仍保留原来 nullable 的「卡自身项目」含义，未悄悄改小窗编辑契约。
+- `npm test`、`npm run check` 通过：57 个文件、379 条测试。新增五例覆盖项目继承优先级、同名显式覆盖、暂停编辑/清除覆盖/继续计时。
+- 普通原生构建通过，dist/mini.html 存在并引用独立 mini JS，见 n6-followup-build.log；其他证据为 n6-followup-tests.log、n6-followup-check.log。
+- 未实测真实窗口的缩放、关闭、跨窗口操作和提示外观；由 Claude 按此次交接安排完成真实程序 UI 冒烟。没有把开发预览或构建成功算作 Windows UI 通过。
+- Claude 的 MiniApp 尺寸调整目前有空 catch，会吞掉原生失败；建议在 UI 线仅对明确的浏览器预览跳过原生调用，真实 Tauri 错误应显示或报告，避免下次权限问题被隐藏。本次未越界修改 app 文件。
+- 融合布局仍保留在 0.2.0 范围，建议 Claude 在真实窗口验收和卡头接线后实现；本次没有修改阶段计划或新增列表设置。
+- 提交建议：`fix(n6): allow mini window sizing and expose home card timing metadata`。未推送、未发版，原有 journal-real.json 改动保留。

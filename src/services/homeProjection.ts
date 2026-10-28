@@ -1,4 +1,5 @@
 import type { Card } from '../domain/card/card';
+import { cardTiming } from '../domain/card/edit';
 import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
 import type { Review } from '../domain/review/schedule';
@@ -25,6 +26,7 @@ export function projectHome(input: ProjectionInput): HomeSlice {
   const closedEffectiveMs = rows.filter(row => row !== tail).reduce((sum, row) => sum + Date.parse(row.ended_at!) - Date.parse(row.started_at), 0);
   const task = active.find(item => item.id === selected?.task_id);
   const card = selected && (selected.status === '待做' || selected.status === '进行中') ? {
+    ...cardTiming(selected, tasks.find(task => task.id === selected.task_id)),
     id: selected.id, slotNo: task?.slot_index ? String(task.slot_index).padStart(2, '0') : LOOSE.slot, slotOf: `/${String(settings.sideTasks + settings.mainTasks).padStart(2, '0')}`,
     task: task?.name ?? LOOSE.name, type: selected.type, goalMinutes: selected.type === '时间盒卡' ? selected.timebox_minutes : null,
     content: selected.content, progressNote: selected.progress_note, status: selected.status,

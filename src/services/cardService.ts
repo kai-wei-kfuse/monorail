@@ -1,5 +1,5 @@
 import type { Card } from '../domain/card/card';
-import { editCardContent } from '../domain/card/edit';
+import { editCardContent, cardTiming } from '../domain/card/edit';
 import { startCard, completeCard, continueCard, releaseCard, abandonCard } from '../domain/card/transitions';
 import { shrinkCard, restoreParent } from '../domain/card/shrink';
 import { skipCard } from '../domain/degrade/signals';
@@ -28,7 +28,8 @@ function requireCurrent(tx: Transaction, card: Card): void {
   if (tx.state.current_card !== card.id || tx.state.rest) throw new Error('首页卡片已改变');
 }
 function target(tx: Transaction, card: Card) {
-  return { description: card.content.replace(/[[\]]/g, ''), project: card.project ?? tx.tasks.find(task => task.id === card.task_id)?.default_project ?? '未分类', card_id: card.id, tags: card.tags };
+  const { project, tags } = cardTiming(card, tx.tasks.find(task => task.id === card.task_id));
+  return { description: card.content.replace(/[[\]]/g, ''), project, card_id: card.id, tags };
 }
 export const templateInTx = target;
 export function alignInTx(tx: Transaction): void {

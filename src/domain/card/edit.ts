@@ -1,5 +1,11 @@
 import type { Card } from './card';
 import type { CardFields } from '../../shared/backpack';
+import type { Task } from '../task/task';
+
+/** Both the timer template and the card header resolve inheritance from current task data. */
+export function cardTiming(card: Pick<Card, 'project' | 'tags'>, task: Pick<Task, 'default_project'> | undefined) {
+  return { project: card.project ?? task?.default_project ?? '未分类', tags: [...card.tags], projectOverridden: card.project !== null };
+}
 
 export function editCardContent(card: Card, content: string): Card {
   const trimmed = content.trim();

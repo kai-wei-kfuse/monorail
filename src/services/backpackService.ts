@@ -2,7 +2,7 @@ import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
 import { putInBackpack, leaveBackpack } from '../domain/task/backpack';
 import { canAddTask, itemCapacity, singleItemTask, replaceableSingle, afterItem } from '../domain/task/pool';
-import { createCard, editCard, editCardContent } from '../domain/card/edit';
+import { createCard, editCard, editCardContent, cardTiming } from '../domain/card/edit';
 import { releaseCard } from '../domain/card/transitions';
 import { taskWithItems } from '../domain/task/create';
 import type { BackpackSlot, CardFields, MakeRoom, TaskDraft } from '../shared/backpack';
@@ -104,7 +104,8 @@ export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at
     if (!eligible) stopRefInTx(tx, card.id);
     else {
       renameRefInTx(tx, card.id, card.content.replace(/[[\]]/g, ''));
-      retagRefInTx(tx, card.id, card.project ?? task?.default_project ?? '未分类', card.tags);
+      const { project, tags } = cardTiming(card, task);
+      retagRefInTx(tx, card.id, project, tags);
     }
   }
   refreshInTx(tx);
