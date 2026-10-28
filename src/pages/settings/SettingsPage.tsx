@@ -18,28 +18,35 @@ import { Emblem } from '../../ui/marks/Emblem';
 import type { SettingRow } from './sections';
 import { SECTIONS, UNIT_EN } from './sections';
 import { ListEditor } from './ListEditor';
+import { PresetEditor } from './PresetEditor';
+import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import './settings.css';
 
 type Change = <K extends SettingKey>(key: K, value: Settings[K]) => void;
 
 /**
  * 设置页：左侧 9 个分类，右侧面板。改动即时生效：每次改动都直接交给 onChange，由调用方保存，并在底栏闪一下「已保存 ✓」（见 SavedBadge）。
+ * 列表只交出改了的那一段（onListsChange），免得连着两次改动时后一次把前一次盖掉。
  * 快捷键冲突等保存失败的原因，通过 errors 按 key 显示在对应那一行。
+ * projects、knownTags 给预设编辑器选项目和标签；onCreateProject、onCreateTag 在选择器里就地新建。
  */
-export function SettingsPage({ section, onSection, settings, onChange, onListsChange, dataDir, onChangeDir, errors = {}, version, aboutExtras }:
+export function SettingsPage({ section, onSection, settings, onChange, onListsChange, projects, knownTags, onCreateProject, onCreateTag, dataDir, onChangeDir, errors = {}, version, aboutExtras }:
   { section: string; onSection: (id: string) => void; settings: Settings; onChange: Change;
-    onListsChange: (lists: Settings['lists']) => void; dataDir: string; onChangeDir: () => void;
+    onListsChange: (lists: Partial<Settings['lists']>) => void; projects: ProjectOption[]; knownTags: string[];
+    onCreateProject?: (name: string) => void; onCreateTag?: (tag: string) => void; dataDir: string; onChangeDir: () => void;
     errors?: Partial<Record<SettingKey, string>>; version: string; aboutExtras?: ReactNode }) {
   const sec = SECTIONS.find(s => s.id === section) ?? SECTIONS[0];
   const lists = settings.lists;
+  const presets = (place: '计时条' | '弹层', placeholder: string) => <PresetEditor presets={lists.presets} place={place} placeholder={placeholder}
+    projects={projects} knownTags={knownTags} onChange={presets => onListsChange({ presets })} onCreateProject={onCreateProject} onCreateTag={onCreateTag} />;
   const control = (row: SettingRow) => {
     if ('custom' in row) {
       switch (row.custom) {
-        case 'idleName': return <TextInput aria-label={row.cn} value={lists.idleName} style={{ width: 200 }} onChange={e => onListsChange({ ...lists, idleName: e.target.value })} />;
-        case 'presets': return <ListEditor withProject items={lists.presets} placeholder="例如：厕所、拿快递、吃饭"
-          onChange={items => onListsChange({ ...lists, presets: items.map(i => ({ ...(lists.presets.find(p => p.id === i.id) ?? { tags: [], mode: '插入' as const, place: '弹层' as const }), id: i.id, name: i.name, project: i.project ?? '生活' })) })} />;
-        case 'restPool': return <ListEditor withProject={false} items={lists.restPool} placeholder="例如：眺望窗外、走走、洗脸、收拾桌面"
-          onChange={items => onListsChange({ ...lists, restPool: items.map(i => ({ id: i.id, name: i.name })) })} />;
+        case 'idleName': return <TextInput aria-label={row.cn} value={lists.idleName} style={{ width: 200 }} onChange={e => onListsChange({ idleName: e.target.value })} />;
+        case 'favorites': return presets('计时条', '例如：学 408、回邮件');
+        case 'presets': return presets('弹层', '例如：厕所、拿快递、吃饭');
+        case 'restPool': return <ListEditor items={lists.restPool} placeholder="例如：眺望窗外、走走、洗脸、收拾桌面"
+          onChange={items => onListsChange({ restPool: items.map(i => ({ id: i.id, name: i.name })) })} />;
         case 'dataDir': return <><code className="st-path">{dataDir}</code><Button onClick={onChangeDir}>更换</Button></>;
         case 'about': return null;
       }
@@ -74,7 +81,7 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
         {g.rows.map(r => {
           const id = 'custom' in r ? r.custom : r.key;
           const err = 'key' in r ? errors[r.key] : undefined;
-          const block = 'custom' in r && (r.custom === 'presets' || r.custom === 'restPool');
+          const block = 'custom' in r && (r.custom === 'favorites' || r.custom === 'presets' || r.custom === 'restPool');
           const row = <Row key={id} title={r.cn} desc={err ? <span className="st-err">{err}</span> : r.desc}>{control(r)}</Row>;
           return block ? <div key={id} className="st-block">{row}</div> : row;
         })}

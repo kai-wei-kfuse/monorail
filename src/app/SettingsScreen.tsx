@@ -4,6 +4,7 @@ import { appStore } from '../store/appStore';
 import { SettingsPage } from '../pages/settings/SettingsPage';
 import type { Ctx } from '../services/commit';
 import { change, changeDataDirectory, changeLists } from '../services/settingsService';
+import * as preset from '../services/presetService';
 import type { SettingsErrors } from '../services/settingsService';
 import { chooseRoot } from '../platform/dialog';
 import type { SettingKey, Settings } from '../shared/settings';
@@ -20,6 +21,7 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
   { ctx: Ctx; root: string; initialErrors: SettingsErrors; onSaved: () => void; report: (error: unknown) => void;
     updates: ReturnType<typeof useUpdates> }) {
   const settings = useStore(appStore, s => (s.ready ? s.settings : ctx.settings));
+  const projects = useStore(appStore, s => s.backpack.pool.projects), knownTags = useStore(appStore, s => s.home.knownTags);
   const [section, setSection] = useState('deal');
   const [errors, setErrors] = useState<SettingsErrors>(initialErrors);
   const onChange = <K extends SettingKey>(key: K, value: Settings[K]) => {
@@ -32,12 +34,15 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
       if (result.ok) onSaved();
     }).catch(report);
   };
-  const onListsChange = (lists: Settings['lists']) => { void changeLists(ctx, lists, now()).then(onSaved).catch(report); };
+  const onListsChange = (lists: Partial<Settings['lists']>) => { void changeLists(ctx, lists, now()).then(onSaved).catch(report); };
+  // 预设编辑器里就地新建项目（自动配色）、标签
+  const onCreateProject = (name: string) => { void preset.createProject(ctx, name, now()).then(onSaved).catch(report); };
+  const onCreateTag = (tag: string) => { void preset.createTag(ctx, tag, now()).then(onSaved).catch(report); };
   const onChangeDir = () => {
     void changeDataDirectory({ async changeDataDirectory() { if (await chooseRoot()) window.location.reload(); } }).catch(report);
   };
   return <SettingsPage section={section} onSection={setSection} settings={settings} onChange={onChange}
-    onListsChange={onListsChange} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}
+    onListsChange={onListsChange} projects={projects} knownTags={knownTags} onCreateProject={onCreateProject} onCreateTag={onCreateTag} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}
     aboutExtras={<UpdatePanel state={updates.state} connectionError={updates.connectionError} onCheck={() => void updates.check()}
       onDownload={() => void updates.download()} onInstall={() => void updates.install()} onReconnect={() => void updates.reconnect()} />} />;
 }

@@ -5,7 +5,7 @@ import type { SettingKey } from '../../shared/settings';
 /** 一行设置：引用一个设置项；或者是自定义组件（列表编辑器、数据目录、关于）。 */
 export type SettingRow =
   | { key: SettingKey; cn: string; desc?: string; control?: 'slider' | 'dropdown'; labels?: Record<string, string> }
-  | { custom: 'idleName' | 'presets' | 'restPool' | 'dataDir' | 'about'; cn: string; desc?: string };
+  | { custom: 'idleName' | 'favorites' | 'presets' | 'restPool' | 'dataDir' | 'about'; cn: string; desc?: string };
 
 export interface SettingGroup { cn: string; en: string; rows: SettingRow[] }
 export interface SettingSection { id: string; no: string; cn: string; en: string; desc: string; groups: SettingGroup[] }
@@ -45,8 +45,9 @@ export const SECTIONS: SettingSection[] = [
       { key: 'longActivityMinutes', cn: '长时间提醒', desc: '同一活动超过这个时长，轻提醒确认一下' },
       { key: 'deadlineLeadMinutes', cn: '期限提醒提前量', desc: '带期限的待办，到期前多久提醒' },
       { key: 'offlineAskMinMinutes', cn: '离线追问最小间隔', desc: '关机或休眠短于这个时长，不追问，直接算在原来的活动上' } ] } ] },
-  { id: 'lists', no: '05', cn: '快捷活动与休息池', en: 'LISTS', desc: '软件不预置任何快捷活动和休息项，都由你自己添加。', groups: [
-    { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'presets', cn: '快捷活动', desc: '底栏一键插入；结束后自动回到原来的卡。按使用频率排序' }] },
+  { id: 'lists', no: '05', cn: '预设与休息池', en: 'LISTS', desc: '收藏和快捷活动都是预设：描述、项目、标签，加上开始的方式。软件不预置，都由你自己添加。', groups: [
+    { cn: '收藏', en: 'FAVORITES', rows: [{ custom: 'favorites', cn: '收藏', desc: '计时条下面一行，输入框没有焦点时按数字键 1–9 启动。默认切换：开始它，正在计的那条结束。计时条上点图钉、日历和列表里「设为收藏」也会加到这里' }] },
+    { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'presets', cn: '快捷活动', desc: '底栏弹层里一键开始。默认插入：做完点「回来」，回到原来的事' }] },
     { cn: '休息池', en: 'REST POOL', rows: [{ custom: 'restPool', cn: '休息池', desc: '进入休息时从这里派一件事。只是建议，不打勾、不计数' }] } ] },
   { id: 'look', no: '06', cn: '外观', en: 'APPEARANCE', desc: '视觉风格固定，这里只调首页布局、强调色、字号和动效。', groups: [
     { cn: '首页', en: 'HOME', rows: [

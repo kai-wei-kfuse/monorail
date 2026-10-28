@@ -106,7 +106,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000);
   };
 
-  const acts: QuickAct[] = useMemo(() => settings.lists.presets.map(a => ({ id: a.id, name: a.name, icon: iconFor(a.name) })), [settings]);
+  // 底栏弹层只放快捷活动（位置是弹层的预设）；收藏在首页计时条下面
+  const acts: QuickAct[] = useMemo(() => settings.lists.presets.filter(a => a.place === '弹层').map(a => ({ id: a.id, name: a.name, icon: iconFor(a.name) })), [settings]);
   const activityOptions = settings.lists.presets.map(a => ({ id: a.id, name: a.name }));
   const awayId = acts.find(a => a.name === home.awayActivity)?.id ?? null;
 
@@ -184,7 +185,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   </TitleBar>;
   const statusBar = <StatusBar
     left={<><QuickActs acts={acts} current={awayId}
-      onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)}
+      onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.startPreset(id, at))} onSleep={at => void actions.sleep(at)}
       onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />
       <MiniToggle on={miniOpen} onClick={() => void toggleMini()} /></>}
     right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;

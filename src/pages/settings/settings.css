@@ -25,3 +25,12 @@
 .st-update-history summary { cursor: pointer; }
 .st-update-history time { font-family: var(--f-mono); color: var(--mute); }
 .update-shield { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: var(--paper); font: 400 16px/1.7 var(--f-cn); }
+/* 预设编辑器：名称、项目、标签、方式、操作；放不下就换行，操作那组不拆开 */
+.le.pe { width: 100%; }
+.pe-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.pe-row > .le-no { flex: none; width: 28px; }
+.pe-row > .inp { flex: 1 1 140px; min-width: 120px; }
+.pe-row > .tagpick { flex: 1 1 150px; }
+.pe-row .seg button { min-width: 48px; height: 28px; font-size: 12px; }
+.pe-acts { display: flex; gap: 8px; margin-left: auto; white-space: nowrap; }
+.pe-acts .sbtn:first-child { min-width: 104px; }
