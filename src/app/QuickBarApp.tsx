@@ -4,7 +4,6 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { encode } from '../data/frontmatter';
 import { recordSchema } from '../data/schemas';
-import { toV1, taskReferenceFields } from '../data/v1Codec';
 import { createRecord } from '../domain/record/record';
 import type { RecordEntry } from '../domain/record/record';
 import { QuickBar } from '../pages/quickbar/QuickBar';
@@ -18,7 +17,7 @@ import '../ui/styles/base.css';
 /** 记录条只能经窄命令 save_quick_record 新建 records/<uuid>.md（架构 §3.2），写完发 data-changed，主窗口负责 reconcile。 */
 async function persistRecord(input: RecordEntry) {
   const value = recordSchema.parse(input);
-  await invoke('save_quick_record', { id: value.id, text: encode(toV1(value, taskReferenceFields), value.text) });
+  await invoke('save_quick_record', { id: value.id, text: encode(value, value.text) });
   await invoke('evidence', { message: `quickbar-saved:${value.id}` });
   await emit('data-changed', { recordId: value.id });
 }

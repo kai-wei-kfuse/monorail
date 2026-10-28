@@ -2,9 +2,8 @@ import { activityDay } from '../domain/timeline/day';
 import type { LifecycleSource, PowerEvent } from '../platform/lifecycle';
 import type { Ctx } from './commit';
 import { run, whenCommitsOpen } from './commit';
-import { refreshInTx } from './dealService';
-import { settleOfflineInTx } from './timerService';
-import type { Range } from './timerService';
+import { settleOfflineInTx } from './homeService';
+import type { Range } from './homeService';
 
 export interface SchedulerDeps {
   lifecycle: LifecycleSource;
@@ -16,9 +15,8 @@ const iso = (ms: number) => new Date(ms).toISOString();
 
 /** Settling may release the card in progress, so the home card is re-dealt in the same transaction. */
 const settle = (ctx: Ctx, gap: Range) => run(ctx, async tx => {
-  const segment = await settleOfflineInTx(tx, gap);
-  if (segment) refreshInTx(tx);
-  return segment;
+  const entry = await settleOfflineInTx(tx, gap);
+  return entry;
 }, gap.end);
 
 /** Milliseconds from `now` until the next local day boundary. */

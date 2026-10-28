@@ -16,7 +16,6 @@ import { ShrinkDialog } from './ShrinkDialog';
 import { GuideCard } from './GuideCard';
 import type { GuideKind } from './GuideCard';
 import { RestCard } from './RestCard';
-import { ConfirmLink } from './ConfirmLink';
 import { ReviewCard } from './ReviewCard';
 import { CardFrame } from './CardFrame';
 import { playAfterWipe, playColdIntro, playResumeIntro } from './intro';
@@ -29,7 +28,7 @@ export interface HomeActions {
   shrink(cardId: string, input: { content: string; type: '结果卡' | '时间盒卡'; minutes: number | null }, at: string): Promise<unknown>;
   redraw(cardId: string | null, at: string): Promise<unknown>;
   editContent(cardId: string, content: string, at: string): Promise<unknown>;
-  stopToday(at: string): Promise<unknown>;
+  draw(at: string): Promise<unknown>;
   resume(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
   returnFromRest(answer: string, at: string): Promise<unknown>;
@@ -116,25 +115,15 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   let body;
   if (home.mode === 'rest') body = <RestCard suggestion={home.rest?.suggestion ?? null} look={cardLook} onAddRest={onAddRest} onBack={(answer, at) => void act(() => actions.returnFromRest(answer, at))} />;
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
-  else if (home.mode === 'stopped') body = <CardFrame look={cardLook} slotNo="停" slotLabel="STOPPED">
-    <div />
-    <div className="alt-hero" data-fx="title">
-      <span className="k">NO MORE CARDS TODAY</span>
-      <h1>{home.activity.label === '睡觉' ? '晚安' : '今天不再出卡'}</h1>
-      <p>{home.activity.label === '睡觉' ? '醒来点「醒来」结束睡眠。' : '现在只作为计时工具使用，过了日边界自动恢复出卡。'}当前活动：{home.activity.label}。</p>
-    </div>
-    <div />
-    <div className="foot"><div className="actions" data-fx="actions">
-      {home.activity.label === '睡觉' && <ActionButton primary cn="醒来" en="WAKE" icon="play" onClick={() => void act(() => actions.wake(new Date().toISOString()))} />}
-    </div></div>
+  else if (home.mode === 'blank') body = <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
+    <div /><div className="alt-hero"><h1>现在做什么？</h1><p>抽一张卡，开始下一件事。</p></div><div />
+    <div className="foot"><ActionButton primary cn="抽卡" en="DRAW" icon="play" onClick={() => void act(() => actions.draw(new Date().toISOString()))} /></div>
   </CardFrame>;
   else if (home.mode === 'task' && view && home.card) {
     const running = home.card.status === '进行中', away = home.awayActivity !== null;
-    const doneBaseline = home.baseline.side && home.baseline.main !== false;
     const corner = <>
       {away && <button type="button" className="c-link" onClick={() => void act(() => actions.resume(new Date().toISOString()))}>回来 · {home.awayActivity}</button>}
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
-      {doneBaseline && <ConfirmLink label="今天不再出卡" confirmLabel="确认今天不再出卡？" onConfirm={at => void act(() => actions.stopToday(at))} />}
     </>;
     // 再抽一张的擦除演出期间，画面上还是旧卡，不让改
     body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner}

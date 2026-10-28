@@ -7,12 +7,8 @@ import type { FileSystem } from './fs';
 import type { Write } from './journal';
 import { createWrite, committedWrite } from './journal';
 
-export const entrySchema = z.object({
-  id: z.string().min(1), started_at: z.iso.datetime({ offset: true }), ended_at: z.iso.datetime({ offset: true }).nullable(),
-  description: z.string(), project: z.string().min(1), tags: z.array(z.string()), card_id: z.string().nullable(),
-  kind: z.enum(['普通', '插入', '暂停']), source: z.enum(['计时', '手动', '日历', '自动', '离线追问']),
-  updated_at: z.iso.datetime({ offset: true }),
-});
+import { entrySchema } from './schemas';
+
 
 export class TimelogV2Repo {
   private index = new Map<string, TimeEntry[]>();

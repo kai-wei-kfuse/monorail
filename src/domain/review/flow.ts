@@ -6,7 +6,7 @@ export interface ReviewProgress {
   done: ReviewStep[]; started_at: string | null; completed_at: string | null;
   added_idea_ids: string[]; bet_task_ids: string[]; bet_done_ids: string[];
   cold_duel: { left: string; right: string } | null;
-  timer_segment_id: string | null;
+  timer_entry_id: string | null;
 }
 export type ActiveReview = Review & ReviewProgress;
 
@@ -16,7 +16,7 @@ export function progress(review: Review): ActiveReview {
   return { ...review, done: review.done ?? reviewSteps.slice(0, Math.max(0, stepIndex)),
     started_at: review.started_at ?? null, completed_at: review.completed_at ?? null,
     added_idea_ids: review.added_idea_ids ?? [], bet_task_ids: review.bet_task_ids ?? [],
-    bet_done_ids: review.bet_done_ids ?? [], cold_duel: review.cold_duel ?? null, timer_segment_id: review.timer_segment_id ?? null };
+    bet_done_ids: review.bet_done_ids ?? [], cold_duel: review.cold_duel ?? null, timer_entry_id: review.timer_entry_id ?? null };
 }
 
 export function navigate(review: ActiveReview, target: ReviewStep, arenaBlocked: boolean): ActiveReview {

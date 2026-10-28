@@ -17,6 +17,6 @@ export function editCard(card: Card, fields: CardFields): Card {
 
 export function createCard(id: string, fields: CardFields, at: string, order: number): Card {
   return editCard({ id, source_record_id: null, content: '', created_at: at, due_at: null, blocking: false, task_id: null,
-    status: '待做', type: '结果卡', order, timebox_minutes: null, no_shrink: false, shrunk_from: null, shrink_level: 0,
+    project: null, tags: [], status: '待做', type: '结果卡', order, timebox_minutes: null, no_shrink: false, shrunk_from: null, shrink_level: 0,
     continued_from: null, skip_count: 0, completed_at: null, completed_day: null, completed_track: null, progress_note: '' }, fields);
 }

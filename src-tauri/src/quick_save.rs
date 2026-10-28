@@ -3,8 +3,13 @@ use tauri::{Emitter, Manager, State};
 
 #[derive(Default)]
 struct Gate { active: HashSet<String>, installing: bool, migrating: bool, guard_ready: bool, pending: Option<mpsc::Sender<bool>> }
-#[derive(Default)]
 pub struct QuickSaves(Mutex<Gate>);
+impl Default for QuickSaves {
+    fn default() -> Self {
+        // Startup recovery/migration must finish before the independent quickbar can write.
+        Self(Mutex::new(Gate { migrating: true, ..Gate::default() }))
+    }
+}
 
 impl Gate {
     fn begin_migration(&mut self) -> Result<(), String> {

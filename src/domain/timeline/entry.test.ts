@@ -51,13 +51,20 @@ it('R2 rejects a replaced running target and previews concurrent manual entries 
   const plan = previewReadout(rows, { entryId: 'b', at: at(20), milliseconds: 12 * 60000, mode: 'entry' });
   expect(plan.hit.map(hit => hit.id)).toEqual(['parallel']);
 });
-it('R3 rejects totals below closed time; raising a total skips prior segments of the same reference', () => {
+it('R3 rejects totals below closed time; raising a total skips prior entries of the same reference', () => {
   const rows = [entry('old', 0, 10, { card_id: 'c' }), entry('idle', 10, 15, { project: '待机' }), entry('open', 15, null, { card_id: 'c' })];
   const req = { entryId: 'open', at: at(20), milliseconds: 30 * 60000, mode: 'ref' as const };
   expect(() => previewReadout(rows, { ...req, milliseconds: 5 * 60000 })).toThrow('最少 10');
   const result = applyReadout(rows, req, null, at(20), () => 'unused');
   expect(result.kind).toBe('done');
   if (result.kind === 'done') expect(refElapsed(result.entries, 'c', at(20))).toBe(30 * 60000);
+});
+it('reference totals remain exact when a parallel historical copy overlaps the running entry', () => {
+  const rows = [entry('copy', 15, 25, { card_id: 'c' }), entry('open', 20, null, { card_id: 'c' })];
+  const request = { entryId: 'open', at: at(30), milliseconds: 30 * 60000, mode: 'ref' as const };
+  const result = applyReadout(rows, request, null, at(30), () => 'unused');
+  expect(result.kind).toBe('done');
+  if (result.kind === 'done') expect(refElapsed(result.entries, 'c', at(30))).toBe(request.milliseconds);
 });
 it.each([
   [entry('x', 1, 1)], [entry('x', 0, 61)], [entry('x', 61, null)],

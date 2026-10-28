@@ -42,6 +42,7 @@ export async function migrateV2(fs: FileSystem, options: MigrationOptions): Prom
     return value.map(row => segmentSchema.parse(row));
   });
   const rawOpen = segments.filter(segment => segment.ended_at === null);
+  if (segments.some(segment => segment.seq > state.max_seq)) throw new Error('state.max_seq 落后于计时记录');
   if (rawOpen.length > 1 || (rawOpen[0]?.id ?? null) !== state.open_segment) throw new Error('v1 当前计时指针不一致');
   const entries = migrateTimeline(segments, state.open_segment, options.now, options.id);
   if (!state.open_segment) entries.push({ id: options.id(), started_at: options.now, ended_at: null,

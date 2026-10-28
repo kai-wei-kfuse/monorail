@@ -64,18 +64,17 @@ async function run(ctx: Ctx) {
   assert(cards.filter(c => c.value.id === cardId).length === 1, 'Duplicate reconciliation');
   await log('verification-hidden-record-passed', { recordId: id, cardId, mainVisible: await w.isVisible(), due: record.due_at });
   const at = new Date().toISOString(); await start(ctx, cardId, at);
-  const openDay = (await ctx.repos.state.read()).open_segment_day!;
-  const segment = (await ctx.repos.times.readDay(openDay)).find(s => s.ended_at === null);
-  assert(segment?.card_id === cardId, 'Verification timer did not start');
-  await log('verification-background-start', { at, segmentId: segment!.id, mainVisible: await w.isVisible(), requiredMs: 600_000 });
+  const entry = ctx.repos.times.snapshot().find(s => s.ended_at === null);
+  assert(entry?.card_id === cardId, 'Verification timer did not start');
+  await log('verification-background-start', { at, segmentId: entry!.id, mainVisible: await w.isVisible(), requiredMs: 600_000 });
   await new Promise<void>((resolve, reject) => {
     void listen('main-visible', () => {
       void (async () => {
         const resumedAt = Date.now(), elapsed = resumedAt - Date.parse(at);
         assert(elapsed >= 600_000, `Main was resumed too early: ${elapsed}ms`);
-        const actual = (await ctx.repos.times.readDay(openDay)).find(s => s.id === segment!.id);
-        assert(actual?.started_at === at && actual.ended_at === null, 'Background segment was modified');
-        await log('verification-background-passed', { resumedAt, startedAt: Date.parse(at), elapsedMs: elapsed, segment: actual });
+        const actual = ctx.repos.times.snapshot().find(s => s.id === entry!.id);
+        assert(actual?.started_at === at && actual.ended_at === null, 'Background entry was modified');
+        await log('verification-background-passed', { resumedAt, startedAt: Date.parse(at), elapsedMs: elapsed, entry: actual });
         resolve();
       })().catch(reject);
     });

@@ -14,7 +14,7 @@ function setup(now: () => string) {
     publish: () => {}, log: async () => {}, reminders: { update: async () => {} } });
 }
 const offlineIds = async (ctx: ReturnType<typeof setup>) =>
-  [...new Set((await ctx.repos.times.scan()).flatMap(d => d.segments).filter(s => s.source === '离线追问').map(s => s.id))];
+  [...new Set(ctx.repos.times.snapshot().filter(s => s.source === '离线追问').map(s => s.id))];
 
 describe('scheduler', () => {
   it('changing the boundary immediately rearms its existing timer and disposal removes the subscription', async () => {
@@ -58,8 +58,8 @@ describe('scheduler', () => {
       lifecycle: { read: async () => ({ last_alive: 0, previous_last_alive: startAt, startup_at: endAt, events: [] }), onPower: async () => () => {} },
       onDayChanged: async () => {}, report: error => { throw error; },
     });
-    const physical = (await ctx.repos.times.scan()).flatMap(day => day.segments).filter(segment => segment.source === '离线追问');
-    expect(physical).toHaveLength(2);
+    const physical = ctx.repos.times.snapshot().filter(entry => entry.source === '离线追问');
+    expect(physical).toHaveLength(1);
     expect(await offlineIds(ctx)).toHaveLength(1);
     stop();
   });
@@ -74,7 +74,7 @@ describe('scheduler', () => {
     });
     const state = await ctx.repos.state.read();
     expect((await ctx.repos.cards.get(`card-${id}`))?.value.status).toBe('待做');
-    expect(state).toMatchObject({ home_mode: 'task', current_card: `card-${id}` });
+    expect(state).toMatchObject({ home_mode: 'blank', current_card: null });
     stop();
   });
   it('reports a day change once when the boundary has passed', async () => {

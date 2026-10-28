@@ -50,8 +50,8 @@ export function ReviewPreview({ step: initial }: { step: string }) {
 /** 设置页预览（只在开发时用）：?sec=deal|degrade|ideas|timer|lists|look|keys|window|about。 */
 export function SettingsPreview({ sec: initial }: { sec: string }) {
   const [sec, setSec] = useState(initial), [saves, setSaves] = useState(0);
-  const [s, setS] = useState<Settings>({ ...defaults, lists: { idleName: '待机',
-    quickActivities: [{ id: 'q1', name: '厕所', project: '生活' }, { id: 'q2', name: '拿快递', project: '生活' }, { id: 'q3', name: '刷视频', project: '休息' }],
+  const [s, setS] = useState<Settings>({ ...defaults, lists: { projects: [], tags: [], idleName: '待机',
+    presets: [{ id: 'q1', name: '厕所', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q2', name: '拿快递', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q3', name: '刷视频', project: '休息', tags: [], mode: '插入', place: '弹层' }],
     restPool: [{ id: 'r1', name: '眺望窗外' }, { id: 'r2', name: '走走' }] } });
   return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.1.0" dataDir="D:\\Notes\\monorail"
     onChange={(k, v) => { setS({ ...s, [k]: v }); setSaves(n => n + 1); }} onListsChange={lists => { setS({ ...s, lists }); setSaves(n => n + 1); }}

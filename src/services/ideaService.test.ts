@@ -21,7 +21,7 @@ it('A4 converts once in one transaction, retains the original idea and excludes 
   const transact = vi.spyOn(f.ctx.repos, 'transact');
   const cardId = await convertIdea(f.ctx, source.id, { content: '写一个脚本', taskId: 'p' }, at(10));
   expect(transact).toHaveBeenCalledTimes(1);
-  expect((await records(f))[0]).toMatchObject({ kind: '想法', pool: '已转待办', card_id: cardId, text: source.text, last_touched_at: at(10), attachments: source.attachments });
+  expect((await records(f))[0]).toMatchObject({ kind: '想法', pool: '已转任务', card_id: cardId, text: source.text, last_touched_at: at(10), attachments: source.attachments });
   expect((await f.ctx.repos.cards.get(cardId))!.value).toMatchObject({ content: '写一个脚本', task_id: 'p', source_record_id: source.id });
   expect(activeIdeas(await records(f))).toEqual([]);
   await expect(convertIdea(f.ctx, source.id, { content: '再来', taskId: null }, at(10))).rejects.toThrow('已经转为');
@@ -34,7 +34,7 @@ it('new ideas can overflow the pool and reconciliation never turns them into car
   expect(f.publish.mock.calls.at(-1)![0].backpack.ideas).toHaveLength(5);
 });
 it('archives at exactly 60 days since last touch, excluding cold and converted ideas', async () => {
-  const f = fixture(), old = idea(), edited = idea({ last_touched_at: at(1) }), converted = idea({ pool: '已转待办', card_id: 'card-old' });
+  const f = fixture(), old = idea(), edited = idea({ last_touched_at: at(1) }), converted = idea({ pool: '已转任务', card_id: 'card-old' });
   const cold = idea({ pool: '冷库', cold_since: at() }); await ideas(f, [old, edited, converted, cold]);
   const boundary = new Date(Date.parse(at()) + 60 * 86400000).toISOString(); f.clock(boundary);
   expect(await expire(f.ctx, boundary)).toBe(1);

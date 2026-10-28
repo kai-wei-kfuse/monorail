@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { effective } from './effective';
-import { activityDay, splitAtDays } from './day';
+import { activityDay, splitAtDays } from '../../../domain/timeline/day';
 import type { Segment } from './segment';
 
 const segment = (seq: number, start: string, end: string, card: string | null): Segment => ({
-  id: crypto.randomUUID(), seq, started_at: start, ended_at: end, activity: card ? '学Python' : '厕所', project: '支线', card_id: card,
+  id: crypto.randomUUID(), seq, started_at: start, ended_at: end, activity: card ? '学Python' : '厕所', category: '支线', card_id: card,
   kind: '普通', source: seq === 1 ? '手动' : '补记', resume_card_id: null,
 });
 describe('effective timeline', () => {

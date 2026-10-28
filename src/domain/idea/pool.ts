@@ -10,7 +10,7 @@ export function weakest(records: RecordEntry[]): RecordEntry | null {
 }
 export function freezeIdea(record: RecordEntry, at: string): RecordEntry {
   requireIdea(record);
-  if (record.pool === '已转待办') throw new Error('已转待办的想法不参加归档或对决');
+  if (record.pool === '已转任务') throw new Error('已转任务的想法不参加归档或对决');
   return { ...record, pool: '冷库', cold_since: at };
 }
 export function reviveIdea(record: RecordEntry, at: string): RecordEntry {

@@ -12,7 +12,7 @@ import { pass } from '../services/cardService';
 export function BackpackScreen({ ctx, report }: { ctx: Ctx; report: (error: unknown) => void }) {
   const view = useStore(appStore, state => state.backpack);
   const [tab, setTab] = useState<BackpackTab>('tasks');
-  const { mainSlots, sideSlots, ideaPoolLimit, timeboxDefaultMinutes } = ctx.settings;
+  const { mainTasks, sideTasks, ideaPoolLimit, timeboxDefaultMinutes } = ctx.settings;
   const call = (work: () => Promise<unknown>) => { void work().catch(report); };
   const actions: BackpackActions = {
     createTask: (draft, at) => call(() => backpack.createTask(ctx, draft, at)),
@@ -25,5 +25,5 @@ export function BackpackScreen({ ctx, report }: { ctx: Ctx; report: (error: unkn
     deleteIdea: (ideaId, at) => call(() => ideas.deleteIdea(ctx, ideaId, at)),
   };
   return <BackpackPage tab={tab} onTab={setTab} tasks={view.tasks} queue={view.queue} ideas={view.ideas}
-    mainSlots={mainSlots} sideSlots={sideSlots} ideaLimit={ideaPoolLimit} defaultTimebox={timeboxDefaultMinutes} actions={actions} />;
+    mainTasks={mainTasks} sideTasks={sideTasks} ideaLimit={ideaPoolLimit} defaultTimebox={timeboxDefaultMinutes} actions={actions} />;
 }

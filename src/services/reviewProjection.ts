@@ -7,9 +7,8 @@ import { progress } from '../domain/review/flow';
 import type { ReviewStep } from '../domain/review/flow';
 import { activeIdeas, coldOffer } from '../domain/idea/pool';
 import { pair } from '../domain/idea/arena';
-import { effective } from '../domain/timeline/effective';
 import { activityDayTotals, cardMilliseconds } from '../domain/timeline/stats';
-import type { Segment } from '../domain/timeline/segment';
+import type { TimeEntry } from '../domain/timeline/entry';
 import type { Settings } from '../shared/settings';
 import { LOOSE } from '../shared/backpack';
 import type { AppState } from '../data/repos';
@@ -26,11 +25,11 @@ export function recapStart(reviews: Review[], firstDay: string, boundary: number
   return finished?.completed_at ?? new Date(`${firstDay}T${String(boundary).padStart(2, '0')}:00:00`).toISOString();
 }
 
-interface Input { cards: Card[]; tasks: Task[]; records: RecordEntry[]; reviews: Review[]; segments: Segment[]; state: AppState; settings: Settings; at: string }
+interface Input { cards: Card[]; tasks: Task[]; records: RecordEntry[]; reviews: Review[]; entries: TimeEntry[]; state: AppState; settings: Settings; at: string }
 function recap(input: Input, from: string): RecapData {
-  const { cards, tasks, segments, settings, at } = input;
+  const { cards, tasks, entries, settings, at } = input;
   const start = Date.parse(from), end = Date.parse(at);
-  const timeline = effective(segments, at).filter(row => Date.parse(row.started_at) < end && Date.parse(row.ended_at!) > start)
+  const timeline = entries.map(entry => ({ ...entry, ended_at: entry.ended_at ?? at })).filter(row => Date.parse(row.started_at) < end && Date.parse(row.ended_at!) > start)
     .map(row => ({ ...row, started_at: new Date(Math.max(start, Date.parse(row.started_at))).toISOString(),
       ended_at: new Date(Math.min(end, Date.parse(row.ended_at!))).toISOString() }));
   const totals: Record<string, number> = {};
@@ -68,6 +67,6 @@ export function projectReview(input: Input): ReviewSlice {
     duel: duel?.left && duel.right ? { left: ideaView(duel.left), right: ideaView(duel.right), over: Math.max(review.cold_duel ? 1 : 0, activeIdeas(records).length - settings.ideaPoolLimit) } : null,
     cold: { offered: coldOffer(records).map(idea => ({ id: idea.id, text: idea.text, needs: idea.needs, coldSince: idea.cold_since! })), poolFree: Math.max(0, settings.ideaPoolLimit - activeIdeas(records).length) },
     bet: bet?.bet_ends_at ? { taskId: bet.id, task: bet.name, betEndsAt: bet.bet_ends_at, betWeeks: settings.betWeeks } : null,
-    backpack: { inBackpack: active.map(p => ({ id: p.id, name: p.name, slot: p.slot as '主线' | '支线' })), sideFree: active.filter(p => p.slot === '支线').length < settings.sideSlots },
+    backpack: { inBackpack: active.map(p => ({ id: p.id, name: p.name, slot: p.slot as '主线' | '支线' })), sideFree: active.filter(p => p.slot === '支线').length < settings.sideTasks },
   };
 }

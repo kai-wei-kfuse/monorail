@@ -1,8 +1,13 @@
-export interface QuickActivity { id: string; name: string; project: string }
+export interface QuickActivity { id: string; name: string; project: string; tags: string[]; mode: '切换' | '插入'; place: '计时条' | '弹层' }
 export interface RestItem { id: string; name: string }
 export const settingDefinitions = {
-  mainSlots: { type: 'number', default: 1, min: 1, max: 3, step: 1, unit: 'slots' },
-  sideSlots: { type: 'number', default: 2, min: 0, max: 6, step: 1, unit: 'slots' },
+  mainTasks: { type: 'number', default: 1, min: 1, max: 3, step: 1, unit: 'slots' },
+  sideTasks: { type: 'number', default: 10, min: 1, max: 30, step: 1, unit: 'slots' },
+  mainItems: { type: 'number', default: 5, min: 1, max: 10, step: 1, unit: 'items' },
+  homeLayout: { type: 'enum', default: 'split', options: ['split', 'fused'], unit: 'layout' },
+  // Exact minute arithmetic uses JavaScript safe integers; no product-specific upper cap is imposed.
+  calendarSnapMinutes: { type: 'number', default: 5, min: 1, max: Number.MAX_SAFE_INTEGER, step: 1, unit: 'minutes' },
+  calendarShowIdle: { type: 'boolean', default: true, unit: 'boolean' },
   betWeeks: { type: 'number', default: 4, min: 1, max: 12, step: 1, unit: 'weeks' },
   dueSoonHours: { type: 'number', default: 24, min: 1, max: 168, step: 1, unit: 'hours' },
   timeboxDefaultMinutes: { type: 'number', default: 60, min: 5, max: 240, step: 5, unit: 'minutes' },
@@ -37,10 +42,10 @@ export type SettingValues = { [K in SettingKey]: Value<(typeof settingDefinition
 export type SettingEntry = { [K in SettingKey]: (typeof settingDefinitions)[K] & { key: K } }[SettingKey];
 export const settingEntries = Object.entries(settingDefinitions).map(([key, definition]) => ({ ...definition, key })) as SettingEntry[];
 export type Settings = SettingValues & {
-  schemaVersion: 1;
-  lists: { quickActivities: QuickActivity[]; restPool: RestItem[]; idleName: string };
+  schemaVersion: 2;
+  lists: { presets: QuickActivity[]; projects: { name: string; color: string }[]; tags: string[]; restPool: RestItem[]; idleName: string };
 };
 export const defaults: Settings = {
   ...Object.fromEntries(settingEntries.map(entry => [entry.key, entry.default])) as SettingValues,
-  schemaVersion: 1, lists: { quickActivities: [], restPool: [], idleName: '待机' },
+  schemaVersion: 2, lists: { presets: [], projects: [], tags: [], restPool: [], idleName: '待机' },
 };

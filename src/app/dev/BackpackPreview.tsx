@@ -27,7 +27,7 @@ const QUEUE: QueueGroup[] = [
 const IDEAS: IdeaView[] = [
   { id: 'i1', text: '用空闲服务器搞点自动化', tags: ['服务器'], needs: '空闲服务器', pool: '活跃池', createdAt: ago(20), lastTouchedAt: ago(20) },
   { id: 'i2', text: '把读过的 Agent 文章整理成一份对比表', tags: ['AI'], needs: '大量 token', pool: '活跃池', createdAt: ago(41), lastTouchedAt: ago(41) },
-  { id: 'i3', text: '给打印机做个喷头清洁提醒', tags: [], needs: null, pool: '已转待办', createdAt: ago(3), lastTouchedAt: ago(1) },
+  { id: 'i3', text: '给打印机做个喷头清洁提醒', tags: [], needs: null, pool: '已转任务', createdAt: ago(3), lastTouchedAt: ago(1) },
 ];
 const noop: BackpackActions = { createTask() {}, freezeTask() {}, abandonTask() {}, restoreTask() {}, saveCard() {}, passCard() {}, convertIdea() {}, deleteIdea() {} };
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
@@ -48,6 +48,6 @@ export function BackpackPreview({ tab: initial, overlay }: { tab: string; overla
   </TitleBar>;
   return <Frame titleBar={title} statusBar={<StatusBar right={<BaselineMarks main side={false} />} />}>
     <BackpackPage tab={tab} onTab={setTab} tasks={TASKS} queue={QUEUE} ideas={IDEAS}
-      mainSlots={1} sideSlots={FULL ? 1 : 2} ideaLimit={10} defaultTimebox={60} actions={noop} />
+      mainTasks={1} sideTasks={FULL ? 1 : 2} ideaLimit={10} defaultTimebox={60} actions={noop} />
   </Frame>;
 }

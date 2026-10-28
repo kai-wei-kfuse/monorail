@@ -1,6 +1,6 @@
 # 单轨（MONORAIL）开发约定
 
-依据上级目录《架构设计》v1.1、《设计文档 v0.2》附录 A、《首期开发计划》。
+依据上级目录《架构设计》v1.2、《设计文档 v0.3》附录 A、《二期开发计划 0.2.0》v1.5。
 
 ## 分层
 - app 是组装根，可引用全部层；data/repos 创建仓库和 transact，bootstrap 注入。
@@ -17,20 +17,21 @@
 - 用户动作调用 run(rootCtx, callback, at)，并发根动作串行排队。
 - callback 只把 tx 传给 InTx 函数，不能捕获根 ctx 调另一个用户动作。
 - InTx 只接 tx（自带 repos/settings/id/now/at）；run(tx, ...) 同步抛重入错误。
-- cardService → degradeService 的 InTx → timerService。
-- cardService → dealService；其余 service → timerService/dealService。
+- homeService → cardService/dealService 的 InTx 与 tracking/api；scheduler → homeService 的 InTx。
+- cardService → degradeService 的 InTx → tracking/api；cardService → dealService。
 - reviewService → backpackService/ideaService 的 InTx（主线与回顾进度同事务）；任何 service 不得反向调用 reviewService。
-- timerService/dealService 不调用其他 service；degrade 的「回来」只调 timerService。
+- tracking 内部 service 互不调用；卡侧只经 tracking/api；计时不读取卡/任务。degrade 的「回来」只调 tracking/api。
 - picker 只由 dealService 调用；其余跨 service 调用禁止，评审检查方向。
 - Write 对 services 不透明：只能收集仓库生成的对象，不拼路径、不构造 Write。
-- seq 只由 tx.nextSeq 分配；跨日物理切片保留同一逻辑段 id/seq。
-- 启动先恢复 journal，再扫描/校验 max_seq 和 open_segment_day；普通动作只读当前段日期+今日。
+- seq/effective 仅保留在 data/migrations/v1；运行时条目跨日不切片，所有修改经 place。
+- 启动先封住原生记录条写入、恢复 journal、迁移、扫描条目、校验 open_entry/resume_entry_id，成功后开放保存。
+- 普通事务使用启动索引，只读取并重写发生变化的活动日文件；改计时的入口在同一事务对齐卡状态。
 - settings.yaml 是当前配置来源；只有缺文件的新目录使用 shared 默认值，坏文件必须报错。
 
 ## 术语
 - record：输入记录；card：任务卡；task/backpack：任务/背包；project：计时项目。
-- N2①：代码已改名，磁盘仍为 v1；data/v1Codec 保留 project_id、bet_project_ids、category，任务仍写 projects/。N2③才切换格式。
-- segment：逻辑计时段；effective：补记覆盖后的有效时间线；day：活动日。
+- entry：可编辑计时条目；day：活动日；pending：待确认；resume target：回到目标；align：对齐。
+- 数据 schemaVersion 2，tasks/ 与 task_id；迁移冻结 v1 读法，备份、对账后通过一份 journal 切换。
 - reconcile：幂等补齐记录生成的卡；InTx：现有事务内编排，不再次排队。
 - journal/transact：可恢复的多文件提交；publish：提交后投影更新。
 

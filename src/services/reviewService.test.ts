@@ -6,10 +6,9 @@ import { freezeTask } from './backpackService';
 import { enter, goto, addIdea, duel, takeCold, skipCold, continueBet, switchMain, finish } from './reviewService';
 import { refresh } from './dealService';
 import { start, redraw } from './cardService';
-import { insert } from './timerService';
+import { insert } from './homeService';
 import { createRecord } from '../domain/record/record';
-import { activityDay } from '../domain/timeline/day';
-import type { Segment } from '../domain/timeline/segment';
+import type { TimeEntry } from '../domain/timeline/entry';
 
 const view = (f: Fixture) => f.publish.mock.calls.at(-1)![0].review!;
 const saved = async (f: Fixture) => (await f.ctx.repos.reviews.list()).map(row => row.value);
@@ -35,8 +34,8 @@ it('A8 active first-week review completes the ISO period and does not enter the 
   expect(open(f).project).toBe('待机'); expect(f.home().baseline).toMatchObject({ main: null, side: false });
   f.clock(new Date(2026, 10, 1, 12).toISOString()); await refresh(f.ctx, f.ctx.now());
   expect(f.home().review).toBeNull();
-  const seq = (await f.ctx.repos.state.read()).max_seq;
-  await enter(f.ctx, f.ctx.now()); expect((await f.ctx.repos.state.read()).max_seq).toBe(seq);
+  const entryId = open(f).id;
+  await enter(f.ctx, f.ctx.now()); expect(open(f).id).toBe(entryId);
 });
 
 it('A8 persisted step and completed prefix survive a fresh context; completed steps can be revisited', async () => {
@@ -45,7 +44,7 @@ it('A8 persisted step and completed prefix survive a fresh context; completed st
   const ctx = createContext({ ...f.ctx, settings: await f.ctx.repos.settings.read() });
   await enter(ctx, at(1));
   expect(view(f)).toMatchObject({ step: 'arena', done: ['recap', 'newIdeas'], addedIdeas: ['restart idea'] });
-  expect((await f.ctx.repos.state.read()).max_seq).toBe(1);
+  expect(f.ctx.repos.times.snapshot().filter(entry => entry.project === '回顾')).toHaveLength(1);
   await goto(ctx, 'recap', at(1)); await goto(ctx, 'newIdeas', at(1)); await goto(ctx, 'arena', at(1));
   expect(view(f).step).toBe('arena');
 });
@@ -73,7 +72,7 @@ it('finishing after a quick activity does not end that unrelated activity', asyn
 });
 
 it('an identically named custom review activity is not mistaken for this review timer', async () => {
-  const f = fixture(); f.ctx.settings.lists.quickActivities = [{ id: 'custom', name: '每周回顾', project: '回顾' }];
+  const f = fixture(); f.ctx.settings.lists.presets = [{ id: 'custom', name: '每周回顾', project: '回顾', tags: [], mode: '插入', place: '弹层' }];
   await toCold(f); f.clock(at(1)); await insert(f.ctx, 'custom', at(1));
   const id = open(f).id; await finish(f.ctx, at(1)); expect(open(f).id).toBe(id);
 });
@@ -110,23 +109,23 @@ it('cold retrieval uses the existing rules, persists a confirmed duel, and resum
   const restarted = createContext(f.ctx); await enter(restarted, at(11));
   expect(view(f)).toMatchObject({ step: 'coldPick', duel: { left: { id: rows[3].id }, right: { id: rows[0].id } } });
   await expect(finish(restarted, at(11))).rejects.toThrow('对决');
-  await duel(restarted, rows[3].id, rows[0].id, at(12));
+  f.clock(at(12)); await duel(restarted, rows[3].id, rows[0].id, at(12));
   expect((await saved(f))[0].status).toBe('已完成');
   expect((await f.ctx.repos.records.get(rows[3].id))!.value.pool).toBe('活跃池');
 });
 
 it('cold skip cancels a pending duel without touching either idea; available slots restore two directly', async () => {
   const f = fixture(); f.ctx.settings.ideaPoolLimit = 3; const rows = await ideas(f, 3, 2); await toCold(f);
-  await takeCold(f.ctx, [rows[3].id], at(10), true); await skipCold(f.ctx, at(11));
+  await takeCold(f.ctx, [rows[3].id], at(10), true); f.clock(at(11)); await skipCold(f.ctx, at(11));
   expect((await f.ctx.repos.records.get(rows[3].id))!.value).toEqual(rows[3]);
   expect((await f.ctx.repos.records.get(rows[0].id))!.value).toEqual(rows[0]);
   const g = fixture(); const cold = await ideas(g, 0, 2); await toCold(g);
-  await takeCold(g.ctx, cold.map(row => row.id), at(3));
+  g.clock(at(3)); await takeCold(g.ctx, cold.map(row => row.id), at(3));
   expect((await g.ctx.repos.records.list()).every(row => row.value.pool === '活跃池')).toBe(true);
 });
 
 it('A8 continue extends the original deadline by one bet period and finishes after all due mains', async () => {
-  const f = fixture(); f.ctx.settings.mainSlots = 2;
+  const f = fixture(); f.ctx.settings.mainTasks = 2;
   const deadline = new Date(2026, 8, 1, 10).toISOString();
   await seed(f, [], [{ ...task('a'), bet_ends_at: deadline }, { ...task('b', '主线', 2), bet_ends_at: deadline }]);
   await toCold(f); await skipCold(f.ctx, at()); expect(view(f).bet?.task).toBe('a');
@@ -137,7 +136,7 @@ it('A8 continue extends the original deadline by one bet period and finishes aft
 });
 
 it('review projection keeps the exact id when advancing between identically named mains', async () => {
-  const f = fixture(); f.ctx.settings.mainSlots = 2;
+  const f = fixture(); f.ctx.settings.mainTasks = 2;
   await seed(f, [], ['first', 'second'].map((id, index) => ({ ...task(id, '主线', index + 1), name: '同名主线', bet_ends_at: at(-1) })));
   await toCold(f); await skipCold(f.ctx, at());
   expect(view(f).bet).toMatchObject({ taskId: 'first', task: '同名主线' });
@@ -159,7 +158,7 @@ it.each(['冷藏', '放弃'] as const)('A8 changing main via create shares one c
 });
 
 it('A8 restoring an existing main and invalid replacement both obey backpack transactions', async () => {
-  const f = fixture(); await seed(f, [], [{ ...task('old'), bet_ends_at: at(-1) }, { ...task('restore'), slot: '不在背包', slot_index: null, status: '冷藏' }]);
+  const f = fixture(); await seed(f, [], [{ ...task('old'), bet_ends_at: at(-1) }, { ...task('restore'), slot: '支线', slot_index: null, status: '冷藏' }]);
   await toCold(f); await skipCold(f.ctx, at());
   await expect(switchMain(f.ctx, { name: ' ', slot: '主线', makeRoom: { id: 'old', action: '放弃' } }, at())).rejects.toThrow('不能为空');
   expect((await f.ctx.repos.tasks.get('old'))!.value.status).toBe('进行中');
@@ -183,14 +182,14 @@ it('recap spans superseded periods since the last completion, clips overlays, an
     tx.saveReview({ id: '2026-W41', period: '2026-W41', status: '已完成', step: 'done', completed_at: date(10) });
     tx.saveReview({ id: '2026-W42', period: '2026-W42', status: '已被取代', step: 'arena' });
     tx.saveCard({ ...tx.cards.find(card => card.id === 'pending')!, progress_note: 'unfinished-note' });
-    const segment: Segment = { id: tx.id(), seq: tx.nextSeq(), started_at: date(10, 9), ended_at: date(10, 12), activity: 'task', project: '主线', card_id: 'done', kind: '普通', source: '手动', resume_card_id: null };
-    const overlay: Segment = { ...segment, id: tx.id(), seq: tx.nextSeq(), started_at: date(10, 11), ended_at: date(10, 12), project: '生活', card_id: null, source: '补记' };
-    tx.writes.push(...await tx.repos.times.writes([segment, overlay].map(segment => ({ day: activityDay(segment.started_at, 4), segment }))));
+    const entry: TimeEntry = { id: tx.id(), started_at: date(10, 9), ended_at: date(10, 12), description: 'task', project: '主线', card_id: 'done', kind: '普通', source: '手动', tags: [], updated_at: date(10, 12) };
+    const overlay: TimeEntry = { ...entry, id: tx.id(), started_at: date(10, 11), ended_at: date(10, 12), project: '生活', card_id: null, source: '手动' };
+    tx.entries.push(entry, overlay);
   }, date(26));
   await enter(f.ctx, at()); const recap = view(f).recap;
   expect(recap.completed.map(card => card.id)).toEqual(['done']);
-  expect(recap.totals).toEqual(expect.arrayContaining([{ project: '主线', minutes: 60 }, { project: '生活', minutes: 60 }]));
-  expect(recap.completed[0].minutes).toBe(60);
+  expect(recap.totals).toEqual(expect.arrayContaining([{ project: '主线', minutes: 120 }, { project: '生活', minutes: 60 }]));
+  expect(recap.completed[0].minutes).toBe(120);
   expect(recap.notes.map(note => note.id).sort()).toEqual(['done', 'pending']);
   expect((await saved(f)).some(row => row.period === '2026-W43')).toBe(true);
 });

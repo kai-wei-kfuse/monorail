@@ -1,13 +1,14 @@
 import type { Task } from '../domain/task/task';
-import { inBackpack, trackOf } from '../domain/task/task';
+import { inBackpack } from '../domain/task/task';
 import { putInBackpack, leaveBackpack } from '../domain/task/backpack';
+import { canAddTask, itemCapacity, singleItemTask } from '../domain/task/pool';
 import { createCard, editCard } from '../domain/card/edit';
 import { releaseCard } from '../domain/card/transitions';
 import type { BackpackSlot, CardFields, MakeRoom, TaskDraft } from '../shared/backpack';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import { refreshInTx } from './dealService';
-import { openSegmentInTx, switchInTx, idleTarget } from './timerService';
+import { openInTx, stopRefInTx, renameRefInTx, retagRefInTx } from './tracking/api';
 
 function findTask(tx: Transaction, id: string): Task {
   const task = tx.tasks.find(item => item.id === id);
@@ -16,18 +17,17 @@ function findTask(tx: Transaction, id: string): Task {
 }
 
 async function removeTaskInTx(tx: Transaction, id: string, status: '冷藏' | '已放弃'): Promise<void> {
-  const task = findTask(tx, id), current = openSegmentInTx(tx);
+  const task = findTask(tx, id);
   tx.saveTask(leaveBackpack(task, status));
   for (const card of tx.cards.filter(item => item.task_id === id)) {
+    if (card.status === '进行中') stopRefInTx(tx, card.id);
     if (status === '已放弃' && card.status !== '已完成' && card.status !== '已放弃') tx.saveCard({ ...card, status: '已放弃' });
     else if (status === '冷藏' && card.status === '进行中') tx.saveCard(releaseCard(card));
-    if (tx.state.current_card === card.id) tx.state.current_card = null;
+    if (tx.state.current_card === card.id) { tx.state.current_card = null; tx.state.home_mode = 'blank'; }
   }
-  // A3: an inserted activity continues; resume checks the released/abandoned card later.
-  if (current?.card_id && tx.cards.some(card => card.id === current.card_id && card.task_id === id)) await switchInTx(tx, tx.at, idleTarget(tx));
 }
 
-async function makeRoomInTx(tx: Transaction, slot: Task['slot'], room: MakeRoom | null | undefined): Promise<void> {
+async function makeRoomInTx(tx: Transaction, slot: TaskDraft['slot'], room: MakeRoom | null | undefined): Promise<void> {
   if (!room) return;
   const task = findTask(tx, room.id);
   if (slot === '不在背包' || !inBackpack(task) || task.slot !== slot) throw new Error('腾位项目必须在目标类型的背包格内');
@@ -38,7 +38,7 @@ export async function createTaskInTx(tx: Transaction, draft: TaskDraft): Promise
   const at = tx.at;
   if (!draft.name.trim()) throw new Error('项目名不能为空');
   await makeRoomInTx(tx, draft.slot, draft.makeRoom);
-  let task: Task = { id: tx.id(), name: draft.name.trim(), slot: '不在背包', slot_index: null, status: '进行中', created_at: at, bet_ends_at: null };
+  let task: Task = { id: tx.id(), name: draft.name.trim(), slot: '支线', slot_index: null, status: '冷藏', created_at: at, bet_ends_at: null, default_project: null };
   if (draft.slot !== '不在背包') task = putInBackpack(task, draft.slot, tx.tasks, tx.settings, at);
   tx.saveTask(task); refreshInTx(tx);
   return task.id;
@@ -66,7 +66,12 @@ export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at
   if (cardId !== null && !original) throw new Error('卡片不存在');
   if (original && original.status !== '待做' && original.status !== '进行中') throw new Error('只能编辑待做或进行中的卡');
   let card = original ? editCard(original, fields) : createCard(tx.id(), fields, at, Math.max(0, ...tx.cards.map(item => item.order)) + 1);
-  const task = tx.tasks.find(item => item.id === card.task_id), current = openSegmentInTx(tx);
+  if (!card.task_id) {
+    if (!canAddTask(tx.tasks, '支线', tx.settings)) throw new Error('支线任务已满');
+    const single = singleItemTask(card); tx.saveTask(single); card = { ...card, task_id: single.id };
+  }
+  const task = tx.tasks.find(item => item.id === card.task_id), current = openInTx(tx);
+  if (task && original?.task_id !== task.id && itemCapacity(task, tx.cards, tx.settings) <= 0) throw new Error('主线任务事项已满');
   const eligible = card.task_id === null || (!!task && inBackpack(task));
   if (!eligible) {
     card = releaseCard(card);
@@ -74,10 +79,11 @@ export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at
   }
   tx.saveCard(card);
   if (current?.card_id === card.id) {
-    const project = trackOf(card.task_id, tx.tasks);
-    if (!eligible) await switchInTx(tx, at, idleTarget(tx));
-    else if (current.activity !== card.content || current.project !== project) await switchInTx(tx, at,
-      { activity: card.content, project, card_id: card.id, kind: '普通', resume_card_id: null });
+    if (!eligible) stopRefInTx(tx, card.id);
+    else {
+      renameRefInTx(tx, card.id, card.content);
+      retagRefInTx(tx, card.id, card.project ?? task?.default_project ?? '未分类', card.tags);
+    }
   }
   refreshInTx(tx);
   return card.id;

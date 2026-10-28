@@ -3,7 +3,7 @@ import { fixture, at, card, task, seed } from './serviceFixture';
 import { change, changeLists, applyPlatform, changeDataDirectory } from './settingsService';
 import { createContext, run } from './commit';
 import { createTask } from './backpackService';
-import { insert } from './timerService';
+import { insert } from './homeService';
 import { createRecord } from '../domain/record/record';
 import type { SettingsPlatform } from '../platform/settings';
 
@@ -12,19 +12,19 @@ function platform(): SettingsPlatform {
 }
 it('settings write updates durable settings, context, projection, and the next queued operation', async () => {
   const f = fixture(); await seed(f, [], [task('main')]);
-  const commands = [change(f.ctx, 'mainSlots', 2, at()), createTask(f.ctx, { name: 'second', slot: '主线', makeRoom: null }, at())];
+  const commands = [change(f.ctx, 'mainTasks', 2, at()), createTask(f.ctx, { name: 'second', slot: '主线', makeRoom: null }, at())];
   await Promise.all(commands);
-  expect((await f.ctx.repos.settings.read()).mainSlots).toBe(2); expect(f.ctx.settings.mainSlots).toBe(2);
-  expect(f.publish.mock.calls.at(-1)![0].settings.mainSlots).toBe(2);
+  expect((await f.ctx.repos.settings.read()).mainTasks).toBe(2); expect(f.ctx.settings.mainTasks).toBe(2);
+  expect(f.publish.mock.calls.at(-1)![0].settings.mainTasks).toBe(2);
   expect((await f.ctx.repos.tasks.list()).filter(row => row.value.slot === '主线')).toHaveLength(2);
 });
 it('concurrent single and list modifications merge against the latest serialized setting values', async () => {
   const f = fixture();
   await Promise.all([change(f.ctx, 'betWeeks', 2, at()), change(f.ctx, 'accent', '#20b8ff', at()),
-    changeLists(f.ctx, { quickActivities: [{ id: 'walk', name: '走走', project: '运动' }] }, at()),
+    changeLists(f.ctx, { presets: [{ id: 'walk', name: '走走', project: '运动', tags: [], mode: '插入', place: '弹层' }] }, at()),
     changeLists(f.ctx, { restPool: [{ id: 'look', name: '看窗外' }] }, at())]);
   const settings = await f.ctx.repos.settings.read();
-  expect(settings).toMatchObject({ betWeeks: 2, accent: '#20b8ff', lists: { quickActivities: [{ id: 'walk', name: '走走', project: '运动' }], restPool: [{ id: 'look', name: '看窗外' }], idleName: '待机' } });
+  expect(settings).toMatchObject({ betWeeks: 2, accent: '#20b8ff', lists: { presets: [{ id: 'walk', name: '走走', project: '运动', tags: [], mode: '插入', place: '弹层' }], restPool: [{ id: 'look', name: '看窗外' }], idleName: '待机' } });
   await insert(f.ctx, 'walk', at()); expect(f.publish.mock.calls.at(-1)![0].home.activity.label).toBe('走走');
 });
 it('schema violations return errors by key, leave persistence unchanged, and do not poison the queue', async () => {

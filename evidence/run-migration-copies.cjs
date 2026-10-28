@@ -17,6 +17,8 @@ function load(file) {
 }
 async function main() {
   const { MemoryFs } = load('src/data/memoryFs.ts'), { migrateV2 } = load('src/data/migrations/v2.ts');
+  const { createRepos } = load('src/data/repos.ts'), { createContext } = load('src/services/commit.ts');
+  const home = load('src/services/homeService.ts'), assert = require('assert/strict');
   const roots = ['.verification-data/desktop', '.verification-data/m1-smoke'];
   const config = path.join(process.env.APPDATA, 'local.pixelrecord.app', 'config.json');
   if (fs.existsSync(config)) {
@@ -38,8 +40,21 @@ async function main() {
     await copy(root);
     const start = Date.now();
     const result = await migrateV2(memory, { now: new Date().toISOString(), id: () => crypto.randomUUID() });
+    const repos = createRepos(memory), settings = await repos.settings.read();
+    let clock = Date.now();
+    await repos.times.scan(new Date(clock).toISOString(), settings.dayBoundaryHour);
+    assert.equal((await repos.state.read()).schemaVersion, 2);
+    const ctx = createContext({ repos, settings, id: () => crypto.randomUUID(), now: () => new Date(clock).toISOString(),
+      publish: () => {}, log: async () => {}, reminders: { update: async () => {} } });
+    clock += 60000; await home.beginPending(ctx, ctx.now());
+    clock += 60000; await home.startFree(ctx, { description: 'migration smoke', project: '未分类', tags: [], card_id: null }, ctx.now());
+    clock += 60000; await home.pause(ctx, ctx.now());
+    clock += 60000; await home.resume(ctx, ctx.now());
+    assert.equal(repos.times.snapshot().filter(entry => entry.ended_at === null).length, 1);
+    assert.equal(repos.times.snapshot().find(entry => entry.ended_at === null).description, 'migration smoke');
+    assert.equal((await repos.cards.list()).filter(card => card.value.status === '进行中').length, 0);
     results.push({ source: index < 2 ? root : 'user-data-memory-copy', files, migrated: result.migrated,
-      referenceChanges: result.changes.length, milliseconds: Date.now() - start });
+      referenceChanges: result.changes.length, runtimeActions: 4, milliseconds: Date.now() - start });
   }
   fs.writeFileSync('evidence/n2-migration-copies.json', JSON.stringify(results, null, 2));
   console.log(JSON.stringify(results));

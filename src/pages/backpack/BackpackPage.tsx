@@ -39,15 +39,15 @@ type Open =
   | null;
 
 /** 背包页：左侧分页（项目 / 任务队列 / 想法池），右侧内容；编辑类对话框都在这里打开。 */
-export function BackpackPage({ tab, onTab, tasks, queue, ideas, mainSlots, sideSlots, ideaLimit, defaultTimebox, actions }:
+export function BackpackPage({ tab, onTab, tasks, queue, ideas, mainTasks, sideTasks, ideaLimit, defaultTimebox, actions }:
   { tab: BackpackTab; onTab: (tab: BackpackTab) => void; tasks: TaskView[]; queue: QueueGroup[]; ideas: IdeaView[];
-    mainSlots: number; sideSlots: number; ideaLimit: number; defaultTimebox: number; actions: BackpackActions }) {
+    mainTasks: number; sideTasks: number; ideaLimit: number; defaultTimebox: number; actions: BackpackActions }) {
   const [open, setOpen] = useState<Open>(null);
   const close = () => setOpen(null);
   const inBackpack: SlotTask[] = tasks.filter(p => p.status === '进行中' && p.slot !== '不在背包')
     .map(p => ({ id: p.id, name: p.name, slot: p.slot as '主线' | '支线', slotIndex: p.slotIndex ?? 0 }));
   const choices = inBackpack.map(p => ({ id: p.id, name: p.name }));
-  const mainFree = inBackpack.filter(p => p.slot === '主线').length < mainSlots, sideFree = inBackpack.filter(p => p.slot === '支线').length < sideSlots;
+  const mainFree = inBackpack.filter(p => p.slot === '主线').length < mainTasks, sideFree = inBackpack.filter(p => p.slot === '支线').length < sideTasks;
   const activeIdeas = ideas.filter(i => i.pool === '活跃池').length;
   const nav = [
     { id: 'tasks', no: '01', cn: '项目', en: 'TASKS', count: inBackpack.length },
@@ -61,9 +61,9 @@ export function BackpackPage({ tab, onTab, tasks, queue, ideas, mainSlots, sideS
   }[tab];
   return <>
     <SplitLayout nav={<SideNav en="BACKPACK" cn="背包" items={nav} active={tab} onSelect={id => onTab(id as BackpackTab)}
-      foot={<><Emblem /><div><b>背包</b><span>{inBackpack.length} / {mainSlots + sideSlots} SLOTS</span></div></>} />}>
+      foot={<><Emblem /><div><b>背包</b><span>{inBackpack.length} / {mainTasks + sideTasks} SLOTS</span></div></>} />}>
       <PanelHeader no={head[0]} en={head[1]} cn={head[2]} desc={head[3]} />
-      {tab === 'tasks' && <TaskList tasks={tasks} mainSlots={mainSlots} sideSlots={sideSlots}
+      {tab === 'tasks' && <TaskList tasks={tasks} mainTasks={mainTasks} sideTasks={sideTasks}
         onNew={() => setOpen({ kind: 'task', mode: 'new' })} onSetMain={() => setOpen({ kind: 'task', mode: 'setMain' })}
         onFreeze={actions.freezeTask} onRestore={task => setOpen({ kind: 'restore', task })} onAbandon={task => setOpen({ kind: 'abandon', task })} />}
       {tab === 'queue' && <QueueList groups={queue} onEdit={card => setOpen({ kind: 'card', card, taskId: card.fields.taskId })}

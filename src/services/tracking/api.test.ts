@@ -7,7 +7,7 @@ const template: EntryTemplate = { description: 'work', project: '学习', tags: 
 it('nested pause/insert retains only one return target, with caller-supplied current metadata on resume', () => {
   let minute = 0;
   const tx: TrackingTransaction = { scope: 'transaction', get at() { return at(minute); }, now: () => at(minute),
-    id: () => crypto.randomUUID(), settings: { dayBoundaryHour: 4 }, entries: [],
+    id: () => crypto.randomUUID(), settings: { dayBoundaryHour: 4, lists: { idleName: '待机' } }, entries: [],
     state: { open_entry: null, open_entry_day: null, resume_entry_id: null } };
   startRefInTx(tx, 'card', template);
   minute = 10; pauseInTx(tx);

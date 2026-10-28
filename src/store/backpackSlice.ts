@@ -2,7 +2,7 @@ import type { CardFields } from '../shared/backpack';
 
 export interface TaskView {
   id: string; name: string; slot: '主线' | '支线' | '不在背包'; slotIndex: number | null;
-  status: '进行中' | '冷藏' | '已放弃'; betEndsAt: string | null; openCards: number;
+  status: '进行中' | '冷藏' | '已放弃' | '已完成'; betEndsAt: string | null; openCards: number;
 }
 export interface QueueCard {
   id: string; fields: CardFields; status: '待做' | '进行中';
@@ -10,7 +10,7 @@ export interface QueueCard {
 }
 export interface QueueGroup { taskId: string | null; name: string; slotLabel: string; cards: QueueCard[] }
 export interface IdeaView {
-  id: string; text: string; tags: string[]; needs: string | null; pool: '活跃池' | '已转待办'; createdAt: string; lastTouchedAt: string;
+  id: string; text: string; tags: string[]; needs: string | null; pool: '活跃池' | '已转任务'; createdAt: string; lastTouchedAt: string;
 }
 export interface ColdIdea { id: string; text: string; needs: string | null; coldSince: string }
 export interface BackpackSlice { tasks: TaskView[]; queue: QueueGroup[]; ideas: IdeaView[]; coldIdeas: ColdIdea[] }

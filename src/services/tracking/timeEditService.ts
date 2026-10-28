@@ -17,6 +17,8 @@ export function setRefTotalInTx(tx: TrackingTransaction, ref: string, millisecon
   return setReadoutInTx(tx, { entryId: open.id, at: tx.at, milliseconds, mode: 'ref' }, seen);
 }
 export function manualInTx(tx: TrackingTransaction, template: EntryTemplate, start: string, end: string, source: TimeEntry['source'] = '手动'): TimeEntry {
+  if (!(Date.parse(end) > Date.parse(start))) throw new Error('结束时间必须晚于开始时间');
+  if (Date.parse(end) > Date.parse(tx.at)) throw new Error('结束时间不能晚于现在');
   const entry: TimeEntry = { ...template, id: tx.id(), started_at: start, ended_at: end, source, kind: '普通', updated_at: tx.at };
   acceptInTx(tx, place(tx.entries, entry, 'overlay', tx.now(), tx.id));
   return entry;

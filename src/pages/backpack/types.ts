@@ -4,7 +4,7 @@ import type { CardFields } from '../../widgets/CardEditor';
 export interface TaskView {
   id: string; name: string;
   slot: '主线' | '支线' | '不在背包'; slotIndex: number | null;
-  status: '进行中' | '冷藏' | '已放弃';
+  status: '进行中' | '冷藏' | '已放弃' | '已完成';
   betEndsAt: string | null;   // 只有主线有
   openCards: number;          // 待做 + 进行中的卡数
 }
@@ -21,6 +21,6 @@ export interface QueueGroup { taskId: string | null; name: string; slotLabel: st
 
 export interface IdeaView {
   id: string; text: string; tags: string[]; needs: string | null;
-  pool: '活跃池' | '已转待办';
+  pool: '活跃池' | '已转任务';
   createdAt: string; lastTouchedAt: string;
 }

@@ -1,7 +1,7 @@
 import { isoWeek } from '../domain/review/schedule';
 import { progress, navigate, completeReview } from '../domain/review/flow';
 import type { ActiveReview, ReviewStep } from '../domain/review/flow';
-import { activityDay, splitAtDays } from '../domain/timeline/day';
+import { activityDay } from '../domain/timeline/day';
 import { createRecord } from '../domain/record/record';
 import { releaseCard } from '../domain/card/transitions';
 import { inBackpack } from '../domain/task/task';
@@ -10,10 +10,10 @@ import type { MakeRoom, TaskDraft } from '../shared/backpack';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import { refreshInTx } from './dealService';
-import { openSegmentInTx, switchInTx, idleTarget } from './timerService';
+import { openInTx, startSystemInTx } from './tracking/api';
 import { reviveInTx, resolveDuelInTx } from './ideaService';
 import { createTaskInTx, restoreTaskInTx } from './backpackService';
-import { currentReview, recapStart } from './reviewProjection';
+import { currentReview } from './reviewProjection';
 
 const overLimit = (tx: Transaction) => activeIdeas(tx.records).length > tx.settings.ideaPoolLimit;
 function active(tx: Transaction, step?: ReviewStep): ActiveReview {
@@ -24,7 +24,7 @@ function active(tx: Transaction, step?: ReviewStep): ActiveReview {
 }
 async function finishInTx(tx: Transaction, review: ActiveReview): Promise<void> {
   tx.saveReview(completeReview(review, tx.at, overLimit(tx)));
-  if (openSegmentInTx(tx)?.id === review.timer_segment_id) await switchInTx(tx, tx.at, idleTarget(tx));
+  if (openInTx(tx)?.id === review.timer_entry_id) startSystemInTx(tx, '待机');
   refreshInTx(tx);
 }
 async function coldDoneInTx(tx: Transaction, review: ActiveReview): Promise<void> {
@@ -48,13 +48,11 @@ export const enter = (ctx: Ctx, at: string) => run(ctx, async tx => {
   // A main changed from the backpack page already received its explicit decision.
   review = { ...review, bet_done_ids: [...new Set([...review.bet_done_ids, ...review.bet_task_ids.filter(id =>
     !tx.tasks.some(task => task.id === id && inBackpack(task) && task.slot === '主线'))])] };
-  const from = recapStart(tx.reviews, tx.state.first_used_day!, tx.settings.dayBoundaryHour, at);
-  await tx.repos.times.readDays(splitAtDays(from, at, tx.settings.dayBoundaryHour).map(piece => piece.day));
-  if (openSegmentInTx(tx)?.id !== review.timer_segment_id) {
+  if (openInTx(tx)?.id !== review.timer_entry_id) {
     for (const card of tx.cards.filter(card => card.status === '进行中')) tx.saveCard(releaseCard(card));
     tx.state.rest = null;
-    await switchInTx(tx, at, { activity: '每周回顾', project: '回顾', card_id: null, kind: '普通', resume_card_id: null });
-    review = { ...review, timer_segment_id: tx.state.open_segment };
+    startSystemInTx(tx, '回顾');
+    review = { ...review, timer_entry_id: tx.state.open_entry };
   }
   tx.saveReview({ ...review, status: '进行中' });
   if (review.step === 'bet' && review.bet_task_ids.every(id => review.bet_done_ids.includes(id))) {

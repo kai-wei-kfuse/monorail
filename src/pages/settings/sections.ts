@@ -5,7 +5,7 @@ import type { SettingKey } from '../../shared/settings';
 /** 一行设置：引用一个设置项；或者是自定义组件（列表编辑器、数据目录、关于）。 */
 export type SettingRow =
   | { key: SettingKey; cn: string; desc?: string; control?: 'slider' | 'dropdown'; labels?: Record<string, string> }
-  | { custom: 'idleName' | 'quickActivities' | 'restPool' | 'dataDir' | 'about'; cn: string; desc?: string };
+  | { custom: 'idleName' | 'presets' | 'restPool' | 'dataDir' | 'about'; cn: string; desc?: string };
 
 export interface SettingGroup { cn: string; en: string; rows: SettingRow[] }
 export interface SettingSection { id: string; no: string; cn: string; en: string; desc: string; groups: SettingGroup[] }
@@ -16,8 +16,8 @@ const weekdays = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周�
 export const SECTIONS: SettingSection[] = [
   { id: 'deal', no: '01', cn: '出卡', en: 'DEAL', desc: '背包有几格、主线押多久、什么算快到期。选卡的优先级是固定的：阻塞 > 回顾 > 快到期 > 主线 > 支线 > 随机。', groups: [
     { cn: '背包', en: 'BACKPACK', rows: [
-      { key: 'mainSlots', cn: '主线格数', desc: '默认 1 格。主线是押注，格子越多越难集中' },
-      { key: 'sideSlots', cn: '支线格数', desc: '调低时已经在背包里的项目不会被移出，只是不能再放新的' },
+      { key: 'mainTasks', cn: '主线格数', desc: '默认 1 格。主线是押注，格子越多越难集中' },
+      { key: 'sideTasks', cn: '支线格数', desc: '调低时已经在背包里的项目不会被移出，只是不能再放新的' },
       { key: 'betWeeks', cn: '主线押注期', desc: '到期那一周的回顾里加入主线复盘' } ] },
     { cn: '出卡', en: 'CARDS', rows: [
       { key: 'dueSoonHours', cn: '快到期阈值', desc: '期限在这个时长以内的卡，排在主线和支线前面' },
@@ -46,7 +46,7 @@ export const SECTIONS: SettingSection[] = [
       { key: 'deadlineLeadMinutes', cn: '期限提醒提前量', desc: '带期限的待办，到期前多久提醒' },
       { key: 'offlineAskMinMinutes', cn: '离线追问最小间隔', desc: '关机或休眠短于这个时长，不追问，直接算在原来的活动上' } ] } ] },
   { id: 'lists', no: '05', cn: '快捷活动与休息池', en: 'LISTS', desc: '软件不预置任何快捷活动和休息项，都由你自己添加。', groups: [
-    { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'quickActivities', cn: '快捷活动', desc: '底栏一键插入；结束后自动回到原来的卡。按使用频率排序' }] },
+    { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'presets', cn: '快捷活动', desc: '底栏一键插入；结束后自动回到原来的卡。按使用频率排序' }] },
     { cn: '休息池', en: 'REST POOL', rows: [{ custom: 'restPool', cn: '休息池', desc: '进入休息时从这里派一件事。只是建议，不打勾、不计数' }] } ] },
   { id: 'look', no: '06', cn: '外观', en: 'APPEARANCE', desc: '视觉风格固定，这里只调强调色、字号和动效。', groups: [
     { cn: '颜色与字号', en: 'COLOR & TYPE', rows: [

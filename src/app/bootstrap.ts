@@ -3,7 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { tauriFs } from '../data/fs';
 import { createRepos } from '../data/repos';
 import type { Repositories } from '../data/repos';
-import { effective } from '../domain/timeline/effective';
+import { activityDay } from '../domain/timeline/day';
 import { nativeLifecycle } from '../platform/lifecycle';
 import { nativeReminders } from '../platform/reminders';
 import { onQuickbarReady, pushQuickbarContext } from '../platform/quickbarContext';
@@ -22,31 +22,27 @@ import { appendNotices } from '../store/noticeSlice';
 
 export async function restoreRepositories(repos: Repositories, id: () => string, now: () => string) {
   const recovered = await repos.recover();
-  const [state, days, settings] = await Promise.all([repos.state.read(), repos.times.scan(), repos.settings.read()]);
-  const segments = days.flatMap(day => day.segments);
-  if (segments.some(segment => segment.seq > state.max_seq)) throw new Error('state.max_seq 落后于计时记录');
-  effective(segments, now());
-  const open = days.flatMap(day => day.segments.filter(segment => segment.ended_at === null).map(segment => ({ day: day.day, segment })));
-  if (open.length > 1 || (open[0]?.segment.id ?? null) !== state.open_segment) throw new Error('state.yaml: 当前计时段与文件不一致');
-  const expectedDay = open[0]?.day ?? null;
-  if (state.open_segment_day !== undefined && state.open_segment_day !== expectedDay) throw new Error('state.yaml: 当前计时段日期不一致');
-  const writes = [await repos.settings.write(settings)];
-  // One-time migration of the original skeleton's state; never scan in a user command.
-  if (state.open_segment_day === undefined) writes.push(await repos.state.write({ ...state, open_segment_day: expectedDay }));
-  await repos.transact(id(), writes);
-  return { recovered, settings };
+  const migration = await repos.migrate(now(), id);
+  const [state, settings] = await Promise.all([repos.state.read(), repos.settings.read()]);
+  const entries = await repos.times.scan(now(), settings.dayBoundaryHour);
+  const open = entries.filter(entry => entry.ended_at === null);
+  if (open.length !== 1 || open[0].id !== state.open_entry) throw new Error('state.yaml: 当前计时条目与文件不一致');
+  if (state.open_entry_day !== activityDay(open[0].started_at, settings.dayBoundaryHour)) throw new Error('state.yaml: 当前计时条目日期不一致');
+  if (state.resume_entry_id && !entries.some(entry => entry.id === state.resume_entry_id)) throw new Error('state.yaml: 回到目标不存在');
+  return { recovered, settings, migration };
 }
 
 /** The native scheduler delivered a long-activity reminder; surface it as an in-app notice too. */
 function notifyLongActivity(ctx: Ctx, plan: ReminderPlan) {
   if (!plan.id.startsWith('long:')) return;
-  const open = appStore.getState().segments.find(segment => segment.ended_at === null);
+  const open = appStore.getState().entries.find(entry => entry.ended_at === null);
   if (!open) return;
-  const notice = { id: plan.id, kind: 'longActivity' as const, data: { activity: open.activity, startedAt: open.started_at, hours: ctx.settings.longActivityMinutes / 60 } };
+  const notice = { id: plan.id, kind: 'longActivity' as const, data: { activity: open.description, startedAt: open.started_at, hours: ctx.settings.longActivityMinutes / 60 } };
   appStore.setState(previous => ({ notices: appendNotices(previous.notices, [notice]) }));
 }
 
 export async function bootstrap(root: string) {
+  await invoke('begin_data_migration');
   const fs = await tauriFs(root);
   const repos = createRepos(fs);
   const id = () => crypto.randomUUID(), now = () => new Date().toISOString();
@@ -85,6 +81,7 @@ export async function bootstrap(root: string) {
     offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: newDay, report }));
     // Hotkeys and autostart follow settings.yaml; per-key failures are shown on the settings page.
     const platformErrors = await applyPlatform(ctx);
+    await invoke('finish_data_migration');
     return { ctx, fs, dispose, platformErrors };
   } catch (error) { dispose(); throw error; }
 }

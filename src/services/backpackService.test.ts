@@ -2,7 +2,7 @@ import { expect, it, vi } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed } from './serviceFixture';
 import { createTask, freezeTask, abandonTask, restoreTask, saveCard, reorderQueue } from './backpackService';
 import { start, shrink, pass, complete } from './cardService';
-import { insert, resume } from './timerService';
+import { insert, resume } from './homeService';
 import type { CardFields } from '../shared/backpack';
 
 const fields = (taskId: string | null = null): CardFields => ({ content: '做一件事', type: '结果卡', timeboxMinutes: null,
@@ -25,15 +25,15 @@ it('makeRoom freezes a running task and inserts its replacement in one transacti
   const transact = vi.spyOn(f.ctx.repos, 'transact');
   const id = await createTask(f.ctx, { name: '替代主线', slot: '主线', makeRoom: { id: 'main', action: '冷藏' } }, at());
   expect(transact).toHaveBeenCalledTimes(1);
-  expect((await f.ctx.repos.tasks.get('main'))!.value).toMatchObject({ status: '冷藏', slot: '不在背包', slot_index: null });
+  expect((await f.ctx.repos.tasks.get('main'))!.value).toMatchObject({ status: '冷藏', slot: '主线', slot_index: null });
   expect((await f.ctx.repos.tasks.get(id))!.value.slot_index).toBe(1);
   expect((await getCard(f, 'a')).status).toBe('待做'); expect(open(f).project).toBe('待机');
 });
 it('a reduced capacity never evicts existing tasks and an insufficient makeRoom rolls back all changes', async () => {
-  const f = fixture(); f.ctx.settings.mainSlots = 2;
+  const f = fixture(); f.ctx.settings.mainTasks = 2;
   const a = await createTask(f.ctx, { name: 'a', slot: '主线', makeRoom: null }, at());
   const b = await createTask(f.ctx, { name: 'b', slot: '主线', makeRoom: null }, at());
-  f.ctx.settings.mainSlots = 1;
+  f.ctx.settings.mainTasks = 1;
   await expect(createTask(f.ctx, { name: 'c', slot: '主线', makeRoom: { id: a, action: '冷藏' } }, at())).rejects.toThrow('已满');
   expect((await f.ctx.repos.tasks.get(a))!.value.status).toBe('进行中');
   expect((await f.ctx.repos.tasks.get(b))!.value.status).toBe('进行中');
@@ -41,20 +41,21 @@ it('a reduced capacity never evicts existing tasks and an insufficient makeRoom 
   const c = await createTask(f.ctx, { name: 'c', slot: '主线', makeRoom: { id: a, action: '放弃' } }, at());
   expect((await f.ctx.repos.tasks.get(c))!.value.slot_index).toBe(1);
 });
-it.each(['冷藏', '放弃'] as const)('A3 %s while away leaves the insert untouched, and return resumes idle', async action => {
+it.each(['冷藏', '放弃'] as const)('A3 %s while away ends the insert and clears its return target', async action => {
   const f = fixture(); await seed(f, [card('a', { task_id: 'main' }), card('b')], [task('main')]);
-  await start(f.ctx, 'a', at()); await insert(f.ctx, 'wc', at());
+  await start(f.ctx, 'a', at()); f.clock(at(1)); await insert(f.ctx, 'wc', at(1));
   const before = open(f);
-  await (action === '冷藏' ? freezeTask : abandonTask)(f.ctx, 'main', at());
-  expect(open(f)).toEqual(before);
+  await (action === '冷藏' ? freezeTask : abandonTask)(f.ctx, 'main', at(1));
+  expect(open(f).project).toBe('待机');
+  expect(open(f).id).not.toBe(before.id);
   expect((await getCard(f, 'a')).status).toBe(action === '冷藏' ? '待做' : '已放弃');
-  expect((await f.ctx.repos.state.read()).current_card).toBe('b');
-  await resume(f.ctx, at()); expect(open(f)).toMatchObject({ project: '待机', card_id: null });
+  expect((await f.ctx.repos.state.read()).current_card).toBeNull();
+  await resume(f.ctx, at(1)); expect(open(f)).toMatchObject({ project: '待机', card_id: null });
 });
 it('A3 abandoning a running task stops its timer, preserves completed history, and exposes the next card', async () => {
   const f = fixture(); await seed(f, [card('a', { task_id: 'main' }), card('done', { task_id: 'main', status: '已完成', completed_day: '2026-10-27', completed_track: '主线' }), card('b')], [task('main')]);
   await start(f.ctx, 'a', at()); await abandonTask(f.ctx, 'main', at());
-  expect(open(f).project).toBe('待机'); expect(f.home().card?.id).toBe('b');
+  expect(open(f).project).toBe('待机'); expect(f.home().card).toBeNull();
   expect(await getCard(f, 'done')).toMatchObject({ status: '已完成', completed_track: '主线' });
   await restoreTask(f.ctx, 'main', '支线', at());
   expect((await getCard(f, 'a')).status).toBe('已放弃');
@@ -85,19 +86,19 @@ it('editing card fields resets skips, updates deadline plans, and keeps historic
 it('reorders only a complete queue and makes the new head the pending home card', async () => {
   const f = fixture(); await seed(f, [card('a'), card('b', { order: 2 })]);
   await expect(reorderQueue(f.ctx, null, ['b'], at())).rejects.toThrow('完整顺序');
-  await reorderQueue(f.ctx, null, ['b', 'a'], at()); expect(f.home().card?.id).toBe('b');
+  await reorderQueue(f.ctx, null, ['b', 'a'], at()); expect(f.home().card?.id).toBe('a');
 });
 it('moving a running card to a parked task releases it and switching active task records a new project', async () => {
-  const f = fixture(); await seed(f, [card('a')], [task('main'), { ...task('cold'), slot: '不在背包', slot_index: null, status: '冷藏' }]);
-  await start(f.ctx, 'a', at()); await saveCard(f.ctx, 'a', fields('main'), at()); expect(open(f).project).toBe('主线');
+  const f = fixture(); await seed(f, [card('a')], [task('main'), { ...task('cold'), slot: '支线', slot_index: null, status: '冷藏' }]);
+  await start(f.ctx, 'a', at()); await saveCard(f.ctx, 'a', fields('main'), at()); expect(open(f).project).toBe('未分类');
   await saveCard(f.ctx, 'a', fields('cold'), at()); expect(open(f).project).toBe('待机'); expect((await getCard(f, 'a')).status).toBe('待做');
 });
 it('moving an away card into a main task resumes in the new track without changing historical time', async () => {
-  const f = fixture(); await seed(f, [card('a')], [task('main')]);
-  await start(f.ctx, 'a', at()); await insert(f.ctx, 'wc', at());
+  const f = fixture(); await seed(f, [card('a')], [{ ...task('main'), default_project: '学习' }]);
+  await start(f.ctx, 'a', at()); f.clock(at(1)); await insert(f.ctx, 'wc', at(1));
   const inserted = open(f);
-  await saveCard(f.ctx, 'a', fields('main'), at()); expect(open(f)).toEqual(inserted);
-  await resume(f.ctx, at()); expect(open(f).project).toBe('主线');
+  await saveCard(f.ctx, 'a', fields('main'), at(1)); expect(open(f)).toEqual(inserted);
+  await resume(f.ctx, at(1)); expect(open(f).project).toBe('学习');
 });
 it('queue ties can be reordered while preserving other task positions', async () => {
   const f = fixture(); await seed(f, [card('a'), card('b'), card('x', { task_id: 'main', order: 2 })], [task('main')]);

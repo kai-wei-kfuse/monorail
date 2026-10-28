@@ -1,5 +1,6 @@
 import type { Card } from '../domain/card/card';
-import type { Segment } from '../domain/timeline/segment';
+import type { TimeEntry } from '../domain/timeline/entry';
+import { startSystemInTx } from './tracking/api';
 import { activityDay } from '../domain/timeline/day';
 import { planReminders } from '../domain/reminders';
 import type { Settings } from '../shared/settings';
@@ -18,7 +19,7 @@ import type { SettingsPlatform } from '../platform/settings';
 import type { ReviewSlice } from '../store/reviewSlice';
 import { projectReview } from './reviewProjection';
 
-export interface Snapshot { state: AppState; cards: Card[]; segments: Segment[]; home: HomeSlice; backpack: BackpackSlice; review: ReviewSlice; settings: Settings; notices: Notice[] }
+export interface Snapshot { state: AppState; cards: Card[]; entries: TimeEntry[]; home: HomeSlice; backpack: BackpackSlice; review: ReviewSlice; settings: Settings; notices: Notice[] }
 export interface ContextOptions {
   repos: Repositories; settings: Settings; reminders: Reminders;
   id(): string; now(): string; publish(snapshot: Snapshot): void; log(message: string): Promise<void>;
@@ -30,9 +31,9 @@ export interface Transaction {
   readonly scope: 'transaction'; readonly repos: Repositories; readonly settings: Settings;
   readonly at: string; readonly id: () => string; readonly now: () => string;
   readonly log: (message: string) => Promise<void>;
-  state: AppState; segments: Segment[]; writes: Write[]; notices: Notice[];
+  state: AppState; entries: TimeEntry[]; writes: Write[]; notices: Notice[];
   readonly cards: Card[]; readonly tasks: Task[]; readonly reviews: Review[]; readonly records: RecordEntry[];
-  random(): number; saveCard(card: Card): void; saveReview(review: Review): void; nextSeq(): number;
+  random(): number; saveCard(card: Card): void; saveReview(review: Review): void;
   saveTask(task: Task): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
   saveSettings(settings: Settings): Promise<void>;
 }
@@ -70,11 +71,6 @@ export async function whenCommitsOpen<T>(ctx: Ctx, work: () => Promise<T>): Prom
   return work();
 }
 
-function daysFor(state: AppState, today: string): string[] {
-  if (state.open_segment && !state.open_segment_day) throw new Error('当前计时段缺少日期，请先执行启动校验');
-  return [...new Set([today, ...(state.open_segment_day ? [state.open_segment_day] : [])])];
-}
-
 /** Root contexts enqueue independent actions. Transaction scopes may never enqueue. */
 export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at?: string): Promise<T> {
   if (ctx.scope === 'transaction') throw new Error('事务重入：请调用 InTx 函数');
@@ -85,9 +81,7 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
   const result = queue.tail.then(async () => {
     if (queue.failure) throw new Error('提交已阻塞；请重启以恢复 journal', { cause: queue.failure });
     const state = await ctx.repos.state.read();
-    const today = activityDay(ctx.now(), ctx.settings.dayBoundaryHour);
-    const days = daysFor(state, today);
-    const segments = await ctx.repos.times.readDays(days);
+    const entries = ctx.repos.times.snapshot();
     const [entities, taskEntities, reviewEntities, recordEntities] = await Promise.all([ctx.repos.cards.list(), ctx.repos.tasks.list(), ctx.repos.reviews.list(), ctx.repos.records.list()]);
     const cards = entityChanges(ctx.repos.cards, entities), tasks = entityChanges(ctx.repos.tasks, taskEntities);
     const reviews = entityChanges(ctx.repos.reviews, reviewEntities);
@@ -98,7 +92,7 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
     const tx: Transaction = {
       scope: 'transaction', repos: ctx.repos, get settings() { return settings; },
       at: commandAt, id: ctx.id, now: ctx.now, log: ctx.log,
-      state, segments, writes: [], notices: [],
+      state, entries, writes: [], notices: [],
       get cards() { return cards.values; }, get tasks() { return tasks.values; },
       get reviews() { return reviews.values; }, get records() { return records.values; },
       random: ctx.random ?? Math.random,
@@ -109,9 +103,13 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
       }, saveReview: review => reviews.save(review),
       saveTask: task => tasks.save(task), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
       async saveSettings(value) { settingsWrite = await ctx.repos.settings.write(value); settings = structuredClone(value); },
-      nextSeq() { return ++this.state.max_seq; },
     };
+    if (!tx.state.open_entry) startSystemInTx(tx, '待机');
     const value = await work(tx);
+    const open = tx.entries.filter(entry => entry.ended_at === null);
+    if (open.length !== 1 || open[0].id !== tx.state.open_entry) throw new Error('当前计时条目与运行指针不一致');
+    tx.state.open_entry_day = activityDay(open[0].started_at, tx.settings.dayBoundaryHour);
+    tx.writes.push(...await ctx.repos.times.writes(tx.entries, ctx.now(), tx.settings.dayBoundaryHour));
     if (settingsWrite) tx.writes.push(settingsWrite);
     tx.writes.push(...await cards.writes(), ...await tasks.writes(), ...await reviews.writes(), ...await records.writes());
     tx.writes.push(await ctx.repos.state.write(tx.state));
@@ -121,13 +119,11 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
       ctx.settings = settings;
       for (const listener of settingsListeners.get(ctx)!) listener(settings);
     }
-    const visibleDays = [...new Set([...days, ...daysFor(tx.state, today)])];
-    const visible = await ctx.repos.times.readDays(visibleDays);
-    const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, segments: ctx.repos.times.snapshot(), at: ctx.now(), version: ++queue.version });
+    const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: ctx.repos.times.snapshot(), at: ctx.now(), version: ++queue.version });
     const backpack = projectBackpack(tx.cards, tx.tasks, tx.records);
-    const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, segments: ctx.repos.times.snapshot(), state: tx.state, settings: ctx.settings, at: ctx.now() });
-    ctx.publish({ state: tx.state, cards: tx.cards, segments: visible, home, backpack, review, settings: ctx.settings, notices: tx.notices });
-    await ctx.reminders.update(planReminders({ cards: tx.cards, open: tx.segments.find(seg => seg.id === tx.state.open_segment && seg.ended_at === null) ?? null,
+    const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, entries: ctx.repos.times.snapshot(), state: tx.state, settings: ctx.settings, at: ctx.now() });
+    ctx.publish({ state: tx.state, cards: tx.cards, entries: ctx.repos.times.snapshot(), home, backpack, review, settings: ctx.settings, notices: tx.notices });
+    await ctx.reminders.update(planReminders({ cards: tx.cards, open: tx.entries.find(seg => seg.id === tx.state.open_entry && seg.ended_at === null) ?? null,
       deadlineLeadMinutes: ctx.settings.deadlineLeadMinutes, longActivityMinutes: ctx.settings.longActivityMinutes }));
     return value;
   });

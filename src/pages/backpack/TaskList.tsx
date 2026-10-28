@@ -10,15 +10,15 @@ const day = (iso: string) => { const d = new Date(iso); return `${d.getMonth() +
  * 背包的格子：主线格（格号 01）和支线格（从 02 起），空格虚线；格号分配后固定，空出来的给下一个放进来的项目。
  * 下面是冷藏的项目，随时可以放回背包：放进哪一格由用户在对话框里选，满了就先腾位。已放弃的不显示。
  */
-export function TaskList({ tasks, mainSlots, sideSlots, onNew, onSetMain, onFreeze, onAbandon, onRestore }:
-  { tasks: TaskView[]; mainSlots: number; sideSlots: number;
+export function TaskList({ tasks, mainTasks, sideTasks, onNew, onSetMain, onFreeze, onAbandon, onRestore }:
+  { tasks: TaskView[]; mainTasks: number; sideTasks: number;
     onNew: () => void; onSetMain: () => void; onFreeze: (id: string, at: string) => void; onAbandon: (p: TaskView) => void; onRestore: (p: TaskView) => void }) {
   const active = tasks.filter(p => p.status === '进行中' && p.slot !== '不在背包');
   const mains = active.filter(p => p.slot === '主线'), sides = active.filter(p => p.slot === '支线');
   const parked = tasks.filter(p => p.status === '冷藏' || (p.status === '进行中' && p.slot === '不在背包'));
-  const freeMain = mains.length < mainSlots, freeSide = sides.length < sideSlots;
+  const freeMain = mains.length < mainTasks, freeSide = sides.length < sideTasks;
   const at = () => new Date().toISOString();
-  // 空格的格号：主线 1..mainSlots，支线接在后面；已用的格号不再分配
+  // 空格的格号：主线 1..mainTasks，支线接在后面；已用的格号不再分配
   const used = new Set(active.map(p => p.slotIndex));
   const emptyNos = (from: number, count: number) => Array.from({ length: count }, (_, i) => from + i).filter(n => !used.has(n));
   const card = (p: TaskView) => <div key={p.id} className={`slot${p.slot === '主线' ? ' main' : ''}`}>
@@ -35,8 +35,8 @@ export function TaskList({ tasks, mainSlots, sideSlots, onNew, onSetMain, onFree
   return <>
     <Group cn="背包" en="BACKPACK">
       <div className="slots">
-        {mains.map(card)}{emptyNos(1, mainSlots).slice(0, mainSlots - mains.length).map(n => empty(n, true))}
-        {sides.map(card)}{emptyNos(mainSlots + 1, Math.max(sideSlots, sides.length)).slice(0, Math.max(0, sideSlots - sides.length)).map(n => empty(n, false))}
+        {mains.map(card)}{emptyNos(1, mainTasks).slice(0, mainTasks - mains.length).map(n => empty(n, true))}
+        {sides.map(card)}{emptyNos(mainTasks + 1, Math.max(sideTasks, sides.length)).slice(0, Math.max(0, sideTasks - sides.length)).map(n => empty(n, false))}
       </div>
       <div className="bp-tools"><Button tone="ink" onClick={onNew}>新建项目</Button>
         <span className="bp-cnt">{!freeMain && !freeSide ? '背包满了：要开新坑，先冷藏或放弃一个' : ''}</span></div>

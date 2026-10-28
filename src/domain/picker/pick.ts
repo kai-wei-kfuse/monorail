@@ -8,17 +8,16 @@ import type { ReviewDue } from '../review/schedule';
 
 export interface PickInput {
   cards: Card[]; tasks: Task[]; day: string; at: string; dueSoonHours: number;
-  excluded: string[]; stopped: boolean; review: ReviewDue | null;
+  excluded: string[]; review: ReviewDue | null;
   random: number; mainWeight: number;
 }
 export type PickResult = { kind: 'task'; card: Card; resetRound: boolean } | { kind: 'review'; review: ReviewDue; resetRound: boolean } |
-  { kind: 'guide'; guide: GuideKind; resetRound: false } | { kind: 'stopped'; resetRound: false };
+  { kind: 'guide'; guide: GuideKind; resetRound: false };
 
 export function isCandidate(card: Card, tasks: Task[]): boolean {
   return (card.status === '待做' || card.status === '进行中') && (card.task_id === null || tasks.some(p => p.id === card.task_id && inBackpack(p)));
 }
 export function pick(input: PickInput): PickResult {
-  if (input.stopped) return { kind: 'stopped', resetRound: false };
   const tasks = input.tasks.filter(inBackpack), mainIds = new Set(tasks.filter(p => p.slot === '主线').map(p => p.id));
   const main = (card: Card) => card.task_id !== null && mainIds.has(card.task_id);
   const pool = input.cards.filter(card => isCandidate(card, tasks));

@@ -4,20 +4,23 @@
     "files": 7,
     "migrated": true,
     "referenceChanges": 0,
-    "milliseconds": 48
+    "runtimeActions": 4,
+    "milliseconds": 84
   },
   {
     "source": ".verification-data/m1-smoke",
     "files": 9,
     "migrated": true,
     "referenceChanges": 0,
-    "milliseconds": 22
+    "runtimeActions": 4,
+    "milliseconds": 55
   },
   {
     "source": "user-data-memory-copy",
     "files": 14,
     "migrated": true,
     "referenceChanges": 0,
-    "milliseconds": 25
+    "runtimeActions": 4,
+    "milliseconds": 62
   }
 ]

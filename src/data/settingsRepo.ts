@@ -4,17 +4,10 @@ import { defaults } from '../shared/settings';
 import type { FileSystem } from './fs';
 import type { Write } from './journal';
 import { createWrite } from './journal';
-import { legacySettingsSchema, settingsSchema } from './schemas';
-import { settingsV1 } from './v1Codec';
+import { settingsSchema } from './schemas';
 
 function readSettings(text: string): Settings {
-  const value = settingsV1(parse(text), false);
-  if (value !== null && typeof value === 'object' && !('schemaVersion' in value)) {
-    // Explicit M0 -> M1 migration. Invalid legacy values still fail validation.
-    const legacy = legacySettingsSchema.parse(value);
-    return settingsSchema.parse({ ...structuredClone(defaults), ...legacy, schemaVersion: 1 });
-  }
-  return settingsSchema.parse(value);
+  return settingsSchema.parse(parse(text));
 }
 
 export class SettingsRepo {
@@ -31,7 +24,7 @@ export class SettingsRepo {
     try {
       const original = file ? readSettings(file.text) : null;
       const settings = settingsSchema.parse({ ...original, ...value, lists: { ...original?.lists, ...value.lists } });
-      return createWrite('settings.yaml', stringify(settingsV1(settings, true)), file?.text ?? null);
+      return createWrite('settings.yaml', stringify(settings), file?.text ?? null);
     } catch (error) { throw new Error('settings.yaml: invalid settings', { cause: error }); }
   }
 }

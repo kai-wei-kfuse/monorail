@@ -36,8 +36,8 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
     if ('custom' in row) {
       switch (row.custom) {
         case 'idleName': return <TextInput aria-label={row.cn} value={lists.idleName} style={{ width: 200 }} onChange={e => onListsChange({ ...lists, idleName: e.target.value })} />;
-        case 'quickActivities': return <ListEditor withProject items={lists.quickActivities} placeholder="例如：厕所、拿快递、吃饭"
-          onChange={items => onListsChange({ ...lists, quickActivities: items.map(i => ({ id: i.id, name: i.name, project: i.project ?? '生活' })) })} />;
+        case 'presets': return <ListEditor withProject items={lists.presets} placeholder="例如：厕所、拿快递、吃饭"
+          onChange={items => onListsChange({ ...lists, presets: items.map(i => ({ ...(lists.presets.find(p => p.id === i.id) ?? { tags: [], mode: '插入' as const, place: '弹层' as const }), id: i.id, name: i.name, project: i.project ?? '生活' })) })} />;
         case 'restPool': return <ListEditor withProject={false} items={lists.restPool} placeholder="例如：眺望窗外、走走、洗脸、收拾桌面"
           onChange={items => onListsChange({ ...lists, restPool: items.map(i => ({ id: i.id, name: i.name })) })} />;
         case 'dataDir': return <><code className="st-path">{dataDir}</code><Button onClick={onChangeDir}>更换</Button></>;
@@ -74,7 +74,7 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
         {g.rows.map(r => {
           const id = 'custom' in r ? r.custom : r.key;
           const err = 'key' in r ? errors[r.key] : undefined;
-          const block = 'custom' in r && (r.custom === 'quickActivities' || r.custom === 'restPool');
+          const block = 'custom' in r && (r.custom === 'presets' || r.custom === 'restPool');
           const row = <Row key={id} title={r.cn} desc={err ? <span className="st-err">{err}</span> : r.desc}>{control(r)}</Row>;
           return block ? <div key={id} className="st-block">{row}</div> : row;
         })}

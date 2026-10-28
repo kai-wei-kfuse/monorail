@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { planReminders } from './reminders';
 import type { Card } from './card/card';
-import type { Segment } from './timeline/segment';
+import type { TimeEntry } from './timeline/entry';
 
 const card = (id: string, status: Card['status'], due_at: string | null): Card => ({
-  id, source_record_id: null, content: id, created_at: '2026-10-27T00:00:00Z', due_at, blocking: false, task_id: null,
+  id, source_record_id: null, content: id, created_at: '2026-10-27T00:00:00Z', due_at, blocking: false, task_id: null, project: null, tags: [],
   status, type: '结果卡', order: 0, timebox_minutes: null, no_shrink: false, shrunk_from: null, shrink_level: 0,
   continued_from: null, skip_count: 0, completed_at: null, completed_day: null, completed_track: null, progress_note: '',
 });
-const open: Segment = { id: 's1', seq: 1, started_at: '2026-10-27T08:00:00Z', ended_at: null, activity: '学 Python',
-  project: '主线', card_id: null, kind: '普通', source: '手动', resume_card_id: null };
+const open: TimeEntry = { id: 's1', started_at: '2026-10-27T08:00:00Z', ended_at: null, description: '学 Python',
+  project: '主线', card_id: null, kind: '普通', source: '手动', tags: [], updated_at: '2026-10-27T08:00:00Z' };
 const base = { deadlineLeadMinutes: 60, longActivityMinutes: 240 };
 
 describe('planReminders', () => {
@@ -20,7 +20,7 @@ describe('planReminders', () => {
     ] });
     expect(plans).toEqual([{ id: 'deadline:a:2026-10-27T12:00:00Z:60', at: Date.parse('2026-10-27T11:00:00Z'), title: '待办期限提醒', body: 'a' }]);
   });
-  it('arms one long-activity reminder per open segment', () => {
+  it('arms one long-activity reminder per open entry', () => {
     const [plan] = planReminders({ ...base, open, cards: [] });
     expect(plan.id).toBe('long:s1:2026-10-27T08:00:00Z:240');
     expect(plan.at).toBe(Date.parse('2026-10-27T12:00:00Z'));

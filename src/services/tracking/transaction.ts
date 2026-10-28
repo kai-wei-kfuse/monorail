@@ -4,7 +4,7 @@ import { activityDay } from '../../domain/timeline/day';
 export interface TrackingState { open_entry: string | null; open_entry_day: string | null; resume_entry_id: string | null }
 export interface TrackingTransaction {
   readonly scope: 'transaction'; readonly at: string; readonly id: () => string; readonly now: () => string;
-  readonly settings: { dayBoundaryHour: number };
+  readonly settings: { dayBoundaryHour: number; lists: { idleName: string } };
   entries: TimeEntry[]; state: TrackingState;
 }
 export const openInTx = (tx: TrackingTransaction) => tx.entries.find(entry => entry.id === tx.state.open_entry) ?? null;

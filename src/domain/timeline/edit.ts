@@ -1,10 +1,31 @@
-import { assertEntries, isIdle, refElapsed } from './entry';
+import { assertEntries, isIdle } from './entry';
 import type { TimeEntry } from './entry';
 import { place } from './place';
 
 export interface ReadoutRequest { entryId: string; at: string; milliseconds: number; mode: 'entry' | 'ref' }
 export interface Coverage { id: string; description: string; project: string; tags: string[]; card_id: string | null; from: string; to: string }
 export interface ReadoutPlan { entryId: string; start: string; hit: Coverage[] }
+
+function refStart(entries: readonly TimeEntry[], open: TimeEntry, at: number, target: number): number {
+  const history = entries.filter(entry => entry.id !== open.id && entry.card_id === open.card_id);
+  const closed = history.reduce((sum, entry) => sum + Date.parse(entry.ended_at!) - Date.parse(entry.started_at), 0);
+  if (target < closed) throw new Error(`最少 ${closed / 60000} 分钟（之前各段已计 ${closed / 60000} 分钟）`);
+  // Sweep backwards: extending the open interval adds time, while covered own-history is removed.
+  // Interval multiplicity also accounts for parallel copies of the same reference.
+  const events = new Map<number, number>(); let active = 0, total = 0, cursor = at;
+  for (const entry of history) {
+    const start = Date.parse(entry.started_at), end = Date.parse(entry.ended_at!);
+    total += Math.max(0, Math.min(at, end) - start);
+    if (start <= at && end > at) active++;
+    for (const [time, delta] of [[end, 1], [start, -1]]) if (time <= at) events.set(time, (events.get(time) ?? 0) + delta);
+  }
+  for (const [time, delta] of [...events].sort(([a], [b]) => b - a)) {
+    const slope = 1 - active, duration = cursor - time;
+    if (slope > 0 && total + slope * duration >= target) return cursor - (target - total) / slope;
+    total += slope * duration; cursor = time; active += delta;
+  }
+  return cursor - (target - total);
+}
 
 export function previewReadout(entries: readonly TimeEntry[], request: ReadoutRequest): ReadoutPlan {
   const open = entries.find(entry => entry.ended_at === null);
@@ -16,25 +37,12 @@ export function previewReadout(entries: readonly TimeEntry[], request: ReadoutRe
   let start = at - target;
   if (request.mode === 'ref') {
     if (!open.card_id) throw new Error('当前条目没有引用');
-    const total = refElapsed(entries, open.card_id, request.at), currentStart = Date.parse(open.started_at);
-    const closed = total - (at - currentStart);
-    if (target < closed) throw new Error(`最少 ${closed / 60000} 分钟（之前各段已计 ${closed / 60000} 分钟）`);
-    let need = target - total, cursor = currentStart;
-    if (need > 0) {
-      const previous = entries.filter(entry => entry.card_id === open.card_id && entry.id !== open.id &&
-        entry.ended_at !== null && Date.parse(entry.ended_at) <= currentStart).sort((a, b) => Date.parse(b.ended_at!) - Date.parse(a.ended_at!));
-      for (const entry of previous) {
-        const gap = cursor - Date.parse(entry.ended_at!);
-        if (gap >= need) break;
-        need -= gap; cursor = Date.parse(entry.started_at);
-      }
-    }
-    start = cursor - need;
+    start = refStart(entries, open, at, target);
   }
   const hit = entries.filter(entry => entry.id !== open.id && !isIdle(entry) &&
     !(request.mode === 'ref' && entry.card_id === open.card_id)).flatMap(entry => {
       const from = Math.max(start, Date.parse(entry.started_at)), to = Date.parse(entry.ended_at ?? request.at);
-      return to > from ? [{ id: entry.id, description: entry.description, project: entry.project, tags: entry.tags,
+      return to > from ? [{ id: entry.id, description: entry.description, project: entry.project, tags: [...entry.tags],
         card_id: entry.card_id, from: new Date(from).toISOString(), to: new Date(to).toISOString() }] : [];
     }).sort((a, b) => a.id.localeCompare(b.id));
   return { entryId: open.id, start: new Date(start).toISOString(), hit };

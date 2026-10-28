@@ -2,7 +2,7 @@ export interface RecordEntry {
   id: string; text: string; kind: '待办' | '想法'; created_at: string;
   due_at: string | null; blocking: boolean; task_id: string | null;
   card_id: string | null; tags: string[]; attachments: string[];
-  needs: string | null; pool: '活跃池' | '冷库' | '已转待办' | null;
+  needs: string | null; pool: '活跃池' | '冷库' | '已转任务' | null;
   last_touched_at: string; cold_since: string | null;
 }
 

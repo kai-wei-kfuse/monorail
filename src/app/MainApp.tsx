@@ -103,8 +103,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000);
   };
 
-  const acts: QuickAct[] = useMemo(() => settings.lists.quickActivities.map(a => ({ id: a.id, name: a.name, icon: iconFor(a.name) })), [settings]);
-  const activityOptions = settings.lists.quickActivities.map(a => ({ id: a.id, name: a.name }));
+  const acts: QuickAct[] = useMemo(() => settings.lists.presets.map(a => ({ id: a.id, name: a.name, icon: iconFor(a.name) })), [settings]);
+  const activityOptions = settings.lists.presets.map(a => ({ id: a.id, name: a.name }));
   const awayId = acts.find(a => a.name === home.awayActivity)?.id ?? null;
 
   useEffect(() => {

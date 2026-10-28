@@ -10,10 +10,11 @@ export type { EntryTemplate, TimeEntry } from '../../domain/timeline/entry';
 export type { ReadoutRequest, ReadoutPlan } from '../../domain/timeline/edit';
 export { openInTx } from './transaction';
 export { startInTx, startSystemInTx, pauseInTx, insertInTx, resumeInTx, stopRefInTx, renameRefInTx, retagRefInTx } from './timerService';
+export { settleOfflineInTx } from './timerService';
 export { manualInTx, editInTx, deleteInTx, previewReadoutInTx, setReadoutInTx, setRefTotalInTx } from './timeEditService';
 export const startRefInTx = (tx: TrackingTransaction, ref: string, template: EntryTemplate, from = tx.at) =>
   startInTx(tx, { ...template, card_id: ref }, from);
-export const refElapsedInTx = (tx: TrackingTransaction, ref: string) => refElapsed(tx.entries, ref, tx.at);
+export const refElapsedInTx = (tx: Pick<TrackingTransaction, 'entries' | 'at'>, ref: string) => refElapsed(tx.entries, ref, tx.at);
 export function activeRefInTx(tx: TrackingTransaction): string | null {
   const open = openInTx(tx);
   return open?.card_id ?? (open && open.kind !== '普通'

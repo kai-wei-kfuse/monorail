@@ -7,7 +7,7 @@ export function putInBackpack(task: Task, slot: BackpackSlot, tasks: Task[], set
   if (inBackpack(task) && task.slot === slot) return { ...task };
   const active = tasks.filter(item => item.id !== task.id && inBackpack(item));
   const main = active.filter(item => item.slot === '主线').length, side = active.length - main;
-  if (main > settings.mainSlots || side > settings.sideSlots || (slot === '主线' ? main >= settings.mainSlots : side >= settings.sideSlots)) {
+  if (slot === '主线' ? main >= settings.mainTasks : side >= settings.sideTasks) {
     throw new Error('背包格已满，请先冷藏或放弃项目');
   }
   const used = new Set(active.map(item => item.slot_index));
@@ -18,5 +18,5 @@ export function putInBackpack(task: Task, slot: BackpackSlot, tasks: Task[], set
 }
 
 export function leaveBackpack(task: Task, status: '冷藏' | '已放弃'): Task {
-  return { ...task, slot: '不在背包', slot_index: null, status, bet_ends_at: null };
+  return { ...task, slot_index: null, status, bet_ends_at: null };
 }

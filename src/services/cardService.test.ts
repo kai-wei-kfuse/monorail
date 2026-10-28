@@ -1,34 +1,33 @@
 import { expect, it } from 'vitest';
-import { at, card, fixture, getCard, open, task, seed, segments } from './serviceFixture';
-import { start, complete, checkComplete, shrink, redraw, pass, stopToday, leaveTo, editContent } from './cardService';
-import { insert, resume, backfillRange } from './timerService';
-import { refresh } from './dealService';
+import { at, card, fixture, getCard, open, task, seed, entries } from './serviceFixture';
+import { start, complete, checkComplete, shrink, redraw, pass, leaveTo, editContent } from './cardService';
+import { insert, backfillRange } from './homeService';
 import { cardMilliseconds } from '../domain/timeline/stats';
 
 const smaller = { content: '做一小步', type: '结果卡' as const, minutes: null };
-it.each([false, true])('edits only content and skip count without changing v1 timing (running=%s)', async running => {
+it.each([false, true])('edits only content and skip count and renames only the running entry (running=%s)', async running => {
   const f = fixture();
   await seed(f, [card('a', { content: '旧标题', skip_count: 3, blocking: true, due_at: at(60),
     type: '时间盒卡', timebox_minutes: 25, no_shrink: true, progress_note: '已有进度' })]);
   if (running) await start(f.ctx, 'a', at());
-  const before = await getCard(f, 'a'), state = await f.ctx.repos.state.read(), history = structuredClone(segments(f));
+  const before = await getCard(f, 'a'), state = await f.ctx.repos.state.read(), history = structuredClone(entries(f));
   f.clock(at(5));
   await editContent(f.ctx, 'a', ' \t新[标题]\n ', at(5));
   expect(await getCard(f, 'a')).toEqual({ ...before, content: '新[标题]', skip_count: 0 });
   expect(await f.ctx.repos.state.read()).toEqual(state);
-  expect(segments(f)).toEqual(history);
+  expect(entries(f)).toEqual(running ? history.map(entry => entry.ended_at === null ? { ...entry, description: '新标题', updated_at: at(5) } : entry) : history);
   expect(f.home().card).toMatchObject({ id: 'a', content: '新[标题]' });
-  if (running) expect(open(f).activity).toBe('旧标题');
+  if (running) expect(open(f).description).toBe('新标题');
 });
 it('rejects blank content and missing cards without committing, then allows another edit', async () => {
   const f = fixture(); await seed(f, [card('a', { skip_count: 2 })]); await start(f.ctx, 'a', at());
-  const before = await getCard(f, 'a'), state = await f.ctx.repos.state.read(), history = structuredClone(segments(f));
+  const before = await getCard(f, 'a'), state = await f.ctx.repos.state.read(), history = structuredClone(entries(f));
   f.publish.mockClear();
   await expect(editContent(f.ctx, 'a', ' \t\n ', at())).rejects.toThrow('卡片内容不能为空');
   await expect(editContent(f.ctx, 'missing', '新标题', at())).rejects.toThrow('卡片不存在');
   expect(await getCard(f, 'a')).toEqual(before);
   expect(await f.ctx.repos.state.read()).toEqual(state);
-  expect(segments(f)).toEqual(history);
+  expect(entries(f)).toEqual(history);
   expect(f.publish).not.toHaveBeenCalled();
   await editContent(f.ctx, 'a', '新标题', at());
   expect(await getCard(f, 'a')).toEqual({ ...before, content: '新标题', skip_count: 0 });
@@ -42,13 +41,13 @@ it.each(['complete', 'shrink', 'redraw'] as const)('A2 %s ends the insert at the
   if (action === 'complete') await complete(f.ctx, 'a', at(20), '进度');
   if (action === 'shrink') await shrink(f.ctx, 'a', smaller, at(20));
   if (action === 'redraw') await redraw(f.ctx, 'a', at(20), '再做');
-  expect(segments(f).find(s => s.kind === '插入')).toMatchObject({ ended_at: at(20) });
-  expect(open(f)).toMatchObject({ kind: '普通', resume_card_id: null, started_at: at(20) });
+  expect(entries(f).find(s => s.kind === '插入')).toMatchObject({ ended_at: at(20) });
+  expect(open(f)).toMatchObject({ kind: '普通', started_at: at(20) });
   expect((await getCard(f, 'a')).status).toBe(action === 'complete' ? '已完成' : action === 'shrink' ? '已缩小' : '待做');
-  expect(cardMilliseconds(segments(f), 'a', at(20))).toBe(10 * 60000);
+  expect(cardMilliseconds(entries(f), 'a', at(20))).toBe(10 * 60000);
   if (action === 'shrink') expect((await getCard(f, open(f).card_id!)).status).toBe('进行中');
   else expect(open(f).project).toBe('待机');
-  await expect(resume(f.ctx, at(20))).rejects.toThrow('没有插入');
+  expect((await f.ctx.repos.state.read()).resume_entry_id).toBeNull();
 });
 it('A2 checks effective time without stopping, then completes at the original click across the day boundary', async () => {
   const f = fixture(), begin = new Date(2026, 9, 27, 3).toISOString(), click = new Date(2026, 9, 27, 3, 50).toISOString();
@@ -56,14 +55,14 @@ it('A2 checks effective time without stopping, then completes at the original cl
   await start(f.ctx, 'a', begin);
   f.clock(click);
   await backfillRange(f.ctx, { start: new Date(2026, 9, 27, 3, 20).toISOString(), end: new Date(2026, 9, 27, 3, 40).toISOString() }, 'wc', click);
-  const before = segments(f);
-  expect(await checkComplete(f.ctx, 'a', click)).toEqual({ at: click, remainingMinutes: 30 });
-  expect(segments(f)).toEqual(before);
+  const before = entries(f);
+  expect(await checkComplete(f.ctx, 'a', click)).toEqual({ at: click, remainingMinutes: 10 });
+  expect(entries(f)).toEqual(before);
   f.clock(new Date(2026, 9, 27, 4, 10).toISOString());
   await complete(f.ctx, 'a', click, '先到这里');
   expect(await getCard(f, 'a')).toMatchObject({ completed_at: click, completed_day: '2026-10-26', completed_track: '主线' });
   expect(open(f)).toMatchObject({ project: '待机', started_at: click });
-  expect(cardMilliseconds(segments(f), 'a', f.ctx.now())).toBe(30 * 60000);
+  expect(cardMilliseconds(entries(f), 'a', f.ctx.now())).toBe(50 * 60000);
 });
 it('creates one independent continuation and repeated completion cannot create another', async () => {
   const f = fixture(); await seed(f, [card('a', { blocking: true, due_at: at(60), task_id: 'main' })], [task('main')]);
@@ -97,22 +96,11 @@ it('A6 PASS restores the parent, allows replacement at the same level, and forbi
   await pass(f.ctx, replacement, at()); await pass(f.ctx, b, at());
   expect((await getCard(f, 'a')).status).toBe('待做');
 });
-it.each([false, true])('stopping today releases the card and any insert (%s), then restores dealing at 04:00', async inserted => {
-  const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
-  if (inserted) await insert(f.ctx, 'wc', at());
-  await stopToday(f.ctx, at());
-  expect((await getCard(f, 'a')).status).toBe('待做');
-  expect(open(f)).toMatchObject({ project: '待机', resume_card_id: null });
-  const before = new Date(2026, 9, 28, 3, 59).toISOString(); f.clock(before); await refresh(f.ctx, before);
-  expect(f.home().mode).toBe('stopped');
-  const boundary = new Date(2026, 9, 28, 4).toISOString(); f.clock(boundary); await refresh(f.ctx, boundary);
-  expect(f.home()).toMatchObject({ mode: 'task', card: { id: 'a', status: '待做' } });
-});
 it('leaveTo releases the running card while switching to the chosen activity', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
   await leaveTo(f.ctx, 'wc', at());
   expect((await getCard(f, 'a')).status).toBe('待做');
-  expect(open(f)).toMatchObject({ activity: '厕所', card_id: null, kind: '普通', resume_card_id: null });
+  expect(open(f)).toMatchObject({ description: '厕所', card_id: null, kind: '普通' });
 });
 it('the third redraw emits one skip signal, and shrinking clears skip counts', async () => {
   const f = fixture(); f.ctx.settings.refusalThreshold = 10; await seed(f, [card('a')]);
@@ -126,9 +114,9 @@ it('the third redraw emits one skip signal, and shrinking clears skip counts', a
 });
 it('a rejected shrink changes neither card, timer nor refusal count and the next action still works', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
-  const state = await f.ctx.repos.state.read(), before = segments(f);
+  const state = await f.ctx.repos.state.read(), before = entries(f);
   await expect(shrink(f.ctx, 'a', { ...smaller, content: ' ' }, at())).rejects.toThrow('不能为空');
-  expect(await f.ctx.repos.state.read()).toEqual(state); expect(segments(f)).toEqual(before);
+  expect(await f.ctx.repos.state.read()).toEqual(state); expect(entries(f)).toEqual(before);
   expect(await f.ctx.repos.cards.list()).toHaveLength(1);
   expect((await getCard(f, 'a')).status).toBe('进行中');
   await complete(f.ctx, 'a', at(), '完成');

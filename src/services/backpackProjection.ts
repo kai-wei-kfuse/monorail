@@ -19,10 +19,10 @@ export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEnt
       status: task.status, betEndsAt: task.bet_ends_at, openCards: active.filter(card => card.task_id === task.id).length })),
     queue: [...orderedTasks.filter(inBackpack).map(task => ({ taskId: task.id, name: task.name,
       slotLabel: String(task.slot_index).padStart(2, '0'), cards: queue(task.id) })), { taskId: null, name: LOOSE.group, slotLabel: LOOSE.slot, cards: queue(null) }],
-    ideas: records.filter(record => record.kind === '想法' && (record.pool === '活跃池' || record.pool === '已转待办'))
+    ideas: records.filter(record => record.kind === '想法' && (record.pool === '活跃池' || record.pool === '已转任务'))
       .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))
       .map(record => ({ id: record.id, text: record.text, tags: record.tags, needs: record.needs,
-        pool: record.pool as '活跃池' | '已转待办', createdAt: record.created_at, lastTouchedAt: record.last_touched_at })),
+        pool: record.pool as '活跃池' | '已转任务', createdAt: record.created_at, lastTouchedAt: record.last_touched_at })),
     coldIdeas: coldOffer(records)
       .map(record => ({ id: record.id, text: record.text, needs: record.needs, coldSince: record.cold_since! })),
   };
