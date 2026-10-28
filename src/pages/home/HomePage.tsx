@@ -25,6 +25,8 @@ import type { Cover, ReadoutOutcome, ReadoutRequest } from './TimeField';
 import { PresetRow } from './PresetRow';
 import { ManualForm } from './ManualForm';
 import { favorites, timerView } from './timerView';
+import { cardArea } from './cardArea';
+import { FreeCard } from './FreeCard';
 
 /** 首页需要的动作。由外壳的适配层（app/actions）提供，出错由适配层统一报告。 */
 export interface HomeActions {
@@ -89,6 +91,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), projects = useStore(appStore, s => s.backpack.pool.projects), settings = useStore(appStore, s => s.settings);
   const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer'), [prefill, setPrefill] = useState<EntryValue | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);   // 计时条里正在写的字，卡区照着显示
   const now = useNow();
   const stage = useRef<HTMLDivElement>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -160,8 +163,12 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     createTag: tag => void actions.createTag(tag, now_()),
   };
 
+  // 分开布局：卡区跟着计时条走（cardArea）。休息时只显示休息卡
+  const tv = timerView({ home, entries, cards, tasks, settings, projects }), area = cardArea(draft, tv, home.card?.status ?? null);
   let body;
   if (home.mode === 'rest') body = <RestCard suggestion={home.rest?.suggestion ?? null} look={cardLook} onAddRest={onAddRest} onBack={(answer, at) => void act(() => actions.returnFromRest(answer, at))} />;
+  else if (area === 'free') body = <FreeCard view={tv} draft={draft} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
+    over={home.card?.status === '待做' ? { id: home.card.id, content: home.card.content } : null} />;
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
   else if (home.mode === 'blank') body = <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
     <div /><div className="alt-hero"><h1>现在做什么？</h1><p>抽一张卡，开始下一件事。</p></div><div />
@@ -186,7 +193,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   } else body = <GuideCard kind={home.mode === 'guide' ? home.guideKind : 'allDone'} look={cardLook} onAction={() => onGuide(home.mode === 'guide' ? home.guideKind : 'allDone')} />;
 
   return <div className="home">
-    <TimerBar view={timerView({ home, entries, cards, tasks, settings, projects })} actions={timerActions} mode={timerMode} onMode={setTimerMode}
+    <TimerBar view={tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft}
       manual={<ManualForm projects={projects} knownTags={home.knownTags} overlaps={actions.overlaps} prefill={prefill}
         onAdd={(v, start, end) => void actions.manual(v, start, end, now_())}
         onCreateProject={name => void actions.createProject(name, now_())} onCreateTag={tag => void actions.createTag(tag, now_())} />} />

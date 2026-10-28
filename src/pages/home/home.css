@@ -72,3 +72,7 @@
 /* 首页舞台：铺满内容区 */
 .home-stage { display: grid; min-height: 0; }
 .home-stage > .card { grid-area: 1 / 1; }
+
+/* 自由记录卡（分开布局的卡区照着计时条显示）：标题为空时的提示；卡头「记到」那一行，弹层要压在标题上面 */
+.title .ph { color: var(--mute-2); }
+.c-picks { position: relative; z-index: 9; display: inline-flex; align-items: center; gap: 6px; }

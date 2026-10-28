@@ -32,14 +32,17 @@ const STATE = {
 /**
  * 首页的任务卡。按钮、右上角的小字（「还没有主线」「今天不再出卡」）和演出层都由外面传进来。
  * 给了 onEditContent，双击标题就能就地改卡的内容：[词] 标记照原文显示，也能改；回车或点别处保存，Esc 不改。
+ * 自由记录卡也用它：meta 换掉类型那几个字，picks 是后面「记到」那一行，digits 换掉读数（可以是 TimeField），
+ * note 换掉「上次做到」那一行，stateText 换掉状态字，placeholder 是内容为空时标题位置的提示。
  */
-export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef, innerRef, onEditContent }:
+export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef, innerRef, onEditContent, meta, picks, digits, note, stateText, placeholder }:
   { view: TaskCardView; look: CardLook; titleScale: number; actions: ReactNode; corner?: ReactNode; fx?: ReactNode;
-    cardRef?: Ref<HTMLElement>; innerRef?: Ref<HTMLDivElement>; onEditContent?: (cardId: string, content: string) => void }) {
+    cardRef?: Ref<HTMLElement>; innerRef?: Ref<HTMLDivElement>; onEditContent?: (cardId: string, content: string) => void;
+    meta?: ReactNode; picks?: ReactNode; digits?: ReactNode; note?: ReactNode; stateText?: readonly [string, string]; placeholder?: string }) {
   const hero = useRef<HTMLDivElement>(null), title = useRef<HTMLHeadingElement>(null);
   const [draft, setDraft] = useState<string | null>(null), done = useRef(false), editing = useRef<{ id: string; content: string } | null>(null);
   const { progress } = view;
-  const [cn, en] = STATE[progress.state];
+  const [cn, en] = stateText ?? STATE[progress.state];
   const stateCn = progress.state === 'away' && view.awayActivity ? `${cn} · ${view.awayActivity}` : cn;
   const canEdit = !!onEditContent && view.id !== undefined;
   // 双击时就记下改的是哪张卡：编辑期间首页换了卡，保存时仍交出原来那张的 id。
@@ -73,12 +76,13 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     const ro = new ResizeObserver(fit);
     ro.observe(h);
     return () => ro.disconnect();
-  }, [view.content, titleScale, view.progressNote, draft === null]);
+  }, [view.content, titleScale, view.progressNote, draft === null, note]);
 
   return <CardFrame look={look} running={progress.state === 'run'} slotNo={view.slotNo} slotOf={view.slotOf} cardRef={cardRef} innerRef={innerRef} fx={fx}>
     <div className="c-head" data-fx="head">
       <TrackMark /><b>{view.task}</b>
-      <span className="c-meta">{view.type === '时间盒卡' ? '时间盒' : '结果卡'}{view.goalMinutes !== null && <em>目标 {view.goalMinutes} 分钟</em>}</span>
+      <span className="c-meta">{meta ?? <>{view.type === '时间盒卡' ? '时间盒' : '结果卡'}{view.goalMinutes !== null && <em>目标 {view.goalMinutes} 分钟</em>}</>}</span>
+      {picks}
       {corner && <span className="c-corner">{corner}</span>}
     </div>
     <div className="hero" ref={hero}>
@@ -91,15 +95,15 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
                 if (e.key === 'Escape') { e.preventDefault(); finish(false); }
               }} />
           : <h1 className="title" ref={title} data-fx="title" title={canEdit ? '双击编辑' : undefined} onDoubleClick={canEdit ? beginEdit : undefined}>
-              <MarkedText content={view.content} />
+              {view.content ? <MarkedText content={view.content} /> : <span className="ph">{placeholder}</span>}
             </h1>}
       </Corners>
-      {view.progressNote && <p className="c-note"><b>上次做到</b>{view.progressNote}</p>}
+      {note ?? (view.progressNote && <p className="c-note"><b>上次做到</b>{view.progressNote}</p>)}
     </div>
     <VBars filled={progress.filled} state={progress.state} />
     <div className="foot">
       <div className="actions" data-fx="actions">{actions}</div>
-      <Readout state={progress.state} stateCn={stateCn} stateEn={en} digits={formatMinutes(view.elapsedMs)}
+      <Readout state={progress.state} stateCn={stateCn} stateEn={en} digits={digits ?? formatMinutes(view.elapsedMs)}
         over={progress.overMs > 0 ? `+${formatMinutes(progress.overMs)}` : null} />
     </div>
   </CardFrame>;
