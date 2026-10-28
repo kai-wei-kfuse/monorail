@@ -27,6 +27,8 @@ import { ManualForm } from './ManualForm';
 import { favorites, timerView } from './timerView';
 import { cardArea } from './cardArea';
 import { FreeCard } from './FreeCard';
+import { ProjectPicker } from '../../ui/controls/ProjectPicker';
+import { TagPicker } from '../../ui/controls/TagPicker';
 
 /** 首页需要的动作。由外壳的适配层（app/actions）提供，出错由适配层统一报告。 */
 export interface HomeActions {
@@ -36,6 +38,7 @@ export interface HomeActions {
   shrink(cardId: string, input: { content: string; type: '结果卡' | '时间盒卡'; minutes: number | null }, at: string): Promise<unknown>;
   redraw(cardId: string | null, at: string): Promise<unknown>;
   editContent(cardId: string, content: string, at: string): Promise<unknown>;
+  editMeta(cardId: string, project: string | null, tags: string[], at: string): Promise<unknown>;
   draw(at: string): Promise<unknown>;
   resume(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
@@ -181,7 +184,14 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
     </>;
     // 再抽一张的擦除演出期间，画面上还是旧卡，不让改
-    body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner}
+    // 卡头「记到」那一行：存在卡自己身上，正在计的那条跟着改。只改标签时，项目保持原来是单独设的还是跟随任务
+    const c = home.card, picks = <span className="c-meta c-picks">记到
+      <ProjectPicker flat id="card-project" value={c.project} options={projects} onChange={p => void actions.editMeta(c.id, p, c.tags, now_())}
+        onCreate={name => void actions.createProject(name, now_())} />
+      <TagPicker flat id="card-tags" value={c.tags} options={home.knownTags} onChange={tags => void actions.editMeta(c.id, c.projectOverridden ? c.project : null, tags, now_())}
+        onCreate={tag => void actions.createTag(tag, now_())} />
+    </span>;
+    body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner} picks={picks}
       onEditContent={frozen || wipe ? undefined : (cardId, content) => void act(() => actions.editContent(cardId, content, new Date().toISOString()))}
       actions={<CardActions running={running} shrink={home.card.shrink} busy={busy || !!wipe}
         onStart={at => void act(() => actions.start(home.card!.id, at))}

@@ -27,6 +27,8 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     redraw: guard((cardId: string | null, at: string) => card.redraw(ctx, cardId, at)),
     pass: guard((cardId: string, at: string) => card.pass(ctx, cardId, at)),
     editContent: guard((cardId: string, content: string, at: string) => card.editContent(ctx, cardId, content, at)),
+    // 卡头「记到」那一行：project 为 null 是跟随任务的默认项目
+    editMeta: guard((cardId: string, project: string | null, tags: string[], at: string) => timer.editMeta(ctx, cardId, project, tags, at)),
     draw: guard((at: string) => timer.draw(ctx, at)),
     // 计时条（homeService，N3 接线草案）
     beginPending: guard((at: string) => timer.beginPending(ctx, at)),

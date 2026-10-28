@@ -40,10 +40,10 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
-    // 小窗还没有改尺寸的权限时 setSize 会失败，窗口就停在 88 高；开发预览里没有 Tauri，getCurrentWindow 直接抛错
-    const fit = () => {
-      try { void getCurrentWindow().setSize(new LogicalSize(520, Math.ceil(el.getBoundingClientRect().height))).catch(() => {}); } catch { /* 没有 Tauri */ }
-    };
+    // 开发预览里没有 Tauri，不调；真窗口里改尺寸失败，说明那一条写出来，不悄悄吞掉
+    if (!('__TAURI_INTERNALS__' in window)) return;
+    const fit = () => void getCurrentWindow().setSize(new LogicalSize(520, Math.ceil(el.getBoundingClientRect().height)))
+      .catch(e => setError(`小窗没能调整高度：${String(e)}`));
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(el);
@@ -106,7 +106,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
       paused={!running} canResume={!!resumeDescription}
       onPause={() => act({ type: 'pause' })} onResume={() => act({ type: 'resume' })}
       onComplete={c && c.status === '进行中' ? () => act({ type: 'complete', cardId: c.id }) : undefined}
-      onClose={() => void onClose()} onTitle={openEdit}
+      onClose={() => void onClose().catch(e => setError(`小窗没能关闭：${String(e)}`))} onTitle={openEdit}
       digits={<TimeField id="mini-elapsed" kind="mmss" shown={total} disabled={!running && !pending} target={target} submit={submit} onNote={setNote}>{formatReadout(total, 'mmss')}</TimeField>}
       editor={edit && <MiniEdit editing={editingRun} isCard={!!editCard} pendingSince={edit.snap.pending?.startedAt ?? (edit.startedHere ? new Date().toISOString() : null)}
         initial={editCard ? { name: editCard.content, project: editCard.project ?? edit.snap.entry!.project, tags: editCard.tags }
