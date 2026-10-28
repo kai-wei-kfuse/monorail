@@ -1,0 +1,111 @@
+
+> pixel-record@0.2.0 tauri
+> tauri build --debug --no-bundle
+
+        Info Looking up installed tauri packages to check mismatched versions...
+        Warn The bundle identifier "local.pixelrecord.app" set in `"tauri.conf.json" identifier` ends with `.app`. This is not recommended because it conflicts with the application bundle extension on macOS.
+     Running beforeBuildCommand `npm run build`
+
+> pixel-record@0.2.0 build
+> tsc --noEmit && vite build
+
+[36mvite v7.3.7 [32mbuilding client environment for production...[36m[39m
+transforming...
+[33mnode_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.[39m
+[33mnode_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.[39m
+[32m✓[39m 457 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mmini.html                                                  [39m[1m[2m  0.45 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+[2mdist/[22m[32mindex.html                                                 [39m[1m[2m  0.50 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+[2mdist/[22m[32massets/jetbrains-mono-greek-400-normal-C190GLew.woff2      [39m[1m[2m  4.23 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-cyrillic-400-normal-BEIGL1Tu.woff2   [39m[1m[2m  5.33 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-vietnamese-400-normal-CqNFfHCs.woff  [39m[1m[2m  5.37 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-greek-400-normal-B9oWc5Lo.woff       [39m[1m[2m  5.66 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-cyrillic-400-normal-ugxPyKxw.woff    [39m[1m[2m  6.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-ext-400-normal-Bc8Ftmh3.woff2  [39m[1m[2m  7.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.7d084b054b54abc1.55-D-niG1Cm.woff2         [39m[1m[2m  8.42 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-ext-400-normal-fXTG6kC5.woff   [39m[1m[2m 10.13 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2      [39m[1m[2m 21.17 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.ca620abda1b076bd.53-BGSdC53c.woff2         [39m[1m[2m 22.79 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.4f81f745e2c3159d.51-Dh0pBHy9.woff2         [39m[1m[2m 24.80 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.517a94fe8dd5692a.54-ChdNRa0W.woff2         [39m[1m[2m 25.60 kB[22m[1m[22m
+[2mdist/[22m[32massets/saira-vietnamese-wdth-normal-Dabr_kLY.woff2         [39m[1m[2m 26.80 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-400-normal-6-qcROiO.woff       [39m[1m[2m 27.50 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.d525a1349c7ec9e4.52-Cv3HvKJa.woff2         [39m[1m[2m 29.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.16240990c6f7f7dd.0-hYNu36zK.woff2          [39m[1m[2m 50.04 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.3ee7f36171786397.50-B2mtXAXw.woff2         [39m[1m[2m 50.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.1fa3a293a561985c.1-Ik97Bnim.woff2          [39m[1m[2m 60.19 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.235af3ebfd0343d5.2-9YwKK7yC.woff2          [39m[1m[2m 66.63 kB[22m[1m[22m
+[2mdist/[22m[32massets/saira-latin-ext-wdth-normal-3Ba4ICIc.woff2          [39m[1m[2m 67.19 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.53744263f2939586.3-DT-x9XRC.woff2          [39m[1m[2m 68.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.8ac4bbc96a6db0e2.4-CLvgMvHJ.woff2          [39m[1m[2m 70.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.0915b4d5a6f0ee33.49-LMn5Q4GP.woff2         [39m[1m[2m 71.49 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.73924789affc3080.5-O0rdDs3A.woff2          [39m[1m[2m 72.45 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.52728aa7bc854270.6-BmPMmo-Q.woff2          [39m[1m[2m 75.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.d77855c75a78e271.7-C_C7j9eS.woff2          [39m[1m[2m 78.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.18220753c89aeaa7.9-ClfyzM_W.woff2          [39m[1m[2m 78.57 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c06909dbc78c83aa.8-9EM0gbMF.woff2          [39m[1m[2m 78.63 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.91d6994ea01c40e1.10-DEcCGd-1.woff2         [39m[1m[2m 79.27 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a597bc0d89a7e9de.12-BbvMbbeG.woff2         [39m[1m[2m 81.58 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.4432f1e8b9c6afb6.11-4ZdC0IHJ.woff2         [39m[1m[2m 81.85 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.799303268bd0a8c8.13-DwvW2pYT.woff2         [39m[1m[2m 81.90 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c626836af9104d5f.16-Cn-uDijZ.woff2         [39m[1m[2m 81.99 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.00d0682c24b9e852.15-2e6f7JpF.woff2         [39m[1m[2m 82.13 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.7f4670c6ddefc0b7.17-JNBV3-bJ.woff2         [39m[1m[2m 82.51 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.353f733c1a9d24dd.14-DsPHSW78.woff2         [39m[1m[2m 82.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.cfcb48d0933e0ec5.20-DtJGSCz-.woff2         [39m[1m[2m 84.14 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a068ef4539a6cd96.23-2lDk_Pzi.woff2         [39m[1m[2m 84.37 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.868ff10381a4fff7.21-COM3rrf8.woff2         [39m[1m[2m 84.86 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.e4ea5bc4c8993992.25-QCrSaZfC.woff2         [39m[1m[2m 86.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.0aa19e2394367e45.28-BA6TmvoL.woff2         [39m[1m[2m 86.86 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.8739e6cdf2007d9e.18-CW9JsvXP.woff2         [39m[1m[2m 86.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.30106979750ad8e7.27-COo67qta.woff2         [39m[1m[2m 86.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.184e5227db3e935f.22--LBj-Hb3.woff2         [39m[1m[2m 87.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.3581642e24f576d7.26-DFSukXV9.woff2         [39m[1m[2m 88.72 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.e2fb4df3666402bd.30-CBTjEOGS.woff2         [39m[1m[2m 89.14 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a397ccbbda85fd60.19-Drtf84UU.woff2         [39m[1m[2m 89.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.43a930e968cb0514.29-D4pA0GF5.woff2         [39m[1m[2m 90.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.77773797e06e14c0.24-CIwq3smS.woff2         [39m[1m[2m 90.75 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.92c0f158f1d0c43b.32-D_nHOWsY.woff2         [39m[1m[2m 91.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.f08d1f83ff0dabdd.31-B-qHDOHs.woff2         [39m[1m[2m 94.47 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c6c390a740763363.34-5N4-3NiL.woff2         [39m[1m[2m 96.60 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.081b771213563eae.33-DNyn2Gkt.woff2         [39m[1m[2m 96.80 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.5ebd323d44595044.36-Geeq6vWV.woff2         [39m[1m[2m 97.57 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.b8965049ba77d8e5.35-CKrADHFj.woff2         [39m[1m[2m 98.46 kB[22m[1m[22m
+[2mdist/[22m[32massets/saira-latin-wdth-normal-X2eA-qfZ.woff2              [39m[1m[2m 98.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.aa995a1ea7837593.37-BOzYTkrh.woff2         [39m[1m[2m 99.85 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.00ed8f01da81647e.47-il558wcj.woff2         [39m[1m[2m 99.99 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.d6a0497045ed1170.38-B1422lRy.woff2         [39m[1m[2m101.42 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.def9fc53240b0bba.40-CCG-FJFi.woff2         [39m[1m[2m102.89 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.b666094020110d0a.45-DXPbajQH.woff2         [39m[1m[2m103.29 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a3d4bcfd8dba2e50.44-VKMPAliQ.woff2         [39m[1m[2m103.43 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.bc2b7bd40e327658.46-B-h4q1nN.woff2         [39m[1m[2m104.93 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c4a48795fdedf3a5.42-DbwfVnRu.woff2         [39m[1m[2m105.62 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.71c7e77bac6a2786.39-CPjeTgzL.woff2         [39m[1m[2m106.03 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.ef133bbc03cec415.43-i4UGVXA_.woff2         [39m[1m[2m106.40 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.182a224825bf167c.41-CYo6GT10.woff2         [39m[1m[2m108.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.4f3d21c8b761cd08.48-BF9KcnIc.woff2         [39m[1m[2m109.83 kB[22m[1m[22m
+[2mdist/[22m[35massets/main-zJSoONTu.css                                   [39m[1m[2m 38.17 kB[22m[1m[22m[2m │ gzip:   7.74 kB[22m
+[2mdist/[22m[35massets/base-BUeoZdWb.css                                   [39m[1m[2m126.89 kB[22m[1m[22m[2m │ gzip:  45.85 kB[22m
+[2mdist/[22m[36massets/path-CqArZl7K.js                                    [39m[1m[2m  0.83 kB[22m[1m[22m[2m │ gzip:   0.43 kB[22m
+[2mdist/[22m[36massets/main-2eanV2dU.js                                    [39m[1m[2m  4.18 kB[22m[1m[22m[2m │ gzip:   1.85 kB[22m
+[2mdist/[22m[36massets/index-_qRLe6Rn.js                                   [39m[1m[2m  7.05 kB[22m[1m[22m[2m │ gzip:   1.81 kB[22m
+[2mdist/[22m[36massets/mini-Cyy9LiNk.js                                    [39m[1m[2m  8.28 kB[22m[1m[22m[2m │ gzip:   3.66 kB[22m
+[2mdist/[22m[36massets/base-B5PnTFHu.js                                    [39m[1m[2m355.88 kB[22m[1m[22m[2m │ gzip: 109.17 kB[22m
+[2mdist/[22m[36massets/main-C5m4-C-G.js                                    [39m[1m[2m356.47 kB[22m[1m[22m[2m │ gzip: 117.26 kB[22m
+[32m✓ built in 5.78s[39m
+   Compiling pixel-record v0.2.0 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 23.66s
+       Built application at: C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\debug\pixel-record.exe
+exit 0
