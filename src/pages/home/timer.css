@@ -1,4 +1,4 @@
-/* 计时条和读数（UI 规范 §11.1–11.3），照原型 new.css。 */
+/* 计时条和读数（UI 规范 §11.2、§11.4），照原型 new.css。 */
 
 /* 计时条：头一行（小标题、提示、计时 / 手动补录）+ 主体一行 + 下面一行说明 */
 .tbar { position: relative; z-index: 6; display: grid; gap: 6px; }

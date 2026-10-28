@@ -1,4 +1,4 @@
-// 开发用预览入口（gallery.html）：?page=home|settings|parts|pickers 看设计系统，?page=card|guide|rest|review|mini 看首页部件，?page=backpack 看背包页，?page=review / settingsPage 看回顾页和设置页，?page=calendar / list 看日历页和列表页，?page=timer 看读数就地编辑，?page=timerbar 看计时条。
+// 开发用预览入口（gallery.html）：?page=home|settings|parts|pickers 看设计系统，?page=card|guide|rest|review|mini 看首页部件，?page=backpack 看背包页，?page=review / settingsPage 看回顾页和设置页，?page=calendar / list 看日历页和列表页，?page=timer 看读数就地编辑，?page=timerbar 看计时条，?page=pool 看任务池。
 // 加 ?still 关掉动效，方便截图对照。不在 index.html 里引用，不进生产构建。
 import { createRoot } from 'react-dom/client';
 import { setMotionLevel } from '../../ui/effects/animate';
@@ -9,6 +9,7 @@ import { ReviewPreview, SettingsPreview } from './M3Preview';
 import { CalendarPreview } from './CalendarPreview';
 import { ListPreview } from './ListPreview';
 import { TimerBarPreview, TimerPreview } from './TimerPreview';
+import { TaskPoolPreview } from './TaskPoolPreview';
 import '../../ui/styles/base.css';
 
 const q = new URLSearchParams(location.search), page = q.get('page') ?? 'home';
@@ -20,5 +21,6 @@ const root = page === 'review' ? <ReviewPreview step={q.get('step') ?? 'recap'} 
   : page === 'list' ? <ListPreview />
   : page === 'timer' ? <TimerPreview />
   : page === 'timerbar' ? <TimerBarPreview />
+  : page === 'pool' ? <TaskPoolPreview />
   : PREVIEW_PAGES.includes(page) ? <HomePreview page={page} overlay={q.get('o')} /> : <Gallery page={page} />;
 createRoot(document.getElementById('root')!).render(root);

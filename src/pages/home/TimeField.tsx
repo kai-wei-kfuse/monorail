@@ -22,7 +22,7 @@ export type ReadoutOutcome =
 export type ReadoutNote = Exclude<ReadoutOutcome, { kind: 'confirm' }> | { kind: 'confirm'; hit: Cover[]; ok: () => void; cancel: () => void };
 
 /**
- * 读数直接可改（UI 规范 §11.3）：平时是按钮，点一下就地变成输入框，回车或点别处提交，Esc 不改。
+ * 读数直接可改（UI 规范 §11.4）：平时是按钮，点一下就地变成输入框，回车或点别处提交，Esc 不改。
  * 写法见 shared/duration 的 parseReadout。shown 是读数现在显示的值，children 是它平时的样子。
  * 点开时就向 target() 要改的是哪一条，编辑期间换成了别的事，提交时仍按记下的去核对。
  * 先预览、后提交：submit 交回 confirm 时，onNote 收到带〔确定〕〔取消〕的提示，点确定才带着 plan 再交一次。

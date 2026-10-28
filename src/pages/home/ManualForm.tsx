@@ -17,7 +17,7 @@ const hm = (t: number) => { const d = new Date(t); return `${pad(d.getHours())}:
 const TIMES = [['start', 'START', '开始', '9:30'], ['end', 'END', '结束', '11'], ['dur', 'DURATION', '时长', '1h 30m']] as const;
 
 /**
- * 计时条的「手动补录」（UI 规范 §11.1，方案 §7.2）：写一段做过的事，开始、结束、时长填两项。
+ * 计时条的「手动补录」（UI 规范 §11.2，方案 §7.2）：写一段做过的事，开始、结束、时长填两项。
  * 和已有记录重叠时两条共存（E1），下面一行先说会和哪些并排；overlaps 由接线按条目查。onAdd 交 ISO 时刻。
  */
 export function ManualForm({ projects, knownTags, overlaps, onAdd, onCreateProject, onCreateTag }:

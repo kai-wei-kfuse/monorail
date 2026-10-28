@@ -59,7 +59,7 @@ const hms = (iso: string) => `${hm(iso)}:${pad(new Date(iso).getSeconds())}`;
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
 /**
- * 分开布局首页上方的计时条（UI 规范 §11.1，原型 home.js 的 useEntry + TimerBar）。
+ * 分开布局首页上方的计时条（UI 规范 §11.2，原型 home.js 的 useEntry + TimerBar）。
  * 点输入框和点抽卡是同一件事：从第一次点的那一刻起计时（待确认），确认做什么时才写盘。
  * 输入框、项目、标签算一组：焦点在组内移动不写盘，离开这一组才写盘。写了字就开始这件事；正在计时点进去是改这一条；
  * 没写字就离开，接着计待确认；Esc 放弃。带卡的那一条在这里只读，改卡在卡上改。
