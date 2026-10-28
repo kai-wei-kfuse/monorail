@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { IconName } from '../../ui/icons/Icon';
 import { Icon } from '../../ui/icons/Icon';
-import { ActTile, TempTile } from '../../ui/marks/ActTile';
+import { ActTile } from '../../ui/marks/ActTile';
+import { TextInput } from '../../ui/controls/TextInput';
+import { Switch } from '../../ui/controls/Switch';
+import { Button } from '../../ui/controls/Button';
 import './shell.css';
 
 export interface QuickAct { id: string; name: string; icon: IconName }
@@ -13,7 +16,7 @@ const EN: Partial<Record<IconName, string>> = { wc: 'RESTROOM', parcel: 'PARCEL'
  * 底栏的快捷活动：默认折叠，点开从底栏向上弹出，点外面就收起。
  * 固定首项是「睡觉」；其余按使用频率排好序传进来；快捷活动不预置。
  * 选中一项会插入这项活动（结束后回到原来的卡），由 onPick 交给 timerService。
- * 末尾是临时活动的输入磁贴（给了 onTemp 才显示）：写名字回车就插入，勾上「存为快捷活动」才写进列表。
+ * 最后一行是临时活动（给了 onTemp 才显示）：写名字回车就插入，打开「存为快捷活动」才写进列表。
  */
 export function QuickActs({ acts, current, onPick, onSleep, onTemp }:
   { acts: QuickAct[]; current: string | null; onPick: (id: string, at: string) => void; onSleep: (at: string) => void;
@@ -40,8 +43,18 @@ export function QuickActs({ acts, current, onPick, onSleep, onTemp }:
         <ActTile icon="sleep" name="睡觉" en="SLEEP" onClick={() => pick(() => onSleep(new Date().toISOString()))} />
         {acts.map((a, i) => <ActTile key={a.id} icon={a.icon} name={a.name} en={EN[a.icon]} keys={i < 9 ? String(i + 1) : undefined} pressed={a.id === current}
           onClick={() => { const at = new Date().toISOString(); pick(() => onPick(a.id, at)); }} />)}
-        {onTemp && <TempTile onSubmit={(name, keep) => { const at = new Date().toISOString(); pick(() => onTemp(name, keep, at)); }} />}
       </div>
+      {onTemp && <TempRow onSubmit={(name, keep) => { const at = new Date().toISOString(); pick(() => onTemp(name, keep, at)); }} />}
     </div>}
   </div>;
+}
+
+/** 弹层最后一行（原型的 .tray-temp）。跟着弹层卸载，下次打开是空的。 */
+function TempRow({ onSubmit }: { onSubmit: (name: string, keep: boolean) => void }) {
+  const [name, setName] = useState(''), [keep, setKeep] = useState(false);
+  return <form className="tray-temp" onSubmit={e => { e.preventDefault(); if (name.trim()) onSubmit(name.trim(), keep); }}>
+    <TextInput aria-label="临时活动" placeholder="直接写一项活动，回车就开始（临时的，不进列表）" value={name} onChange={e => setName(e.target.value)} />
+    <span className="tray-keep"><Switch checked={keep} onChange={setKeep} label="存为快捷活动" /><span>存为快捷活动</span></span>
+    <Button tone="ink" type="submit" disabled={!name.trim()}>开始</Button>
+  </form>;
 }

@@ -20,6 +20,10 @@
 .tray-head b { font: 520 14px/1 var(--f-cn); letter-spacing: .06em; }
 .tray-head span:last-child { margin-left: auto; padding-left: 24px; font: 330 11px/1 var(--f-cn); color: var(--mute); }
 .tray-row { display: flex; flex-wrap: wrap; gap: 8px; max-width: calc(128px * 6 + 8px * 5); }
+/* 最后一行：临时活动（原型 new.css 的 .tray-temp） */
+.tray-temp { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.tray-temp .inp { flex: 1; min-width: 220px; }
+.tray-keep { display: inline-flex; align-items: center; gap: 8px; font: 520 12px/1 var(--f-cn); white-space: nowrap; }
 
 .baseline { display: inline-flex; align-items: center; gap: 12px; font: 520 12px/1 var(--f-cn); letter-spacing: .04em; color: var(--mute); }
 .baseline span { display: inline-flex; align-items: center; gap: 5px; }
