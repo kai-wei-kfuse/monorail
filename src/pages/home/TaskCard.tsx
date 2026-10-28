@@ -34,11 +34,13 @@ const STATE = {
  * 给了 onEditContent，双击标题就能就地改卡的内容：[词] 标记照原文显示，也能改；回车或点别处保存，Esc 不改。
  * 自由记录卡也用它：meta 换掉类型那几个字，picks 是后面「记到」那一行，digits 换掉读数（可以是 TimeField），
  * note 换掉「上次做到」那一行，stateText 换掉状态字，placeholder 是内容为空时标题位置的提示。
+ * 融合布局的大卡也用它：title 换掉整个标题（换成输入框），slotLabel 是左侧标签条的字。
  */
-export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef, innerRef, onEditContent, meta, picks, digits, note, stateText, placeholder }:
+export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef, innerRef, onEditContent, meta, picks, digits, note, stateText, placeholder, title: titleSlot, slotLabel }:
   { view: TaskCardView; look: CardLook; titleScale: number; actions: ReactNode; corner?: ReactNode; fx?: ReactNode;
     cardRef?: Ref<HTMLElement>; innerRef?: Ref<HTMLDivElement>; onEditContent?: (cardId: string, content: string) => void;
-    meta?: ReactNode; picks?: ReactNode; digits?: ReactNode; note?: ReactNode; stateText?: readonly [string, string]; placeholder?: string }) {
+    meta?: ReactNode; picks?: ReactNode; digits?: ReactNode; note?: ReactNode; stateText?: readonly [string, string]; placeholder?: string;
+    title?: ReactNode; slotLabel?: string }) {
   const hero = useRef<HTMLDivElement>(null), title = useRef<HTMLHeadingElement>(null);
   const [draft, setDraft] = useState<string | null>(null), done = useRef(false), editing = useRef<{ id: string; content: string } | null>(null);
   const { progress } = view;
@@ -76,9 +78,9 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     const ro = new ResizeObserver(fit);
     ro.observe(h);
     return () => ro.disconnect();
-  }, [view.content, titleScale, view.progressNote, draft === null, note]);
+  }, [view.content, titleScale, view.progressNote, draft === null, note, !titleSlot]);
 
-  return <CardFrame look={look} running={progress.state === 'run'} slotNo={view.slotNo} slotOf={view.slotOf} cardRef={cardRef} innerRef={innerRef} fx={fx}>
+  return <CardFrame look={look} running={progress.state === 'run'} slotNo={view.slotNo} slotOf={view.slotOf} slotLabel={slotLabel} cardRef={cardRef} innerRef={innerRef} fx={fx}>
     <div className="c-head" data-fx="head">
       <TrackMark /><b>{view.task}</b>
       <span className="c-meta">{meta ?? <>{view.type === '时间盒卡' ? '时间盒' : '结果卡'}{view.goalMinutes !== null && <em>目标 {view.goalMinutes} 分钟</em>}</>}</span>
@@ -87,7 +89,7 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     </div>
     <div className="hero" ref={hero}>
       <Corners>
-        {draft !== null
+        {titleSlot ?? (draft !== null
           ? <input className="title-edit" aria-label="卡的内容" value={draft} autoFocus onChange={e => setDraft(e.target.value)} onBlur={() => finish(true)}
               onKeyDown={e => {
                 if (e.nativeEvent.isComposing) return;
@@ -96,7 +98,7 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
               }} />
           : <h1 className="title" ref={title} data-fx="title" title={canEdit ? '双击编辑' : undefined} onDoubleClick={canEdit ? beginEdit : undefined}>
               {view.content ? <MarkedText content={view.content} /> : <span className="ph">{placeholder}</span>}
-            </h1>}
+            </h1>)}
       </Corners>
       {note ?? (view.progressNote && <p className="c-note"><b>上次做到</b>{view.progressNote}</p>)}
     </div>

@@ -76,3 +76,23 @@
 /* 自由记录卡（分开布局的卡区照着计时条显示）：标题为空时的提示；卡头「记到」那一行，弹层要压在标题上面 */
 .title .ph { color: var(--mute-2); }
 .c-picks { position: relative; z-index: 9; display: inline-flex; align-items: center; gap: 6px; }
+
+/* 融合布局（UI 规范 §11.3，原型 new.css）：计时条并进大卡，标题区就是输入框；没有上方计时条，收藏行下面就是这张卡 */
+.home.fused { grid-template-rows: auto minmax(0, 1fr); }
+.hero:has(> .tbox > .f-input) { justify-items: stretch; }
+.f-input { position: relative; z-index: 8; width: min(100%, 980px); }
+.f-title { width: 100%; padding: 2px 6px; border: 0; background: transparent; font: 630 clamp(30px, 6cqh, 58px)/1.2 var(--f-cn); letter-spacing: .005em; color: var(--ink); user-select: text; transition: box-shadow .2s; }
+.f-title::placeholder { font: 600 expanded clamp(24px, 5cqh, 44px)/1.2 var(--f-en); letter-spacing: -.01em; color: var(--mute-2); }
+.f-title:focus { outline: none; box-shadow: inset 0 -4px 0 var(--yellow); }
+.f-title[readonly] { color: var(--ink-3); }
+.f-input .sug { max-height: 300px; }
+.f-sub { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 2px 0 0 2px; font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+.f-sub b { font: 600 12px/1 var(--f-en); color: var(--ink); font-variant-numeric: tabular-nums; }
+.home.fused .actions { flex-wrap: wrap; }
+.home.fused .tbar-new { width: 52px; height: 52px; }
+.home.fused .readout .time-btn:hover:not(:disabled) { box-shadow: inset 0 -6px 0 var(--yellow); }
+.home.fused .t-row b { white-space: nowrap; }
+/* 手动补录放进对话框：去掉左边的黑块和厚度阴影 */
+.f-manual { margin-top: 4px; }
+.f-manual .tbar-row { box-shadow: none; flex-wrap: wrap; padding-left: 10px; }
+.f-manual .tbar-tag { display: none; }

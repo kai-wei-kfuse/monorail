@@ -48,7 +48,10 @@ export const SECTIONS: SettingSection[] = [
   { id: 'lists', no: '05', cn: '快捷活动与休息池', en: 'LISTS', desc: '软件不预置任何快捷活动和休息项，都由你自己添加。', groups: [
     { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'presets', cn: '快捷活动', desc: '底栏一键插入；结束后自动回到原来的卡。按使用频率排序' }] },
     { cn: '休息池', en: 'REST POOL', rows: [{ custom: 'restPool', cn: '休息池', desc: '进入休息时从这里派一件事。只是建议，不打勾、不计数' }] } ] },
-  { id: 'look', no: '06', cn: '外观', en: 'APPEARANCE', desc: '视觉风格固定，这里只调强调色、字号和动效。', groups: [
+  { id: 'look', no: '06', cn: '外观', en: 'APPEARANCE', desc: '视觉风格固定，这里只调首页布局、强调色、字号和动效。', groups: [
+    { cn: '首页', en: 'HOME', rows: [
+      { key: 'homeLayout', cn: '首页布局', desc: '分开：上面一条计时条，下面是大卡。融合：计时条并进大卡，标题区就是输入框，项目和标签在卡的顶行，所有按钮在卡底部一排',
+        labels: { split: '分开', fused: '融合' } } ] },
     { cn: '颜色与字号', en: 'COLOR & TYPE', rows: [
       { key: 'accent', cn: '强调色', labels: { '#fffa00': '信号黄', '#00f5a0': '薄荷绿', '#20b8ff': '天青', '#ff7a1a': '警示橙' } },
       { key: 'titleScale', cn: '首页标题字号', desc: '在能放下的最大字号上再乘这个比例' } ] },

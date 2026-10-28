@@ -13,7 +13,7 @@ import { TaskCard } from './TaskCard';
 import { CardActions } from './CardActions';
 import { CompleteDialog } from './CompleteDialog';
 import { ShrinkDialog } from './ShrinkDialog';
-import { GuideCard } from './GuideCard';
+import { GUIDES, GuideCard } from './GuideCard';
 import type { GuideKind } from './GuideCard';
 import { RestCard } from './RestCard';
 import { ReviewCard } from './ReviewCard';
@@ -27,6 +27,8 @@ import { ManualForm } from './ManualForm';
 import { favorites, timerView } from './timerView';
 import { cardArea } from './cardArea';
 import { FreeCard } from './FreeCard';
+import { FusedCard } from './FusedCard';
+import { Dialog } from '../../ui/overlay/Dialog';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
 import { TagPicker } from '../../ui/controls/TagPicker';
 
@@ -80,7 +82,8 @@ export function useNow(): number {
   return now;
 }
 
-type Dialog = { kind: 'short'; cardId: string; remaining: number; at: string } | { kind: 'complete'; cardId: string; at: string } | { kind: 'shrink'; cardId: string } | null;
+type DialogState = { kind: 'short'; cardId: string; remaining: number; at: string } | { kind: 'complete'; cardId: string; at: string } | { kind: 'shrink'; cardId: string }
+  | { kind: 'manual' } | null;
 
 /**
  * 首页：只显示一件事。按 home.mode 显示任务卡、引导卡、休息卡、回顾卡，或「今天不再出卡」。
@@ -94,10 +97,12 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), projects = useStore(appStore, s => s.backpack.pool.projects), settings = useStore(appStore, s => s.settings);
   const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer'), [prefill, setPrefill] = useState<EntryValue | null>(null);
+  // 首页布局（设置 → 外观）：分开 = 上面计时条、下面卡区；融合 = 计时条并进大卡（UI 规范 §11.3）
+  const fused = settings.homeLayout === 'fused';
   const [draft, setDraft] = useState<string | null>(null);   // 计时条里正在写的字，卡区照着显示
   const now = useNow();
   const stage = useRef<HTMLDivElement>(null);
-  const [dialog, setDialog] = useState<Dialog>(null);
+  const [dialog, setDialog] = useState<DialogState>(null);
   const [busy, setBusy] = useState(false);
   // 再抽一张：先冻结旧画面，换卡完成后用擂除盖住，盖住时才放出新卡（UI 规范 §8.3）
   const [frozen, setFrozen] = useState<TaskCardView | null>(null), [wipe, setWipe] = useState<{ no: string; meta: string; title: string } | null>(null);
@@ -147,7 +152,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   const startFavorite = (id: string) => {
     const f = favs.find(x => x.id === id);
     if (!f) return;
-    if (timerMode === 'manual') setPrefill({ description: f.name, project: f.project, tags: f.tags }); else void actions.startPreset(id, now_());
+    if (fused ? dialog?.kind === 'manual' : timerMode === 'manual') setPrefill({ description: f.name, project: f.project, tags: f.tags }); else void actions.startPreset(id, now_());
   };
   const timerActions: TimerActions = {
     beginPending: () => void actions.beginPending(now_()),
@@ -168,6 +173,27 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
 
   // 分开布局：卡区跟着计时条走（cardArea）。休息时只显示休息卡
   const tv = timerView({ home, entries, cards, tasks, settings, projects }), area = cardArea(draft, tv, home.card?.status ?? null);
+  const manualForm = <ManualForm projects={projects} knownTags={home.knownTags} overlaps={actions.overlaps} prefill={prefill}
+    onAdd={(v, start, end) => void actions.manual(v, start, end, now_())}
+    onCreateProject={name => void actions.createProject(name, now_())} onCreateTag={tag => void actions.createTag(tag, now_())} />;
+  // 抽到的卡上的部件，两种布局共用。再抽一张的擦除演出期间，画面上还是旧卡，不让改
+  // 卡头「记到」那一行：存在卡自己身上，正在计的那条跟着改。只改标签时，项目保持原来是单独设的还是跟随任务
+  const c = home.card, task = c && {
+    picks: <span className="c-meta c-picks">记到
+      <ProjectPicker flat id="card-project" value={c.project} options={projects} onChange={p => void actions.editMeta(c.id, p, c.tags, now_())}
+        onCreate={name => void actions.createProject(name, now_())} />
+      <TagPicker flat id="card-tags" value={c.tags} options={home.knownTags} onChange={tags => void actions.editMeta(c.id, c.projectOverridden ? c.project : null, tags, now_())}
+        onCreate={tag => void actions.createTag(tag, now_())} />
+    </span>,
+    onEditContent: frozen || wipe ? undefined : (cardId: string, content: string) => void act(() => actions.editContent(cardId, content, new Date().toISOString())),
+    actions: <CardActions running={c.status === '进行中'} shrink={c.shrink} busy={busy || !!wipe}
+      onStart={at => void act(() => actions.start(c.id, at))}
+      onComplete={at => void beginComplete(c.id, at)}
+      onShrink={() => setDialog({ kind: 'shrink', cardId: c.id })}
+      onRedraw={at => void redraw(at)} />,
+    fx: wipe && <Wipe no={wipe.no} meta={wipe.meta} title={wipe.title} onCovered={() => setFrozen(null)}
+      onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />,
+  };
   let body;
   if (home.mode === 'rest') body = <RestCard suggestion={home.rest?.suggestion ?? null} look={cardLook} onAddRest={onAddRest} onBack={(answer, at) => void act(() => actions.returnFromRest(answer, at))} />;
   else if (area === 'free') body = <FreeCard view={tv} draft={draft} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
@@ -177,39 +203,34 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     <div /><div className="alt-hero"><h1>现在做什么？</h1><p>抽一张卡，开始下一件事。</p></div><div />
     <div className="foot"><ActionButton primary cn="抽卡" en="DRAW" icon="play" onClick={() => void act(() => actions.draw(new Date().toISOString()))} /></div>
   </CardFrame>;
-  else if (home.mode === 'task' && view && home.card) {
-    const running = home.card.status === '进行中', away = home.awayActivity !== null;
+  else if (home.mode === 'task' && view && task) {
+    const away = home.awayActivity !== null;
     const corner = <>
       {away && <button type="button" className="c-link" onClick={() => void act(() => actions.resume(new Date().toISOString()))}>回来 · {home.awayActivity}</button>}
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
     </>;
-    // 再抽一张的擦除演出期间，画面上还是旧卡，不让改
-    // 卡头「记到」那一行：存在卡自己身上，正在计的那条跟着改。只改标签时，项目保持原来是单独设的还是跟随任务
-    const c = home.card, picks = <span className="c-meta c-picks">记到
-      <ProjectPicker flat id="card-project" value={c.project} options={projects} onChange={p => void actions.editMeta(c.id, p, c.tags, now_())}
-        onCreate={name => void actions.createProject(name, now_())} />
-      <TagPicker flat id="card-tags" value={c.tags} options={home.knownTags} onChange={tags => void actions.editMeta(c.id, c.projectOverridden ? c.project : null, tags, now_())}
-        onCreate={tag => void actions.createTag(tag, now_())} />
-    </span>;
-    body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner} picks={picks}
-      onEditContent={frozen || wipe ? undefined : (cardId, content) => void act(() => actions.editContent(cardId, content, new Date().toISOString()))}
-      actions={<CardActions running={running} shrink={home.card.shrink} busy={busy || !!wipe}
-        onStart={at => void act(() => actions.start(home.card!.id, at))}
-        onComplete={at => void beginComplete(home.card!.id, at)}
-        onShrink={() => setDialog({ kind: 'shrink', cardId: home.card!.id })}
-        onRedraw={at => void redraw(at)} />}
-      fx={wipe && <Wipe no={wipe.no} meta={wipe.meta} title={wipe.title} onCovered={() => setFrozen(null)}
-        onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />} />;
+    body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner} picks={task.picks}
+      onEditContent={task.onEditContent} actions={task.actions} fx={task.fx} />;
   } else body = <GuideCard kind={home.mode === 'guide' ? home.guideKind : 'allDone'} look={cardLook} onAction={() => onGuide(home.mode === 'guide' ? home.guideKind : 'allDone')} />;
 
-  return <div className="home">
-    <TimerBar view={tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft}
-      manual={<ManualForm projects={projects} knownTags={home.knownTags} overlaps={actions.overlaps} prefill={prefill}
-        onAdd={(v, start, end) => void actions.manual(v, start, end, now_())}
-        onCreateProject={name => void actions.createProject(name, now_())} onCreateTag={tag => void actions.createTag(tag, now_())} />} />
+  // 融合布局：首页只有一张大卡（休息时是休息卡）。引导、回顾不再占整张卡，改成卡头右边的提示，输入框一直在
+  const guide = home.mode === 'guide' ? GUIDES[home.guideKind] : null;
+  if (fused && home.mode !== 'rest') body = <FusedCard key={home.card?.id ?? 'none'} view={tv} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
+    card={home.mode === 'task' && home.card ? home.card : null} cardView={home.mode === 'task' ? view : null}
+    cardPicks={task?.picks} cardActions={task?.actions} onEditContent={task?.onEditContent} fx={task?.fx} onManual={() => setDialog({ kind: 'manual' })}
+    corner={<>
+      {home.noMainHint && <span className="c-hint">还没有主线</span>}
+      {guide && <><span className="c-hint">{guide.title}</span><button type="button" className="c-link" onClick={() => onGuide(home.guideKind)}>{guide.cn}</button></>}
+      {home.mode === 'review' && home.review && <><span className="c-hint">每周回顾</span>
+        <button type="button" className="c-link" onClick={onOpenReview}>{home.review.resumeStep ? '接着回顾' : '开始回顾'}</button></>}
+    </>} />;
+
+  return <div className={`home${fused ? ' fused' : ''}`}>
+    {!fused && <TimerBar view={tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
     <PresetRow items={favs} onPick={startFavorite} onReorder={ids => void actions.reorderFavorites(ids, now_())} />
     <div ref={stage} className="home-stage">
     {body}
+    {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}
       resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at } : null)} />}
     {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} isShrinkCard={!!full?.shrunk_from} onCancel={() => setDialog(null)}

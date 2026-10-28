@@ -35,6 +35,8 @@
   padding: 26px 28px 22px; background: var(--paper); border: 1px solid var(--ink);
   box-shadow: 0 30px 70px rgb(0 0 0 / .35); animation: dlgIn .32s var(--ease) both;
 }
+/* 放一整行表单：下拉弹层要能伸出对话框 */
+.dlg.wide { width: min(1000px, calc(100vw - 48px)); overflow: visible; }
 @keyframes dlgIn { from { opacity: 0; transform: translateY(10px); } }
 .dlg::before { content: ""; position: absolute; left: 0; top: 0; width: 64px; height: 7px; background: var(--ink); }
 .dlg::after { content: ""; position: absolute; left: 64px; top: 0; width: 18px; height: 7px; background: var(--yellow); }

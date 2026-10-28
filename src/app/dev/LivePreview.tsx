@@ -18,15 +18,16 @@ import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
 /**
  * 首页接线预览（只在开发时用）：内存文件系统 + 真的仓库和 service，发布到真的 appStore，首页用真的 actions。
  * 一个主线任务带两张卡，两个收藏，今天上午两条记录。下面列出条目和待确认，方便截图核对。刷新页面数据就清空。
- * &view=calendar / list 换成日历页、列表页（真的 CalendarScreen / ListScreen）。
+ * &view=calendar / list 换成日历页、列表页（真的 CalendarScreen / ListScreen）。&layout=fused 用融合布局。
  */
 export function LivePreview() {
   const [actions, setActions] = useState<Actions | null>(null), [ctx, setCtx] = useState<Ctx | null>(null), [errors, setErrors] = useState<string[]>([]);
-  const view = new URLSearchParams(location.search).get('view');
+  const query = new URLSearchParams(location.search), view = query.get('view'), layout = query.get('layout');
   const entries = useStore(appStore, s => s.entries), home = useStore(appStore, s => s.home);
   useEffect(() => { void (async () => {
     const settings = structuredClone(defaults);
     settings.lists.projects = PREVIEW_PROJECTS; settings.lists.tags = PREVIEW_TAGS;
+    if (layout === 'fused') settings.homeLayout = 'fused';
     settings.lists.presets = [{ id: 'f1', name: '学 408', project: '学习', tags: ['408'], mode: '切换', place: '计时条' },
       { id: 'f2', name: '回消息', project: '工作', tags: [], mode: '切换', place: '计时条' }];
     const repos = createRepos(new MemoryFs()), at = new Date().toISOString();
