@@ -1,0 +1,11 @@
+{
+  "version": "0.2.1",
+  "notes": "# 单轨 0.2.1\r\n\r\n小改动，不涉及数据格式，不用升级数据。\r\n\r\n- 首页新增「停止」：正在计时的时候，暂停旁边的「＋」换成停止（■）。停止会结束当前这一条，转为待机，之后不再提供〔继续〕；如果计的是卡，这张卡放回去。暂停照旧，可以〔继续〕接回来。\r\n- 不在计时（已暂停或待机）时，那个位置是「＋」，点了就开始写下一件事。\r\n- 小窗下面不再常驻操作说明；只有出错、主窗口未响应、改读数的结果时才出现那一条。\r\n\r\n私有开发版需安装 GitHub CLI，并通过 gh auth login 登录可读取此仓库的账号。\r\n",
+  "pub_date": "2026-10-28T13:48:16.908Z",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://api.github.com/repos/kai-wei-kfuse/monorail/releases/assets/685141566",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSbVJhUmZUNUxzbmlSTDBTZEYxYjk5TFFnSGlIVWU2YnUxRUpPSEhhSWxubkhtc3hJNktFdGpwM2wxdU8rNDBUYnMyWDBNaVpzQkxlU3VNSkpNVnhjSzkxWUxPa1RCV0FrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTk1Mjg1CWZpbGU65Y2V6L2oXzAuMi4xX3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjIuMQpkWjlXeFNiWFh2VFFzMUt5V015S0cyQUNzblQ1TURuSXk4R09JdlNzbFI1WnVnYmVhbHpkeWwvMjNsSlFWdGxuRUl6dFd4WGNBZjNhVDhLaDdEak1BUT09Cg=="
+    }
+  }
+}
