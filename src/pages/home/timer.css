@@ -32,6 +32,12 @@
 .tbar-new:hover:not(:disabled) { border-color: var(--ink); }
 .tbar-new:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
 .tbar-new:disabled { opacity: .4; }
+/* 手动补录：开始、结束、时长三格 */
+.tbar-row.manual { align-items: center; }
+.tbar-tag[data-kind="manual"] { margin: -8px 0; align-self: stretch; }
+.m-times { flex: none; display: flex; gap: 8px; }
+.m-times label { display: grid; gap: 5px; }
+.m-in.inp { width: 96px; min-height: 30px; padding: 4px 8px; font: 500 15px/1.3 var(--f-en); font-variant-numeric: tabular-nums; }
 .tbar-sub { display: flex; flex-wrap: wrap; gap: 4px 18px; min-height: 18px; padding: 0 2px; font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
 .tbar-sub b { font: 600 12px/1 var(--f-en); color: var(--ink); font-variant-numeric: tabular-nums; }
 

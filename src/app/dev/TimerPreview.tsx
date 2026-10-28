@@ -4,6 +4,7 @@ import { HitNote, TimeField } from '../../pages/home/TimeField';
 import type { Cover, ReadoutNote, ReadoutOutcome, ReadoutRequest } from '../../pages/home/TimeField';
 import { TimerBar } from '../../pages/home/TimerBar';
 import type { EntryValue, TimerEntry } from '../../pages/home/TimerBar';
+import { ManualForm } from '../../pages/home/ManualForm';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
 
 const MIN = 60_000;
@@ -98,7 +99,13 @@ export function TimerBarPreview() {
   };
 
   return <div style={{ padding: '24px 16px', display: 'grid', gap: 24 }}>
-    <TimerBar mode={mode} onMode={setMode} onDraft={setDraft} manual={<p className="tbar-sub">（手动补录表单另做）</p>}
+    <TimerBar mode={mode} onMode={setMode} onDraft={setDraft}
+      manual={<ManualForm projects={projects} knownTags={tags}
+        overlaps={(a, b) => s.rows.filter(r => r.project !== '待机' && Date.parse(r.startedAt) < Date.parse(b) && (r.end ?? Date.now()) > Date.parse(a))
+          .map(r => ({ id: r.id, description: r.description, from: iso(Math.max(Date.parse(r.startedAt), Date.parse(a))), to: iso(Math.min(r.end ?? Date.now(), Date.parse(b))) }))}
+        onAdd={(v, a, b) => setS(x => ({ ...x, rows: [...x.rows, { id: crypto.randomUUID(), ...v, cardId: null, kind: '普通' as const, startedAt: a, end: Date.parse(b) }]
+          .sort((p, q) => Date.parse(p.startedAt) - Date.parse(q.startedAt)) }))}
+        onCreateProject={name => setProjects(l => [...l, { name, color: '#16a085' }])} onCreateTag={t => setTags(l => [...l, t])} />}
       view={{ entry: open, idle, pending: s.pending, paused: idle && s.resume ? row(s.resume).description : null, waitingCard: s.drawn, canDraw: !s.drawn,
         projects, knownTags: tags, suggest: {
           favorites: [{ id: 'f1', name: '学 408', project: '学习', tags: ['408'] }],
