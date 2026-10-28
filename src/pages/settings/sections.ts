@@ -14,10 +14,11 @@ const hours = Object.fromEntries(Array.from({ length: 9 }, (_, h) => [String(h),
 const weekdays = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' };
 
 export const SECTIONS: SettingSection[] = [
-  { id: 'deal', no: '01', cn: '出卡', en: 'DEAL', desc: '背包有几格、主线押多久、什么算快到期。选卡的优先级是固定的：阻塞 > 回顾 > 快到期 > 主线 > 支线 > 随机。', groups: [
-    { cn: '背包', en: 'BACKPACK', rows: [
-      { key: 'mainTasks', cn: '主线格数', desc: '默认 1 格。主线是押注，格子越多越难集中' },
-      { key: 'sideTasks', cn: '支线格数', desc: '调低时已经在背包里的项目不会被移出，只是不能再放新的' },
+  { id: 'deal', no: '01', cn: '出卡', en: 'DEAL', desc: '任务池的上限、主线押多久、什么算快到期。选卡的优先级是固定的：阻塞 > 回顾 > 快到期 > 主线 > 支线 > 随机。', groups: [
+    { cn: '任务池', en: 'TASK POOL', rows: [
+      { key: 'mainTasks', cn: '主线任务最多几个', desc: '同时押注的主线任务数。调低时，已有的任务和事项不会被移出，只是不能再加新的' },
+      { key: 'mainItems', cn: '每个主线任务下最多几项', desc: '缩小出来的卡、「还要接着做」的续卡也算在里面' },
+      { key: 'sideTasks', cn: '支线任务最多几个', desc: '普通待办也是支线任务。满了要先做完、冷藏或放弃一个' },
       { key: 'betWeeks', cn: '主线押注期', desc: '到期那一周的回顾里加入主线复盘' } ] },
     { cn: '出卡', en: 'CARDS', rows: [
       { key: 'dueSoonHours', cn: '快到期阈值', desc: '期限在这个时长以内的卡，排在主线和支线前面' },
@@ -74,5 +75,5 @@ export const SECTIONS: SettingSection[] = [
 
 /** 英文单位小字。 */
 export const UNIT_EN: Record<string, string> = {
-  minutes: 'MIN', hours: 'H', days: 'DAYS', weeks: 'WEEKS', times: 'TIMES', items: 'ITEMS', levels: 'LV', slots: 'SLOTS', '%': '%',
+  minutes: 'MIN', hours: 'H', days: 'DAYS', weeks: 'WEEKS', times: 'TIMES', items: 'ITEMS', levels: 'LV', slots: 'TASKS', '%': '%',
 };
