@@ -25,7 +25,7 @@ export const groupKey = (e: ListEntry) => [e.description, e.project, [...e.tags]
 
 /**
  * 最近 days 天（含今天）开始的条目，按活动日分组，新的在上。同一天里相同的条目合成一组，组按组里最晚开始的排，组内新的在上。
- * 当天合计是这一天里显示出来的非待机条目合在一起的时长，重叠只算一次。
+ * 当天合计是这一天里显示出来的非待机条目合在一起的时长，重叠只算一次；跨过日边界的只算到下一个日边界。
  */
 export function listDays<T extends ListEntry>(entries: readonly T[], o: ListOptions<T>): DayList<T>[] {
   const from = addDays(activityDayStart(o.now, o.boundaryHour), -(o.days - 1));
@@ -41,7 +41,7 @@ export function listDays<T extends ListEntry>(entries: readonly T[], o: ListOpti
     for (const e of list) groups.set(groupKey(e), [...(groups.get(groupKey(e)) ?? []), e]);
     return {
       day,
-      total: unionLength(list.filter(e => !o.isIdle(e)).map(e => [start(e), end(e, o.now)] as const)),
+      total: unionLength(list.filter(e => !o.isIdle(e)).map(e => [start(e), Math.min(end(e, o.now), addDays(day, 1))] as const)),
       groups: [...groups].map(([key, es]) => ({
         key, entries: es, first: Math.min(...es.map(start)),
         last: es.some(e => e.ended_at === null) ? null : Math.max(...es.map(e => end(e, o.now))),

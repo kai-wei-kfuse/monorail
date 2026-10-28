@@ -34,6 +34,11 @@ describe('listDays', () => {
   });
   // 9:00–10:00、10:30–11:30（回邮件和第二段学 408 重叠，合成一段）、14:00–15:00（写周报计到现在）
   it('当天合计里重叠只算一次，默认不算待机', () => expect(days[0].total).toBe(180 * MIN));
+  it('跨过日边界的条目，当天合计只算到下一个日边界', () => {
+    const night = listDays([entry(at(27, 23), at(28, 7), '睡前看书', { project: '生活' })], { ...opts, now: at(28, 8) });
+    expect(night[0].total).toBe(5 * 60 * MIN);
+    expect(night[0].groups[0].total).toBe(8 * 60 * MIN);
+  });
   it('勾上显示待机后，待机也列出来', () => expect(listDays(list, { ...opts, showIdle: true })[0].groups.some(g => g.entries[0].project === '待机')).toBe(true));
   it('按描述、项目、#标签筛选', () => {
     expect(listDays(list, { ...opts, query: '#408' })[0].groups.map(g => g.entries[0].description)).toEqual(['学 408']);

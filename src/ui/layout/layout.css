@@ -55,3 +55,9 @@
 .ls-item.done b { color: var(--mute); }
 .ls-empty { padding: 18px 0; font: 330 13px/1.6 var(--f-cn); color: var(--mute); }
 .ls-warn { margin-top: 14px; padding: 10px 12px; border-left: 4px solid var(--yellow); background: var(--paper-2); font: 330 12px/1.6 var(--f-cn); color: var(--ink-3); box-shadow: -1px 0 0 var(--ink); }
+
+/* 整页外框（PageFrame）：日历、列表。面板的样子沿用设置页右侧 */
+.pg { min-height: 0; overflow: auto; padding: 26px clamp(18px, 3vw, 44px) 36px; background: var(--paper); border: 1px solid var(--line); scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.pg .s-head { flex-wrap: wrap; row-gap: 14px; }
+.pg-tools { margin-left: auto; align-self: center; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pg-switch { display: inline-flex; align-items: center; gap: 8px; font: 520 12px/1 var(--f-cn); color: var(--ink-3); }

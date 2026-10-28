@@ -1,0 +1,58 @@
+/* 日历（UI 规范 §11.6）。外框是 ui/layout 的 PageFrame */
+.pg.cal { display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; }
+.cal-nav { display: inline-flex; border: 1px solid var(--line-2); background: var(--paper-2); }
+.cal-nav button { width: 34px; height: 32px; display: grid; place-items: center; }
+.cal-nav button svg { width: 13px; height: 13px; }
+.cal-nav button.flip svg { transform: scaleX(-1); }
+.cal-nav button.today { width: auto; padding: 0 12px; border-inline: 1px solid var(--line); font: 520 13px/1 var(--f-cn); }
+.cal-nav button:hover { background: var(--yellow); }
+
+.cal-board { min-height: 0; margin-top: 18px; display: grid; grid-template-rows: auto minmax(0, 1fr); overflow-x: auto; border: 1px solid var(--line-2); background: var(--paper-2); }
+.cal-head, .cal-grid { display: grid; min-width: 660px; }
+.cal-head { border-bottom: 1px solid var(--ink); background: var(--paper); }
+.cal-corner { display: grid; place-items: end center; padding-bottom: 9px; }
+.cal-day { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; row-gap: 5px; align-items: end; padding: 10px 10px 8px; border-left: 1px solid var(--line); }
+.cal-day b { grid-row: span 2; font: 600 expanded 28px/.8 var(--f-en); letter-spacing: -.02em; }
+.cal-day span { display: flex; gap: 6px; align-items: baseline; font: 520 12px/1 var(--f-cn); white-space: nowrap; }
+.cal-day span i { font: 500 8px/1 var(--f-en); letter-spacing: .2em; font-style: normal; color: var(--mute-2); }
+.cal-day em { font: 500 11px/1 var(--f-en); font-style: normal; color: var(--mute); font-variant-numeric: tabular-nums; }
+.cal-day.today { background: var(--ink); color: #f6f6f3; box-shadow: inset 0 -3px 0 var(--yellow); }
+.cal-day.today b { color: var(--yellow); }
+.cal-day.today em, .cal-day.today span i { color: #9a9a95; }
+
+.cal-scroll { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.cal-grid { position: relative; touch-action: none; user-select: none; background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 46px); }
+.cal-hours { position: relative; }
+.cal-hours span { position: absolute; right: 8px; transform: translateY(-50%); font: 400 10px/1 var(--f-mono); color: var(--mute); }
+.cal-hours span:first-child { transform: translateY(4px); }
+.cal-col { position: relative; border-left: 1px solid var(--line); cursor: crosshair; }
+.cal-col.today { background: color-mix(in srgb, var(--yellow) 7%, transparent); }
+
+/* 记录块：左侧 4px 项目色，正在计时的底部多一条 mint；待机是淡色斜纹，不能点 */
+.blk { position: absolute; left: 2px; right: 2px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; padding: 3px 6px 3px 10px; background: var(--paper); border: 1px solid var(--line-2); box-shadow: inset 4px 0 0 var(--c), 0 2px 0 var(--line-2); cursor: grab; }
+.blk:hover { z-index: 2; border-color: var(--ink); }
+.blk-t { font: 520 12px/1.3 var(--f-cn); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk-s { font: 500 10px/1.2 var(--f-en); letter-spacing: .02em; color: var(--mute); white-space: nowrap; overflow: hidden; }
+.blk.running { box-shadow: inset 4px 0 0 var(--c), inset 0 -3px 0 var(--mint), 0 2px 0 var(--line-2); }
+.blk.idle { border: 0; box-shadow: none; background: repeating-linear-gradient(-45deg, rgb(22 22 22 / .08) 0 1px, transparent 1px 6px); pointer-events: none; }
+.blk.dim { opacity: .3; }
+.blk.ghost { z-index: 5; background: color-mix(in srgb, var(--yellow) 60%, transparent); border: 1.5px dashed var(--ink); box-shadow: none; pointer-events: none; }
+.blk.ghost .blk-s { color: var(--ink); }
+.blk > i { position: absolute; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.blk > i[data-edge="top"] { top: 0; }
+.blk > i[data-edge="bottom"] { bottom: 0; }
+.cal-now { position: absolute; left: -1px; right: 0; z-index: 4; height: 2px; background: var(--ink); pointer-events: none; }
+.cal-now::before { content: ""; position: absolute; left: 0; top: -3px; width: 8px; height: 8px; background: var(--yellow); box-shadow: 0 0 0 1.5px var(--ink); }
+
+/* 点开一条的弹窗：对话框的样子（顶部黑条 + 强调色短条） */
+.cal-pop { position: fixed; z-index: 60; width: 340px; padding: 22px 16px 14px; display: grid; gap: 10px; background: var(--paper); border: 1px solid var(--ink); box-shadow: 0 30px 70px rgb(0 0 0 / .35); }
+.cal-pop::before { content: ""; position: absolute; left: 0; top: 0; width: 64px; height: 7px; background: var(--ink); }
+.cal-pop::after { content: ""; position: absolute; left: 64px; top: 0; width: 18px; height: 7px; background: var(--yellow); }
+.cal-pop-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
+.cal-pop-x { width: 24px; height: 24px; display: grid; place-items: center; color: var(--mute); }
+.cal-pop-x:hover { background: #ececE8; color: var(--ink); }
+.cal-pop-x svg { width: 11px; height: 11px; }
+.cal-pop-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-pop-row .tagpick { flex: 1 1 140px; }
+.cal-pop-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.cal-note { margin: 0; font: 330 11px/1.4 var(--f-cn); color: var(--mute); }
