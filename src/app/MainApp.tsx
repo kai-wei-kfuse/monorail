@@ -93,7 +93,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   useEffect(() => { setMotionLevel(settings.motion); document.documentElement.style.setProperty('--yellow', settings.accent); }, [settings.motion, settings.accent]);
   const nowMs = useNow();
   const [page, setPage] = useState<Route['id']>('home');
-  const [mini, setMini] = useState(false), [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
+  const [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
   const [backfill, setBackfill] = useState(false);
   const [completeAt, setCompleteAt] = useState<string | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
@@ -126,7 +126,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
 
   // 小窗是独立窗口（N6）：主窗口照常开着；底栏按钮、M、托盘都是开关
   async function toggleMini() {
-    try { setMini(await miniWindow.toggle()); } catch (error) { info('小窗切换失败', String(error)); }
+    try { await miniWindow.toggle(); } catch (error) { info('小窗切换失败', String(error)); }
   }
   // 给小窗发快照、接它的命令。在小窗里点完成：主窗口出来，回到首页接着走完成流程，保留小窗里点的时刻
   useEffect(() => {
@@ -181,7 +181,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     left={<><QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)}
       onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />
-      <MiniToggle on={mini} onClick={() => void toggleMini()} /></>}
+      <MiniToggle onClick={() => void toggleMini()} /></>}
     right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;
 
   return <>
