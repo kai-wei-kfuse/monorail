@@ -1,4 +1,5 @@
 import type { Card } from '../domain/card/card';
+import { editCardContent } from '../domain/card/edit';
 import { startCard, completeCard, continueCard, releaseCard, abandonCard } from '../domain/card/transitions';
 import { shrinkCard, restoreParent } from '../domain/card/shrink';
 import { skipCard } from '../domain/degrade/signals';
@@ -29,6 +30,11 @@ function requireCurrent(tx: Transaction, card: Card): void {
 function target(tx: Transaction, card: Card) {
   return { activity: card.content, category: trackOf(card.project_id, tx.projects), card_id: card.id, kind: '普通' as const, resume_card_id: null };
 }
+
+export const editContent = (ctx: Ctx, cardId: string, content: string, at: string) => run(ctx, async tx => {
+  // v1 keeps the running segment's original name; renaming it belongs to the v2 migration.
+  tx.saveCard(editCardContent(getCard(tx, cardId), content));
+}, at);
 
 export const start = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx => {
   const card = getCard(tx, cardId), current = openSegmentInTx(tx);

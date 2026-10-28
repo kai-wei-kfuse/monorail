@@ -1,11 +1,39 @@
 import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, project, seed, segments } from './serviceFixture';
-import { start, complete, checkComplete, shrink, redraw, pass, stopToday, leaveTo } from './cardService';
+import { start, complete, checkComplete, shrink, redraw, pass, stopToday, leaveTo, editContent } from './cardService';
 import { insert, resume, backfillRange } from './timerService';
 import { refresh } from './dealService';
 import { cardMilliseconds } from '../domain/timeline/stats';
 
 const smaller = { content: '做一小步', type: '结果卡' as const, minutes: null };
+it.each([false, true])('edits only content and skip count without changing v1 timing (running=%s)', async running => {
+  const f = fixture();
+  await seed(f, [card('a', { content: '旧标题', skip_count: 3, blocking: true, due_at: at(60),
+    type: '时间盒卡', timebox_minutes: 25, no_shrink: true, progress_note: '已有进度' })]);
+  if (running) await start(f.ctx, 'a', at());
+  const before = await getCard(f, 'a'), state = await f.ctx.repos.state.read(), history = structuredClone(segments(f));
+  f.clock(at(5));
+  await editContent(f.ctx, 'a', ' \t新[标题]\n ', at(5));
+  expect(await getCard(f, 'a')).toEqual({ ...before, content: '新[标题]', skip_count: 0 });
+  expect(await f.ctx.repos.state.read()).toEqual(state);
+  expect(segments(f)).toEqual(history);
+  expect(f.home().card).toMatchObject({ id: 'a', content: '新[标题]' });
+  if (running) expect(open(f).activity).toBe('旧标题');
+});
+it('rejects blank content and missing cards without committing, then allows another edit', async () => {
+  const f = fixture(); await seed(f, [card('a', { skip_count: 2 })]); await start(f.ctx, 'a', at());
+  const before = await getCard(f, 'a'), state = await f.ctx.repos.state.read(), history = structuredClone(segments(f));
+  f.publish.mockClear();
+  await expect(editContent(f.ctx, 'a', ' \t\n ', at())).rejects.toThrow('卡片内容不能为空');
+  await expect(editContent(f.ctx, 'missing', '新标题', at())).rejects.toThrow('卡片不存在');
+  expect(await getCard(f, 'a')).toEqual(before);
+  expect(await f.ctx.repos.state.read()).toEqual(state);
+  expect(segments(f)).toEqual(history);
+  expect(f.publish).not.toHaveBeenCalled();
+  await editContent(f.ctx, 'a', '新标题', at());
+  expect(await getCard(f, 'a')).toEqual({ ...before, content: '新标题', skip_count: 0 });
+});
+
 it.each(['complete', 'shrink', 'redraw'] as const)('A2 %s ends the insert at the click and clears its return target', async action => {
   const f = fixture(); await seed(f, [card('a'), card('b', { order: 2 })]);
   await start(f.ctx, 'a', at());
