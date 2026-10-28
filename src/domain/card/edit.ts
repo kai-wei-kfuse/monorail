@@ -12,7 +12,9 @@ export function editCard(card: Card, fields: CardFields): Card {
   if (fields.type === '时间盒卡' && !(fields.timeboxMinutes !== null && Number.isFinite(fields.timeboxMinutes) && fields.timeboxMinutes > 0)) throw new Error('时间盒需要正数时长');
   if (fields.dueAt !== null && !Number.isFinite(Date.parse(fields.dueAt))) throw new Error('期限不是有效时间');
   return { ...edited, type: fields.type, timebox_minutes: fields.type === '结果卡' ? null : fields.timeboxMinutes,
-    due_at: fields.dueAt, blocking: fields.blocking, no_shrink: fields.noShrink, task_id: fields.taskId };
+    due_at: fields.dueAt, blocking: fields.blocking, no_shrink: fields.noShrink, task_id: fields.taskId,
+    project: fields.project === undefined ? card.project : fields.project?.trim() || null,
+    tags: fields.tags === undefined ? card.tags : [...new Set(fields.tags.map(tag => tag.trim()).filter(Boolean))] };
 }
 
 export function createCard(id: string, fields: CardFields, at: string, order: number): Card {

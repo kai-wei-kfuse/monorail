@@ -7,6 +7,10 @@ import type { Duel } from '../domain/idea/arena';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import { refreshInTx } from './dealService';
+import { taskWithItems } from '../domain/task/create';
+import { itemCapacity } from '../domain/task/pool';
+import { inBackpack } from '../domain/task/task';
+import type { BackpackSlot } from '../shared/backpack';
 
 function findIdea(tx: Transaction, id: string): RecordEntry {
   const record = tx.records.find(item => item.id === id);
@@ -15,16 +19,36 @@ function findIdea(tx: Transaction, id: string): RecordEntry {
   return record;
 }
 
-export const convertIdea = (ctx: Ctx, id: string, input: { content: string; taskId: string | null }, at: string) => run(ctx, async tx => {
+export type IdeaTaskInput = { items: string[] } & ({ taskId: string } | { name: string; slot: BackpackSlot; defaultProject: string | null });
+function convertIdeaInTx(tx: Transaction, id: string, input: IdeaTaskInput): string[] {
   const idea = findIdea(tx, id);
   if (idea.pool === '已转任务' || idea.card_id !== null || tx.cards.some(card => card.id === `card-${id}`)) throw new Error('这个想法已经转为待办');
-  if (!input.content.trim()) throw new Error('待办内容不能为空');
-  if (input.taskId !== null && !tx.tasks.some(task => task.id === input.taskId)) throw new Error('项目不存在');
-  const card = convert({ ...idea, kind: '待办', text: input.content.trim(), task_id: input.taskId, created_at: at }, Math.max(0, ...tx.cards.map(item => item.order)) + 1);
-  tx.saveCard(card);
-  tx.saveRecord({ ...idea, pool: '已转任务', card_id: card.id, last_touched_at: at, cold_since: null });
+  if (!input.items.length || input.items.some(content => !content.trim())) throw new Error('待办内容不能为空');
+  let taskId: string;
+  if ('taskId' in input) {
+    const task = tx.tasks.find(task => task.id === input.taskId);
+    if (!task || !inBackpack(task)) throw new Error('任务不在任务池');
+    if (itemCapacity(task, tx.cards, tx.settings) < input.items.length) throw new Error('主线任务事项已满');
+    taskId = task.id;
+  } else {
+    const { task } = taskWithItems({ ...input, makeRoom: null, items: undefined }, tx.tasks, tx.cards, tx.settings, tx.at, tx.id);
+    if (input.items.length > itemCapacity(task, tx.cards, tx.settings)) throw new Error('主线任务事项已满');
+    tx.saveTask(task); taskId = task.id;
+  }
+  const order = Math.max(0, ...tx.cards.map(item => item.order));
+  const cards = input.items.map((content, index) => ({
+    ...convert({ ...idea, kind: '待办', text: content.trim(), task_id: taskId, created_at: tx.at }, order + index + 1),
+    id: index === 0 ? `card-${id}` : tx.id(),
+  }));
+  cards.forEach(card => tx.saveCard(card));
+  tx.saveRecord({ ...idea, pool: '已转任务', card_id: cards[0].id, last_touched_at: tx.at, cold_since: null });
   refreshInTx(tx);
-  return card.id;
+  return cards.map(card => card.id);
+}
+export const convertIdeaToTask = (ctx: Ctx, id: string, input: IdeaTaskInput, at: string) => run(ctx, async tx => convertIdeaInTx(tx, id, input), at);
+export const convertIdea = (ctx: Ctx, id: string, input: { content: string; taskId: string | null }, at: string) => run(ctx, async tx => {
+  const target = input.taskId === null ? { name: input.content, slot: '支线' as const, defaultProject: null } : { taskId: input.taskId };
+  return convertIdeaInTx(tx, id, { ...target, items: [input.content] })[0];
 }, at);
 
 export const deleteIdea = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {

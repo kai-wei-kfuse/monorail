@@ -8,6 +8,7 @@ export interface HomeSlice {
   entry: { id: string; description: string; project: string; tags: string[]; startedAt: string; cardId: string | null; paused: boolean; kind: '普通' | '插入' | '暂停' } | null;
   pending: { id: string; startedAt: string } | null;
   resumeDescription: string | null;
+  knownTags: string[];
   guideKind: 'firstTask' | 'setMain' | 'splitMain' | 'allDone';
   card: HomeCard | null; closedEffectiveMs: number; currentSegStartedAt: string | null;
   awayActivity: string | null; baseline: { main: boolean | null; side: boolean };
@@ -17,7 +18,7 @@ export interface HomeSlice {
   dataVersion: number;
 }
 export const initialHome: HomeSlice = {
-  mode: 'blank', entry: null, pending: null, resumeDescription: null, guideKind: 'firstTask', card: null, closedEffectiveMs: 0, currentSegStartedAt: null,
+  mode: 'blank', entry: null, pending: null, resumeDescription: null, knownTags: [], guideKind: 'firstTask', card: null, closedEffectiveMs: 0, currentSegStartedAt: null,
   awayActivity: null, baseline: { main: null, side: false }, noMainHint: false, rest: null, review: null,
   activity: { kind: 'idle', label: '', startedAt: null }, dataVersion: 0,
 };

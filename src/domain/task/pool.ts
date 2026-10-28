@@ -19,5 +19,5 @@ export function itemCapacity(task: Task, cards: readonly Card[], limits: PoolLim
 }
 export function replaceableSingle(task: Task, cards: readonly Card[], elapsed: (id: string) => number): Card | null {
   const items = activeItems(cards, task.id), only = items[0];
-  return items.length === 1 && only.content === task.name && only.status === '待做' && elapsed(only.id) === 0 ? only : null;
+  return items.length === 1 && only.content.replace(/[[\]]/g, '') === task.name && only.status === '待做' && elapsed(only.id) === 0 ? only : null;
 }

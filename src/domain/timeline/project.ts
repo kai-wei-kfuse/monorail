@@ -1,5 +1,9 @@
 export const SYSTEM_PROJECTS = ['待机', '休息', '睡眠', '离线', '回顾'] as const;
 export interface Project { name: string; color: string }
+export const projectOptions = (projects: readonly Project[]): Project[] => [
+  ...[...SYSTEM_PROJECTS, '未分类'].filter(name => !projects.some(item => item.name === name))
+    .map(name => ({ name, color: 'var(--mute-2)' })), ...projects,
+];
 
 export function newProject(projects: readonly Project[], input: string): Project {
   const name = input.trim();

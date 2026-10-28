@@ -120,7 +120,7 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
       for (const listener of settingsListeners.get(ctx)!) listener(settings);
     }
     const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: ctx.repos.times.snapshot(), at: ctx.now(), version: ++queue.version });
-    const backpack = projectBackpack(tx.cards, tx.tasks, tx.records);
+    const backpack = projectBackpack(tx.cards, tx.tasks, tx.records, ctx.repos.times.snapshot(), ctx.settings, ctx.now());
     const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, entries: ctx.repos.times.snapshot(), state: tx.state, settings: ctx.settings, at: ctx.now() });
     ctx.publish({ state: tx.state, cards: tx.cards, entries: ctx.repos.times.snapshot(), home, backpack, review, settings: ctx.settings, notices: tx.notices });
     await ctx.reminders.update(planReminders({ cards: tx.cards, open: tx.entries.find(seg => seg.id === tx.state.open_entry && seg.ended_at === null) ?? null,

@@ -11,6 +11,7 @@ import type { AppState } from '../data/repos';
 import type { Settings } from '../shared/settings';
 import { LOOSE } from '../shared/backpack';
 import type { HomeSlice } from '../store/homeSlice';
+import { knownTags } from '../domain/timeline/tags';
 
 export interface ProjectionInput { cards: Card[]; tasks: Task[]; reviews: Review[]; entries: TimeEntry[]; state: AppState; settings: Settings; at: string; version: number }
 export function projectHome(input: ProjectionInput): HomeSlice {
@@ -42,6 +43,7 @@ export function projectHome(input: ProjectionInput): HomeSlice {
       startedAt: current.started_at, cardId: current.card_id, paused: current.kind === '暂停', kind: current.kind } : null,
     pending: state.pending_id ? { id: state.pending_id, startedAt: state.pending_at! } : null,
     resumeDescription: entries.find(entry => entry.id === state.resume_entry_id)?.description ?? null,
+    knownTags: knownTags([...entries, ...settings.lists.presets, ...cards], settings.lists.tags),
     dataVersion: version,
   };
 }

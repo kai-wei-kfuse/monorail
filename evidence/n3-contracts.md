@@ -119,3 +119,5 @@ Claude：替换 actions 中的临时 addFavorite/reorderFavorites；启用 Manua
 - 下次发版必须包含 cbe1b11；本次不推送、不发布。
 
 验证：npm run check 通过（52 个文件、341 条测试）；npm run build 通过。证据：n3-check.log、n3-build.log。
+
+N4 增量：homeSlice 新增 knownTags（按使用次数排序）；首页项目选择可取 backpack.pool.projects（包含系统五项、未分类和自定义项目）。详见 n4-contracts.md。

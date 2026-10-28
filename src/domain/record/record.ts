@@ -1,3 +1,5 @@
+import { parseEntryText } from '../../shared/tags';
+
 export interface RecordEntry {
   id: string; text: string; kind: '待办' | '想法'; created_at: string;
   due_at: string | null; blocking: boolean; task_id: string | null;
@@ -11,7 +13,7 @@ export type RecordInput = Omit<RecordEntry, 'needs' | 'pool' | 'last_touched_at'
   Partial<Pick<RecordEntry, 'needs' | 'pool' | 'last_touched_at' | 'cold_since'>>;
 
 export function extractTags(text: string): string[] {
-  return [...new Set([...text.matchAll(/(?:^|\s)#([\p{L}\p{N}_-]+)/gu)].map(match => match[1]))];
+  return parseEntryText(text, []).tags;
 }
 
 export function createRecord(input: RecordInput): RecordEntry {

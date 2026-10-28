@@ -1,18 +1,19 @@
 import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
 import { putInBackpack, leaveBackpack } from '../domain/task/backpack';
-import { canAddTask, itemCapacity, singleItemTask } from '../domain/task/pool';
-import { createCard, editCard } from '../domain/card/edit';
+import { canAddTask, itemCapacity, singleItemTask, replaceableSingle, afterItem } from '../domain/task/pool';
+import { createCard, editCard, editCardContent } from '../domain/card/edit';
 import { releaseCard } from '../domain/card/transitions';
+import { taskWithItems } from '../domain/task/create';
 import type { BackpackSlot, CardFields, MakeRoom, TaskDraft } from '../shared/backpack';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import { refreshInTx } from './dealService';
-import { openInTx, stopRefInTx, renameRefInTx, retagRefInTx } from './tracking/api';
+import { openInTx, stopRefInTx, renameRefInTx, retagRefInTx, refElapsedInTx } from './tracking/api';
 
 function findTask(tx: Transaction, id: string): Task {
   const task = tx.tasks.find(item => item.id === id);
-  if (!task) throw new Error('项目不存在');
+  if (!task) throw new Error('任务不存在');
   return task;
 }
 
@@ -35,12 +36,10 @@ async function makeRoomInTx(tx: Transaction, slot: TaskDraft['slot'], room: Make
 }
 
 export async function createTaskInTx(tx: Transaction, draft: TaskDraft): Promise<string> {
-  const at = tx.at;
-  if (!draft.name.trim()) throw new Error('项目名不能为空');
   await makeRoomInTx(tx, draft.slot, draft.makeRoom);
-  let task: Task = { id: tx.id(), name: draft.name.trim(), slot: '支线', slot_index: null, status: '冷藏', created_at: at, bet_ends_at: null, default_project: null };
-  if (draft.slot !== '不在背包') task = putInBackpack(task, draft.slot, tx.tasks, tx.settings, at);
-  tx.saveTask(task); refreshInTx(tx);
+  const { task, items } = taskWithItems(draft, tx.tasks, tx.cards, tx.settings, tx.at, tx.id);
+  tx.saveTask(task); items.forEach(item => tx.saveCard(item));
+  refreshInTx(tx);
   return task.id;
 }
 export const createTask = (ctx: Ctx, draft: TaskDraft, at: string) => run(ctx, tx => createTaskInTx(tx, draft), at);
@@ -60,6 +59,28 @@ export async function restoreTaskInTx(tx: Transaction, id: string, slot: Backpac
 }
 export const restoreTask = (ctx: Ctx, id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => run(ctx, tx => restoreTaskInTx(tx, id, slot, makeRoom), at);
 
+export function addItemInTx(tx: Transaction, taskId: string, content: string): string {
+  const task = findTask(tx, taskId);
+  if (task.status === '已完成' || task.status === '已放弃') throw new Error('已结束的任务不能添加事项');
+  const placeholder = replaceableSingle(task, tx.cards, id => refElapsedInTx(tx, id));
+  if (placeholder) {
+    tx.saveCard(editCardContent(placeholder, content));
+    return placeholder.id;
+  }
+  if (itemCapacity(task, tx.cards, tx.settings) <= 0) throw new Error('主线任务事项已满');
+  const card = createCard(tx.id(), { content, type: '结果卡', timeboxMinutes: null, blocking: false,
+    dueAt: null, noShrink: false, taskId, project: null, tags: [] }, tx.at, Math.max(0, ...tx.cards.map(item => item.order)) + 1);
+  tx.saveCard(card); return card.id;
+}
+export const addItem = (ctx: Ctx, taskId: string, content: string, at: string) => run(ctx, async tx => {
+  const id = addItemInTx(tx, taskId, content); refreshInTx(tx); return id;
+}, at);
+export const setDefaultProject = (ctx: Ctx, taskId: string, project: string | null, at: string) => run(ctx, async tx => {
+  const task = findTask(tx, taskId), value = project?.trim() || null;
+  tx.saveTask({ ...task, default_project: value });
+  for (const card of tx.cards.filter(item => item.task_id === taskId && item.project === null)) retagRefInTx(tx, card.id, value ?? '未分类', card.tags);
+}, at);
+
 export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at: string) => run(ctx, async tx => {
   if (fields.taskId !== null) findTask(tx, fields.taskId);
   const original = cardId === null ? null : tx.cards.find(card => card.id === cardId);
@@ -78,10 +99,11 @@ export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at
     if (tx.state.current_card === card.id) tx.state.current_card = null;
   }
   tx.saveCard(card);
+  if (original?.task_id && original.task_id !== card.task_id) tx.saveTask(afterItem(findTask(tx, original.task_id), tx.cards));
   if (current?.card_id === card.id) {
     if (!eligible) stopRefInTx(tx, card.id);
     else {
-      renameRefInTx(tx, card.id, card.content);
+      renameRefInTx(tx, card.id, card.content.replace(/[[\]]/g, ''));
       retagRefInTx(tx, card.id, card.project ?? task?.default_project ?? '未分类', card.tags);
     }
   }
