@@ -9,7 +9,13 @@
 - `npm run check`：TypeScript、ESLint 通过；59 个测试文件、389 项测试通过，退出码 0，见 `check.log`。测试运行器已有整个进程 60 秒上限。
 - `git diff --check`：通过。
 - 发布前远程 `v0.2.0` tag 和 Release 均不存在；既有版本不覆盖、不删除。
-- `evidence/journal-real.json` 是他人改动，不纳入暂存或提交。检查前 SHA256：`E8EB510C29A000835D415A51E25D248C0F2A02BF8C1A882B7FAE934FDE7BC590`。本次遗漏了现有 `src/data/journal.test.ts:54` 的副作用：运行 check 时该测试覆盖了这个文件，检查后 SHA256 为 `4BCC8C1BA4704E3753C81DAF9FBF4A7B7C1C27B0B120AAC631FAC96044317485`。未事先备份原始内容，无法可靠恢复；没有用 HEAD 内容覆盖它，已向用户说明。
+- `evidence/journal-real.json` 是他人改动，不纳入暂存或提交。检查前 SHA256：`E8EB510C29A000835D415A51E25D248C0F2A02BF8C1A882B7FAE934FDE7BC590`。本次遗漏了现有 `src/data/journal.test.ts:54` 的副作用：运行 check 时该测试覆盖了这个文件，检查后 SHA256 为 `4BCC8C1BA4704E3753C81DAF9FBF4A7B7C1C27B0B120AAC631FAC96044317485`。没有用 HEAD 内容覆盖它，已向用户说明。
+
+## journal-real.json 原始内容恢复
+
+随后只读检查了该测试留下的旧 `.verification-data/journal-*` 目录。该 JSON 由固定结构、目录名和 ISO 毫秒时间组成；枚举旧 `.journal` 目录时间附近的候选内容，只有 SHA256 与检查前记录完全一致时才接受。找到原始内容的时间为 `2026-10-28T11:50:50.372Z`。
+
+写回前再次确认文件仍是本次测试产生的 `4BCC8C…`，没有被其他人继续修改；写回后 SHA256 完全恢复为原始 `E8EB510C29A000835D415A51E25D248C0F2A02BF8C1A882B7FAE934FDE7BC590`。该文件没有纳入任何暂存或提交，保留用户发版前的未提交内容。
 
 ## 本机情况与未验证项
 

@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "notes": "# 单轨 0.2.0\n\n这一版把计时和卡合到一起：首页就是一个计时入口，卡是计时的一件事。首次打开旧版数据时会升级数据，升级前自动备份；已经是 v2 的数据不会重复升级。\n\n- 数据升级：启动时先恢复未完成的事务，再把 v1 数据转成新格式。升级前的文件复制到数据目录里的 `backup/v1-<UTC时间>-<编号>/`，逐个读回比对；不包含 `attachments/`、`.journal/` 和已有的 `backup/`。附件留在原处，不做修改。升级期间快速记录条会提示稍后再存，草稿保留。\n- 首页：上面是计时条，点输入框就开始计时，写下在做什么或者抽一张卡。待确认的起点会保存，确认以后这段时间算在那件事上。「＋」开始想下一件事，当前这条照常计。\n- 读数点一下就能改：`45` 是 45 分钟，`1:30`、`1h 30m` 也认，`+10` / `-5` 加减分钟。会盖掉别的记录时先提示，点确定才改。\n- 卡头「记到」那一行，点一下就能改这张卡记到哪个项目、加标签。\n- 收藏：计时条下面一行，数字键 1–9 启动，可以拖动排序。正在计的那条旁边点图钉就能收藏。\n- 设置 → 外观 → 首页布局：「融合」把计时条并进大卡，标题区就是输入框。\n- 新增日历和列表：拖动新建、移动、改起止，同一段时间的几件事并排显示；列表按天合并同名记录。\n- 背包改成任务池：主线任务、支线任务，每个任务下面若干项；待办就是只有一项的支线任务。想法可以转成任务。\n- 小窗是独立窗口，可以和主窗口同时开着，能暂停、继续、完成、改名和改时间。\n- 「类别」改叫「项目」，可以自己加，每个项目一个颜色。收藏和快捷活动在设置 → 预设与休息池里编辑。\n\n升级以后不能直接装回 0.1.4 使用同一个数据目录。需要回退时，照 `docs/releases/0.2.0-回退.md` 操作。\n\n私有开发版需安装 GitHub CLI，并通过 gh auth login 登录可读取此仓库的账号。\n",
+  "pub_date": "2026-10-28T12:49:04.431Z",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://api.github.com/repos/kai-wei-kfuse/monorail/releases/assets/684982773",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSbVJhUmZUNUxzbmh3MW5kR25tQ25uMTlRY0M3QzkwVUE1WGhnTmJhQzZmQXgySFBveXNRLzkybDhDM1pYVytMUHZLYVpyMmR6Q1ZuSFdkbEJvNjB5cFRKazE2ekczSEE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTkxNjM3CWZpbGU65Y2V6L2oXzAuMi4wX3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjIuMApPSHFITUhIVXFHQUpVZ0FOZzNTWWFlUWlMUHc4VlBrcFFyOTNzT3R0L1BlR25yRGowdFZZN1VadFBtNGlnWnNPQXU4Z1NzNkczYXVUNDlmV1pyemdCZz09Cg=="
+    }
+  }
+}

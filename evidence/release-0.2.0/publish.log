@@ -1,0 +1,8 @@
+
+> pixel-record@0.2.0 release:publish
+> node scripts/publish-release.mjs --tag v0.2.0 --notes docs/releases/0.2.0.md --installer C:\Users\kai_wei\AppData\Local\Temp\monorail-v0.2.0-ci-40688264661\单轨_0.2.0_x64-setup.exe
+
+https://github.com/kai-wei-kfuse/monorail/releases/tag/untagged-80473989f828b0861cf3
+
+https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.2.0
+Published https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.2.0

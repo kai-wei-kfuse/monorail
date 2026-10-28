@@ -1,0 +1,2 @@
+PASS: installer signature and trusted comment verified against the application public key
+PASS: one-byte-tampered installer rejected
