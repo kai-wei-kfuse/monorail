@@ -126,6 +126,7 @@ export function TimerBarPreview() {
         startFree: v => start(v, take()),
         editOpen: (id, patch) => setS(x => ({ ...x, rows: x.rows.map(r => r.id === id ? { ...r, ...patch } : r) })),
         pause: () => { const id = open.id; start({ description: '待机', project: '待机', tags: [] }); setS(x => ({ ...x, resume: id })); },
+        stop: () => { start({ description: '待机', project: '待机', tags: [] }); setS(x => ({ ...x, resume: null })); },
         resume: () => { const r = row(s.resume!); start({ description: r.description, project: r.project, tags: r.tags, cardId: r.cardId }); },
         draw: () => setS(x => ({ ...x, drawn: true, pending: x.pending ?? { id: crypto.randomUUID(), startedAt: iso(Date.now()) } })),
         startFavorite: pick,

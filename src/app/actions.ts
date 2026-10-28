@@ -36,6 +36,7 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     startFree: guard((value: EntryValue, at: string) => timer.startFree(ctx, value, at)),
     editOpen: guard((entryId: string, patch: Partial<EntryValue>, at: string) => timer.editOpen(ctx, entryId, patch, at)),
     pause: guard((at: string) => timer.pause(ctx, at)),
+    stop: guard((at: string) => timer.stop(ctx, at)),
     continueEntry: guard((entryId: string, at: string) => timer.continueEntry(ctx, entryId, at)),
     // 读数：出错不弹报错，交回读数下面那一行显示；plan 原样带回
     commitReadout: async (req: ReadoutRequest, seen: unknown): Promise<ReadoutOutcome> => {

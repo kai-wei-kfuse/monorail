@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { fixture, at, card, seed, entries, open, getCard } from './serviceFixture';
 import { start } from './cardService';
-import { insert, resume, pause, backfillRange, settleOffline, answerOffline, sleep, wake, beginPending, cancelPending, startFree, commitReadout } from './homeService';
+import { insert, resume, pause, stop, backfillRange, settleOffline, answerOffline, sleep, wake, beginPending, cancelPending, startFree, commitReadout } from './homeService';
 import { activeRefInTx } from './tracking/api';
 import { run } from './commit';
 
@@ -12,6 +12,16 @@ it('A2 nested insert/pause keeps one return target and excludes interruptions fr
   f.clock(at(20)); await resume(f.ctx, at(20));
   expect(open(f)).toMatchObject({ card_id: 'c', project: '未分类' });
   expect(f.home().closedEffectiveMs).toBe(10 * 60000);
+});
+it('stop ends the open entry into idle without a return target and releases the card', async () => {
+  const f = fixture(); await seed(f, [card('c')]); await start(f.ctx, 'c', at());
+  f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
+  f.clock(at(15)); await stop(f.ctx, at(15));
+  expect(open(f)).toMatchObject({ project: '待机', card_id: null, started_at: at(15) });
+  expect((await f.ctx.repos.state.read()).resume_entry_id).toBeNull();
+  expect((await getCard(f, 'c')).status).not.toBe('进行中');
+  f.clock(at(20)); await resume(f.ctx, at(20));
+  expect(open(f)).toMatchObject({ project: '待机' });
 });
 it('A1 manual backfill coexists with work, while invalid/future ranges fail', async () => {
   const f = fixture(); await seed(f, [card('c')]); await start(f.ctx, 'c', at());

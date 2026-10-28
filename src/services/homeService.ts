@@ -55,6 +55,8 @@ export const draw = (ctx: Ctx, at: string) => action(ctx, at, tx => {
   drawInTx(tx);
 });
 export const pause = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.pauseInTx(tx));
+// 停止计的是卡时，卡跟着 align 放回去
+export const stop = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.stopInTx(tx));
 export const insert = (ctx: Ctx, activity: string, at: string) => action(ctx, at, tx => tracking.insertInTx(tx, template(tx, activity)));
 export async function resumeInTx(tx: Transaction): Promise<void> {
   const target = tx.entries.find(entry => entry.id === tx.state.resume_entry_id);

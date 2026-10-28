@@ -5,6 +5,7 @@ const S = { fill: 'none', stroke: 'currentColor' } as const;
 const PATHS = {
   play: <path fill="currentColor" d="M4.5 2.6v10.8L13.2 8z" />,
   pause: <path fill="currentColor" d="M3.8 3h3v10h-3zM9.2 3h3v10h-3z" />,
+  stop: <path fill="currentColor" d="M3.5 3.5h9v9h-9z" />,
   check: <path {...S} strokeWidth="1.8" d="M2.8 8.4 6.4 12l6.8-7.6" />,
   shrink: <path {...S} strokeWidth="1.7" d="M2.5 13.5 6.8 9.2M7 13.2V9H2.8M13.5 2.5 9.2 6.8M9 2.8V7h4.2" />,
   lower: <path {...S} strokeWidth="1.7" d="M8 2.5v8M4.6 7.2 8 10.6l3.4-3.4M3 13.6h10" />,

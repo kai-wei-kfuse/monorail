@@ -43,6 +43,8 @@ export interface TimerActions {
   /** 改正在计的这一条（自由记录；带卡的改卡）。只交改了的字段。 */
   editOpen: (entryId: string, patch: Partial<EntryValue>) => void;
   pause: () => void;
+  /** 停止：截断这一条转为待机，之后没有〔继续〕。 */
+  stop: () => void;
   resume: () => void;
   draw: () => void;
   startFavorite: (presetId: string) => void;
@@ -57,6 +59,11 @@ export interface TimerActions {
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
+/** 正在计时时「＋」的位置换成它（融合大卡也用）；不在计时时那里还是「＋」。 */
+export function StopButton({ onClick }: { onClick: () => void }) {
+  return <button type="button" className="tbar-new" aria-label="停止" title="停止计时，转为待机" onClick={onClick}><Icon name="stop" /></button>;
+}
 
 /**
  * 分开布局首页上方的计时条（UI 规范 §11.2，原型 home.js 的 TimerBar）。输入逻辑在 useEntry，融合布局的大卡也用它。
@@ -119,8 +126,8 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
             : running ? <ActionButton primary compact cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />
             : paused ? <ActionButton primary compact cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.resume} />
             : <ActionButton primary compact cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={() => E.input.current?.focus()} />}
-          <button type="button" className="tbar-new" disabled={!running || deciding} aria-label="开始想下一件事"
-            title="开始想下一件事：当前这条照常计，确认新的事后在这一刻截断" onClick={E.next}><Icon name="plus" /></button>
+          {running && !deciding ? <StopButton onClick={actions.stop} />
+            : <button type="button" className="tbar-new" disabled={!!pending} aria-label="开始想下一件事" title="开始想下一件事" onClick={E.next}><Icon name="plus" /></button>}
           <ActionButton compact cn="抽卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />
         </div>
       </div>

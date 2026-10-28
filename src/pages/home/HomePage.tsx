@@ -51,6 +51,7 @@ export interface HomeActions {
   startFree(value: EntryValue, at: string): Promise<unknown>;
   editOpen(entryId: string, patch: Partial<EntryValue>, at: string): Promise<unknown>;
   pause(at: string): Promise<unknown>;
+  stop(at: string): Promise<unknown>;
   continueEntry(entryId: string, at: string): Promise<unknown>;
   commitReadout(req: ReadoutRequest, seen: unknown): Promise<ReadoutOutcome>;
   manual(value: EntryValue, start: string, end: string, at: string): Promise<unknown>;
@@ -160,6 +161,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     startFree: v => void actions.startFree(v, now_()),
     editOpen: (id, patch) => void actions.editOpen(id, patch, now_()),
     pause: () => void actions.pause(now_()),
+    stop: () => void actions.stop(now_()),
     resume: () => void act(() => actions.resume(now_())),
     draw: () => void act(() => actions.draw(now_())),
     startFavorite,

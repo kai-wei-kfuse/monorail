@@ -13,13 +13,14 @@ import { Suggest } from './Suggest';
 import type { TaskCardView } from './TaskCard';
 import { TaskCard } from './TaskCard';
 import { TimeField } from './TimeField';
+import { StopButton } from './TimerBar';
 import type { TimerActions, TimerView } from './TimerBar';
 import { EntryLine, useEntry } from './useEntry';
 
 /**
  * 融合布局的大卡（UI 规范 §11.3，原型 stage.js 的 FusedCard）：计时条并进卡里，首页只有这一张。
  * 标题区就是输入框；抽到卡时显示卡的标题，点「写别的」换回输入框。项目、标签在卡头「记到」那一行：显示卡时改卡（cardPicks），
- * 输入框时和输入框算一组。放弃、抽卡、暂停、＋ 和卡的按钮（cardActions）在底部一排；读数点一下就地改。
+ * 输入框时和输入框算一组。放弃、抽卡、暂停、停止 / ＋（正在计时显示停止，不在计时显示 ＋）和卡的按钮（cardActions）在底部一排；读数点一下就地改。
  * card / cardView 是首页抽到的卡；换卡时由首页按 card.id 重建，「写别的」随之复位。corner 是卡头右边另加的提示。
  */
 export function FusedCard({ view, card, cardView, now, look, titleScale, actions, cardPicks, cardActions, onEditContent, fx, corner, onManual }:
@@ -39,8 +40,8 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
   const digits = <TimeField id="f-elapsed" kind="mmss" shown={total} disabled={!s.target} target={() => s.target} submit={actions.readout} onNote={E.setNote}>
     {formatReadout(total, 'mmss')}</TimeField>;
   const draw = (primary: boolean) => <ActionButton primary={primary} cn="抽一张卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />;
-  const plus = <button type="button" className="tbar-new" aria-label="开始想下一件事" title="开始想下一件事：当前这条照常计，确认新的事后在这一刻截断"
-    onClick={writeOther}><Icon name="plus" /></button>;
+  const plus = <button type="button" className="tbar-new" aria-label="开始想下一件事" title="开始想下一件事" onClick={writeOther}><Icon name="plus" /></button>;
+  const stop = <StopButton onClick={actions.stop} />;
   const manual = <button type="button" className="c-link" title="补一段过去做过的事" onClick={onManual}>手动补录</button>;
   const line = <p className="f-sub"><EntryLine view={view} note={E.note} /></p>;
 
@@ -60,7 +61,7 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
         {pending && <ActionButton compact cn="放弃" en="DISCARD" icon="x" title="放弃这次计时，这段时间照旧" onClick={discard} />}
         {s.paused ? <ActionButton compact cn="继续" en="RESUME" icon="play" onClick={actions.resume} />
           : s.onCard && <ActionButton compact cn="暂停" en="PAUSE" icon="pause" onClick={actions.pause} />}
-        {s.onCard && plus}
+        {s.onCard || s.away ? stop : !pending && plus}
       </>} />;
   }
 
@@ -93,7 +94,7 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
     </>}
     actions={pending ? <>{draw(!card)}<ActionButton compact cn="放弃" en="DISCARD" icon="x" title="放弃这次计时，这段时间照旧" onClick={discard} /></>
       : running ? <>{kind === 'away' ? <ActionButton primary cn="回来" en="BACK" icon="play" onClick={actions.resume} />
-          : <ActionButton primary cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />}{plus}{draw(false)}</>
-      : paused ? <><ActionButton primary cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.resume} />{draw(false)}</>
-      : <><ActionButton primary cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={() => E.input.current?.focus()} />{draw(false)}</>} />;
+          : <ActionButton primary cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />}{stop}{draw(false)}</>
+      : paused ? <><ActionButton primary cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.resume} />{plus}{draw(false)}</>
+      : <><ActionButton primary cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={() => E.input.current?.focus()} />{plus}{draw(false)}</>} />;
 }

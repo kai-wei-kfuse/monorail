@@ -12,7 +12,7 @@ export { inRange, overlaps } from '../../domain/timeline/query';
 export { addFavoriteInTx, favoriteInTx, editFavoriteInTx, removeFavoriteInTx, reorderFavoritesInTx, createProjectInTx, createTagInTx } from './presetService';
 export type { FavoriteValue } from './presetService';
 export { openInTx } from './transaction';
-export { startInTx, startSystemInTx, pauseInTx, insertInTx, resumeInTx, stopRefInTx, renameRefInTx, retagRefInTx } from './timerService';
+export { startInTx, startSystemInTx, pauseInTx, stopInTx, insertInTx, resumeInTx, stopRefInTx, renameRefInTx, retagRefInTx } from './timerService';
 export { settleOfflineInTx } from './timerService';
 export { manualInTx, editInTx, deleteInTx, previewReadoutInTx, setReadoutInTx, setRefTotalInTx } from './timeEditService';
 export { updateRangeInTx, moveInTx, copyInTx, patchMetadataInTx, setStartInTx, setEndInTx, setDurationInTx } from './timeEditService';
