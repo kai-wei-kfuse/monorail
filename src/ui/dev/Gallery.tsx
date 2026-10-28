@@ -14,6 +14,9 @@ import { TextArea } from '../controls/TextArea';
 import { DateTimeInput } from '../controls/DateTimeInput';
 import { Chip } from '../controls/Chip';
 import { HotkeyInput } from '../controls/HotkeyInput';
+import { ProjectPicker } from '../controls/ProjectPicker';
+import type { ProjectOption } from '../controls/ProjectPicker';
+import { TagPicker } from '../controls/TagPicker';
 import { ToastStack } from '../overlay/Toast';
 import { ContextMenu } from '../overlay/ContextMenu';
 import { Dialog } from '../overlay/Dialog';
@@ -36,10 +39,11 @@ import { Wipe } from '../effects/Wipe';
 import { CutIn } from '../effects/CutIn';
 import './gallery.css';
 
-const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }, { id: 'parts', cn: '部件', en: 'PARTS' }];
+const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }, { id: 'parts', cn: '部件', en: 'PARTS' },
+  { id: 'pickers', cn: '选择器', en: 'PICKERS' }];
 const ACCENTS = [{ value: '#fffa00', name: '信号黄' }, { value: '#00f5a0', name: '薄荷绿' }, { value: '#20b8ff', name: '天青' }, { value: '#ff7a1a', name: '警示橙' }];
 
-/** 设计系统预览页（只在开发时用）：?page=home|settings|parts，加 ?still 关掉动效方便截图。 */
+/** 设计系统预览页（只在开发时用）：?page=home|settings|parts|pickers，加 ?still 关掉动效方便截图。 */
 export function Gallery({ page: initial }: { page: string }) {
   const [page, setPage] = useState(initial), [pinned, setPinned] = useState(false);
   const titleBar = <TitleBar name="单轨" tabs={TABS} active={page} onTab={setPage}>
@@ -53,7 +57,38 @@ export function Gallery({ page: initial }: { page: string }) {
     {page === 'home' && <HomeMock />}
     {page === 'settings' && <SettingsMock />}
     {page === 'parts' && <PartsMock />}
+    {page === 'pickers' && <PickersMock />}
   </Frame>;
+}
+
+// 新建项目时轮流用这几个颜色（真实软件里由调用方决定）
+const PALETTE = ['#c0392b', '#16a085', '#8e44ad', '#d35400'];
+
+/** 项目选择、标签选择：普通、小号、不可用，以及卡头「记到」那一行的 flat 样式。 */
+function PickersMock() {
+  const [projects, setProjects] = useState<ProjectOption[]>([{ name: '未分类', color: '#a3a39e' }, { name: '求职', color: '#ff5a3c' },
+    { name: '学习', color: '#00b4ff' }, { name: '生活', color: '#d9a400' }, { name: '运动', color: '#00c389' }]);
+  const [known, setKnown] = useState(['408', 'python', '面试', '户外']);
+  const [project, setProject] = useState('学习'), [tags, setTags] = useState(['408']);
+  const [flatProject, setFlatProject] = useState('求职'), [flatTags, setFlatTags] = useState<string[]>([]);
+  const createProject = (name: string) => setProjects(list => [...list, { name, color: PALETTE[list.length % PALETTE.length] }]);
+  const createTag = (tag: string) => setKnown(list => [...list, tag]);
+  return <SplitLayout nav={<SideNav en="PICKERS" cn="选择器" items={[{ id: 'p', no: '01', cn: '项目和标签', en: 'PROJECT · TAG' }]} active="p" onSelect={() => {}} />}>
+    <PanelHeader no="01" en="PROJECT · TAG" cn="项目和标签" desc="点开列出已有的，输入就筛选；没有就新建。上下键选，回车确定，Esc 收起。" />
+    <Group cn="计时条和表单" en="FORM">
+      <Row title="项目" desc="150×34，左边是项目色点"><ProjectPicker id="pk-project" value={project} options={projects} onChange={setProject} onCreate={createProject} /></Row>
+      <Row title="小号" desc="128×28，用在列表行里"><ProjectPicker small value={project} options={projects} onChange={setProject} onCreate={createProject} /></Row>
+      <Row title="不可用" desc="正在做卡时"><ProjectPicker disabled value="求职" options={projects} onChange={() => {}} /></Row>
+      <Row title="标签" desc="回车、空格、逗号新建；输入框为空时退格去掉最后一个"><TagPicker id="pk-tags" value={tags} options={known} onChange={setTags} onCreate={createTag} /></Row>
+    </Group>
+    <Group cn="卡头「记到」那一行" en="FLAT">
+      <Row title="flat" desc="和这一行字一个样子，点一下就地改">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: '330 14px/1 var(--f-cn)', color: 'var(--mute)' }}>记到
+          <ProjectPicker id="pk-flat-project" flat value={flatProject} options={projects} onChange={setFlatProject} onCreate={createProject} />
+          <TagPicker id="pk-flat-tags" flat value={flatTags} options={known} onChange={setFlatTags} onCreate={createTag} /></span>
+      </Row>
+    </Group>
+  </SplitLayout>;
 }
 
 function HomeMock() {
