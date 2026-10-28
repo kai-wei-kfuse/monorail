@@ -164,7 +164,7 @@ function PartsMock() {
     <ToastStack onClose={() => {}} items={[{ id: '1', en: 'DEADLINE', title: '待办期限提醒', text: '「查服务器」还有 1 小时到期。' }]} />
     {menu && <ContextMenu {...menu} onClose={() => setMenu(null)} items={[
       { label: '开始', keys: 'Space', onSelect: () => {} }, { label: '缩小成悬浮小窗', keys: 'M', onSelect: () => {} }, 'divider',
-      { label: '窗口置顶', checked: true, onSelect: () => {} }, { label: '今天不再出卡', onSelect: () => {}, disabled: true }]} />}
+      { label: '窗口置顶', checked: true, onSelect: () => {} }, { label: '开启小窗口', onSelect: () => {}, disabled: true }]} />}
     {dlg && <Dialog en="TIMEBOX" title="还差 15 分钟" onClose={() => setDlg(false)}
       footer={<><Button onClick={() => setDlg(false)}>沿方向继续</Button><Button tone="ink" onClick={() => setDlg(false)}>就到这</Button></>}>
       选「就到这」照样算完成，按实际时长记录。</Dialog>}

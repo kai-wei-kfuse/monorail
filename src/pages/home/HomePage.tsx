@@ -86,7 +86,7 @@ type DialogState = { kind: 'short'; cardId: string; remaining: number; at: strin
   | { kind: 'manual' } | null;
 
 /**
- * 首页：只显示一件事。按 home.mode 显示任务卡、引导卡、休息卡、回顾卡，或「今天不再出卡」。
+ * 首页：只显示一件事。按 home.mode 显示任务卡、引导卡、休息卡或回顾卡。
  * completeAt：小窗里点了完成、主窗口还原以后，由外壳传进来，接着走完成流程（架构 §5.5）。
  * shrinkFor：跳过信号里选了「拆小」，由外壳传进来卡 id，打开缩小对话框。
  */

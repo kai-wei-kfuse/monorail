@@ -8,7 +8,6 @@ import { TaskCard } from '../../pages/home/TaskCard';
 import type { TaskCardView } from '../../pages/home/TaskCard';
 import { CardActions } from '../../pages/home/CardActions';
 import { GuideCard } from '../../pages/home/GuideCard';
-import { ConfirmLink } from '../../pages/home/ConfirmLink';
 import { RestCard } from '../../pages/home/RestCard';
 import { ReviewCard } from '../../pages/home/ReviewCard';
 import { playAfterWipe, playColdIntro } from '../../pages/home/intro';
@@ -67,7 +66,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
   return <div ref={app} style={{ height: '100%' }}><Frame titleBar={title} statusBar={dock}>
     <div ref={stage} style={{ display: 'grid', minHeight: 0 }} onDoubleClick={e => { if (!(e.target as HTMLElement).closest('.title, .title-edit')) setWipe(true); }}>
       {(page === 'card' || page === 'over') && <TaskCard view={view} look={look} titleScale={65} onEditContent={(_, text) => setContent(text)}
-        corner={page === 'over' ? <ConfirmLink label="今天不再出卡" confirmLabel="确认今天不再出卡？" onConfirm={() => {}} /> : <span className="c-hint">还没有主线</span>}
+        corner={<span className="c-hint">还没有主线</span>}
         actions={<CardActions running shrink={page === 'over' ? 'max' : 'ok'} onStart={() => {}} onComplete={() => {}} onShrink={() => {}} onRedraw={() => {}} />}
         fx={wipe && <Wipe no="支" meta="支线 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => { setWipe(false); playAfterWipe(stage.current!); }} />} />}
       {page === 'guide' && <GuideCard kind="setMain" look={look} onAction={() => {}} />}
