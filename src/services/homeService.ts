@@ -6,6 +6,20 @@ import { alignInTx, startCardInTx, editContentInTx, editMetaInTx } from './cardS
 import { drawInTx } from './dealService';
 
 export interface Range { start: string; end: string }
+export const manual = (ctx: Ctx, value: Omit<EntryTemplate, 'card_id'>, start: string, end: string, at: string) =>
+  action(ctx, at, tx => tracking.manualInTx(tx, { ...value, card_id: null }, start, end).id);
+export const overlaps = (ctx: Ctx, start: string, end: string, at = ctx.now()) =>
+  tracking.overlaps(ctx.repos.times.snapshot(), start, end, at);
+export const startPreset = (ctx: Ctx, presetId: string, at: string) => action(ctx, at, tx => {
+  const preset = tx.settings.lists.presets.find(item => item.id === presetId);
+  if (!preset) throw new Error('预设不存在');
+  const value = { description: preset.name, project: preset.project, tags: preset.tags, card_id: null };
+  if (preset.mode === '插入') tracking.insertInTx(tx, value);
+  else {
+    const from = tx.state.pending_at ?? at; clearPending(tx);
+    tracking.startInTx(tx, value, from); tx.state.current_card = null; tx.state.home_mode = 'blank';
+  }
+});
 function template(tx: Transaction, activity: string): EntryTemplate {
   const preset = tx.settings.lists.presets.find(preset => preset.id === activity);
   if (preset) return { description: preset.name, project: preset.project, tags: preset.tags, card_id: null };

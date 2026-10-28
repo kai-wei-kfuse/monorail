@@ -41,6 +41,7 @@ export function projectHome(input: ProjectionInput): HomeSlice {
     entry: current ? { id: current.id, description: current.description, project: current.project, tags: current.tags,
       startedAt: current.started_at, cardId: current.card_id, paused: current.kind === '暂停', kind: current.kind } : null,
     pending: state.pending_id ? { id: state.pending_id, startedAt: state.pending_at! } : null,
+    resumeDescription: entries.find(entry => entry.id === state.resume_entry_id)?.description ?? null,
     dataVersion: version,
   };
 }

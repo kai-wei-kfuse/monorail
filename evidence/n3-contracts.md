@@ -84,5 +84,38 @@ deleteInTx(tx, entryId)
 ## 后续阶段边界
 
 N3 负责把 TimerBar、TimeField 等组件接到这些真实接口；两种首页布局规则仍由 N3 验收。
-预设收藏管理、就地创建项目/标签、完整任务池表单与想法转多项属于 N4；不能把现有纯 UI 组件误称为已接入功能。
+完整任务池表单与想法转多项属于 N4；不能把现有纯 UI 组件误称为已接入功能。
 N5 日历/列表、N6 独立小窗仍按原计划实施。
+
+## N3 缺口补齐（2026-10-28）
+
+`homeSlice.resumeDescription: string | null` 精确读取 `state.resume_entry_id` 指向条目的描述，无目标为 null。
+Claude：将 `TimerView.paused` 接到该字段，删除 `pages/home/timerView.ts` 的 `pausedTarget` 倒推。
+
+```ts
+// services/homeService.ts
+manual(ctx, { description, project, tags }, start: string, end: string, at: string): Promise<string> // 新条目 id
+overlaps(ctx, start: string, end: string, at = ctx.now()): Coverage[] // 同步只读，无事务、无发布
+startPreset(ctx, presetId: string, at: string): Promise<void>
+// services/presetService.ts
+createProject(ctx, name: string, at: string): Promise<{ name: string; color: string }>
+addFavorite(ctx, { description, project, tags }, at: string): Promise<string>
+favorite(ctx, entryId: string, at: string): Promise<string>
+editFavorite(ctx, id: string, { description, project, tags }, at: string): Promise<void>
+removeFavorite(ctx, id: string, at: string): Promise<void>
+reorderFavorites(ctx, ids: string[], at: string): Promise<void>
+```
+
+手动补录走 `manualInTx`，E1 共存，只有待机让位；overlaps 排除待机，from/to 是精确相交区间（还带 Coverage 的项目、标签、卡 id）。非法范围抛错。
+创建项目拒绝空白、系统五项、未分类和已有名字；自动生成不重复 RGB 色值。收藏同名不新增，返回已有 id，不存卡引用。
+排序必须包含当前所有收藏一次；弹层预设的相对次序不变。收藏相关读取、验证和写入均在同一事务内，避免并发覆盖。
+Claude：替换 actions 中的临时 addFavorite/reorderFavorites；启用 ManualForm 和就地新建项目；数字键可以直接调用 startPreset。
+
+### N3 简报
+
+- 已实现上述接口，未修改 UI/app 文件。
+- 新增服务测试覆盖准确回到目标、E1 共存/查询无副作用、并发项目配色、保留名拒绝、收藏并发去重/编辑/删除/排序、待确认幂等与收藏起点。
+- Windows 实际窗口、ManualForm 接线、快捷键和覆盖提示外观未实测，待 Claude 接线后验收。
+- 下次发版必须包含 cbe1b11；本次不推送、不发布。
+
+验证：npm run check 通过（52 个文件、341 条测试）；npm run build 通过。证据：n3-check.log、n3-build.log。
