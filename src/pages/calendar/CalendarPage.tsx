@@ -4,7 +4,7 @@ import { Segmented } from '../../ui/controls/Segmented';
 import { Switch } from '../../ui/controls/Switch';
 import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import { Icon } from '../../ui/icons/Icon';
-import { activityDayStart } from '../../shared/time';
+import { activityDayStart, addDays } from '../../shared/time';
 import { isoWeek, viewDays } from './grid';
 import { CalendarBoard } from './CalendarBoard';
 import type { CalEntry } from './CalendarBoard';
@@ -44,12 +44,15 @@ function useNow(period = 30_000): number {
  * 日历页（设计文档「计时 · 日历」）：日 / 周视图，周一开始；每天从日边界画到次日日边界。
  * 条目按项目上色，待机可以隐藏。点一条打开弹窗；新建以后也直接打开弹窗，好填描述。
  */
-export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapMinutes, showIdle, isIdle, actions }:
+export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapMinutes, showIdle, isIdle, actions, onRange }:
   { entries: readonly CalendarEntry[]; projects: ProjectOption[]; knownTags: string[]; boundaryHour: number; snapMinutes: number;
-    showIdle: boolean; isIdle: (e: CalEntry) => boolean; actions: CalendarActions }) {
+    showIdle: boolean; isIdle: (e: CalEntry) => boolean; actions: CalendarActions; onRange?: (start: number, end: number) => void }) {
   const now = useNow();
   const [view, setView] = useState<'day' | 'week'>('week'), [shift, setShift] = useState(0), [pop, setPop] = useState<{ id: string; x: number; y: number } | null>(null);
   const days = viewDays(now, boundaryHour, view, shift), today = activityDayStart(now, boundaryHour);
+  // 看的是哪几天交给接线层，它按这个范围查条目
+  const first = days[0], end = addDays(days[days.length - 1], 1);
+  useEffect(() => { onRange?.(first, end); }, [first, end, onRange]);
   const colorOf = (name: string) => projects.find(p => p.name === name)?.color ?? 'var(--mute-2)';
   const open = pop && entries.find(e => e.id === pop.id);
   const no = view === 'day' ? pad(new Date(days[0]).getDate()) : `W${isoWeek(days[3])}`;

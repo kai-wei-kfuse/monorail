@@ -9,15 +9,20 @@ import { defaults } from '../../shared/settings';
 import { appStore, publishProjection } from '../../store/appStore';
 import { HomePage } from '../../pages/home/HomePage';
 import { createActions } from '../actions';
+import { CalendarScreen, ListScreen } from '../TimeScreens';
+import * as edit from '../../services/timeEditService';
+import type { Ctx } from '../../services/commit';
 import type { Actions } from '../actions';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
 
 /**
  * 首页接线预览（只在开发时用）：内存文件系统 + 真的仓库和 service，发布到真的 appStore，首页用真的 actions。
- * 一个主线任务带两张卡，两个收藏。下面列出条目和待确认，方便截图核对。刷新页面数据就清空。
+ * 一个主线任务带两张卡，两个收藏，今天上午两条记录。下面列出条目和待确认，方便截图核对。刷新页面数据就清空。
+ * &view=calendar / list 换成日历页、列表页（真的 CalendarScreen / ListScreen）。
  */
 export function LivePreview() {
-  const [actions, setActions] = useState<Actions | null>(null), [errors, setErrors] = useState<string[]>([]);
+  const [actions, setActions] = useState<Actions | null>(null), [ctx, setCtx] = useState<Ctx | null>(null), [errors, setErrors] = useState<string[]>([]);
+  const view = new URLSearchParams(location.search).get('view');
   const entries = useStore(appStore, s => s.entries), home = useStore(appStore, s => s.home);
   useEffect(() => { void (async () => {
     const settings = structuredClone(defaults);
@@ -32,9 +37,19 @@ export function LivePreview() {
       blocking: false, task_id: 'job', card_id: null, tags: [], attachments: [] }, i + 1), id: 'card' + i }));
     await repos.transact(crypto.randomUUID(), await Promise.all([repos.tasks.write(task, null), ...cards.map(c => repos.cards.write(c, null))]));
     await run(ctx, async tx => { tx.state.home_mode = 'blank'; });
+    const morning = (h: number) => { const d = new Date(); d.setHours(h, 0, 0, 0); return d.getTime(); };
+    await edit.create(ctx, morning(9), morning(10), at, { description: '学 408', project: '学习', tags: ['408'] });
+    await edit.create(ctx, morning(10), morning(11) - 30 * 60_000, at, { description: '回消息', project: '工作', tags: [] });
+    setCtx(ctx);
     setActions(createActions(ctx, e => setErrors(l => [...l, e instanceof Error ? e.message : String(e)])));
   })(); }, []);
-  if (!actions) return <p style={{ padding: 32 }}>准备数据…</p>;
+  if (!actions || !ctx) return <p style={{ padding: 32 }}>准备数据…</p>;
+  const report = (e: unknown) => setErrors(l => [...l, e instanceof Error ? e.message : String(e)]);
+  if (view === 'calendar' || view === 'list') return <div style={{ height: '100vh', display: 'grid', gridTemplateRows: 'minmax(0, 1fr) auto', padding: '14px 16px' }}>
+    <div style={{ minHeight: 0, display: 'grid' }}>{view === 'calendar' ? <CalendarScreen ctx={ctx} report={report} /> : <ListScreen ctx={ctx} report={report} />}</div>
+    <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)' }}>{errors.length > 0 && `出错：${errors.join(' / ')}`}
+      <ol>{entries.map(e => <li key={e.id}>{e.description} [{e.project}{e.tags.map(t => ' #' + t).join('')}] {new Date(e.started_at).toTimeString().slice(0, 5)}–{e.ended_at ? new Date(e.ended_at).toTimeString().slice(0, 5) : '现在'}</li>)}</ol></div>
+  </div>;
   const hms = (iso: string) => new Date(iso).toTimeString().slice(0, 8);
   return <div style={{ height: '100vh', display: 'grid', gridTemplateRows: 'minmax(0, 1fr) auto', padding: '14px 16px', gap: 8 }}>
     <HomePage actions={actions} intro={null} completeAt={null} onCompleteConsumed={() => {}} shrinkFor={null} onShrinkConsumed={() => {}}

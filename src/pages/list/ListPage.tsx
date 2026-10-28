@@ -26,10 +26,13 @@ function useNow(): number {
  * 列表页（设计文档「计时 · 列表」，参照 Toggl Track 的 List view）：和日历看的是同一份条目，按时间倒序。
  * 默认最近 7 天、不显示待机；顶部按描述、项目、#标签筛选；底部「再往前 7 天」。
  */
-export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, actions }:
-  { entries: readonly ListEntry[]; projects: ProjectOption[]; knownTags: string[]; boundaryHour: number; isIdle: (e: ListEntry) => boolean; actions: ListActions }) {
+export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, actions, showIdle, onShowIdle, onDays }:
+  { entries: readonly ListEntry[]; projects: ProjectOption[]; knownTags: string[]; boundaryHour: number; isIdle: (e: ListEntry) => boolean; actions: ListActions;
+    showIdle: boolean; onShowIdle: (on: boolean) => void; onDays?: (days: number) => void }) {
   const now = useNow();
-  const [days, setDays] = useState(7), [showIdle, setShowIdle] = useState(false), [query, setQuery] = useState(''), [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  const [days, setDays] = useState(7), [query, setQuery] = useState(''), [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  // 看最近几天交给接线层，它按这个查条目；显示待机和日历共用一个设置
+  useEffect(() => { onDays?.(days); }, [days, onDays]);
   const list = listDays(entries, { now, boundaryHour, days, showIdle, query, isIdle });
   const ctx: RowContext = { now, projects, knownTags, isIdle, overlaps: overlapping(entries, now, isIdle), actions };
   const today = activityDayStart(now, boundaryHour);
@@ -37,7 +40,7 @@ export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, a
   const toggle = (key: string) => setOpen(prev => { const next = new Set(prev); if (!next.delete(key)) next.add(key); return next; });
   const tools = <>
     <TextInput className="lv-q" type="search" aria-label="筛选" placeholder="筛选：描述、项目、#标签" value={query} onChange={e => setQuery(e.target.value)} />
-    <span className="pg-switch"><Switch checked={showIdle} onChange={setShowIdle} label="显示待机" /><span>显示待机</span></span>
+    <span className="pg-switch"><Switch checked={showIdle} onChange={onShowIdle} label="显示待机" /><span>显示待机</span></span>
   </>;
   return <PageFrame no={pad(count)} en={`LIST · ${days} DAYS`} cn="列表" tools={tools}
     desc="点文字直接改；时间填 9:30，时长填 1h 30m；▶ 继续；同一天相同的记录合成一组，点左边的数字展开。">

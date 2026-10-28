@@ -25,6 +25,7 @@ import { createActions } from './actions';
 import type { Actions } from './actions';
 import { readyRoutes } from './routes';
 import { BackpackScreen } from './BackpackScreen';
+import { CalendarScreen, ListScreen } from './TimeScreens';
 import { SettingsScreen } from './SettingsScreen';
 import { ReviewScreen } from './ReviewScreen';
 import { SavedBadge } from '../pages/settings/SettingsPage';
@@ -190,6 +191,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
           onGuide={onGuide} onOpenReview={() => setPage('review')} />}
+        {page === 'calendar' && <CalendarScreen ctx={ctx} report={report} />}
+        {page === 'list' && <ListScreen ctx={ctx} report={report} />}
         {page === 'review' && <ReviewScreen ctx={ctx} report={report} />}
         {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} updates={updates} />}
         {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} />}

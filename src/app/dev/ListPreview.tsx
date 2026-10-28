@@ -21,7 +21,7 @@ export function ListPreview() {
     const now = Date.now(), iso = (t: number) => new Date(t).toISOString();
     return [...previewEntries(now), { id: 'a2', started_at: iso(now - 8 * HOUR), ended_at: iso(now - 7 * HOUR), description: '学 408', project: '学习', tags: ['408'], card_id: null }];
   });
-  const [projects, setProjects] = useState(PREVIEW_PROJECTS), [tags, setTags] = useState(PREVIEW_TAGS);
+  const [projects, setProjects] = useState(PREVIEW_PROJECTS), [tags, setTags] = useState(PREVIEW_TAGS), [showIdle, setShowIdle] = useState(false);
   const edit = (id: string, f: (e: ListEntry) => ListEntry | null) => setEntries(list => list.flatMap(e => e.id !== id ? [e] : (r => r ? [r] : [])(f(e))));
   const iso = (t: number) => new Date(t).toISOString();
   const title = <TitleBar name="单轨" tabs={TABS} active="list" onTab={() => {}}>
@@ -29,7 +29,7 @@ export function ListPreview() {
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
   return <Frame titleBar={title} statusBar={<StatusBar left={<span>快捷活动</span>} right={<><span>主线 ✓</span><span>支线 ·</span></>} />}>
-    <ListPage entries={entries} projects={projects} knownTags={tags} boundaryHour={4} isIdle={e => e.project === '待机'} actions={{
+    <ListPage entries={entries} projects={projects} knownTags={tags} boundaryHour={4} isIdle={e => e.project === '待机'} showIdle={showIdle} onShowIdle={setShowIdle} actions={{
       patch: (id, patch) => edit(id, e => ({ ...e, ...patch })),
       setStart: (id, text) => edit(id, e => { const t = atClock(Date.parse(e.started_at), text); return Number.isFinite(t) ? { ...e, started_at: iso(t) } : e; }),
       setEnd: (id, text) => edit(id, e => { const t = atClock(Date.parse(e.started_at), text); return Number.isFinite(t) && t > Date.parse(e.started_at) ? { ...e, ended_at: iso(t) } : e; }),
