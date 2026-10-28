@@ -4,7 +4,7 @@ import { createRepos } from '../data/repos';
 import { defaults } from '../shared/settings';
 import { convert } from '../domain/record/convert';
 import type { Card } from '../domain/card/card';
-import type { Project } from '../domain/project/project';
+import type { Task } from '../domain/task/task';
 import { createContext, run } from './commit';
 import type { Snapshot } from './commit';
 import type { ReminderPlan } from '../domain/reminders';
@@ -13,7 +13,7 @@ export const at = (minute = 0) => new Date(2026, 9, 27, 10, minute).toISOString(
 export function fixture() {
   let now = at();
   const settings = structuredClone(defaults);
-  settings.lists.quickActivities = [{ id: 'wc', name: '厕所', category: '生活' }];
+  settings.lists.quickActivities = [{ id: 'wc', name: '厕所', project: '生活' }];
   const publish = vi.fn<(snapshot: Snapshot) => void>();
   const update = vi.fn<(plans: ReminderPlan[]) => Promise<void>>(async () => {}), random = vi.fn(() => 0);
   const repos = createRepos(new MemoryFs());
@@ -25,14 +25,14 @@ export function fixture() {
 export type Fixture = ReturnType<typeof fixture>;
 export function card(id: string, fields: Partial<Card> = {}): Card {
   return { ...convert({ id: crypto.randomUUID(), text: id, kind: '待办', created_at: at(), due_at: null,
-    blocking: false, project_id: null, card_id: null, tags: [], attachments: [] }, 1), id, ...fields };
+    blocking: false, task_id: null, card_id: null, tags: [], attachments: [] }, 1), id, ...fields };
 }
-export const project = (id: string, slot: Project['slot'] = '主线', slot_index = 1): Project =>
+export const task = (id: string, slot: Task['slot'] = '主线', slot_index = 1): Task =>
   ({ id, name: id, slot, slot_index, status: '进行中', created_at: at(), bet_ends_at: null });
-export async function seed(f: Fixture, cards: Card[], projects: Project[] = []) {
+export async function seed(f: Fixture, cards: Card[], tasks: Task[] = []) {
   await f.ctx.repos.transact(crypto.randomUUID(), await Promise.all([
     ...cards.map(value => f.ctx.repos.cards.write(value, null)),
-    ...projects.map(value => f.ctx.repos.projects.write(value, null)),
+    ...tasks.map(value => f.ctx.repos.tasks.write(value, null)),
   ]));
   await run(f.ctx, async tx => { tx.state.current_card = cards[0]?.id ?? null; tx.state.home_mode = cards.length ? 'task' : 'guide'; });
 }

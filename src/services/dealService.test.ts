@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { at, card, fixture, getCard, open, project, seed } from './serviceFixture';
+import { at, card, fixture, getCard, open, task, seed } from './serviceFixture';
 import { refresh, refreshInTx } from './dealService';
 import { start, redraw } from './cardService';
 import { insert } from './timerService';
@@ -35,26 +35,26 @@ it('exhausting a round clears exclusions and keeps dealing instead of showing an
 });
 it.each([[0, 'm'], [0.599999, 'm'], [0.6, 's'], [0.999999, 's']] as const)('after both baselines, random %s respects the 1.5:1 main weight', async (random, selected) => {
   const f = fixture(); f.random.mockReturnValue(random);
-  await seed(f, [card('m', { project_id: 'main', order: 1 }), card('s', { order: 2 }),
+  await seed(f, [card('m', { task_id: 'main', order: 1 }), card('s', { order: 2 }),
     card('done-m', { status: '已完成', completed_day: '2026-10-27', completed_track: '主线' }),
-    card('done-s', { status: '已完成', completed_day: '2026-10-27', completed_track: '支线' })], [project('main')]);
+    card('done-s', { status: '已完成', completed_day: '2026-10-27', completed_track: '支线' })], [task('main')]);
   await refresh(f.ctx, at()); expect(f.home().card?.id).toBe(selected);
 });
 it('the next activity day recomputes the main baseline rather than using yesterday’s completion', async () => {
-  const f = fixture(); await seed(f, [card('m', { project_id: 'main' }), card('s', { order: 2 }),
-    card('done', { status: '已完成', completed_day: '2026-10-27', completed_track: '主线' })], [project('main')]);
+  const f = fixture(); await seed(f, [card('m', { task_id: 'main' }), card('s', { order: 2 }),
+    card('done', { status: '已完成', completed_day: '2026-10-27', completed_track: '主线' })], [task('main')]);
   await refresh(f.ctx, at()); expect(f.home().card?.id).toBe('s');
   const next = new Date(2026, 9, 28, 4).toISOString(); f.clock(next); await refresh(f.ctx, next);
   expect(f.home().card?.id).toBe('m');
 });
-it.each(['firstProject', 'setMain', 'splitMain', 'allDone'] as const)('projects the %s guide only with no candidate', async guide => {
+it.each(['firstTask', 'setMain', 'splitMain', 'allDone'] as const)('tasks the %s guide only with no candidate', async guide => {
   const f = fixture();
-  const projects = guide === 'firstProject' ? [] : [project('p', guide === 'setMain' ? '支线' : '主线')];
-  const cards = guide === 'allDone' ? [card('done', { project_id: 'p', status: '已完成' })] : [];
-  await seed(f, cards, projects); await refresh(f.ctx, at());
+  const tasks = guide === 'firstTask' ? [] : [task('p', guide === 'setMain' ? '支线' : '主线')];
+  const cards = guide === 'allDone' ? [card('done', { task_id: 'p', status: '已完成' })] : [];
+  await seed(f, cards, tasks); await refresh(f.ctx, at());
   expect(f.home()).toMatchObject({ mode: 'guide', guideKind: guide, card: null });
 });
-it('a loose candidate still deals without a main project and displays the main hint', async () => {
+it('a loose candidate still deals without a main task and displays the main hint', async () => {
   const f = fixture(); await seed(f, [card('a')]); await refresh(f.ctx, at());
   expect(f.home()).toMatchObject({ mode: 'task', noMainHint: true, baseline: { main: null, side: false } });
 });

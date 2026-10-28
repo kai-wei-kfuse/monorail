@@ -11,13 +11,13 @@ import { insertInTx, resumeInTx, insert, resume, backfillRange, backfillSwitch, 
 
 function fixture() {
   const settings = structuredClone(defaults);
-  settings.lists.quickActivities = [{ id: 'wc', name: '厕所', category: '生活' }, { id: 'video', name: '刷视频', category: '娱乐' }];
+  settings.lists.quickActivities = [{ id: 'wc', name: '厕所', project: '生活' }, { id: 'video', name: '刷视频', project: '娱乐' }];
   return createContext({ repos: createRepos(new MemoryFs()), settings, id: () => crypto.randomUUID(), now: () => '2026-10-27T13:00:00Z',
     publish: () => {}, log: async () => {}, reminders: { update: async () => {} } });
 }
 async function startedCard(ctx: ReturnType<typeof fixture>, at: string) {
   const id = crypto.randomUUID();
-  await saveRecord(ctx, { id, text: '学 Python', kind: '待办', created_at: at, due_at: null, blocking: false, project_id: null, card_id: null, tags: [], attachments: [] });
+  await saveRecord(ctx, { id, text: '学 Python', kind: '待办', created_at: at, due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [] });
   await reconcile(ctx);
   await start(ctx, `card-${id}`, at);
   return `card-${id}`;
@@ -34,14 +34,14 @@ describe('timerService', () => {
     await resume(ctx, '2026-10-27T10:20:00Z');
     const open = (await all(ctx)).find(s => s.ended_at === null)!;
     expect(open.card_id).toBe(card);
-    expect(open.category).toBe('支线');
+    expect(open.project).toBe('支线');
   });
   it('resume returns to idle when the card is no longer in progress', async () => {
     const ctx = fixture();
     await insert(ctx, 'wc', '2026-10-27T10:00:00Z');
     await resume(ctx, '2026-10-27T10:05:00Z');
     const open = (await all(ctx)).find(s => s.ended_at === null)!;
-    expect(open).toMatchObject({ card_id: null, category: '待机', activity: '待机' });
+    expect(open).toMatchObject({ card_id: null, project: '待机', activity: '待机' });
   });
   it('range backfill overrides history without changing the current activity (A1 example)', async () => {
     const ctx = fixture(), card = await startedCard(ctx, '2026-10-27T10:00:00Z');
@@ -84,18 +84,18 @@ describe('timerService', () => {
     expect(await settleOffline(ctx, { start: '2026-10-27T11:00:00.000Z', end: '2026-10-27T11:04:00.000Z' })).toBeNull();
     let view = effective(await all(ctx), '2026-10-27T12:00:00Z');
     expect(total(view, s => s.card_id === card)).toBe(60);
-    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ category: '待机', started_at: gap.end });
+    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ project: '待机', started_at: gap.end });
     expect((await ctx.repos.cards.get(card))?.value.status).toBe('待做');
     expect((await ctx.repos.state.read()).current_card).toBeNull();
     await answerOffline(ctx, gap, '睡觉', '2026-10-27T12:00:00Z');
     view = effective(await all(ctx), '2026-10-27T12:00:00Z');
-    expect(total(view, s => s.activity === '睡觉' && s.category === '睡眠')).toBe(120);
+    expect(total(view, s => s.activity === '睡觉' && s.project === '睡眠')).toBe(120);
     expect(total(view, s => s.activity === '离线')).toBe(0);
   });
   it('free-typed names are accepted and blank ones rejected', async () => {
     const ctx = fixture();
     await insert(ctx, ' 拿快递 ', '2026-10-27T07:00:00Z');
-    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '拿快递', category: '生活' });
+    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '拿快递', project: '生活' });
     await expect(insert(ctx, '  ', '2026-10-27T07:01:00Z')).rejects.toThrow('不能为空');
   });
   it('sleep releases the card in progress and stops dealing for the activity day', async () => {
@@ -104,12 +104,12 @@ describe('timerService', () => {
     expect((await ctx.repos.cards.get(card))?.value.status).toBe('待做');
     const state = await ctx.repos.state.read();
     expect(state).toMatchObject({ current_card: null, stopped_day: '2026-10-27' });
-    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '睡觉', category: '睡眠' });
+    expect((await all(ctx)).find(s => s.ended_at === null)).toMatchObject({ activity: '睡觉', project: '睡眠' });
   });
   it('a segment opened and closed in one transaction is written once', async () => {
     const ctx = fixture(), card = await startedCard(ctx, '2026-10-27T10:00:00Z');
     await run(ctx, async tx => {
-      await insertInTx(tx, '2026-10-27T10:10:00Z', { name: '厕所', category: '生活' });
+      await insertInTx(tx, '2026-10-27T10:10:00Z', { name: '厕所', project: '生活' });
       await resumeInTx(tx, '2026-10-27T10:10:00Z');
     }, '2026-10-27T10:10:00Z');
     const rows = await all(ctx);
@@ -120,6 +120,6 @@ describe('timerService', () => {
     const ctx = fixture();
     await insert(ctx, 'wc', '2026-10-27T07:00:00Z');
     await wake(ctx, '2026-10-27T07:30:00Z');
-    expect((await all(ctx)).find(s => s.ended_at === null)?.category).toBe('待机');
+    expect((await all(ctx)).find(s => s.ended_at === null)?.project).toBe('待机');
   });
 });

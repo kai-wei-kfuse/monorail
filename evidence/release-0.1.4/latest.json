@@ -1,0 +1,11 @@
+{
+  "version": "0.1.4",
+  "notes": "# 单轨 0.1.4\r\n\r\n- 首页卡片：双击标题可以直接改内容，回车保存，Esc 不改。正在计时的那一段保留原来的名字，0.2.0 起会跟着改。\r\n- 快捷活动：弹层最后可以直接写一项临时活动，回车就开始计；勾上「存为快捷活动」会加进列表。\r\n- 不属于项目的卡改叫「支线」，原来叫「散件」。\r\n- 快捷键可以带 Win 键。很多 Win 组合被系统占用，注册失败时会提示，原来的快捷键照常可用。\r\n\r\n私有开发版需安装 GitHub CLI，并通过 gh auth login 登录可读取此仓库的账号。\r\n",
+  "pub_date": "2026-10-28T06:25:45.850Z",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://api.github.com/repos/kai-wei-kfuse/monorail/releases/assets/684061834",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSbVJhUmZUNUxzbnNSRmdOM0pwOU96OE83SFZFcitMbjBKOVlJdnlrTm05WkJyaHBqTmhSN1JEV2M1bm5mK2VuQi9pWUlJbTNCb1EvTVBWR3dVd0lWNFY2QnQzNENMMlFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTY4NzM3CWZpbGU65Y2V6L2oXzAuMS40X3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjEuNApiVGRuSUNGQUhuNlJiTjRjWjFubDRMRjVRMm5pL1F0TTN3aVhsdTVQK2Zkd1NmbC9QRW1RMm1EU0k4Ty9yZnhKSDd2aDdsUGNTd1RLUWlVcWJFbGZDZz09Cg=="
+    }
+  }
+}

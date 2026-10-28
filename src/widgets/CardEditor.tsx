@@ -12,16 +12,16 @@ import './forms.css';
 
 export interface CardFields {
   content: string; type: '结果卡' | '时间盒卡'; timeboxMinutes: number | null;
-  blocking: boolean; dueAt: string | null; noShrink: boolean; projectId: string | null;
+  blocking: boolean; dueAt: string | null; noShrink: boolean; taskId: string | null;
 }
-export const NEW_CARD: CardFields = { content: '', type: '结果卡', timeboxMinutes: null, blocking: false, dueAt: null, noShrink: false, projectId: null };
+export const NEW_CARD: CardFields = { content: '', type: '结果卡', timeboxMinutes: null, blocking: false, dueAt: null, noShrink: false, taskId: null };
 
 /**
  * 编辑或新建一张卡。卡必须能明确判断是否完成：要么是一个具体结果，要么是一段计满的时间。
  * PASS 只对能 PASS 的卡开放；已缩小的卡要先处理它缩小出来的卡（附录 A6），这时按钮置灰并说明原因。
  */
-export function CardEditor({ initial, isNew, projects, defaultTimebox, passBlocked, onSave, onPass, onCancel }:
-  { initial: CardFields; isNew: boolean; projects: { id: string; name: string }[]; defaultTimebox: number;
+export function CardEditor({ initial, isNew, tasks, defaultTimebox, passBlocked, onSave, onPass, onCancel }:
+  { initial: CardFields; isNew: boolean; tasks: { id: string; name: string }[]; defaultTimebox: number;
     passBlocked?: string; onSave: (fields: CardFields, at: string) => void; onPass?: (at: string) => void; onCancel: () => void }) {
   const [f, setF] = useState<CardFields>(initial);
   const set = (patch: Partial<CardFields>) => setF(prev => ({ ...prev, ...patch }));
@@ -43,8 +43,8 @@ export function CardEditor({ initial, isNew, projects, defaultTimebox, passBlock
           onChange={timeboxMinutes => set({ timeboxMinutes })} />}
       </div></div>
       <div className="fm-f"><span>所属项目</span>
-        <Dropdown label="所属项目" value={f.projectId ?? ''} onChange={id => set({ projectId: id || null })}
-          options={[{ value: '', label: LOOSE.option }, ...projects.map(p => ({ value: p.id, label: p.name }))]} />
+        <Dropdown label="所属项目" value={f.taskId ?? ''} onChange={id => set({ taskId: id || null })}
+          options={[{ value: '', label: LOOSE.option }, ...tasks.map(p => ({ value: p.id, label: p.name }))]} />
       </div>
       <div className="fm-f"><span>期限</span><div className="fm-row">
         <DateTimeInput label="期限" value={f.dueAt} onChange={dueAt => set({ dueAt })} />

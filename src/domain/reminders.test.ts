@@ -4,12 +4,12 @@ import type { Card } from './card/card';
 import type { Segment } from './timeline/segment';
 
 const card = (id: string, status: Card['status'], due_at: string | null): Card => ({
-  id, source_record_id: null, content: id, created_at: '2026-10-27T00:00:00Z', due_at, blocking: false, project_id: null,
+  id, source_record_id: null, content: id, created_at: '2026-10-27T00:00:00Z', due_at, blocking: false, task_id: null,
   status, type: '结果卡', order: 0, timebox_minutes: null, no_shrink: false, shrunk_from: null, shrink_level: 0,
   continued_from: null, skip_count: 0, completed_at: null, completed_day: null, completed_track: null, progress_note: '',
 });
 const open: Segment = { id: 's1', seq: 1, started_at: '2026-10-27T08:00:00Z', ended_at: null, activity: '学 Python',
-  category: '主线', card_id: null, kind: '普通', source: '手动', resume_card_id: null };
+  project: '主线', card_id: null, kind: '普通', source: '手动', resume_card_id: null };
 const base = { deadlineLeadMinutes: 60, longActivityMinutes: 240 };
 
 describe('planReminders', () => {

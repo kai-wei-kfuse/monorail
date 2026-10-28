@@ -19,7 +19,7 @@ export async function registerRefusalInTx(tx: Transaction): Promise<void> {
   const suggestion = pool.length ? pool[Math.floor(tx.random() * pool.length)].name : null;
   tx.state.rest = { suggestion, started_at: tx.at };
   tx.state.home_mode = 'rest';
-  await switchInTx(tx, tx.at, { activity: '休息', category: '休息', card_id: null, kind: '普通', resume_card_id: null }, { source: '自动' });
+  await switchInTx(tx, tx.at, { activity: '休息', project: '休息', card_id: null, kind: '普通', resume_card_id: null }, { source: '自动' });
 }
 
 /** The answer changes the effective history through an appended overlay, never an edit. */
@@ -31,7 +31,7 @@ export const returnFromRest = (ctx: Ctx, answer: string, at: string) => run(ctx,
   const activity = answer.trim();
   if (activity && Date.parse(at) > Date.parse(rest.started_at)) {
     await backfillRangeInTx(tx, at, { start: rest.started_at, end: at },
-      { activity, category: '休息', card_id: null, kind: '普通', resume_card_id: null }, '自动');
+      { activity, project: '休息', card_id: null, kind: '普通', resume_card_id: null }, '自动');
   }
   const response = restAnswer(tx.state.rest_answers, answer, tx.settings.subconsciousCount);
   tx.state.rest_answers = response.counts;

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import type { MakeRoom, ProjectDraft } from '../../shared/backpack';
+import type { MakeRoom, TaskDraft } from '../../shared/backpack';
 import { Dialog } from '../../ui/overlay/Dialog';
 import { Button } from '../../ui/controls/Button';
 import { Segmented } from '../../ui/controls/Segmented';
 import { TextInput } from '../../ui/controls/TextInput';
 import '../../widgets/forms.css';
 
-export type SwitchMainDraft = ProjectDraft | { restoreId: string; makeRoom: MakeRoom };
+export type SwitchMainDraft = TaskDraft | { restoreId: string; makeRoom: MakeRoom };
 
 /**
  * 主线复盘里的「换一条主线」：新主线可以新建，也可以从冷藏的项目里放回一个；

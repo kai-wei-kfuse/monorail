@@ -5,6 +5,7 @@ import type { FileSystem } from './fs';
 import type { Write } from './journal';
 import { createWrite, committedWrite } from './journal';
 import { segmentSchema } from './schemas';
+import { fromV1, toV1, timingProjectFields } from './v1Codec';
 
 export class TimelogRepo {
   private index = new Map<string, Segment[]>();
@@ -24,7 +25,7 @@ export class TimelogRepo {
     return `timelog/${day}.md`;
   }
   private decode(text: string, path: string): Segment[] {
-    try { return z.array(segmentSchema).parse(parse(text)); }
+    try { return z.array(z.unknown().transform(value => segmentSchema.parse(fromV1(value, timingProjectFields)))).parse(parse(text)); }
     catch (error) { throw new Error(`${path}: invalid timelog`, { cause: error }); }
   }
   async readDay(day: string): Promise<Segment[]> {
@@ -65,7 +66,7 @@ export class TimelogRepo {
           segments[index] = segment;
         }
       }
-      output.push(createWrite(path, stringify(segments), before));
+      output.push(createWrite(path, stringify(segments.map(value => toV1(value, timingProjectFields))), before));
     }
     return output;
   }

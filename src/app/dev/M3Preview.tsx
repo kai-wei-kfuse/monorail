@@ -24,10 +24,10 @@ function reviewData(step: ReviewStep): ReviewData {
     period: '2026-W44', step, done: order.slice(0, order.indexOf(step)), betDue: true,
     recap: {
       completed: [
-        { id: 'c1', content: '找 3 个 JD', project: '找工作', day: '10-27', minutes: 35 },
-        { id: 'c2', content: '沿 [Python] 往下学 1 小时', project: '找工作', day: '10-28', minutes: 64 },
-        { id: 'c3', content: '查一下几台服务器有没有被攻击', project: '支线', day: '10-29', minutes: 22 }],
-      totals: [{ category: '主线', minutes: 412 }, { category: '支线', minutes: 180 }, { category: '生活', minutes: 95 }, { category: '休息', minutes: 40 }],
+        { id: 'c1', content: '找 3 个 JD', task: '找工作', day: '10-27', minutes: 35 },
+        { id: 'c2', content: '沿 [Python] 往下学 1 小时', task: '找工作', day: '10-28', minutes: 64 },
+        { id: 'c3', content: '查一下几台服务器有没有被攻击', task: '支线', day: '10-29', minutes: 22 }],
+      totals: [{ project: '主线', minutes: 412 }, { project: '支线', minutes: 180 }, { project: '生活', minutes: 95 }, { project: '休息', minutes: 40 }],
       notes: [{ id: 'n1', content: '沿 [Python] 往下学 1 小时', note: '看完装饰器，下一步写小练习' }],
     },
     addedIdeas: ['周末把书架整理成按主题分类'],
@@ -35,7 +35,7 @@ function reviewData(step: ReviewStep): ReviewData {
       right: { id: 'i2', text: '把读过的 Agent 文章整理成一份对比表', needs: '大量 token', lastTouchedAt: ago(48), isNew: false }, over: 2 },
     cold: { offered: [{ id: 'k1', text: '用树莓派做家里的温湿度看板', needs: '空闲树莓派', coldSince: ago(30) },
       { id: 'k2', text: '给常用命令写一个速查小工具', needs: null, coldSince: ago(75) }], poolFree: 1 },
-    bet: { projectId: 'p1', project: '找工作', betEndsAt: ago(0), betWeeks: 4 },
+    bet: { taskId: 'p1', task: '找工作', betEndsAt: ago(0), betWeeks: 4 },
     backpack: { inBackpack: [{ id: 'p1', name: '找工作', slot: '主线' }, { id: 'p2', name: '小游戏房间系统', slot: '支线' }], sideFree: true },
   };
 }
@@ -51,7 +51,7 @@ export function ReviewPreview({ step: initial }: { step: string }) {
 export function SettingsPreview({ sec: initial }: { sec: string }) {
   const [sec, setSec] = useState(initial), [saves, setSaves] = useState(0);
   const [s, setS] = useState<Settings>({ ...defaults, lists: { idleName: '待机',
-    quickActivities: [{ id: 'q1', name: '厕所', category: '生活' }, { id: 'q2', name: '拿快递', category: '生活' }, { id: 'q3', name: '刷视频', category: '休息' }],
+    quickActivities: [{ id: 'q1', name: '厕所', project: '生活' }, { id: 'q2', name: '拿快递', project: '生活' }, { id: 'q3', name: '刷视频', project: '休息' }],
     restPool: [{ id: 'r1', name: '眺望窗外' }, { id: 'r2', name: '走走' }] } });
   return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.1.0" dataDir="D:\\Notes\\monorail"
     onChange={(k, v) => { setS({ ...s, [k]: v }); setSaves(n => n + 1); }} onListsChange={lists => { setS({ ...s, lists }); setSaves(n => n + 1); }}

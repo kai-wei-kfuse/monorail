@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { at, card, fixture, getCard, open, project, seed, segments } from './serviceFixture';
+import { at, card, fixture, getCard, open, task, seed, segments } from './serviceFixture';
 import { start, complete, checkComplete, shrink, redraw, pass, stopToday, leaveTo, editContent } from './cardService';
 import { insert, resume, backfillRange } from './timerService';
 import { refresh } from './dealService';
@@ -47,12 +47,12 @@ it.each(['complete', 'shrink', 'redraw'] as const)('A2 %s ends the insert at the
   expect((await getCard(f, 'a')).status).toBe(action === 'complete' ? '已完成' : action === 'shrink' ? '已缩小' : '待做');
   expect(cardMilliseconds(segments(f), 'a', at(20))).toBe(10 * 60000);
   if (action === 'shrink') expect((await getCard(f, open(f).card_id!)).status).toBe('进行中');
-  else expect(open(f).category).toBe('待机');
+  else expect(open(f).project).toBe('待机');
   await expect(resume(f.ctx, at(20))).rejects.toThrow('没有插入');
 });
 it('A2 checks effective time without stopping, then completes at the original click across the day boundary', async () => {
   const f = fixture(), begin = new Date(2026, 9, 27, 3).toISOString(), click = new Date(2026, 9, 27, 3, 50).toISOString();
-  f.clock(begin); await seed(f, [card('a', { type: '时间盒卡', timebox_minutes: 60, project_id: 'main' })], [project('main')]);
+  f.clock(begin); await seed(f, [card('a', { type: '时间盒卡', timebox_minutes: 60, task_id: 'main' })], [task('main')]);
   await start(f.ctx, 'a', begin);
   f.clock(click);
   await backfillRange(f.ctx, { start: new Date(2026, 9, 27, 3, 20).toISOString(), end: new Date(2026, 9, 27, 3, 40).toISOString() }, 'wc', click);
@@ -62,19 +62,19 @@ it('A2 checks effective time without stopping, then completes at the original cl
   f.clock(new Date(2026, 9, 27, 4, 10).toISOString());
   await complete(f.ctx, 'a', click, '先到这里');
   expect(await getCard(f, 'a')).toMatchObject({ completed_at: click, completed_day: '2026-10-26', completed_track: '主线' });
-  expect(open(f)).toMatchObject({ category: '待机', started_at: click });
+  expect(open(f)).toMatchObject({ project: '待机', started_at: click });
   expect(cardMilliseconds(segments(f), 'a', f.ctx.now())).toBe(30 * 60000);
 });
 it('creates one independent continuation and repeated completion cannot create another', async () => {
-  const f = fixture(); await seed(f, [card('a', { blocking: true, due_at: at(60), project_id: 'main' })], [project('main')]);
+  const f = fixture(); await seed(f, [card('a', { blocking: true, due_at: at(60), task_id: 'main' })], [task('main')]);
   await start(f.ctx, 'a', at()); f.clock(at(5));
   await complete(f.ctx, 'a', at(5), '当前进度', true);
   await complete(f.ctx, 'a', at(5), '重复点击', true);
   const cards = (await f.ctx.repos.cards.list()).map(e => e.value), next = cards.find(c => c.id !== 'a')!;
   expect(cards).toHaveLength(2);
-  expect(next).toMatchObject({ status: '待做', continued_from: 'a', blocking: true, due_at: at(60), project_id: 'main', progress_note: '当前进度' });
+  expect(next).toMatchObject({ status: '待做', continued_from: 'a', blocking: true, due_at: at(60), task_id: 'main', progress_note: '当前进度' });
   expect((await f.ctx.repos.state.read()).current_card).toBe(next.id);
-  expect(open(f).category).toBe('待机');
+  expect(open(f).project).toBe('待机');
 });
 it('A6 completes a two-level chain restoring only the immediate parent and its progress', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
@@ -102,7 +102,7 @@ it.each([false, true])('stopping today releases the card and any insert (%s), th
   if (inserted) await insert(f.ctx, 'wc', at());
   await stopToday(f.ctx, at());
   expect((await getCard(f, 'a')).status).toBe('待做');
-  expect(open(f)).toMatchObject({ category: '待机', resume_card_id: null });
+  expect(open(f)).toMatchObject({ project: '待机', resume_card_id: null });
   const before = new Date(2026, 9, 28, 3, 59).toISOString(); f.clock(before); await refresh(f.ctx, before);
   expect(f.home().mode).toBe('stopped');
   const boundary = new Date(2026, 9, 28, 4).toISOString(); f.clock(boundary); await refresh(f.ctx, boundary);

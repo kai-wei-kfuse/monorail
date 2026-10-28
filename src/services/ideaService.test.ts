@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { at, fixture, project, seed } from './serviceFixture';
+import { at, fixture, task, seed } from './serviceFixture';
 import type { Fixture } from './serviceFixture';
 import { createRecord } from '../domain/record/record';
 import type { RecordEntry } from '../domain/record/record';
@@ -11,20 +11,20 @@ import { run } from './commit';
 
 function idea(fields: Partial<RecordEntry> = {}): RecordEntry {
   return { ...createRecord({ id: crypto.randomUUID(), text: '学点东西 #想法', kind: '想法', created_at: at(), due_at: null,
-    blocking: false, project_id: null, card_id: null, tags: [], attachments: [], needs: '服务器' }), ...fields };
+    blocking: false, task_id: null, card_id: null, tags: [], attachments: [], needs: '服务器' }), ...fields };
 }
 const records = async (f: Fixture) => (await f.ctx.repos.records.list()).map(entity => entity.value);
 async function ideas(f: Fixture, entries: RecordEntry[]) { await run(f.ctx, async tx => { entries.forEach(entry => tx.saveRecord(entry)); }); }
 
 it('A4 converts once in one transaction, retains the original idea and excludes it from pool limits', async () => {
-  const f = fixture(), source = idea({ attachments: ['attachments/note.txt'] }); await seed(f, [], [project('p')]); await ideas(f, [source]);
+  const f = fixture(), source = idea({ attachments: ['attachments/note.txt'] }); await seed(f, [], [task('p')]); await ideas(f, [source]);
   const transact = vi.spyOn(f.ctx.repos, 'transact');
-  const cardId = await convertIdea(f.ctx, source.id, { content: '写一个脚本', projectId: 'p' }, at(10));
+  const cardId = await convertIdea(f.ctx, source.id, { content: '写一个脚本', taskId: 'p' }, at(10));
   expect(transact).toHaveBeenCalledTimes(1);
   expect((await records(f))[0]).toMatchObject({ kind: '想法', pool: '已转待办', card_id: cardId, text: source.text, last_touched_at: at(10), attachments: source.attachments });
-  expect((await f.ctx.repos.cards.get(cardId))!.value).toMatchObject({ content: '写一个脚本', project_id: 'p', source_record_id: source.id });
+  expect((await f.ctx.repos.cards.get(cardId))!.value).toMatchObject({ content: '写一个脚本', task_id: 'p', source_record_id: source.id });
   expect(activeIdeas(await records(f))).toEqual([]);
-  await expect(convertIdea(f.ctx, source.id, { content: '再来', projectId: null }, at(10))).rejects.toThrow('已经转为');
+  await expect(convertIdea(f.ctx, source.id, { content: '再来', taskId: null }, at(10))).rejects.toThrow('已经转为');
   expect(await reconcile(f.ctx)).toBe(0); expect(await f.ctx.repos.cards.list()).toHaveLength(1);
 });
 it('new ideas can overflow the pool and reconciliation never turns them into cards', async () => {
@@ -86,7 +86,7 @@ it('arena pairs newest against least recently touched and eliminates until the c
 });
 it('explicit deletion removes the idea while its already generated card remains', async () => {
   const f = fixture(), a = idea(); await ideas(f, [a]);
-  const id = await convertIdea(f.ctx, a.id, { content: '做', projectId: null }, at());
+  const id = await convertIdea(f.ctx, a.id, { content: '做', taskId: null }, at());
   await deleteIdea(f.ctx, a.id, at()); expect(await f.ctx.repos.records.get(a.id)).toBeNull();
   expect(await f.ctx.repos.cards.get(id)).not.toBeNull();
   expect(f.publish.mock.calls.at(-1)![0].backpack.ideas).toEqual([]);

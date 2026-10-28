@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { at, card, fixture, project, seed } from './serviceFixture';
+import { at, card, fixture, task, seed } from './serviceFixture';
 import { start } from './cardService';
 import { backfillRange, insert, settleOffline } from './timerService';
 import { run } from './commit';
@@ -29,12 +29,12 @@ it('cross-day time remains cumulative while completion baselines use only the cu
 });
 it('all main slots count toward review due status, with correct slot numbers and baseline', async () => {
   const f = fixture(); f.ctx.settings.mainSlots = 2; f.ctx.settings.reviewWeekday = 2;
-  await seed(f, [card('a', { project_id: 'm2' })], [project('m1'), { ...project('m2', '主线', 2), bet_ends_at: at(-1) }]);
+  await seed(f, [card('a', { task_id: 'm2' })], [task('m1'), { ...task('m2', '主线', 2), bet_ends_at: at(-1) }]);
   await run(f.ctx, async tx => { tx.state.first_used_day = '2026-10-12'; });
   await refresh(f.ctx, at());
   expect(f.home()).toMatchObject({ mode: 'review', review: { betDue: true } });
   await start(f.ctx, 'a', at());
-  expect(f.home()).toMatchObject({ card: { slotNo: '02', slotOf: '/04', project: 'm2' }, baseline: { main: false } });
+  expect(f.home()).toMatchObject({ card: { slotNo: '02', slotOf: '/04', task: 'm2' }, baseline: { main: false } });
 });
 it('after offline release, refresh produces a pending card with idle activity and no live task timer', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());

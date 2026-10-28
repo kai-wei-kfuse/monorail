@@ -15,7 +15,7 @@ export interface TaskCardView {
   id?: string;                 // 卡的 id；有它才能双击改内容
   slotNo: string;             // 背包格号，例如「01」；不属于项目的卡是「支」（LOOSE.slot）
   slotOf?: string;             // 「/03」
-  project: string;             // 项目名；不属于项目的卡显示「支线」
+  task: string;             // 项目名；不属于项目的卡显示「支线」
   type: '结果卡' | '时间盒卡';
   goalMinutes: number | null;  // 只有时间盒卡有
   content: string;             // 带 [词] 标记的原文
@@ -77,7 +77,7 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
 
   return <CardFrame look={look} running={progress.state === 'run'} slotNo={view.slotNo} slotOf={view.slotOf} cardRef={cardRef} innerRef={innerRef} fx={fx}>
     <div className="c-head" data-fx="head">
-      <TrackMark /><b>{view.project}</b>
+      <TrackMark /><b>{view.task}</b>
       <span className="c-meta">{view.type === '时间盒卡' ? '时间盒' : '结果卡'}{view.goalMinutes !== null && <em>目标 {view.goalMinutes} 分钟</em>}</span>
       {corner && <span className="c-corner">{corner}</span>}
     </div>

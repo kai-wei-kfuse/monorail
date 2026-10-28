@@ -10,7 +10,7 @@ import { createContext, run } from '../services/commit';
 
 const now = () => new Date(2026, 9, 27, 10).toISOString();
 const id = () => crypto.randomUUID();
-const openSegment = (): Segment => ({ id: id(), seq: 1, started_at: new Date(2026, 9, 26, 10).toISOString(), ended_at: null, activity: '学习', category: '支线', card_id: null, kind: '普通', source: '手动', resume_card_id: null });
+const openSegment = (): Segment => ({ id: id(), seq: 1, started_at: new Date(2026, 9, 26, 10).toISOString(), ended_at: null, activity: '学习', project: '支线', card_id: null, kind: '普通', source: '手动', resume_card_id: null });
 
 it('scans once at startup, migrates old open-day state and injects stored settings', async () => {
   const fs = new MemoryFs(), repos = createRepos(fs), segment = openSegment();

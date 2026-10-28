@@ -1,6 +1,6 @@
 import { Button } from '../../ui/controls/Button';
 import { Group } from '../../ui/layout/GroupTitle';
-import type { ProjectView } from './types';
+import type { TaskView } from './types';
 import './backpack.css';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -10,18 +10,18 @@ const day = (iso: string) => { const d = new Date(iso); return `${d.getMonth() +
  * 背包的格子：主线格（格号 01）和支线格（从 02 起），空格虚线；格号分配后固定，空出来的给下一个放进来的项目。
  * 下面是冷藏的项目，随时可以放回背包：放进哪一格由用户在对话框里选，满了就先腾位。已放弃的不显示。
  */
-export function ProjectList({ projects, mainSlots, sideSlots, onNew, onSetMain, onFreeze, onAbandon, onRestore }:
-  { projects: ProjectView[]; mainSlots: number; sideSlots: number;
-    onNew: () => void; onSetMain: () => void; onFreeze: (id: string, at: string) => void; onAbandon: (p: ProjectView) => void; onRestore: (p: ProjectView) => void }) {
-  const active = projects.filter(p => p.status === '进行中' && p.slot !== '不在背包');
+export function TaskList({ tasks, mainSlots, sideSlots, onNew, onSetMain, onFreeze, onAbandon, onRestore }:
+  { tasks: TaskView[]; mainSlots: number; sideSlots: number;
+    onNew: () => void; onSetMain: () => void; onFreeze: (id: string, at: string) => void; onAbandon: (p: TaskView) => void; onRestore: (p: TaskView) => void }) {
+  const active = tasks.filter(p => p.status === '进行中' && p.slot !== '不在背包');
   const mains = active.filter(p => p.slot === '主线'), sides = active.filter(p => p.slot === '支线');
-  const parked = projects.filter(p => p.status === '冷藏' || (p.status === '进行中' && p.slot === '不在背包'));
+  const parked = tasks.filter(p => p.status === '冷藏' || (p.status === '进行中' && p.slot === '不在背包'));
   const freeMain = mains.length < mainSlots, freeSide = sides.length < sideSlots;
   const at = () => new Date().toISOString();
   // 空格的格号：主线 1..mainSlots，支线接在后面；已用的格号不再分配
   const used = new Set(active.map(p => p.slotIndex));
   const emptyNos = (from: number, count: number) => Array.from({ length: count }, (_, i) => from + i).filter(n => !used.has(n));
-  const card = (p: ProjectView) => <div key={p.id} className={`slot${p.slot === '主线' ? ' main' : ''}`}>
+  const card = (p: TaskView) => <div key={p.id} className={`slot${p.slot === '主线' ? ' main' : ''}`}>
     <div className="slot-no"><b>{pad(p.slotIndex ?? 0)}</b><span>{p.slot === '主线' ? 'MAIN' : 'SIDE'}</span></div>
     <div className="slot-body">
       <div><h4>{p.name}</h4><p>{p.openCards} 张待做{p.betEndsAt ? ` · 押注到 ${day(p.betEndsAt)}` : ''}</p></div>

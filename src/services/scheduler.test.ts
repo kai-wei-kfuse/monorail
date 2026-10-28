@@ -65,7 +65,7 @@ describe('scheduler', () => {
   });
   it('a startup gap releases the running card and re-deals it as 待开始', async () => {
     const ctx = setup(() => '2026-10-27T12:00:00.000Z'), id = crypto.randomUUID();
-    await saveRecord(ctx, { id, text: '学 Python', kind: '待办', created_at: '2026-10-27T07:00:00Z', due_at: null, blocking: false, project_id: null, card_id: null, tags: [], attachments: [] });
+    await saveRecord(ctx, { id, text: '学 Python', kind: '待办', created_at: '2026-10-27T07:00:00Z', due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [] });
     await reconcile(ctx);
     await start(ctx, `card-${id}`, '2026-10-27T07:30:00Z');
     const stop = await startScheduler(ctx, {

@@ -3,7 +3,7 @@ import { editCardContent } from '../domain/card/edit';
 import { startCard, completeCard, continueCard, releaseCard, abandonCard } from '../domain/card/transitions';
 import { shrinkCard, restoreParent } from '../domain/card/shrink';
 import { skipCard } from '../domain/degrade/signals';
-import { inBackpack, trackOf } from '../domain/project/project';
+import { inBackpack, trackOf } from '../domain/task/task';
 import { cardMilliseconds } from '../domain/timeline/stats';
 import { activityDay } from '../domain/timeline/day';
 import type { Ctx, Transaction } from './commit';
@@ -21,14 +21,14 @@ function nextOrder(tx: Transaction): number { return Math.max(0, ...tx.cards.map
 function restoreInTx(tx: Transaction, card: Card): void {
   if (!card.shrunk_from) return;
   const parent = getCard(tx, card.shrunk_from);
-  // A child may move to another project; finishing it cannot revive an abandoned ancestor.
+  // A child may move to another task; finishing it cannot revive an abandoned ancestor.
   if (parent.status === '已缩小') tx.saveCard(restoreParent(card, parent, card.progress_note));
 }
 function requireCurrent(tx: Transaction, card: Card): void {
   if (tx.state.current_card !== card.id || tx.state.rest) throw new Error('首页卡片已改变');
 }
 function target(tx: Transaction, card: Card) {
-  return { activity: card.content, category: trackOf(card.project_id, tx.projects), card_id: card.id, kind: '普通' as const, resume_card_id: null };
+  return { activity: card.content, project: trackOf(card.task_id, tx.tasks), card_id: card.id, kind: '普通' as const, resume_card_id: null };
 }
 
 export const editContent = (ctx: Ctx, cardId: string, content: string, at: string) => run(ctx, async tx => {
@@ -40,7 +40,7 @@ export const start = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx
   const card = getCard(tx, cardId), current = openSegmentInTx(tx);
   if (card.status === '进行中' && current?.card_id === cardId) return;
   if (tx.cards.some(item => item.status === '进行中' && item.id !== cardId)) throw new Error('另一个任务正在进行');
-  if (card.project_id && !tx.projects.some(project => project.id === card.project_id && inBackpack(project))) throw new Error('项目不在背包');
+  if (card.task_id && !tx.tasks.some(task => task.id === card.task_id && inBackpack(task))) throw new Error('项目不在背包');
   tx.saveCard(startCard(card));
   await switchInTx(tx, at, target(tx, card));
   tx.state.current_card = cardId;
@@ -60,7 +60,7 @@ export const complete = (ctx: Ctx, cardId: string, at: string, note: string, kee
   const card = getCard(tx, cardId);
   if (card.status === '已完成') return;
   requireCurrent(tx, card);
-  const done = completeCard(card, at, activityDay(at, tx.settings.dayBoundaryHour), trackOf(card.project_id, tx.projects), note);
+  const done = completeCard(card, at, activityDay(at, tx.settings.dayBoundaryHour), trackOf(card.task_id, tx.tasks), note);
   tx.saveCard(done);
   restoreInTx(tx, done);
   if (keepGoing) tx.saveCard(continueCard(done, tx.id(), at, nextOrder(tx)));
@@ -123,5 +123,5 @@ export const leaveTo = (ctx: Ctx, activityId: string, at: string) => run(ctx, as
   if (!activity) throw new Error('快捷活动不存在');
   const card = tx.cards.find(item => item.id === tx.state.current_card);
   if (card) tx.saveCard(releaseCard(card));
-  await switchInTx(tx, at, { activity: activity.name, category: activity.category, card_id: null, kind: '普通', resume_card_id: null });
+  await switchInTx(tx, at, { activity: activity.name, project: activity.project, card_id: null, kind: '普通', resume_card_id: null });
 }, at);

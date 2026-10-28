@@ -15,9 +15,9 @@ it('A7 fourth redraw executes first and preserves the new card behind rest', asy
   expect(open(f)).toMatchObject({ activity: '休息', source: '自动' });
   f.clock(at(10)); await returnFromRest(f.ctx, ' 看小说 ', at(10));
   expect(await f.ctx.repos.state.read()).toMatchObject({ home_mode: 'task', current_card: 'a', rest: null, refusals: [], rest_answers: { 看小说: 1 } });
-  expect(open(f)).toMatchObject({ category: '待机', card_id: null });
+  expect(open(f)).toMatchObject({ project: '待机', card_id: null });
   expect(effective(segments(f), at(10)).filter(s => s.started_at === at(3))).toEqual([
-    expect.objectContaining({ activity: '看小说', category: '休息', source: '自动', ended_at: at(10) }),
+    expect.objectContaining({ activity: '看小说', project: '休息', source: '自动', ended_at: at(10) }),
   ]);
   expect(segments(f).some(s => s.activity === '休息' && s.ended_at === at(10))).toBe(true);
 });
@@ -31,7 +31,7 @@ it('A7 fourth running shrink leaves a pending child and no positive child time b
   expect(effective(segments(f), at(3)).some(s => s.card_id === child)).toBe(false);
   f.clock(at(5)); await returnFromRest(f.ctx, '', at(5));
   expect(f.home()).toMatchObject({ mode: 'task', card: { id: child, status: '待做' } });
-  expect(open(f).category).toBe('待机');
+  expect(open(f).project).toBe('待机');
 });
 it('A7 input hint resets refusals without switching the timer or entering rest', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
@@ -47,7 +47,7 @@ it.each(['', '   ', '画画'])('rest answer %j at zero duration does not write a
   await run(f.ctx, async tx => { tx.state.refusals = [at(), at(), at()]; await registerRefusalInTx(tx); });
   await returnFromRest(f.ctx, answer, at());
   expect(segments(f)).toHaveLength(2);
-  expect(open(f).category).toBe('待机');
+  expect(open(f).project).toBe('待机');
   expect(await f.ctx.repos.state.read()).toMatchObject({ rest_answers: answer.trim() ? { 画画: 1 } : {} });
 });
 it('repeated trimmed rest answers signal on the third occurrence only, including across day boundaries', async () => {

@@ -49,7 +49,7 @@ async function run(ctx: Ctx) {
   await windows(); await native();
   const id = crypto.randomUUID(), cardId = `card-${id}`;
   const record: RecordInput = { id, text: `Native verification ${id}`, kind: '待办', created_at: new Date().toISOString(),
-    due_at: new Date(Date.now() + ctx.settings.deadlineLeadMinutes * 60_000 + 20_000).toISOString(), blocking: true, project_id: null, card_id: null, tags: [], attachments: [] };
+    due_at: new Date(Date.now() + ctx.settings.deadlineLeadMinutes * 60_000 + 20_000).toISOString(), blocking: true, task_id: null, card_id: null, tags: [], attachments: [] };
   const cardReady = new Promise<void>(resolve => {
     const off = appStore.subscribe(state => { if (state.cards.some(c => c.id === cardId)) { off(); resolve(); } });
   });

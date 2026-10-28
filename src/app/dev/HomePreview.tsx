@@ -46,7 +46,7 @@ function notices(o: string | null): Notice[] {
 
 function sample(page: string): TaskCardView {
   const elapsedMs = page === 'over' ? min(66) + 14_000 : min(47) + 12_000, goalMinutes = 60;
-  return { id: 'c1', slotNo: '01', slotOf: '/03', project: '找工作', type: '时间盒卡', goalMinutes, content: '沿 [Python] 往下学 1 小时',
+  return { id: 'c1', slotNo: '01', slotOf: '/03', task: '找工作', type: '时间盒卡', goalMinutes, content: '沿 [Python] 往下学 1 小时',
     progressNote: page === 'over' ? '看完了装饰器，下一步写几个小练习' : undefined, elapsedMs, progress: cardProgress(elapsedMs, goalMinutes, true) };
 }
 
@@ -56,7 +56,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
   const [wipe, setWipe] = useState(false), [content, setContent] = useState<string | null>(null);
   const view = { ...sample(page), ...(content === null ? {} : { content }) };
   useEffect(() => { if (stage.current && app.current) return playColdIntro(app.current, stage.current, stage.current.querySelector('.digits')); }, []);
-  if (page === 'quickbar') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><div style={{ width: 760 }}><QuickBar projects={[{ id: 'p1', name: '找工作' }]} onSave={async () => {}} onHide={() => {}} /></div></div>;
+  if (page === 'quickbar') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><div style={{ width: 760 }}><QuickBar tasks={[{ id: 'p1', name: '找工作' }]} onSave={async () => {}} onHide={() => {}} /></div></div>;
   if (page === 'mini') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><MiniWindow view={view} running topoDepth={60} onPrimary={() => {}} onRestore={() => {}} /></div>;
   const title = <TitleBar name="单轨" tabs={TABS} active="home" onTab={() => {}}>
     <StatusBlock kind={page === 'rest' ? 'away' : 'focus'} label={page === 'rest' ? '休息' : '沿 Python 往下学'} startedAt={new Date(Date.now() - view.elapsedMs).toISOString()} onClick={() => {}} />

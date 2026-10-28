@@ -50,7 +50,7 @@ export function ReviewPage({ data, actions, parked = [] }: { data: ReviewData; a
   // 决定之前捞回的那个仍在冷库提议里，用它区分冷库对决和普通的超额配对
   const offeredIds = new Set(data.cold.offered.map(c => c.id));
   const coldDuel = cur.id === 'coldPick' && data.duel && (offeredIds.has(data.duel.left.id) || offeredIds.has(data.duel.right.id)) ? data.duel : null;
-  const betMain = data.bet ? data.backpack.inBackpack.find(p => p.slot === '主线' && p.id === data.bet!.projectId) ?? null : null;
+  const betMain = data.bet ? data.backpack.inBackpack.find(p => p.slot === '主线' && p.id === data.bet!.taskId) ?? null : null;
   return <>
     <SplitLayout nav={<SideNav en={`REVIEW ${data.period}`} cn="每周回顾" items={nav} active={data.step}
       onSelect={id => { if (reachable(id as ReviewStep)) actions.goto(id as ReviewStep, at()); }}

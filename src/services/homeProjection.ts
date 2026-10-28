@@ -1,6 +1,6 @@
 import type { Card } from '../domain/card/card';
-import type { Project } from '../domain/project/project';
-import { inBackpack } from '../domain/project/project';
+import type { Task } from '../domain/task/task';
+import { inBackpack } from '../domain/task/task';
 import type { Review } from '../domain/review/schedule';
 import { dueReview } from '../domain/review/schedule';
 import type { Segment } from '../domain/timeline/segment';
@@ -13,26 +13,26 @@ import type { Settings } from '../shared/settings';
 import { LOOSE } from '../shared/backpack';
 import type { HomeSlice } from '../store/homeSlice';
 
-export interface ProjectionInput { cards: Card[]; projects: Project[]; reviews: Review[]; segments: Segment[]; state: AppState; settings: Settings; at: string; version: number }
+export interface ProjectionInput { cards: Card[]; tasks: Task[]; reviews: Review[]; segments: Segment[]; state: AppState; settings: Settings; at: string; version: number }
 export function projectHome(input: ProjectionInput): HomeSlice {
-  const { cards, projects, reviews, segments, state, settings, at, version } = input;
-  const day = activityDay(at, settings.dayBoundaryHour), active = projects.filter(inBackpack);
-  const mains = active.filter(project => project.slot === '主线');
+  const { cards, tasks, reviews, segments, state, settings, at, version } = input;
+  const day = activityDay(at, settings.dayBoundaryHour), active = tasks.filter(inBackpack);
+  const mains = active.filter(task => task.slot === '主线');
   const selected = cards.find(card => card.id === state.current_card);
   const current = segments.find(segment => segment.id === state.open_segment && segment.ended_at === null);
   const rows = selected ? effective(segments, at).filter(row => row.card_id === selected.id) : [];
   const tail = current?.card_id === selected?.id ? [...rows].reverse().find(row => row.id === current?.id && Date.parse(row.ended_at!) === Date.parse(at)) : undefined;
   const closedEffectiveMs = rows.filter(row => row !== tail).reduce((sum, row) => sum + Date.parse(row.ended_at!) - Date.parse(row.started_at), 0);
-  const project = active.find(item => item.id === selected?.project_id);
+  const task = active.find(item => item.id === selected?.task_id);
   const card = selected && (selected.status === '待做' || selected.status === '进行中') ? {
-    id: selected.id, slotNo: project?.slot_index ? String(project.slot_index).padStart(2, '0') : LOOSE.slot, slotOf: `/${String(settings.sideSlots + settings.mainSlots).padStart(2, '0')}`,
-    project: project?.name ?? LOOSE.name, type: selected.type, goalMinutes: selected.type === '时间盒卡' ? selected.timebox_minutes : null,
+    id: selected.id, slotNo: task?.slot_index ? String(task.slot_index).padStart(2, '0') : LOOSE.slot, slotOf: `/${String(settings.sideSlots + settings.mainSlots).padStart(2, '0')}`,
+    task: task?.name ?? LOOSE.name, type: selected.type, goalMinutes: selected.type === '时间盒卡' ? selected.timebox_minutes : null,
     content: selected.content, progressNote: selected.progress_note, status: selected.status,
     shrink: selected.no_shrink ? 'locked' as const : selected.shrink_level >= settings.shrinkMaxLevel ? 'max' as const : 'ok' as const,
   } : null;
   const mode = state.stopped_day === day ? 'stopped' : state.home_mode;
   return {
-    mode, card, guideKind: guide(cards, projects), closedEffectiveMs,
+    mode, card, guideKind: guide(cards, tasks), closedEffectiveMs,
     // A newer overlay may cover the entire current tail. Future ticks begin at this snapshot.
     currentSegStartedAt: tail?.started_at ?? (current && selected && current.card_id === selected.id ? at : null),
     awayActivity: current?.kind === '插入' ? current.activity : null,

@@ -9,7 +9,7 @@ import { nativeReminders } from '../platform/reminders';
 import { onQuickbarReady, pushQuickbarContext } from '../platform/quickbarContext';
 import { nativeSettingsPlatform } from '../platform/settings';
 import { applyPlatform } from '../services/settingsService';
-import { inBackpack } from '../domain/project/project';
+import { inBackpack } from '../domain/task/task';
 import type { ReminderPlan } from '../domain/reminders';
 import { createContext, run } from '../services/commit';
 import { refreshInTx } from '../services/dealService';
@@ -53,7 +53,7 @@ export async function bootstrap(root: string) {
   const restored = await restoreRepositories(repos, id, now);
   const report = (error: unknown) => appStore.setState({ error: String(error) });
   const quickbarContext = async () => pushQuickbarContext({
-    projects: (await repos.projects.list()).map(e => e.value).filter(inBackpack).map(p => ({ id: p.id, name: p.name })),
+    tasks: (await repos.tasks.list()).map(e => e.value).filter(inBackpack).map(p => ({ id: p.id, name: p.name })),
     accent: ctx.settings.accent,
   });
   const ctx = createContext({

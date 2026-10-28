@@ -7,7 +7,7 @@ import { encode, decode } from './frontmatter';
 import { createRecord } from '../domain/record/record';
 import type { RecordEntry } from '../domain/record/record';
 
-const record = () => createRecord({ id: crypto.randomUUID(), text: '原文 #test', kind: '想法', created_at: '2026-10-27T00:00:00Z', due_at: null, blocking: false, project_id: null, card_id: null, tags: [], attachments: [] });
+const record = () => createRecord({ id: crypto.randomUUID(), text: '原文 #test', kind: '想法', created_at: '2026-10-27T00:00:00Z', due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [] });
 it('keeps unknown fields and original body when updating an entity', async () => {
   const fs = new MemoryFs(), repo = new MdRepo<RecordEntry>(fs, 'records', recordSchema), value = record();
   const path = repo.path(value.id);

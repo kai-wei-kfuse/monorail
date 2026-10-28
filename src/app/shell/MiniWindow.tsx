@@ -16,7 +16,7 @@ const STATE_EN = { ready: 'READY', run: 'RUNNING', away: 'AWAY', over: 'OVERTIME
 export function MiniWindow({ view, running, topoDepth, onPrimary, onRestore }:
   { view: TaskCardView; running: boolean; topoDepth: number; onPrimary: (at: string) => void; onRestore: () => void }) {
   const { progress } = view;
-  const meta = [view.project, view.type === '时间盒卡' ? '时间盒' : '结果卡', view.goalMinutes !== null ? `目标 ${view.goalMinutes} 分钟` : null].filter(Boolean).join(' · ');
+  const meta = [view.task, view.type === '时间盒卡' ? '时间盒' : '结果卡', view.goalMinutes !== null ? `目标 ${view.goalMinutes} 分钟` : null].filter(Boolean).join(' · ');
   return <div className="miniwin" data-tauri-drag-region>
     <TagStrip mini no={view.slotNo} />
     <div className="mini-l" data-tauri-drag-region>

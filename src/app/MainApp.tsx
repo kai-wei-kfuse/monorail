@@ -157,7 +157,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const routes = readyRoutes();
   const view = cardView(home, nowMs);
   if (mini) {
-    const v = view ?? { slotNo: '—', project: home.activity.label, type: '结果卡' as const, goalMinutes: null, content: home.activity.label || settings.lists.idleName,
+    const v = view ?? { slotNo: '—', task: home.activity.label, type: '结果卡' as const, goalMinutes: null, content: home.activity.label || settings.lists.idleName,
       elapsedMs: home.activity.startedAt ? nowMs - Date.parse(home.activity.startedAt) : 0, progress: { filled: 0, miniFilled: 0, state: 'ready' as const, overMs: 0 } };
     const running = home.card?.status === '进行中';
     return <div className="mini-host"><MiniWindow view={v} running={running} topoDepth={settings.topoDepth} onRestore={() => void toggleMini(false)}

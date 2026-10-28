@@ -1,7 +1,7 @@
 import { pick } from '../domain/picker/pick';
 import { dueReview, reviewUpdates } from '../domain/review/schedule';
 import { activityDay } from '../domain/timeline/day';
-import { inBackpack } from '../domain/project/project';
+import { inBackpack } from '../domain/task/task';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 
@@ -16,8 +16,8 @@ export function refreshInTx(tx: Transaction): void {
   if (tx.state.rest) { tx.state.home_mode = 'rest'; return; }
   const current = tx.cards.find(card => card.id === tx.state.current_card);
   if (current?.status === '进行中') { tx.state.home_mode = 'task'; return; }
-  const betDue = tx.projects.some(project => inBackpack(project) && project.slot === '主线' && project.bet_ends_at !== null && Date.parse(project.bet_ends_at) <= Date.parse(tx.at));
-  const selected = pick({ cards: tx.cards, projects: tx.projects, at: tx.at, day, dueSoonHours: tx.settings.dueSoonHours,
+  const betDue = tx.tasks.some(task => inBackpack(task) && task.slot === '主线' && task.bet_ends_at !== null && Date.parse(task.bet_ends_at) <= Date.parse(tx.at));
+  const selected = pick({ cards: tx.cards, tasks: tx.tasks, at: tx.at, day, dueSoonHours: tx.settings.dueSoonHours,
     excluded: tx.state.seen, stopped: false, random: tx.random(), mainWeight: MAIN_CARD_WEIGHT,
     review: dueReview(day, tx.state.first_used_day, tx.settings.reviewWeekday, tx.reviews, betDue) });
   if (selected.resetRound) tx.state.seen = [];

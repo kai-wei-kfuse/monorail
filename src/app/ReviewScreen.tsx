@@ -14,7 +14,7 @@ import { Emblem } from '../ui/marks/Emblem';
  */
 export function ReviewScreen({ ctx, report }: { ctx: Ctx; report: (error: unknown) => void }) {
   const data = useStore(appStore, state => state.review);
-  const projects = useStore(appStore, state => state.backpack.projects);
+  const tasks = useStore(appStore, state => state.backpack.tasks);
   const [entered, setEntered] = useState(false);
   const call = (work: () => Promise<unknown>) => { void work().catch(report); };
 
@@ -42,6 +42,6 @@ export function ReviewScreen({ ctx, report }: { ctx: Ctx; report: (error: unknow
     <h3>本期回顾已完成</h3>
     <p>下一期到期时，首页会出回顾卡。</p>
   </div>;
-  const parked = projects.filter(p => p.status === '冷藏' || (p.status === '进行中' && p.slot === '不在背包')).map(p => ({ id: p.id, name: p.name }));
+  const parked = tasks.filter(p => p.status === '冷藏' || (p.status === '进行中' && p.slot === '不在背包')).map(p => ({ id: p.id, name: p.name }));
   return <ReviewPage data={data} actions={actions} parked={parked} />;
 }

@@ -12,6 +12,6 @@ const q = new URLSearchParams(location.search), page = q.get('page') ?? 'home';
 if (q.has('still')) setMotionLevel('off');
 const root = page === 'review' ? <ReviewPreview step={q.get('step') ?? 'recap'} />
   : page === 'settingsPage' ? <SettingsPreview sec={q.get('sec') ?? 'deal'} />
-  : page === 'backpack' ? <BackpackPreview tab={q.get('tab') ?? 'projects'} overlay={q.get('o')} />
+  : page === 'backpack' ? <BackpackPreview tab={q.get('tab') ?? 'tasks'} overlay={q.get('o')} />
   : PREVIEW_PAGES.includes(page) ? <HomePreview page={page} overlay={q.get('o')} /> : <Gallery page={page} />;
 createRoot(document.getElementById('root')!).render(root);

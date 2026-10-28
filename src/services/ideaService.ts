@@ -15,12 +15,12 @@ function findIdea(tx: Transaction, id: string): RecordEntry {
   return record;
 }
 
-export const convertIdea = (ctx: Ctx, id: string, input: { content: string; projectId: string | null }, at: string) => run(ctx, async tx => {
+export const convertIdea = (ctx: Ctx, id: string, input: { content: string; taskId: string | null }, at: string) => run(ctx, async tx => {
   const idea = findIdea(tx, id);
   if (idea.pool === '已转待办' || idea.card_id !== null || tx.cards.some(card => card.id === `card-${id}`)) throw new Error('这个想法已经转为待办');
   if (!input.content.trim()) throw new Error('待办内容不能为空');
-  if (input.projectId !== null && !tx.projects.some(project => project.id === input.projectId)) throw new Error('项目不存在');
-  const card = convert({ ...idea, kind: '待办', text: input.content.trim(), project_id: input.projectId, created_at: at }, Math.max(0, ...tx.cards.map(item => item.order)) + 1);
+  if (input.taskId !== null && !tx.tasks.some(task => task.id === input.taskId)) throw new Error('项目不存在');
+  const card = convert({ ...idea, kind: '待办', text: input.content.trim(), task_id: input.taskId, created_at: at }, Math.max(0, ...tx.cards.map(item => item.order)) + 1);
   tx.saveCard(card);
   tx.saveRecord({ ...idea, pool: '已转待办', card_id: card.id, last_touched_at: at, cold_since: null });
   refreshInTx(tx);

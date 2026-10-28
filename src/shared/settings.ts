@@ -1,4 +1,4 @@
-export interface QuickActivity { id: string; name: string; category: string }
+export interface QuickActivity { id: string; name: string; project: string }
 export interface RestItem { id: string; name: string }
 export const settingDefinitions = {
   mainSlots: { type: 'number', default: 1, min: 1, max: 3, step: 1, unit: 'slots' },

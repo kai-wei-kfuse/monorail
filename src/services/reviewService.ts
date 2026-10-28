@@ -4,15 +4,15 @@ import type { ActiveReview, ReviewStep } from '../domain/review/flow';
 import { activityDay, splitAtDays } from '../domain/timeline/day';
 import { createRecord } from '../domain/record/record';
 import { releaseCard } from '../domain/card/transitions';
-import { inBackpack } from '../domain/project/project';
+import { inBackpack } from '../domain/task/task';
 import { activeIdeas, coldOffer } from '../domain/idea/pool';
-import type { MakeRoom, ProjectDraft } from '../shared/backpack';
+import type { MakeRoom, TaskDraft } from '../shared/backpack';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import { refreshInTx } from './dealService';
 import { openSegmentInTx, switchInTx, idleTarget } from './timerService';
 import { reviveInTx, resolveDuelInTx } from './ideaService';
-import { createProjectInTx, restoreProjectInTx } from './backpackService';
+import { createTaskInTx, restoreTaskInTx } from './backpackService';
 import { currentReview, recapStart } from './reviewProjection';
 
 const overLimit = (tx: Transaction) => activeIdeas(tx.records).length > tx.settings.ideaPoolLimit;
@@ -29,7 +29,7 @@ async function finishInTx(tx: Transaction, review: ActiveReview): Promise<void> 
 }
 async function coldDoneInTx(tx: Transaction, review: ActiveReview): Promise<void> {
   const done = { ...review, cold_duel: null, done: [...new Set([...review.done, 'coldPick' as const])] };
-  if (review.bet_project_ids.length) tx.saveReview(navigate(done, 'bet', overLimit(tx)));
+  if (review.bet_task_ids.length) tx.saveReview(navigate(done, 'bet', overLimit(tx)));
   else await finishInTx(tx, done);
 }
 
@@ -43,21 +43,21 @@ export const enter = (ctx: Ctx, at: string) => run(ctx, async tx => {
     row = { id: period, period, status: '未开始', step: 'recap' };
   }
   let review = progress(row);
-  if (!review.started_at) review = { ...review, started_at: at, bet_project_ids: tx.projects.filter(project =>
-    inBackpack(project) && project.slot === '主线' && project.bet_ends_at && Date.parse(project.bet_ends_at) <= Date.parse(at)).map(project => project.id) };
+  if (!review.started_at) review = { ...review, started_at: at, bet_task_ids: tx.tasks.filter(task =>
+    inBackpack(task) && task.slot === '主线' && task.bet_ends_at && Date.parse(task.bet_ends_at) <= Date.parse(at)).map(task => task.id) };
   // A main changed from the backpack page already received its explicit decision.
-  review = { ...review, bet_done_ids: [...new Set([...review.bet_done_ids, ...review.bet_project_ids.filter(id =>
-    !tx.projects.some(project => project.id === id && inBackpack(project) && project.slot === '主线'))])] };
+  review = { ...review, bet_done_ids: [...new Set([...review.bet_done_ids, ...review.bet_task_ids.filter(id =>
+    !tx.tasks.some(task => task.id === id && inBackpack(task) && task.slot === '主线'))])] };
   const from = recapStart(tx.reviews, tx.state.first_used_day!, tx.settings.dayBoundaryHour, at);
   await tx.repos.times.readDays(splitAtDays(from, at, tx.settings.dayBoundaryHour).map(piece => piece.day));
   if (openSegmentInTx(tx)?.id !== review.timer_segment_id) {
     for (const card of tx.cards.filter(card => card.status === '进行中')) tx.saveCard(releaseCard(card));
     tx.state.rest = null;
-    await switchInTx(tx, at, { activity: '每周回顾', category: '回顾', card_id: null, kind: '普通', resume_card_id: null });
+    await switchInTx(tx, at, { activity: '每周回顾', project: '回顾', card_id: null, kind: '普通', resume_card_id: null });
     review = { ...review, timer_segment_id: tx.state.open_segment };
   }
   tx.saveReview({ ...review, status: '进行中' });
-  if (review.step === 'bet' && review.bet_project_ids.every(id => review.bet_done_ids.includes(id))) {
+  if (review.step === 'bet' && review.bet_task_ids.every(id => review.bet_done_ids.includes(id))) {
     await finishInTx(tx, review); return;
   }
   refreshInTx(tx);
@@ -69,7 +69,7 @@ export const goto = (ctx: Ctx, step: ReviewStep, at: string) => run(ctx, async t
 export const addIdea = (ctx: Ctx, text: string, at: string) => run(ctx, async tx => {
   const review = active(tx, 'newIdeas'), id = tx.id();
   tx.saveRecord(createRecord({ id, text: text.trim(), kind: '想法', created_at: at, due_at: null,
-    blocking: false, project_id: null, card_id: null, tags: [], attachments: [] }));
+    blocking: false, task_id: null, card_id: null, tags: [], attachments: [] }));
   tx.saveReview({ ...review, added_idea_ids: [...review.added_idea_ids, id], done: review.done.filter(step => step !== 'arena' && step !== 'coldPick' && step !== 'bet') });
   return id;
 }, at);
@@ -92,31 +92,31 @@ export const takeCold = (ctx: Ctx, ids: string[], at: string, confirmed = false)
 }, at);
 export const skipCold = (ctx: Ctx, at: string) => run(ctx, tx => coldDoneInTx(tx, active(tx, 'coldPick')), at);
 
-function betProject(tx: Transaction, review: ActiveReview) {
-  const id = review.bet_project_ids.find(id => !review.bet_done_ids.includes(id));
-  const project = tx.projects.find(project => project.id === id);
-  if (!project || !inBackpack(project) || project.slot !== '主线' || !project.bet_ends_at) throw new Error('到期主线已改变，请重新进入回顾');
-  return project;
+function betTask(tx: Transaction, review: ActiveReview) {
+  const id = review.bet_task_ids.find(id => !review.bet_done_ids.includes(id));
+  const task = tx.tasks.find(task => task.id === id);
+  if (!task || !inBackpack(task) || task.slot !== '主线' || !task.bet_ends_at) throw new Error('到期主线已改变，请重新进入回顾');
+  return task;
 }
 async function betDoneInTx(tx: Transaction, review: ActiveReview, id: string) {
   const changed = { ...review, bet_done_ids: [...review.bet_done_ids, id] };
-  if (changed.bet_project_ids.every(id => changed.bet_done_ids.includes(id))) await finishInTx(tx, changed);
+  if (changed.bet_task_ids.every(id => changed.bet_done_ids.includes(id))) await finishInTx(tx, changed);
   else tx.saveReview(changed);
 }
 export const continueBet = (ctx: Ctx, at: string) => run(ctx, async tx => {
-  const review = active(tx, 'bet'), project = betProject(tx, review), end = new Date(project.bet_ends_at!);
+  const review = active(tx, 'bet'), task = betTask(tx, review), end = new Date(task.bet_ends_at!);
   end.setDate(end.getDate() + tx.settings.betWeeks * 7);
-  tx.saveProject({ ...project, bet_ends_at: end.toISOString() });
-  await betDoneInTx(tx, review, project.id);
+  tx.saveTask({ ...task, bet_ends_at: end.toISOString() });
+  await betDoneInTx(tx, review, task.id);
 }, at);
-export const switchMain = (ctx: Ctx, draft: ProjectDraft | { restoreId: string; makeRoom: MakeRoom }, at: string) => run(ctx, async tx => {
-  const review = active(tx, 'bet'), project = betProject(tx, review);
-  if (draft.makeRoom?.id !== project.id) throw new Error('换主线必须冷藏或放弃当前复盘主线');
-  if ('restoreId' in draft) await restoreProjectInTx(tx, draft.restoreId, '主线', draft.makeRoom);
+export const switchMain = (ctx: Ctx, draft: TaskDraft | { restoreId: string; makeRoom: MakeRoom }, at: string) => run(ctx, async tx => {
+  const review = active(tx, 'bet'), task = betTask(tx, review);
+  if (draft.makeRoom?.id !== task.id) throw new Error('换主线必须冷藏或放弃当前复盘主线');
+  if ('restoreId' in draft) await restoreTaskInTx(tx, draft.restoreId, '主线', draft.makeRoom);
   else {
     if (draft.slot !== '主线') throw new Error('请选择新的主线');
-    await createProjectInTx(tx, draft);
+    await createTaskInTx(tx, draft);
   }
-  await betDoneInTx(tx, review, project.id);
+  await betDoneInTx(tx, review, task.id);
 }, at);
 export const finish = (ctx: Ctx, at: string) => run(ctx, tx => finishInTx(tx, active(tx)), at);

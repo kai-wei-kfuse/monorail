@@ -5,7 +5,7 @@ import type { Segment } from '../domain/timeline/segment';
 
 const day = '2026-10-26';
 const segment = (): Segment => ({ id: crypto.randomUUID(), seq: 1, started_at: `${day}T10:00:00Z`, ended_at: null,
-  activity: 'task', category: '支线', card_id: 'one', kind: '普通', source: '手动', resume_card_id: null });
+  activity: 'task', project: '支线', card_id: 'one', kind: '普通', source: '手动', resume_card_id: null });
 
 it('publishes committed history in memory and reconstructs it on startup without snapshot IO', async () => {
   const fs = new MemoryFs(), repos = createRepos(fs), open = segment();

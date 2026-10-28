@@ -2,13 +2,13 @@ import { closeSegment } from '../domain/timeline/segment';
 import type { Segment } from '../domain/timeline/segment';
 import { activityDay, splitAtDays } from '../domain/timeline/day';
 import { releaseCard } from '../domain/card/transitions';
-import { trackOf } from '../domain/project/project';
+import { trackOf } from '../domain/task/task';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 
-type Target = Pick<Segment, 'activity' | 'category' | 'card_id' | 'kind' | 'resume_card_id'>;
+type Target = Pick<Segment, 'activity' | 'project' | 'card_id' | 'kind' | 'resume_card_id'>;
 export interface SwitchOptions { startAt?: string; source?: Segment['source'] }
-export interface Activity { name: string; category: string }
+export interface Activity { name: string; project: string }
 export interface Range { start: string; end: string }
 
 const ms = Date.parse;
@@ -76,26 +76,26 @@ export async function switchInTx(tx: Transaction, at: string, target: Target, op
 }
 
 export function idleTarget(tx: Transaction): Target {
-  return { activity: tx.settings.lists.idleName, category: '待机', card_id: null, kind: '普通', resume_card_id: null };
+  return { activity: tx.settings.lists.idleName, project: '待机', card_id: null, kind: '普通', resume_card_id: null };
 }
 
 /** Built-in activities that are not user-defined quick activities. */
 const RESERVED: Record<string, string> = { 离线: '离线', 睡觉: '睡眠' };
 
-/** A quick activity id, a reserved name, or a free-typed name (category 生活). */
+/** A quick activity id, a reserved name, or a free-typed name (project 生活). */
 function lookup(tx: Transaction, activity: string): Activity {
   const quick = tx.settings.lists.quickActivities.find(a => a.id === activity);
-  if (quick) return { name: quick.name, category: quick.category };
+  if (quick) return { name: quick.name, project: quick.project };
   const name = activity.trim();
   if (!name) throw new Error('活动名不能为空');
-  return { name, category: RESERVED[name] ?? '生活' };
+  return { name, project: RESERVED[name] ?? '生活' };
 }
 
 /** Appendix A2: only one return target. Nested inserts keep the original card. */
 export async function insertInTx(tx: Transaction, at: string, activity: Activity, opts: SwitchOptions = {}) {
   const current = openSegmentInTx(tx);
   const resume = current?.kind === '插入' ? current.resume_card_id : current?.card_id ?? null;
-  await switchInTx(tx, at, { activity: activity.name, category: activity.category, card_id: null, kind: '插入', resume_card_id: resume }, opts);
+  await switchInTx(tx, at, { activity: activity.name, project: activity.project, card_id: null, kind: '插入', resume_card_id: resume }, opts);
 }
 
 export async function resumeInTx(tx: Transaction, at: string) {
@@ -103,8 +103,8 @@ export async function resumeInTx(tx: Transaction, at: string) {
   if (!current || current.kind !== '插入') throw new Error('没有插入活动');
   const card = current.resume_card_id ? tx.cards.find(c => c.id === current.resume_card_id) : undefined;
   if (!card || card.status !== '进行中' || tx.state.current_card !== card.id) return switchInTx(tx, at, idleTarget(tx));
-  // Category follows the card's current project, which may have changed while away.
-  await switchInTx(tx, at, { activity: card.content, category: trackOf(card.project_id, tx.projects), card_id: card.id, kind: '普通', resume_card_id: null });
+  // Project follows the card's current task, which may have changed while away.
+  await switchInTx(tx, at, { activity: card.content, project: trackOf(card.task_id, tx.tasks), card_id: card.id, kind: '普通', resume_card_id: null });
 }
 
 /** The card in progress goes back to 待做 and stops being current (sleep, offline). */
@@ -132,10 +132,10 @@ export async function settleOfflineInTx(tx: Transaction, gap: Range): Promise<Se
   const day = activityDay(gap.start, tx.settings.dayBoundaryHour);
   const known = [...tx.segments, ...await tx.repos.times.readDay(day)];
   if (known.some(s => s.source === '离线追问' && ms(s.started_at) === ms(gap.start))) return null;
-  const segment = await backfillRangeInTx(tx, gap.end, gap, { activity: '离线', category: '离线', card_id: null, kind: '普通', resume_card_id: null }, '离线追问');
+  const segment = await backfillRangeInTx(tx, gap.end, gap, { activity: '离线', project: '离线', card_id: null, kind: '普通', resume_card_id: null }, '离线追问');
   // After a gap nobody knows what is going on: stop the old activity rather than keep counting it.
   const open = openSegmentInTx(tx);
-  if (open && open.category !== '待机' && ms(open.started_at) <= ms(gap.end)) {
+  if (open && open.project !== '待机' && ms(open.started_at) <= ms(gap.end)) {
     releaseCurrentInTx(tx);
     await switchInTx(tx, gap.end, idleTarget(tx));
   }
@@ -149,7 +149,7 @@ export const insert = (ctx: Ctx, activity: string, at: string) => run(ctx, tx =>
 export const resume = (ctx: Ctx, at: string) => run(ctx, tx => resumeInTx(tx, at), at);
 
 export const backfillRange = (ctx: Ctx, range: Range, activity: string, at: string) =>
-  run(ctx, tx => { const a = lookup(tx, activity); return backfillRangeInTx(tx, at, range, { activity: a.name, category: a.category, card_id: null, kind: '普通', resume_card_id: null }); }, at);
+  run(ctx, tx => { const a = lookup(tx, activity); return backfillRangeInTx(tx, at, range, { activity: a.name, project: a.project, card_id: null, kind: '普通', resume_card_id: null }); }, at);
 
 /** 「其实从 N 分钟前开始在做 Y」: a backdated insert, so「回来」still returns to the card. */
 export const backfillSwitch = (ctx: Ctx, minutesAgo: number, activity: string, at: string) => run(ctx, tx => {
@@ -159,14 +159,14 @@ export const backfillSwitch = (ctx: Ctx, minutesAgo: number, activity: string, a
 
 /** Answer to「从 X 到 Y 在做什么」: a newer segment over the same gap. */
 export const answerOffline = (ctx: Ctx, gap: Range, activity: string, at: string) =>
-  run(ctx, tx => { const a = lookup(tx, activity); return backfillRangeInTx(tx, at, gap, { activity: a.name, category: a.category, card_id: null, kind: '普通', resume_card_id: null }, '离线追问'); }, at);
+  run(ctx, tx => { const a = lookup(tx, activity); return backfillRangeInTx(tx, at, gap, { activity: a.name, project: a.project, card_id: null, kind: '普通', resume_card_id: null }, '离线追问'); }, at);
 
 export const settleOffline = (ctx: Ctx, gap: Range) => run(ctx, tx => settleOfflineInTx(tx, gap), gap.end);
 
 /** 睡觉 ends the day's dealing (A5) and releases any card in progress. */
 export const sleep = (ctx: Ctx, at: string) => run(ctx, async tx => {
   releaseCurrentInTx(tx);
-  await switchInTx(tx, at, { activity: '睡觉', category: '睡眠', card_id: null, kind: '普通', resume_card_id: null });
+  await switchInTx(tx, at, { activity: '睡觉', project: '睡眠', card_id: null, kind: '普通', resume_card_id: null });
   tx.state.stopped_day = activityDay(at, tx.settings.dayBoundaryHour);
 }, at);
 

@@ -11,7 +11,7 @@ export function activityDayTotals(segments: Segment[], at: string, boundary: num
   for (const segment of effective(segments, at)) {
     for (const piece of splitAtDays(segment.started_at, segment.ended_at!, boundary)) {
       const day = result[piece.day] ??= {};
-      day[segment.category] = (day[segment.category] ?? 0) + Date.parse(piece.end) - Date.parse(piece.start);
+      day[segment.project] = (day[segment.project] ?? 0) + Date.parse(piece.end) - Date.parse(piece.start);
     }
   }
   return result;

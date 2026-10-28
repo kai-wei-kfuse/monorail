@@ -1,6 +1,6 @@
 export interface Segment {
   id: string; seq: number; started_at: string; ended_at: string | null;
-  activity: string; category: string; card_id: string | null;
+  activity: string; project: string; card_id: string | null;
   kind: '普通' | '插入'; source: '手动' | '补记' | '自动' | '离线追问';
   resume_card_id: string | null;
 }

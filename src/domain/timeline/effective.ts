@@ -13,7 +13,7 @@ export function effective(segments: Segment[], now: string): Segment[] {
     // Cross-day file fragments retain the logical segment's id and precedence.
     // Reusing a sequence for another segment, or overlapping its fragments, is corruption.
     if (siblings.some(s => s.id !== segment.id || s.card_id !== segment.card_id || s.activity !== segment.activity ||
-      s.source !== segment.source || s.category !== segment.category ||
+      s.source !== segment.source || s.project !== segment.project ||
       (Date.parse(s.started_at) < end && Date.parse(s.ended_at ?? now) > start))) throw new Error(`Duplicate seq: ${segment.seq}`);
     groups.set(segment.seq, [...siblings, segment]); identities.set(segment.id, segment.seq);
     const next: Segment[] = [];

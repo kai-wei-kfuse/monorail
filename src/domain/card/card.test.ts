@@ -5,7 +5,7 @@ import { shrinkCard, restoreParent } from './shrink';
 import { baseline } from '../baseline/baseline';
 
 const at = '2026-10-27T00:00:00Z';
-function root() { return convert({ id: crypto.randomUUID(), text: '完成原任务', kind: '待办', created_at: at, due_at: null, blocking: false, project_id: null, card_id: null, tags: [], attachments: [] }, 1); }
+function root() { return convert({ id: crypto.randomUUID(), text: '完成原任务', kind: '待办', created_at: at, due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [] }, 1); }
 const input = (level = 2) => ({ id: crypto.randomUUID(), at, content: '小一点', type: '结果卡' as const, minutes: null, order: 2, maxLevel: level });
 it('A6 restores only the immediate parent through two shrink levels', () => {
   const a = root(), ab = shrinkCard(startCard(a), input()), bc = shrinkCard(ab.child, input());
@@ -30,12 +30,12 @@ it('keeps existing deep cards but obeys a lowered limit for new shrink operation
   expect(bc.child.shrink_level).toBe(2);
 });
 it('copies task ownership to independent child/continuation cards, preserving completion snapshots', () => {
-  const a = { ...root(), due_at: at, blocking: true, project_id: 'main' };
+  const a = { ...root(), due_at: at, blocking: true, task_id: 'main' };
   const completed = completeCard(startCard(a), at, '2026-10-26', '主线', 'done');
   const next = continueCard(completed, crypto.randomUUID(), at, 3);
-  expect(next).toMatchObject({ status: '待做', continued_from: completed.id, progress_note: 'done', blocking: true, project_id: 'main', due_at: at });
+  expect(next).toMatchObject({ status: '待做', continued_from: completed.id, progress_note: 'done', blocking: true, task_id: 'main', due_at: at });
   expect(next.completed_day).toBe(null);
-  expect(baseline([{ ...completed, project_id: 'side-now' }], '2026-10-26', true)).toEqual({ main: true, side: false });
+  expect(baseline([{ ...completed, task_id: 'side-now' }], '2026-10-26', true)).toEqual({ main: true, side: false });
   expect(baseline([completed], '2026-10-26', false).main).toBe(null);
   const child = shrinkCard(startCard(a), input()).child;
   expect(() => continueCard(completeCard(child, at, '2026-10-26', '主线', ''), crypto.randomUUID(), at, 4)).toThrow('不能生成续卡');

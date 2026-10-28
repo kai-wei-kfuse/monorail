@@ -28,7 +28,8 @@
 - settings.yaml 是当前配置来源；只有缺文件的新目录使用 shared 默认值，坏文件必须报错。
 
 ## 术语
-- record：输入记录；card：任务卡；project/backpack：项目/背包。
+- record：输入记录；card：任务卡；task/backpack：任务/背包；project：计时项目。
+- N2①：代码已改名，磁盘仍为 v1；data/v1Codec 保留 project_id、bet_project_ids、category，任务仍写 projects/。N2③才切换格式。
 - segment：逻辑计时段；effective：补记覆盖后的有效时间线；day：活动日。
 - reconcile：幂等补齐记录生成的卡；InTx：现有事务内编排，不再次排队。
 - journal/transact：可恢复的多文件提交；publish：提交后投影更新。

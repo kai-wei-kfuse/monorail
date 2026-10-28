@@ -16,7 +16,7 @@ function fixture() {
   return createContext({ repos: createRepos(fs), settings: structuredClone(defaults), id: () => crypto.randomUUID(), now: () => new Date().toISOString(),
     publish: () => {}, log: async () => {}, reminders: { update: async () => {} } });
 }
-function record(text: string) { return { id: crypto.randomUUID(), text, kind: '待办' as const, created_at: '2026-10-26T00:00:00Z', due_at: null, blocking: true, project_id: null, card_id: null, tags: [], attachments: [] }; }
+function record(text: string) { return { id: crypto.randomUUID(), text, kind: '待办' as const, created_at: '2026-10-26T00:00:00Z', due_at: null, blocking: true, task_id: null, card_id: null, tags: [], attachments: [] }; }
 
 it('a rejected pre-write command does not poison the serialized queue', async () => {
   const ctx = fixture();
@@ -67,7 +67,7 @@ it('closing a cross-day segment cannot overwrite an earlier backfill', async () 
   const at = (hour: number, minute: number) => new Date(2026, 9, 26, hour, minute).toISOString();
   await start(ctx, card, at(3, 30));
   await run(ctx, async tx => {
-    const correction: Segment = { id: ctx.id(), seq: tx.nextSeq(), started_at: at(3, 50), ended_at: at(4, 10), activity: '厕所', category: '生活', card_id: null, kind: '普通', source: '补记', resume_card_id: null };
+    const correction: Segment = { id: ctx.id(), seq: tx.nextSeq(), started_at: at(3, 50), ended_at: at(4, 10), activity: '厕所', project: '生活', card_id: null, kind: '普通', source: '补记', resume_card_id: null };
     tx.writes.push(...await ctx.repos.times.writes(splitAtDays(correction.started_at, correction.ended_at!, 4).map(part => ({ day: part.day, segment: { ...correction, started_at: part.start, ended_at: part.end } }))));
   });
   await complete(ctx, card, at(4, 30), 'cross-day completed');
@@ -108,7 +108,7 @@ it('a routine action only reads today and the open segment date, never scans his
   const fs = new MemoryFs(), repos = createRepos(fs);
   const oldAt = new Date(2026, 9, 25, 10).toISOString();
   const todayAt = new Date(2026, 9, 27, 10).toISOString();
-  const open: Segment = { id: crypto.randomUUID(), seq: 1, started_at: oldAt, ended_at: null, activity: '生活', category: '生活', card_id: null, kind: '普通', source: '手动', resume_card_id: null };
+  const open: Segment = { id: crypto.randomUUID(), seq: 1, started_at: oldAt, ended_at: null, activity: '生活', project: '生活', card_id: null, kind: '普通', source: '手动', resume_card_id: null };
   await repos.transact(crypto.randomUUID(), [
     ...await repos.times.writes([{ day: '2026-10-25', segment: open }]),
     await repos.state.write({ ...structuredClone(initialState), max_seq: 1, open_segment: open.id, open_segment_day: '2026-10-25' }),

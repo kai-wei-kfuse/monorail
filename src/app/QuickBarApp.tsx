@@ -4,6 +4,7 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { encode } from '../data/frontmatter';
 import { recordSchema } from '../data/schemas';
+import { toV1, taskReferenceFields } from '../data/v1Codec';
 import { createRecord } from '../domain/record/record';
 import type { RecordEntry } from '../domain/record/record';
 import { QuickBar } from '../pages/quickbar/QuickBar';
@@ -17,7 +18,7 @@ import '../ui/styles/base.css';
 /** 记录条只能经窄命令 save_quick_record 新建 records/<uuid>.md（架构 §3.2），写完发 data-changed，主窗口负责 reconcile。 */
 async function persistRecord(input: RecordEntry) {
   const value = recordSchema.parse(input);
-  await invoke('save_quick_record', { id: value.id, text: encode(value, value.text) });
+  await invoke('save_quick_record', { id: value.id, text: encode(toV1(value, taskReferenceFields), value.text) });
   await invoke('evidence', { message: `quickbar-saved:${value.id}` });
   await emit('data-changed', { recordId: value.id });
 }
@@ -39,7 +40,7 @@ async function save(draft: Draft) {
 function toRecord(d: Draft, id: string, attachments: string[]): RecordEntry {
   const todo = d.kind === '待办';
   return createRecord({ id, text: d.text, kind: d.kind, created_at: d.at, due_at: todo ? d.dueAt : null, blocking: todo && d.blocking,
-    project_id: d.projectId, card_id: null, tags: [], attachments, needs: d.kind === '想法' ? d.needs : null });
+    task_id: d.taskId, card_id: null, tags: [], attachments, needs: d.kind === '想法' ? d.needs : null });
 }
 
 export function QuickBarApp() {
@@ -66,15 +67,15 @@ export function QuickBarApp() {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  // Projects and accent come from the main window; the quick bar has no read access to the data folder.
-  const [context, setContext] = useState<QuickbarContext>({ projects: [], accent: '' });
+  // Tasks and accent come from the main window; the quick bar has no read access to the data folder.
+  const [context, setContext] = useState<QuickbarContext>({ tasks: [], accent: '' });
   useEffect(() => {
     const off = subscribeQuickbarContext(setContext);
     return () => { void off.then(fn => fn()); };
   }, []);
   useEffect(() => { if (context.accent) document.documentElement.style.setProperty('--yellow', context.accent); }, [context.accent]);
   const hide = () => void getCurrentWindow().hide();
-  return <div ref={box}><QuickBar projects={context.projects} onHide={hide} onDirtyChange={onDirtyChange}
+  return <div ref={box}><QuickBar tasks={context.tasks} onHide={hide} onDirtyChange={onDirtyChange}
     onSave={async draft => { await save(draft); hide(); }} />
     {guardError && <p role="alert">更新草稿检查失败：{guardError}</p>}</div>;
 }

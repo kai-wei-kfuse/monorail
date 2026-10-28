@@ -43,7 +43,7 @@ export function cardView(home: HomeSlice, now: number): TaskCardView | null {
   const elapsedMs = home.closedEffectiveMs + (home.currentSegStartedAt ? now - Date.parse(home.currentSegStartedAt) : 0);
   const away = home.awayActivity !== null;
   // 不属于项目的卡不占背包格，不显示「/03」
-  return { id: c.id, slotNo: c.slotNo, slotOf: c.slotNo === LOOSE.slot ? undefined : c.slotOf, project: c.project, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
+  return { id: c.id, slotNo: c.slotNo, slotOf: c.slotNo === LOOSE.slot ? undefined : c.slotOf, task: c.task, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
     progressNote: c.progressNote || undefined, elapsedMs, awayActivity: home.awayActivity ?? undefined,
     progress: cardProgress(elapsedMs, c.goalMinutes, c.status === '进行中' && !away, away) };
 }
@@ -110,7 +110,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     await act(() => actions.redraw(home.card!.id, at));
     const next = appStore.getState().home.card;
     if (!next) { setFrozen(null); return; }
-    setWipe({ no: next.slotNo, meta: `${next.project} · ${next.type}${next.goalMinutes ? ` · ${next.goalMinutes} 分钟` : ''}`, title: next.content.replace(/[[\]]/g, '') });
+    setWipe({ no: next.slotNo, meta: `${next.task} · ${next.type}${next.goalMinutes ? ` · ${next.goalMinutes} 分钟` : ''}`, title: next.content.replace(/[[\]]/g, '') });
   }
 
   let body;

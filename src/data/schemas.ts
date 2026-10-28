@@ -11,7 +11,7 @@ const attachmentPath = z.string().refine(value => {
 }, '附件必须是 attachments/ 下的相对路径');
 const currentRecordSchema = z.object({
   id: z.uuid(), text: z.string(), kind: z.enum(['待办', '想法']), created_at: iso,
-  due_at: iso.nullable(), blocking: z.boolean(), project_id: nullableText,
+  due_at: iso.nullable(), blocking: z.boolean(), task_id: nullableText,
   card_id: nullableText, tags: z.array(z.string()), attachments: z.array(attachmentPath),
   needs: nullableText, pool: z.enum(['活跃池', '冷库', '已转待办']).nullable(),
   last_touched_at: iso, cold_since: iso.nullable(),
@@ -28,7 +28,7 @@ export const recordSchema = z.preprocess(value => {
 }, currentRecordSchema);
 const currentCardSchema = z.object({
   id: z.string().min(1), source_record_id: z.uuid().nullable(), content: z.string(), created_at: iso,
-  due_at: iso.nullable(), blocking: z.boolean(), project_id: nullableText,
+  due_at: iso.nullable(), blocking: z.boolean(), task_id: nullableText,
   status: z.enum(['待做', '进行中', '已完成', '已缩小', '已放弃']), type: z.enum(['结果卡', '时间盒卡']), order: z.number(),
   timebox_minutes: z.number().positive().nullable(), no_shrink: z.boolean(), shrunk_from: nullableText,
   shrink_level: z.number().int().nonnegative(), continued_from: nullableText, skip_count: z.number().int().nonnegative(),
@@ -43,7 +43,7 @@ export const cardSchema = z.preprocess(value => {
   return value;
 }, currentCardSchema);
 
-export const projectSchema = z.object({
+export const taskSchema = z.object({
   id: z.string().min(1), name: z.string().min(1), slot: z.enum(['主线', '支线', '不在背包']),
   slot_index: z.number().int().positive().nullable(), status: z.enum(['进行中', '冷藏', '已放弃']),
   created_at: iso, bet_ends_at: iso.nullable(),
@@ -53,22 +53,22 @@ export const reviewSchema = z.object({
   id: z.string().min(1), period: z.string().regex(/^\d{4}-W\d{2}$/), status: z.enum(['未开始', '进行中', '已完成', '已被取代']),
   step: z.union([reviewStep, z.literal('done')]), done: z.array(reviewStep).optional(),
   started_at: iso.nullable().optional(), completed_at: iso.nullable().optional(),
-  added_idea_ids: z.array(z.string()).optional(), bet_project_ids: z.array(z.string()).optional(), bet_done_ids: z.array(z.string()).optional(),
+  added_idea_ids: z.array(z.string()).optional(), bet_task_ids: z.array(z.string()).optional(), bet_done_ids: z.array(z.string()).optional(),
   cold_duel: z.object({ left: z.string(), right: z.string() }).nullable().optional(),
   timer_segment_id: z.uuid().nullable().optional(),
 }).passthrough().refine(row => row.done === undefined || (row.started_at !== undefined && row.completed_at !== undefined &&
-  row.added_idea_ids !== undefined && row.bet_project_ids !== undefined && row.bet_done_ids !== undefined && row.cold_duel !== undefined), '回顾进度字段不完整')
+  row.added_idea_ids !== undefined && row.bet_task_ids !== undefined && row.bet_done_ids !== undefined && row.cold_duel !== undefined), '回顾进度字段不完整')
   .refine(row => row.done === undefined || row.status !== '已完成' || row.completed_at !== null, '已完成回顾缺少完成时间');
 export const segmentSchema = z.object({
   id: z.uuid(), seq: z.number().int().positive(), started_at: iso, ended_at: iso.nullable(),
-  activity: z.string(), category: z.string(), card_id: nullableText,
+  activity: z.string(), project: z.string(), card_id: nullableText,
   kind: z.enum(['普通', '插入']), source: z.enum(['手动', '补记', '自动', '离线追问']), resume_card_id: nullableText,
 }).refine(s => s.ended_at === null || Date.parse(s.ended_at) >= Date.parse(s.started_at), '结束时间早于开始时间');
 
 const namedItem = z.object({ id: z.string().min(1), name: z.string().min(1) }).passthrough();
 const uniqueIds = (items: { id: string }[]) => new Set(items.map(item => item.id)).size === items.length;
 const listsSchema = z.object({
-    quickActivities: z.array(namedItem.extend({ category: z.string().min(1) })).refine(uniqueIds, '快捷活动 id 重复'),
+    quickActivities: z.array(namedItem.extend({ project: z.string().min(1) })).refine(uniqueIds, '快捷活动 id 重复'),
     restPool: z.array(namedItem).refine(uniqueIds, '休息项 id 重复'),
     idleName: z.string().min(1),
 }).passthrough();

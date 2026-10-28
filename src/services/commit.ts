@@ -6,7 +6,7 @@ import type { Settings } from '../shared/settings';
 import type { Reminders } from '../platform/reminders';
 import type { AppState, Repositories, Write } from '../data/repos';
 import type { RecordEntry } from '../domain/record/record';
-import type { Project } from '../domain/project/project';
+import type { Task } from '../domain/task/task';
 import type { Review } from '../domain/review/schedule';
 import type { Notice } from '../shared/notices';
 import type { HomeSlice } from '../store/homeSlice';
@@ -31,9 +31,9 @@ export interface Transaction {
   readonly at: string; readonly id: () => string; readonly now: () => string;
   readonly log: (message: string) => Promise<void>;
   state: AppState; segments: Segment[]; writes: Write[]; notices: Notice[];
-  readonly cards: Card[]; readonly projects: Project[]; readonly reviews: Review[]; readonly records: RecordEntry[];
+  readonly cards: Card[]; readonly tasks: Task[]; readonly reviews: Review[]; readonly records: RecordEntry[];
   random(): number; saveCard(card: Card): void; saveReview(review: Review): void; nextSeq(): number;
-  saveProject(project: Project): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
+  saveTask(task: Task): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
   saveSettings(settings: Settings): Promise<void>;
 }
 interface Queue { tail: Promise<unknown>; failure?: unknown; version: number; paused?: { resumed: Promise<void>; release(): void } }
@@ -88,8 +88,8 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
     const today = activityDay(ctx.now(), ctx.settings.dayBoundaryHour);
     const days = daysFor(state, today);
     const segments = await ctx.repos.times.readDays(days);
-    const [entities, projectEntities, reviewEntities, recordEntities] = await Promise.all([ctx.repos.cards.list(), ctx.repos.projects.list(), ctx.repos.reviews.list(), ctx.repos.records.list()]);
-    const cards = entityChanges(ctx.repos.cards, entities), projects = entityChanges(ctx.repos.projects, projectEntities);
+    const [entities, taskEntities, reviewEntities, recordEntities] = await Promise.all([ctx.repos.cards.list(), ctx.repos.tasks.list(), ctx.repos.reviews.list(), ctx.repos.records.list()]);
+    const cards = entityChanges(ctx.repos.cards, entities), tasks = entityChanges(ctx.repos.tasks, taskEntities);
     const reviews = entityChanges(ctx.repos.reviews, reviewEntities);
     const records = entityChanges(ctx.repos.records, recordEntities, (record, original) =>
       !original || record.text !== original.value.text ? record.text : undefined);
@@ -99,7 +99,7 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
       scope: 'transaction', repos: ctx.repos, get settings() { return settings; },
       at: commandAt, id: ctx.id, now: ctx.now, log: ctx.log,
       state, segments, writes: [], notices: [],
-      get cards() { return cards.values; }, get projects() { return projects.values; },
+      get cards() { return cards.values; }, get tasks() { return tasks.values; },
       get reviews() { return reviews.values; }, get records() { return records.values; },
       random: ctx.random ?? Math.random,
       saveCard: card => {
@@ -107,13 +107,13 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
         cards.save(previous ? { ...card, progress_noted_at: previous.progress_note !== card.progress_note
           ? commandAt : previous.progress_noted_at } : card);
       }, saveReview: review => reviews.save(review),
-      saveProject: project => projects.save(project), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
+      saveTask: task => tasks.save(task), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
       async saveSettings(value) { settingsWrite = await ctx.repos.settings.write(value); settings = structuredClone(value); },
       nextSeq() { return ++this.state.max_seq; },
     };
     const value = await work(tx);
     if (settingsWrite) tx.writes.push(settingsWrite);
-    tx.writes.push(...await cards.writes(), ...await projects.writes(), ...await reviews.writes(), ...await records.writes());
+    tx.writes.push(...await cards.writes(), ...await tasks.writes(), ...await reviews.writes(), ...await records.writes());
     tx.writes.push(await ctx.repos.state.write(tx.state));
     try { await ctx.repos.transact(ctx.id(), tx.writes); }
     catch (error) { queue.failure = error; throw error; }
@@ -123,9 +123,9 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
     }
     const visibleDays = [...new Set([...days, ...daysFor(tx.state, today)])];
     const visible = await ctx.repos.times.readDays(visibleDays);
-    const home = projectHome({ cards: tx.cards, projects: tx.projects, reviews: tx.reviews, state: tx.state, settings: ctx.settings, segments: ctx.repos.times.snapshot(), at: ctx.now(), version: ++queue.version });
-    const backpack = projectBackpack(tx.cards, tx.projects, tx.records);
-    const review = projectReview({ cards: tx.cards, projects: tx.projects, records: tx.records, reviews: tx.reviews, segments: ctx.repos.times.snapshot(), state: tx.state, settings: ctx.settings, at: ctx.now() });
+    const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, segments: ctx.repos.times.snapshot(), at: ctx.now(), version: ++queue.version });
+    const backpack = projectBackpack(tx.cards, tx.tasks, tx.records);
+    const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, segments: ctx.repos.times.snapshot(), state: tx.state, settings: ctx.settings, at: ctx.now() });
     ctx.publish({ state: tx.state, cards: tx.cards, segments: visible, home, backpack, review, settings: ctx.settings, notices: tx.notices });
     await ctx.reminders.update(planReminders({ cards: tx.cards, open: tx.segments.find(seg => seg.id === tx.state.open_segment && seg.ended_at === null) ?? null,
       deadlineLeadMinutes: ctx.settings.deadlineLeadMinutes, longActivityMinutes: ctx.settings.longActivityMinutes }));

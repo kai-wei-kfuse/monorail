@@ -36,9 +36,9 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
     if ('custom' in row) {
       switch (row.custom) {
         case 'idleName': return <TextInput aria-label={row.cn} value={lists.idleName} style={{ width: 200 }} onChange={e => onListsChange({ ...lists, idleName: e.target.value })} />;
-        case 'quickActivities': return <ListEditor withCategory items={lists.quickActivities} placeholder="例如：厕所、拿快递、吃饭"
-          onChange={items => onListsChange({ ...lists, quickActivities: items.map(i => ({ id: i.id, name: i.name, category: i.category ?? '生活' })) })} />;
-        case 'restPool': return <ListEditor withCategory={false} items={lists.restPool} placeholder="例如：眺望窗外、走走、洗脸、收拾桌面"
+        case 'quickActivities': return <ListEditor withProject items={lists.quickActivities} placeholder="例如：厕所、拿快递、吃饭"
+          onChange={items => onListsChange({ ...lists, quickActivities: items.map(i => ({ id: i.id, name: i.name, project: i.project ?? '生活' })) })} />;
+        case 'restPool': return <ListEditor withProject={false} items={lists.restPool} placeholder="例如：眺望窗外、走走、洗脸、收拾桌面"
           onChange={items => onListsChange({ ...lists, restPool: items.map(i => ({ id: i.id, name: i.name })) })} />;
         case 'dataDir': return <><code className="st-path">{dataDir}</code><Button onClick={onChangeDir}>更换</Button></>;
         case 'about': return null;

@@ -3,7 +3,7 @@ import type { Segment } from './segment';
 import { cardMilliseconds, activityDayTotals } from './stats';
 import { activityDay } from './day';
 
-const segment = (seq: number, start: string, end: string | null, card: string | null): Segment => ({ id: crypto.randomUUID(), seq, started_at: start, ended_at: end, activity: card ? '任务' : '生活', category: card ? '主线' : '生活', card_id: card, kind: '普通', source: seq === 1 ? '手动' : '补记', resume_card_id: null });
+const segment = (seq: number, start: string, end: string | null, card: string | null): Segment => ({ id: crypto.randomUUID(), seq, started_at: start, ended_at: end, activity: card ? '任务' : '生活', project: card ? '主线' : '生活', card_id: card, kind: '普通', source: seq === 1 ? '手动' : '补记', resume_card_id: null });
 it('A1 counts effective time across days and subtracts backfilled periods', () => {
   const rows = [segment(1, '2026-10-26T10:00:00Z', '2026-10-26T11:00:00Z', 'a'), segment(2, '2026-10-26T10:20:00Z', '2026-10-26T10:40:00Z', null), segment(3, '2026-10-27T10:00:00Z', null, 'a')];
   expect(cardMilliseconds(rows, 'a', '2026-10-27T10:30:00Z')).toBe(70 * 60000);

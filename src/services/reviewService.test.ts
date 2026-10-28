@@ -1,8 +1,8 @@
 import { expect, it, vi } from 'vitest';
-import { fixture, card, project, seed, at, open, getCard } from './serviceFixture';
+import { fixture, card, task, seed, at, open, getCard } from './serviceFixture';
 import type { Fixture } from './serviceFixture';
 import { createContext, run } from './commit';
-import { freezeProject } from './backpackService';
+import { freezeTask } from './backpackService';
 import { enter, goto, addIdea, duel, takeCold, skipCold, continueBet, switchMain, finish } from './reviewService';
 import { refresh } from './dealService';
 import { start, redraw } from './cardService';
@@ -20,7 +20,7 @@ async function toCold(f: Fixture) {
 async function ideas(f: Fixture, count: number, cold = 0) {
   const entries = Array.from({ length: count + cold }, (_, i) => {
     const idea = createRecord({ id: crypto.randomUUID(), text: `idea-${i}`, kind: '想法', created_at: at(i),
-      due_at: null, blocking: false, project_id: null, card_id: null, tags: [], attachments: [] });
+      due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [] });
     return i < count ? idea : { ...idea, pool: '冷库' as const, cold_since: at(i) };
   });
   await f.ctx.repos.transact(crypto.randomUUID(), await Promise.all(entries.map(value => f.ctx.repos.records.write(value, null))));
@@ -32,7 +32,7 @@ it('A8 active first-week review completes the ISO period and does not enter the 
   expect(view(f).period).toBe('2026-W44');
   f.clock(at(10)); await finish(f.ctx, at(10));
   expect((await saved(f))[0]).toMatchObject({ status: '已完成', completed_at: at(10), done: ['recap', 'newIdeas', 'arena', 'coldPick'] });
-  expect(open(f).category).toBe('待机'); expect(f.home().baseline).toMatchObject({ main: null, side: false });
+  expect(open(f).project).toBe('待机'); expect(f.home().baseline).toMatchObject({ main: null, side: false });
   f.clock(new Date(2026, 10, 1, 12).toISOString()); await refresh(f.ctx, f.ctx.now());
   expect(f.home().review).toBeNull();
   const seq = (await f.ctx.repos.state.read()).max_seq;
@@ -61,8 +61,8 @@ it('A8 page refresh and hiding-equivalent idle time do not end review; quick act
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
   f.clock(at(1)); await enter(f.ctx, at(1)); expect((await getCard(f, 'a')).status).toBe('待做');
   const id = open(f).id; f.clock(at(5)); await refresh(f.ctx, at(5)); expect(open(f).id).toBe(id);
-  f.clock(at(6)); await insert(f.ctx, 'wc', at(6)); expect(open(f).category).toBe('生活');
-  f.clock(at(7)); await enter(f.ctx, at(7)); expect(open(f).category).toBe('回顾');
+  f.clock(at(6)); await insert(f.ctx, 'wc', at(6)); expect(open(f).project).toBe('生活');
+  f.clock(at(7)); await enter(f.ctx, at(7)); expect(open(f).project).toBe('回顾');
   f.clock(at(8)); await start(f.ctx, 'a', at(8)); expect(open(f).card_id).toBe('a');
   expect((await saved(f))[0].status).toBe('进行中');
 });
@@ -73,7 +73,7 @@ it('finishing after a quick activity does not end that unrelated activity', asyn
 });
 
 it('an identically named custom review activity is not mistaken for this review timer', async () => {
-  const f = fixture(); f.ctx.settings.lists.quickActivities = [{ id: 'custom', name: '每周回顾', category: '回顾' }];
+  const f = fixture(); f.ctx.settings.lists.quickActivities = [{ id: 'custom', name: '每周回顾', project: '回顾' }];
   await toCold(f); f.clock(at(1)); await insert(f.ctx, 'custom', at(1));
   const id = open(f).id; await finish(f.ctx, at(1)); expect(open(f).id).toBe(id);
 });
@@ -128,50 +128,50 @@ it('cold skip cancels a pending duel without touching either idea; available slo
 it('A8 continue extends the original deadline by one bet period and finishes after all due mains', async () => {
   const f = fixture(); f.ctx.settings.mainSlots = 2;
   const deadline = new Date(2026, 8, 1, 10).toISOString();
-  await seed(f, [], [{ ...project('a'), bet_ends_at: deadline }, { ...project('b', '主线', 2), bet_ends_at: deadline }]);
-  await toCold(f); await skipCold(f.ctx, at()); expect(view(f).bet?.project).toBe('a');
+  await seed(f, [], [{ ...task('a'), bet_ends_at: deadline }, { ...task('b', '主线', 2), bet_ends_at: deadline }]);
+  await toCold(f); await skipCold(f.ctx, at()); expect(view(f).bet?.task).toBe('a');
   await continueBet(f.ctx, at());
-  expect((await f.ctx.repos.projects.get('a'))!.value.bet_ends_at).toBe(new Date(2026, 8, 29, 10).toISOString());
-  expect(view(f).bet?.project).toBe('b');
+  expect((await f.ctx.repos.tasks.get('a'))!.value.bet_ends_at).toBe(new Date(2026, 8, 29, 10).toISOString());
+  expect(view(f).bet?.task).toBe('b');
   await continueBet(f.ctx, at()); expect((await saved(f))[0].status).toBe('已完成');
 });
 
 it('review projection keeps the exact id when advancing between identically named mains', async () => {
   const f = fixture(); f.ctx.settings.mainSlots = 2;
-  await seed(f, [], ['first', 'second'].map((id, index) => ({ ...project(id, '主线', index + 1), name: '同名主线', bet_ends_at: at(-1) })));
+  await seed(f, [], ['first', 'second'].map((id, index) => ({ ...task(id, '主线', index + 1), name: '同名主线', bet_ends_at: at(-1) })));
   await toCold(f); await skipCold(f.ctx, at());
-  expect(view(f).bet).toMatchObject({ projectId: 'first', project: '同名主线' });
-  await continueBet(f.ctx, at()); expect(view(f).bet).toMatchObject({ projectId: 'second', project: '同名主线' });
-  await switchMain(f.ctx, { name: 'new', slot: '主线', makeRoom: { id: view(f).bet!.projectId, action: '冷藏' } }, at());
-  expect((await f.ctx.repos.projects.get('first'))!.value.status).toBe('进行中');
-  expect((await f.ctx.repos.projects.get('second'))!.value.status).toBe('冷藏');
+  expect(view(f).bet).toMatchObject({ taskId: 'first', task: '同名主线' });
+  await continueBet(f.ctx, at()); expect(view(f).bet).toMatchObject({ taskId: 'second', task: '同名主线' });
+  await switchMain(f.ctx, { name: 'new', slot: '主线', makeRoom: { id: view(f).bet!.taskId, action: '冷藏' } }, at());
+  expect((await f.ctx.repos.tasks.get('first'))!.value.status).toBe('进行中');
+  expect((await f.ctx.repos.tasks.get('second'))!.value.status).toBe('冷藏');
 });
 
 it.each(['冷藏', '放弃'] as const)('A8 changing main via create shares one commit with review completion (%s)', async action => {
-  const f = fixture(); await seed(f, [card('old-card', { project_id: 'old' })], [{ ...project('old'), bet_ends_at: at(-1) }]);
+  const f = fixture(); await seed(f, [card('old-card', { task_id: 'old' })], [{ ...task('old'), bet_ends_at: at(-1) }]);
   await toCold(f); await skipCold(f.ctx, at());
   const transact = vi.spyOn(f.ctx.repos, 'transact');
   await switchMain(f.ctx, { name: 'new', slot: '主线', makeRoom: { id: 'old', action } }, at());
   expect(transact).toHaveBeenCalledTimes(1);
-  expect((await f.ctx.repos.projects.get('old'))!.value.status).toBe(action === '冷藏' ? '冷藏' : '已放弃');
+  expect((await f.ctx.repos.tasks.get('old'))!.value.status).toBe(action === '冷藏' ? '冷藏' : '已放弃');
   expect((await saved(f))[0].status).toBe('已完成');
-  expect((await f.ctx.repos.projects.list()).find(row => row.value.name === 'new')!.value.slot).toBe('主线');
+  expect((await f.ctx.repos.tasks.list()).find(row => row.value.name === 'new')!.value.slot).toBe('主线');
 });
 
 it('A8 restoring an existing main and invalid replacement both obey backpack transactions', async () => {
-  const f = fixture(); await seed(f, [], [{ ...project('old'), bet_ends_at: at(-1) }, { ...project('restore'), slot: '不在背包', slot_index: null, status: '冷藏' }]);
+  const f = fixture(); await seed(f, [], [{ ...task('old'), bet_ends_at: at(-1) }, { ...task('restore'), slot: '不在背包', slot_index: null, status: '冷藏' }]);
   await toCold(f); await skipCold(f.ctx, at());
   await expect(switchMain(f.ctx, { name: ' ', slot: '主线', makeRoom: { id: 'old', action: '放弃' } }, at())).rejects.toThrow('不能为空');
-  expect((await f.ctx.repos.projects.get('old'))!.value.status).toBe('进行中');
+  expect((await f.ctx.repos.tasks.get('old'))!.value.status).toBe('进行中');
   expect((await saved(f))[0].status).toBe('进行中');
   await switchMain(f.ctx, { restoreId: 'restore', makeRoom: { id: 'old', action: '冷藏' } }, at());
-  expect((await f.ctx.repos.projects.get('restore'))!.value.slot).toBe('主线');
+  expect((await f.ctx.repos.tasks.get('restore'))!.value.slot).toBe('主线');
   expect((await saved(f))[0].status).toBe('已完成');
 });
 
 it('a main explicitly removed in the backpack while reviewing does not strand the bet step on reentry', async () => {
-  const f = fixture(); await seed(f, [], [{ ...project('old'), bet_ends_at: at(-1) }]);
-  await toCold(f); await skipCold(f.ctx, at()); await freezeProject(f.ctx, 'old', at());
+  const f = fixture(); await seed(f, [], [{ ...task('old'), bet_ends_at: at(-1) }]);
+  await toCold(f); await skipCold(f.ctx, at()); await freezeTask(f.ctx, 'old', at());
   await enter(f.ctx, at()); expect((await saved(f))[0].status).toBe('已完成');
 });
 
@@ -183,13 +183,13 @@ it('recap spans superseded periods since the last completion, clips overlays, an
     tx.saveReview({ id: '2026-W41', period: '2026-W41', status: '已完成', step: 'done', completed_at: date(10) });
     tx.saveReview({ id: '2026-W42', period: '2026-W42', status: '已被取代', step: 'arena' });
     tx.saveCard({ ...tx.cards.find(card => card.id === 'pending')!, progress_note: 'unfinished-note' });
-    const segment: Segment = { id: tx.id(), seq: tx.nextSeq(), started_at: date(10, 9), ended_at: date(10, 12), activity: 'task', category: '主线', card_id: 'done', kind: '普通', source: '手动', resume_card_id: null };
-    const overlay: Segment = { ...segment, id: tx.id(), seq: tx.nextSeq(), started_at: date(10, 11), ended_at: date(10, 12), category: '生活', card_id: null, source: '补记' };
+    const segment: Segment = { id: tx.id(), seq: tx.nextSeq(), started_at: date(10, 9), ended_at: date(10, 12), activity: 'task', project: '主线', card_id: 'done', kind: '普通', source: '手动', resume_card_id: null };
+    const overlay: Segment = { ...segment, id: tx.id(), seq: tx.nextSeq(), started_at: date(10, 11), ended_at: date(10, 12), project: '生活', card_id: null, source: '补记' };
     tx.writes.push(...await tx.repos.times.writes([segment, overlay].map(segment => ({ day: activityDay(segment.started_at, 4), segment }))));
   }, date(26));
   await enter(f.ctx, at()); const recap = view(f).recap;
   expect(recap.completed.map(card => card.id)).toEqual(['done']);
-  expect(recap.totals).toEqual(expect.arrayContaining([{ category: '主线', minutes: 60 }, { category: '生活', minutes: 60 }]));
+  expect(recap.totals).toEqual(expect.arrayContaining([{ project: '主线', minutes: 60 }, { project: '生活', minutes: 60 }]));
   expect(recap.completed[0].minutes).toBe(60);
   expect(recap.notes.map(note => note.id).sort()).toEqual(['done', 'pending']);
   expect((await saved(f)).some(row => row.period === '2026-W43')).toBe(true);
