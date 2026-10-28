@@ -75,7 +75,7 @@ function HomeMock() {
         <Readout state="run" stateCn="进行中" stateEn="RUNNING" digits="47:12" />
       </div>
     </div>
-    {fx === 'wipe' && <Wipe no="02" meta="散件 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => setFx('')} />}
+    {fx === 'wipe' && <Wipe no="02" meta="支线 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => setFx('')} />}
     {fx === 'cut' && <CutIn cn={<>目标<em>达成</em></>} en="OBJECTIVE COMPLETE" sub="已用 60:00 // 继续计时会标出超出多少" dim={document.getElementById('g-in')} onDone={() => setFx('')} />}
   </section>;
 }

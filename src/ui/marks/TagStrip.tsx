@@ -2,7 +2,7 @@ import { Tri2 } from '../icons/Icon';
 import './marks.css';
 
 /**
- * 竖排黑色标签条（游戏相框）。no 是格号，例如「01」，散件传「散」。
+ * 竖排黑色标签条（游戏相框）。no 是格号，例如「01」；不属于项目的卡传「支」。
  * card 版在卡片左边缘从顶部落下；mini 版是小窗左侧 24px 的缩小版。
  */
 export function TagStrip({ label = 'SLOT', no, of, mini }: { label?: string; no: string; of?: string; mini?: boolean }) {

@@ -12,9 +12,9 @@ import { fitTitleSize } from './title';
 import { MarkedText } from '../../ui/marks/MarkedText';
 
 export interface TaskCardView {
-  slotNo: string;              // 背包格号，例如「01」；散件是「散」
+  slotNo: string;              // 背包格号，例如「01」；不属于项目的卡是「支」（LOOSE.slot）
   slotOf?: string;             // 「/03」
-  project: string;             // 项目名；散件显示「散件」
+  project: string;             // 项目名；不属于项目的卡显示「支线」
   type: '结果卡' | '时间盒卡';
   goalMinutes: number | null;  // 只有时间盒卡有
   content: string;             // 带 [词] 标记的原文

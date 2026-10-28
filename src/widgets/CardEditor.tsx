@@ -7,6 +7,7 @@ import { Switch } from '../ui/controls/Switch';
 import { TextArea } from '../ui/controls/TextArea';
 import { DateTimeInput } from '../ui/controls/DateTimeInput';
 import { Dropdown } from '../ui/controls/Dropdown';
+import { LOOSE } from '../shared/backpack';
 import './forms.css';
 
 export interface CardFields {
@@ -43,7 +44,7 @@ export function CardEditor({ initial, isNew, projects, defaultTimebox, passBlock
       </div></div>
       <div className="fm-f"><span>所属项目</span>
         <Dropdown label="所属项目" value={f.projectId ?? ''} onChange={id => set({ projectId: id || null })}
-          options={[{ value: '', label: '散件（按支线算）' }, ...projects.map(p => ({ value: p.id, label: p.name }))]} />
+          options={[{ value: '', label: LOOSE.option }, ...projects.map(p => ({ value: p.id, label: p.name }))]} />
       </div>
       <div className="fm-f"><span>期限</span><div className="fm-row">
         <DateTimeInput label="期限" value={f.dueAt} onChange={dueAt => set({ dueAt })} />

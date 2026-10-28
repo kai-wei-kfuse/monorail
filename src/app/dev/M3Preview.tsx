@@ -26,7 +26,7 @@ function reviewData(step: ReviewStep): ReviewData {
       completed: [
         { id: 'c1', content: '找 3 个 JD', project: '找工作', day: '10-27', minutes: 35 },
         { id: 'c2', content: '沿 [Python] 往下学 1 小时', project: '找工作', day: '10-28', minutes: 64 },
-        { id: 'c3', content: '查一下几台服务器有没有被攻击', project: '散件', day: '10-29', minutes: 22 }],
+        { id: 'c3', content: '查一下几台服务器有没有被攻击', project: '支线', day: '10-29', minutes: 22 }],
       totals: [{ category: '主线', minutes: 412 }, { category: '支线', minutes: 180 }, { category: '生活', minutes: 95 }, { category: '休息', minutes: 40 }],
       notes: [{ id: 'n1', content: '沿 [Python] 往下学 1 小时', note: '看完装饰器，下一步写小练习' }],
     },

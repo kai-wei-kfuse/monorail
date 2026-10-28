@@ -22,7 +22,7 @@ const QUEUE: QueueGroup[] = [
     card('c2', '找 3 个 JD', { noShrink: true, projectId: 'p1' }),
     card('c3', '只改一段项目经历', { projectId: 'p1' }, { shrinkLevel: 1, skipCount: 2 }) ] },
   { projectId: 'p2', name: '小游戏房间系统', slotLabel: '支线 02', cards: [card('c4', '写下房间系统的接口设计', { projectId: 'p2' })] },
-  { projectId: null, name: '散件', slotLabel: '散', cards: [card('c5', '查一下几台服务器有没有被攻击', { blocking: true, dueAt: ago(-1) })] },
+  { projectId: null, name: '支线 · 未归项目', slotLabel: '支', cards: [card('c5', '查一下几台服务器有没有被攻击', { blocking: true, dueAt: ago(-1) })] },
 ];
 const IDEAS: IdeaView[] = [
   { id: 'i1', text: '用空闲服务器搞点自动化', tags: ['服务器'], needs: '空闲服务器', pool: '活跃池', createdAt: ago(20), lastTouchedAt: ago(20) },

@@ -4,6 +4,7 @@ import { inBackpack } from '../domain/project/project';
 import type { RecordEntry } from '../domain/record/record';
 import type { BackpackSlice, QueueCard } from '../store/backpackSlice';
 import { coldOffer } from '../domain/idea/pool';
+import { LOOSE } from '../shared/backpack';
 
 export function projectBackpack(cards: Card[], projects: Project[], records: RecordEntry[]): BackpackSlice {
   const active = cards.filter(card => card.status === '待做' || card.status === '进行中');
@@ -17,7 +18,7 @@ export function projectBackpack(cards: Card[], projects: Project[], records: Rec
     projects: orderedProjects.map(project => ({ id: project.id, name: project.name, slot: project.slot, slotIndex: project.slot_index,
       status: project.status, betEndsAt: project.bet_ends_at, openCards: active.filter(card => card.project_id === project.id).length })),
     queue: [...orderedProjects.filter(inBackpack).map(project => ({ projectId: project.id, name: project.name,
-      slotLabel: String(project.slot_index).padStart(2, '0'), cards: queue(project.id) })), { projectId: null, name: '散件', slotLabel: '散', cards: queue(null) }],
+      slotLabel: String(project.slot_index).padStart(2, '0'), cards: queue(project.id) })), { projectId: null, name: LOOSE.group, slotLabel: LOOSE.slot, cards: queue(null) }],
     ideas: records.filter(record => record.kind === '想法' && (record.pool === '活跃池' || record.pool === '已转待办'))
       .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))
       .map(record => ({ id: record.id, text: record.text, tags: record.tags, needs: record.needs,

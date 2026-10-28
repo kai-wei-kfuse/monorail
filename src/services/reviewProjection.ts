@@ -11,6 +11,7 @@ import { effective } from '../domain/timeline/effective';
 import { activityDayTotals, cardMilliseconds } from '../domain/timeline/stats';
 import type { Segment } from '../domain/timeline/segment';
 import type { Settings } from '../shared/settings';
+import { LOOSE } from '../shared/backpack';
 import type { AppState } from '../data/repos';
 import type { RecapData, ReviewSlice } from '../store/reviewSlice';
 
@@ -39,7 +40,7 @@ function recap(input: Input, from: string): RecapData {
   const completed = cards.filter(card => card.completed_at && Date.parse(card.completed_at) > start && Date.parse(card.completed_at) <= end)
     .sort((a, b) => Date.parse(a.completed_at!) - Date.parse(b.completed_at!) || a.id.localeCompare(b.id));
   return {
-    completed: completed.map(card => ({ id: card.id, content: card.content, project: projects.find(project => project.id === card.project_id)?.name ?? '散件',
+    completed: completed.map(card => ({ id: card.id, content: card.content, project: projects.find(project => project.id === card.project_id)?.name ?? LOOSE.name,
       day: card.completed_day!, minutes: cardMilliseconds(timeline, card.id, at) / 60_000 })),
     totals: Object.entries(totals).map(([category, ms]) => ({ category, minutes: ms / 60_000 })).sort((a, b) => b.minutes - a.minutes || a.category.localeCompare(b.category)),
     notes: cards.filter(card => {

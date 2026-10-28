@@ -17,6 +17,11 @@ describe('formatHotkey', () => {
     expect(formatHotkey(key({ key: '!', code: 'Digit1', shiftKey: true }))).toBe('Shift+1');
     expect(formatHotkey(key({ key: ' ', code: 'Space', altKey: true }))).toBe('Alt+Space');
   });
+  it('Win 键算修饰键，写成 Win', () => {
+    expect(formatHotkey(key({ metaKey: true, shiftKey: true, key: 'R' }))).toBe('Shift+Win+R');
+    expect(formatHotkey(key({ metaKey: true, key: '1', code: 'Digit1' }))).toBe('Win+1');
+    expect(formatHotkey(key({ key: 'Meta', code: 'MetaLeft', metaKey: true }))).toBeNull();
+  });
 });
 
 describe('clampStep', () => {

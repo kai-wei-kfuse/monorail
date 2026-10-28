@@ -56,7 +56,7 @@ export const SECTIONS: SettingSection[] = [
       { key: 'topoMode', cn: '等高线背景', labels: { dynamic: '动态', static: '静态', off: '纯色' } },
       { key: 'topoDepth', cn: '等高线深浅' },
       { key: 'motion', cn: '动效', desc: '系统开启「减少动态效果」时等于关闭', labels: { full: '完整', reduced: '简化', off: '关闭' } } ] } ] },
-  { id: 'keys', no: '07', cn: '快捷键', en: 'HOTKEYS', desc: '全局快捷键在任何程序前台时都能用。和别的软件冲突时会提示，不会自动换。', groups: [
+  { id: 'keys', no: '07', cn: '快捷键', en: 'HOTKEYS', desc: '全局快捷键在任何程序前台时都能用。和别的软件冲突时会提示，不会自动换。可以带 Win 键，但很多 Win 组合被系统占用，设好后按一下试试。', groups: [
     { cn: '全局', en: 'GLOBAL', rows: [
       { key: 'quickbarHotkey', cn: '快速记录条', desc: '再按一次或点别处就隐藏' },
       { key: 'mainHotkey', cn: '主窗口', desc: '从托盘唤回主窗口' } ] } ] },

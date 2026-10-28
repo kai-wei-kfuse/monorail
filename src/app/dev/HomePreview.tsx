@@ -69,7 +69,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
       {(page === 'card' || page === 'over') && <TaskCard view={view} look={look} titleScale={65}
         corner={page === 'over' ? <ConfirmLink label="今天不再出卡" confirmLabel="确认今天不再出卡？" onConfirm={() => {}} /> : <span className="c-hint">还没有主线</span>}
         actions={<CardActions running shrink={page === 'over' ? 'max' : 'ok'} onStart={() => {}} onComplete={() => {}} onShrink={() => {}} onRedraw={() => {}} />}
-        fx={wipe && <Wipe no="散" meta="散件 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => { setWipe(false); playAfterWipe(stage.current!); }} />} />}
+        fx={wipe && <Wipe no="支" meta="支线 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => { setWipe(false); playAfterWipe(stage.current!); }} />} />}
       {page === 'guide' && <GuideCard kind="setMain" look={look} onAction={() => {}} />}
       {page === 'rest' && <RestCard suggestion="眺望窗外" look={look} onBack={() => {}} onAddRest={() => {}} />}
       {page === 'review' && <ReviewCard period="2026-W44" resumeStep="擂台对决" betDue look={look} onOpen={() => {}} />}

@@ -176,7 +176,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   </TitleBar>;
   const statusBar = <StatusBar
     left={<QuickActs acts={acts} current={awayId}
-      onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)} />}
+      onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)}
+      onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />}
     right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;
 
   return <>

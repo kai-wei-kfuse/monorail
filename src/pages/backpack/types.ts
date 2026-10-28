@@ -16,7 +16,7 @@ export interface QueueCard {
   passBlocked?: string;       // 不能 PASS 时的原因（已缩小的卡，附录 A6）
 }
 
-/** 一个项目（或散件）的队列。缩小链只放最末端那张卡，由调用方过滤好。 */
+/** 一个项目（或不属于项目的那组卡）的队列。缩小链只放最末端那张卡，由调用方过滤好。 */
 export interface QueueGroup { projectId: string | null; name: string; slotLabel: string; cards: QueueCard[] }
 
 export interface IdeaView {

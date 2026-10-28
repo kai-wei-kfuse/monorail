@@ -3,6 +3,7 @@ import { Dialog } from '../ui/overlay/Dialog';
 import { Button } from '../ui/controls/Button';
 import { TextArea } from '../ui/controls/TextArea';
 import { Dropdown } from '../ui/controls/Dropdown';
+import { LOOSE } from '../shared/backpack';
 import './forms.css';
 
 /**
@@ -24,7 +25,7 @@ export function ConvertIdea({ ideaText, projects, onConvert, onCancel }:
       </div>
       <div className="fm-f"><span>所属项目</span>
         <Dropdown label="所属项目" value={projectId} onChange={setProjectId}
-          options={[{ value: '', label: '散件（按支线算）' }, ...projects.map(p => ({ value: p.id, label: p.name }))]} />
+          options={[{ value: '', label: LOOSE.option }, ...projects.map(p => ({ value: p.id, label: p.name }))]} />
       </div>
     </div>
   </Dialog>;

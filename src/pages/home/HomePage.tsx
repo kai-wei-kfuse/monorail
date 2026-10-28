@@ -6,6 +6,7 @@ import type { TopoMode } from '../../ui/effects/Topo';
 import { Wipe } from '../../ui/effects/Wipe';
 import { ActionButton } from '../../ui/controls/Button';
 import { cardProgress } from '../../widgets/cardProgress';
+import { LOOSE } from '../../shared/backpack';
 import { TimeboxShort } from '../../widgets/notices/TimeboxShort';
 import type { TaskCardView } from './TaskCard';
 import { TaskCard } from './TaskCard';
@@ -40,8 +41,8 @@ export function cardView(home: HomeSlice, now: number): TaskCardView | null {
   if (!c) return null;
   const elapsedMs = home.closedEffectiveMs + (home.currentSegStartedAt ? now - Date.parse(home.currentSegStartedAt) : 0);
   const away = home.awayActivity !== null;
-  // 散件不占背包格，不显示「/03」
-  return { slotNo: c.slotNo, slotOf: c.slotNo === '散' ? undefined : c.slotOf, project: c.project, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
+  // 不属于项目的卡不占背包格，不显示「/03」
+  return { slotNo: c.slotNo, slotOf: c.slotNo === LOOSE.slot ? undefined : c.slotOf, project: c.project, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
     progressNote: c.progressNote || undefined, elapsedMs, awayActivity: home.awayActivity ?? undefined,
     progress: cardProgress(elapsedMs, c.goalMinutes, c.status === '进行中' && !away, away) };
 }

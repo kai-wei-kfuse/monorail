@@ -10,6 +10,7 @@ import { baseline } from '../domain/baseline/baseline';
 import { guide } from '../domain/picker/guide';
 import type { AppState } from '../data/repos';
 import type { Settings } from '../shared/settings';
+import { LOOSE } from '../shared/backpack';
 import type { HomeSlice } from '../store/homeSlice';
 
 export interface ProjectionInput { cards: Card[]; projects: Project[]; reviews: Review[]; segments: Segment[]; state: AppState; settings: Settings; at: string; version: number }
@@ -24,8 +25,8 @@ export function projectHome(input: ProjectionInput): HomeSlice {
   const closedEffectiveMs = rows.filter(row => row !== tail).reduce((sum, row) => sum + Date.parse(row.ended_at!) - Date.parse(row.started_at), 0);
   const project = active.find(item => item.id === selected?.project_id);
   const card = selected && (selected.status === '待做' || selected.status === '进行中') ? {
-    id: selected.id, slotNo: project?.slot_index ? String(project.slot_index).padStart(2, '0') : '散', slotOf: `/${String(settings.sideSlots + settings.mainSlots).padStart(2, '0')}`,
-    project: project?.name ?? '散件', type: selected.type, goalMinutes: selected.type === '时间盒卡' ? selected.timebox_minutes : null,
+    id: selected.id, slotNo: project?.slot_index ? String(project.slot_index).padStart(2, '0') : LOOSE.slot, slotOf: `/${String(settings.sideSlots + settings.mainSlots).padStart(2, '0')}`,
+    project: project?.name ?? LOOSE.name, type: selected.type, goalMinutes: selected.type === '时间盒卡' ? selected.timebox_minutes : null,
     content: selected.content, progressNote: selected.progress_note, status: selected.status,
     shrink: selected.no_shrink ? 'locked' as const : selected.shrink_level >= settings.shrinkMaxLevel ? 'max' as const : 'ok' as const,
   } : null;
