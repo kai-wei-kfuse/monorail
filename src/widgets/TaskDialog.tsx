@@ -6,7 +6,7 @@ import { Segmented } from '../ui/controls/Segmented';
 import { TextInput } from '../ui/controls/TextInput';
 import { ProjectPicker } from '../ui/controls/ProjectPicker';
 import type { ProjectOption } from '../ui/controls/ProjectPicker';
-import { Icon } from '../ui/icons/Icon';
+import { ItemsEditor } from '../ui/controls/ItemsEditor';
 import './forms.css';
 
 export interface SlotTask { id: string; name: string; slot: BackpackSlot; slotIndex: number }
@@ -23,16 +23,6 @@ function MakeRoomPicker({ slot, candidates, value, onChange }:
         {action}「{p.name}」<i>{String(p.slotIndex).padStart(2, '0')}</i>
       </button>))}</div>
     <small>冷藏：移出背包，它的卡不再出现，随时可以放回。放弃：项目和它待做的卡都改为已放弃。</small>
-  </div>;
-}
-
-/** 可增减的事项列表（UI 规范 §11.10）：每行编号、输入框、去掉按钮；最多 max 项。 */
-export function ItemsEditor({ id, items, onChange, max, hint }: { id: string; items: string[]; onChange: (items: string[]) => void; max: number; hint: string }) {
-  return <div className="ie">
-    {items.map((s, k) => <div key={k} className="ie-row"><span className="ie-no">{String(k + 1).padStart(2, '0')}</span>
-      <TextInput id={`${id}-${k}`} aria-label={`第 ${k + 1} 项`} value={s} placeholder="一件能判断做没做完的事" onChange={e => onChange(items.map((x, j) => j === k ? e.target.value : x))} />
-      <button type="button" className="ie-rm" aria-label="去掉这一项" title="去掉这一项" onClick={() => onChange(items.filter((_, j) => j !== k))}><Icon name="x" /></button></div>)}
-    <div className="ie-foot"><Button size="sm" disabled={items.length >= max} onClick={() => onChange([...items, ''])}>＋ 拆一项</Button><span>{hint}</span></div>
   </div>;
 }
 

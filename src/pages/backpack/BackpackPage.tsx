@@ -10,6 +10,7 @@ import type { BackpackSlot, MakeRoom, TaskDraft } from '../../shared/backpack';
 import type { SlotTask } from '../../widgets/TaskDialog';
 import { TaskDialog } from '../../widgets/TaskDialog';
 import { ConvertIdea } from '../../widgets/ConvertIdea';
+import type { IdeaTaskInput } from '../../services/ideaService';
 import { TaskPool } from './TaskPool';
 import type { PoolView } from './TaskPool';
 import { IdeaPool } from './IdeaPool';
@@ -27,7 +28,7 @@ export interface BackpackActions {
   restoreTask: (id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => void;
   saveCard: (cardId: string | null, fields: CardFields, at: string) => void;
   passCard: (cardId: string, at: string) => void;
-  convertIdea: (ideaId: string, r: { content: string; taskId: string | null; at: string }) => void;
+  convertIdea: (ideaId: string, input: IdeaTaskInput, at: string) => void;
   deleteIdea: (ideaId: string, at: string) => void;
   createProject: (name: string, at: string) => void;
   createTag: (tag: string, at: string) => void;
@@ -90,8 +91,10 @@ export function BackpackPage({ tab, onTab, pool, tasks, queue, ideas, knownTags,
       onCreateProject={name => actions.createProject(name, at())} onCreateTag={tag => actions.createTag(tag, at())}
       onCancel={close} onSave={(fields, when) => { close(); actions.saveCard(editing.id, fields, when); }}
       onPass={when => { close(); actions.passCard(editing.id, when); }} />}
-    {open?.kind === 'idea' && <ConvertIdea ideaText={open.idea.text} tasks={choices} onCancel={close}
-      onConvert={r => { close(); actions.convertIdea(open.idea.id, r); }} />}
+    {open?.kind === 'idea' && <ConvertIdea ideaText={open.idea.text} mains={pool.mains.map(t => ({ id: t.id, name: t.name, room: pool.mainItems - t.items.length }))}
+      mainFree={pool.mains.length < pool.mainMax} sideFree={pool.sides.length < pool.sideMax} mainItems={pool.mainItems}
+      projects={pool.projects} onCreateProject={name => actions.createProject(name, at())} onCancel={close}
+      onConvert={(input, when) => { close(); actions.convertIdea(open.idea.id, input, when); }} />}
     {open?.kind === 'delete' && <Dialog en="DELETE" title="删除这个想法" onClose={close}
       footer={<><Button onClick={close}>算了</Button><Button tone="danger" onClick={() => { close(); actions.deleteIdea(open.idea.id, at()); }}>删除</Button></>}>
       想法平时不会被真正删除，过期只会进冷库。确定要永久删除「{open.idea.text.slice(0, 40)}」吗？

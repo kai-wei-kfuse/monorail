@@ -25,7 +25,7 @@ export function BackpackScreen({ ctx, report }: { ctx: Ctx; report: (error: unkn
     restoreTask: (id, slot, at, makeRoom) => call(() => backpack.restoreTask(ctx, id, slot, at, makeRoom)),
     saveCard: (cardId, fields, at) => call(() => backpack.saveCard(ctx, cardId, fields, at)),
     passCard: (cardId, at) => call(() => pass(ctx, cardId, at)),
-    convertIdea: (ideaId, r) => call(() => ideas.convertIdea(ctx, ideaId, { content: r.content, taskId: r.taskId }, r.at)),
+    convertIdea: (ideaId, input, at) => call(() => ideas.convertIdeaToTask(ctx, ideaId, input, at)),
     deleteIdea: (ideaId, at) => call(() => ideas.deleteIdea(ctx, ideaId, at)),
     createProject: (name, at) => call(() => preset.createProject(ctx, name, at)),
     createTag: (tag, at) => call(() => ctx.settings.lists.tags.includes(tag) ? Promise.resolve() : changeLists(ctx, { tags: [...ctx.settings.lists.tags, tag] }, at)),

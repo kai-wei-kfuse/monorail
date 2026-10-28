@@ -36,7 +36,7 @@ export function IdeaPool({ ideas, limit, onConvert, onDelete }:
           </div>
         </div>
         <div className="ls-acts">
-          <Button size="sm" tone="ink" disabled={i.pool === '已转任务'} onClick={() => onConvert(i)}>{i.pool === '已转任务' ? '已转' : '转为待办'}</Button>
+          <Button size="sm" tone="ink" disabled={i.pool === '已转任务'} onClick={() => onConvert(i)}>{i.pool === '已转任务' ? '已转' : '转成任务'}</Button>
           <Button size="sm" tone="danger" onClick={() => onDelete(i)}>删除</Button>
         </div>
       </li>)}</ul>}
