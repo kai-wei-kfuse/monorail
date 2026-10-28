@@ -8,13 +8,13 @@ import './shell.css';
 
 /**
  * 小窗的布局（UI 规范 §7.4、§11.9），纯展示：左边标签条，中间浅色区（「记到 项目」小字、单行名称、30 格竖条），
- * 右边黑色计时块（状态英文小字、读数、暂停 / 继续、是卡时的完成、关闭）。下面是编辑面板（打开时）和一条说明。
+ * 右边黑色计时块（状态英文小字、读数、暂停 / 继续、是卡时的完成、关闭）。下面是编辑面板（打开时）和一条说明（有提示时）。
  * 名称是按钮，点了打开编辑面板；读数 digits 由外面传（就地编辑的 TimeField）。空白处可以拖动窗口。
  */
 export function MiniWindow({ strip, meta, title, stateEn, digits, miniFilled, running, topoDepth, paused, canResume, onPause, onResume, onComplete, onClose, onTitle, editor, caption }:
   { strip: string; meta: string; title: string; stateEn: string; digits: ReactNode; miniFilled: number; running: boolean; topoDepth: number;
     paused: boolean; canResume: boolean; onPause: () => void; onResume: () => void; onComplete?: () => void; onClose: () => void; onTitle: () => void;
-    editor?: ReactNode; caption: ReactNode }) {
+    editor?: ReactNode; caption?: ReactNode }) {
   return <div className="mini-stack">
     <div className="miniwin" data-tauri-drag-region>
       <TagStrip mini no={strip} />
@@ -34,6 +34,6 @@ export function MiniWindow({ strip, meta, title, stateEn, digits, miniFilled, ru
       </div>
     </div>
     {editor}
-    <span className="mini-cap">{caption}</span>
+    {caption && <span className="mini-cap">{caption}</span>}
   </div>;
 }

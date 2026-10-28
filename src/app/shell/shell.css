@@ -53,7 +53,7 @@
 .mini-btn svg { width: 14px; height: 14px; }
 .mini-btn.go { background: var(--yellow); color: var(--ink); }
 
-/* v0.3 独立小窗（UI 规范 §11.9）：窗口里自上而下是小窗本体、编辑面板（打开时）、一条说明 */
+/* v0.3 独立小窗（UI 规范 §11.9）：窗口里自上而下是小窗本体、编辑面板（打开时）、一条说明（有提示时） */
 .mini-stack { display: grid; gap: 6px; justify-items: start; }
 .mini-btn:disabled { opacity: .4; }
 .mini-title { display: block; width: 100%; min-width: 0; overflow: hidden; text-align: left; cursor: pointer; }

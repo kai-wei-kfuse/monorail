@@ -36,7 +36,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     ]).then(async fns => { if (alive) await bus.ready(); return fns; });
     return () => { alive = false; void offs.then(fns => fns.forEach(f => f())); };
   }, [bus]);
-  // 窗口高度跟着内容：小窗本体 88，下面一条说明，编辑面板打开时再加上它
+  // 窗口高度跟着内容：小窗本体 88，有提示时下面多一条说明，编辑面板打开时再加上它
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
@@ -112,6 +112,6 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
         initial={editCard ? { name: editCard.content, project: editCard.project ?? edit.snap.entry!.project, tags: editCard.tags }
           : editingRun ? { name: edit.snap.entry!.description, project: edit.snap.entry!.project, tags: edit.snap.entry!.tags } : { name: '', project: '未分类', tags: [] }}
         projects={snap.projects} knownTags={snap.knownTags} onSave={v => closeEdit(v)} onCancel={() => closeEdit(null)} />}
-      caption={stale ? '主窗口未响应' : error ? error : note ? <HitNote note={note} /> : '点名字改名称和项目，点时间改时间 · 按住空白处拖动'} />
+      caption={stale ? '主窗口未响应' : error ? error : note ? <HitNote note={note} /> : null} />
   </div>;
 }
