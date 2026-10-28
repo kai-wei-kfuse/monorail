@@ -10,14 +10,15 @@ import type { TimerView } from './TimerBar';
 type Card = Projection['cards'][number];
 type TimeEntry = Projection['entries'][number];
 
-export interface TimerSource { home: HomeSlice; entries: readonly TimeEntry[]; cards: readonly Card[]; tasks: readonly TaskView[]; settings: Settings }
+/** projects 用任务池投影里的（系统五项、未分类和自定义项目，带颜色）；已知标签用 home.knownTags（按使用次数排）。 */
+export interface TimerSource { home: HomeSlice; entries: readonly TimeEntry[]; cards: readonly Card[]; tasks: readonly TaskView[]; settings: Settings; projects: readonly { name: string; color: string }[] }
 
-export function timerView({ home, entries, cards, tasks, settings }: TimerSource): TimerView {
+export function timerView({ home, entries, cards, tasks, settings, projects }: TimerSource): TimerView {
   const track = (c: Card) => tasks.find(t => t.id === c.task_id)?.slot === '主线' ? '主线' as const : '支线' as const;
   return {
     entry: home.entry, idle: home.entry?.project === '待机', pending: home.pending, paused: home.resumeDescription,
     waitingCard: home.card?.status === '待做', canDraw: !home.card && home.mode !== 'rest',
-    projects: settings.lists.projects, knownTags: settings.lists.tags,
+    projects: [...projects], knownTags: home.knownTags,
     suggest: {
       favorites: favorites(settings).map(f => ({ id: f.id, name: f.name, project: f.project, tags: f.tags })),
       cards: cards.filter(c => c.status === '待做').map(c => ({ id: c.id, content: plainText(c.content), track: track(c) })),

@@ -14,7 +14,7 @@ const settings = structuredClone(defaults);
 settings.lists.presets = [{ id: 'p1', name: '学 408', project: '学习', tags: ['408'], mode: '切换', place: '计时条' },
   { id: 'p2', name: '厕所', project: '生活', tags: [], mode: '插入', place: '弹层' }];
 const source = (home: Partial<HomeSlice>, entries: Entry[] = [], more: Partial<TimerSource> = {}): TimerSource =>
-  ({ home: { ...initialHome, ...home }, entries, cards: [], tasks: [], settings, ...more });
+  ({ home: { ...initialHome, ...home }, entries, cards: [], tasks: [], settings, projects: [], ...more });
 const asEntry = (e: Entry): HomeSlice['entry'] => ({ id: e.id, description: e.description, project: e.project, tags: e.tags, startedAt: e.started_at,
   cardId: e.card_id, paused: e.kind === '暂停', kind: e.kind });
 

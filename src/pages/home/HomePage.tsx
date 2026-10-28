@@ -87,7 +87,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     shrinkFor: string | null; onShrinkConsumed: () => void;
     onGuide: (kind: GuideKind) => void; onOpenReview: () => void; onAddRest?: () => void }) {
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
-  const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), settings = useStore(appStore, s => s.settings);
+  const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), projects = useStore(appStore, s => s.backpack.pool.projects), settings = useStore(appStore, s => s.settings);
   const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer'), [prefill, setPrefill] = useState<EntryValue | null>(null);
   const now = useNow();
   const stage = useRef<HTMLDivElement>(null);
@@ -186,8 +186,8 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   } else body = <GuideCard kind={home.mode === 'guide' ? home.guideKind : 'allDone'} look={cardLook} onAction={() => onGuide(home.mode === 'guide' ? home.guideKind : 'allDone')} />;
 
   return <div className="home">
-    <TimerBar view={timerView({ home, entries, cards, tasks, settings })} actions={timerActions} mode={timerMode} onMode={setTimerMode}
-      manual={<ManualForm projects={settings.lists.projects} knownTags={settings.lists.tags} overlaps={actions.overlaps} prefill={prefill}
+    <TimerBar view={timerView({ home, entries, cards, tasks, settings, projects })} actions={timerActions} mode={timerMode} onMode={setTimerMode}
+      manual={<ManualForm projects={projects} knownTags={home.knownTags} overlaps={actions.overlaps} prefill={prefill}
         onAdd={(v, start, end) => void actions.manual(v, start, end, now_())}
         onCreateProject={name => void actions.createProject(name, now_())} onCreateTag={tag => void actions.createTag(tag, now_())} />} />
     <PresetRow items={favs} onPick={startFavorite} onReorder={ids => void actions.reorderFavorites(ids, now_())} />
