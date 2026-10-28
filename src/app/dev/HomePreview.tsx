@@ -14,7 +14,7 @@ import { ReviewCard } from '../../pages/home/ReviewCard';
 import { playAfterWipe, playColdIntro } from '../../pages/home/intro';
 import { QuickActs } from '../shell/QuickActs';
 import { BaselineMarks } from '../shell/BaselineMarks';
-import { MiniWindow } from '../shell/MiniWindow';
+import { MiniPreview } from './MiniPreview';
 import { QuickBar } from '../../pages/quickbar/QuickBar';
 import { CompleteDialog } from '../../pages/home/CompleteDialog';
 import { ShrinkDialog } from '../../pages/home/ShrinkDialog';
@@ -57,7 +57,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
   const view = { ...sample(page), ...(content === null ? {} : { content }) };
   useEffect(() => { if (stage.current && app.current) return playColdIntro(app.current, stage.current, stage.current.querySelector('.digits')); }, []);
   if (page === 'quickbar') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><div style={{ width: 760 }}><QuickBar tasks={[{ id: 'p1', name: '找工作' }]} onSave={async () => {}} onHide={() => {}} /></div></div>;
-  if (page === 'mini') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><MiniWindow view={view} running topoDepth={60} onPrimary={() => {}} onRestore={() => {}} /></div>;
+  if (page === 'mini') return <div style={{ padding: 40, background: '#3a3a3c', height: '100%' }}><MiniPreview /></div>;
   const title = <TitleBar name="单轨" tabs={TABS} active="home" onTab={() => {}}>
     <StatusBlock kind={page === 'rest' ? 'away' : 'focus'} label={page === 'rest' ? '休息' : '沿 Python 往下学'} startedAt={new Date(Date.now() - view.elapsedMs).toISOString()} onClick={() => {}} />
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />

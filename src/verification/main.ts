@@ -1,13 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { emit, listen } from '@tauri-apps/api/event';
-import { getCurrentWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/window';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 import type { Ctx } from '../services/commit';
 import type { FileSystem } from '../data/fs';
 import type { RecordInput } from '../domain/record/record';
 import { reconcile } from '../services/recordService';
 import { start } from '../services/cardService';
-import { setMini } from '../platform/windowMode';
+import { miniWindow } from '../platform/miniWindow';
 import { readLifecycle } from '../platform/lifecycle';
 import { appStore } from '../store/appStore';
 import { prepareInterruptedJournal } from './journal';
@@ -19,17 +19,15 @@ async function windowState() {
   return { width: size.width, height: size.height, x: position.x, y: position.y, max: await w.isMaximized(), top: await w.isAlwaysOnTop(), visible: await w.isVisible(), scale: await w.scaleFactor() };
 }
 async function windows() {
-  const w = getCurrentWindow(), before = await windowState();
-  await setMini(true);
-  const small = await windowState();
-  assert(Math.abs(small.width / small.scale - 520) < 2 && Math.abs(small.height / small.scale - 88) < 2 && small.top, 'Small window size/top mismatch');
-  await setMini(false);
-  const restored = await windowState();
-  assert(restored.width === before.width && restored.height === before.height && restored.x === before.x && restored.y === before.y && restored.top === before.top, 'Window restore mismatch');
-  await w.maximize(); await setMini(true); await setMini(false);
-  assert(await w.isMaximized(), 'Maximized mode not restored');
-  await w.unmaximize(); await w.setSize(new PhysicalSize(before.width, before.height)); await w.setPosition(new PhysicalPosition(before.x, before.y));
-  await log('verification-window-passed', { before, small, restored, maximizedRestored: true });
+  // v0.3 小窗是独立窗口（N6）：开、关小窗都不动主窗口
+  const before = await windowState();
+  const shown = await miniWindow.toggle();
+  assert(shown, 'Mini window did not open');
+  const during = await windowState();
+  assert(during.width === before.width && during.height === before.height && during.x === before.x && during.y === before.y, 'Main window changed while mini opened');
+  const hidden = !(await miniWindow.toggle());
+  assert(hidden, 'Mini window did not close');
+  await log('verification-window-passed', { before, during, miniShown: shown, miniHidden: hidden });
 }
 async function native() {
   const original = await isEnabled();

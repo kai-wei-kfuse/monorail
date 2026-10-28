@@ -6,18 +6,19 @@ import { appStore, dismissNotice } from '../store/appStore';
 import type { Notice, NoticeResult } from '../shared/notices';
 import type { Settings } from '../shared/settings';
 import { updatePhaseLabels, updateStepLabels } from '../shared/updates';
-import { setMini } from '../platform/windowMode';
+import { miniWindow } from '../platform/miniWindow';
+import { mainWindowBus, MINI_HEARTBEAT_MS } from '../platform/windowBus';
+import { connectMini } from '../services/miniController';
 import { windowControls } from '../platform/windowControls';
 import type { Ctx } from '../services/commit';
 import { Frame, StatusBar } from '../ui/frame/StatusBar';
 import { TitleBar } from '../ui/frame/TitleBar';
 import { WindowButtons } from '../ui/frame/WindowButtons';
-import { Icon } from '../ui/icons/Icon';
 import type { IconName } from '../ui/icons/Icon';
 import type { ToastItem } from '../ui/overlay/Toast';
 import { motionLevel, play, setMotionLevel } from '../ui/effects/animate';
 import { Backfill } from '../widgets/notices/Backfill';
-import { cardView, HomePage, useNow } from '../pages/home/HomePage';
+import { HomePage, useNow } from '../pages/home/HomePage';
 import { favorites } from '../pages/home/timerView';
 import type { GuideKind } from '../pages/home/GuideCard';
 import { bootstrap } from './bootstrap';
@@ -34,9 +35,9 @@ import type { Route } from './routes';
 import { FirstRun } from './FirstRun';
 import { StatusBlock } from './shell/StatusBlock';
 import { QuickActs } from './shell/QuickActs';
+import { MiniToggle } from './shell/MiniToggle';
 import type { QuickAct } from './shell/QuickActs';
 import { BaselineMarks } from './shell/BaselineMarks';
-import { MiniWindow } from './shell/MiniWindow';
 import { NoticeHost } from './shell/NoticeHost';
 import { useHotkeys } from './shell/hotkeys';
 import { useUpdates } from './useUpdates';
@@ -92,7 +93,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   useEffect(() => { setMotionLevel(settings.motion); document.documentElement.style.setProperty('--yellow', settings.accent); }, [settings.motion, settings.accent]);
   const nowMs = useNow();
   const [page, setPage] = useState<Route['id']>('home');
-  const [mini, setMiniState] = useState(false), [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
+  const [mini, setMini] = useState(false), [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
   const [backfill, setBackfill] = useState(false);
   const [completeAt, setCompleteAt] = useState<string | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
@@ -123,9 +124,19 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     if (motionLevel() === 'full') play(stage.current?.firstElementChild, [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 360, ease: 'snap' });
   }, [page]);
 
-  async function toggleMini(on = !mini) {
-    try { await setMini(on); setMiniState(on); } catch (error) { info('小窗切换失败', String(error)); }
+  // 小窗是独立窗口（N6）：主窗口照常开着；底栏按钮、M、托盘都是开关
+  async function toggleMini() {
+    try { setMini(await miniWindow.toggle()); } catch (error) { info('小窗切换失败', String(error)); }
   }
+  // 给小窗发快照、接它的命令。在小窗里点完成：主窗口出来，回到首页接着走完成流程，保留小窗里点的时刻
+  useEffect(() => {
+    const off = connectMini(ctx, mainWindowBus, {
+      openMain: () => miniWindow.showMain(),
+      complete: async (_cardId, at) => { setPage('home'); setCompleteAt(at); },
+      report,
+    }, MINI_HEARTBEAT_MS);
+    return () => { void off.then(fn => fn()); };
+  }, [ctx]);
   function onGuide(kind: GuideKind) {
     // 建项目、设主线、给主线拆卡都在背包页做；卡都做完了就去写一条
     if (kind === 'allDone') { void actions.showQuickbar(); return; }
@@ -159,29 +170,18 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   });
 
   const routes = readyRoutes();
-  const view = cardView(home, nowMs);
-  if (mini) {
-    const v = view ?? { slotNo: '—', task: home.activity.label, type: '结果卡' as const, goalMinutes: null, content: home.activity.label || settings.lists.idleName,
-      elapsedMs: home.activity.startedAt ? nowMs - Date.parse(home.activity.startedAt) : 0, progress: { filled: 0, miniFilled: 0, state: 'ready' as const, overMs: 0 } };
-    const running = home.card?.status === '进行中';
-    return <div className="mini-host"><MiniWindow view={v} running={running} topoDepth={settings.topoDepth} onRestore={() => void toggleMini(false)}
-      onPrimary={at => {
-        if (!home.card) { void toggleMini(false); return; }
-        if (running) { void toggleMini(false).then(() => setCompleteAt(at)); } else void actions.start(home.card.id, at);
-      }} /></div>;
-  }
 
   const titleBar = <TitleBar name="单轨" tabs={routes.map(r => ({ id: r.id, cn: r.cn, en: r.en }))} active={page} onTab={id => setPage(id as Route['id'])}>
     <StatusBlock kind={home.activity.kind} label={home.activity.label || settings.lists.idleName} startedAt={home.activity.startedAt} onClick={() => setBackfill(true)} />
-    {page === 'home' && <button type="button" className="wc mini-btn-tb" aria-label="缩成悬浮小窗" title="缩成悬浮小窗（M）" onClick={() => void toggleMini(true)}><Icon name="shrink" /></button>}
     <WindowButtons pinned={pinned} maximized={maximized}
       onPin={() => void windowControls.setPinned(!pinned).then(() => setPinned(!pinned))} onMinimize={() => void windowControls.minimize()}
       onMaximize={() => void windowControls.toggleMaximize().then(() => windowControls.isMaximized()).then(setMaximized)} onClose={() => void windowControls.hide()} />
   </TitleBar>;
   const statusBar = <StatusBar
-    left={<QuickActs acts={acts} current={awayId}
+    left={<><QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)}
-      onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />}
+      onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />
+      <MiniToggle on={mini} onClick={() => void toggleMini()} /></>}
     right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;
 
   return <>
