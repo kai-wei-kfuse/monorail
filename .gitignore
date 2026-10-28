@@ -16,3 +16,7 @@ src-tauri/icons/*
 *.key.pub
 /evidence/update-test-data/
 /evidence/update-test-install/
+
+# 含真实使用数据的验证证据，只留在本机（仓库公开前移出）
+evidence/m1-wire/
+evidence/n7-rehearse-backup.json

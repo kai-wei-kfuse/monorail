@@ -28,7 +28,7 @@
 
 ## 安装与开发
 
-- 安装：从 [Releases](https://github.com/kai-wei-kfuse/monorail/releases) 下载 `monorail_<版本>_windows-x86_64_setup.exe`。仓库是私有的，应用内更新需要本机 `gh auth login` 登录能读取仓库的账号，见 [docs/updates.md](docs/updates.md)。
+- 安装：从 [Releases](https://github.com/kai-wei-kfuse/monorail/releases) 下载 `monorail_<版本>_windows-x86_64_setup.exe`。应用内更新经本机 GitHub CLI 读取 Release，需要先 `gh auth login`，见 [docs/updates.md](docs/updates.md)。
 - 开发：Node 24 + Rust 1.95.0（MSVC）+ WebView2。
 
   ```powershell

@@ -1,8 +1,8 @@
-# 私有开发版更新与发版
+# 更新与发版
 
 ## 使用
 
-仓库与 Release 均保持 private：https://github.com/kai-wei-kfuse/monorail 。首次手动安装带更新功能的版本；当前旧版没有检查更新功能。
+仓库与 Release 自 2026-10-28（0.2.1 之后）公开：https://github.com/kai-wei-kfuse/monorail 。之前一直是 private，下文按当时的私有仓库写成，检查更新的实现没有改：仍然经本机 gh 登录读取 Release。首次手动安装带更新功能的版本；当前旧版没有检查更新功能。
 
 每台电脑需安装 GitHub CLI，在终端运行 `gh auth login --hostname github.com`，登录有仓库读取权限的账号。应用只在原生进程中临时读取该登录，凭据不传入前端、不放入安装包或配置。未登录、网络错误、缺失清单、签名错误各自显示失败，不能把失败显示为「已是最新版本」。
 
