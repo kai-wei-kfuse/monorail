@@ -1,0 +1,23 @@
+[
+  {
+    "source": ".verification-data/desktop",
+    "files": 7,
+    "migrated": true,
+    "referenceChanges": 0,
+    "milliseconds": 48
+  },
+  {
+    "source": ".verification-data/m1-smoke",
+    "files": 9,
+    "migrated": true,
+    "referenceChanges": 0,
+    "milliseconds": 22
+  },
+  {
+    "source": "user-data-memory-copy",
+    "files": 14,
+    "migrated": true,
+    "referenceChanges": 0,
+    "milliseconds": 25
+  }
+]

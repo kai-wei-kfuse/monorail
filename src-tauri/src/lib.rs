@@ -25,7 +25,8 @@ macro_rules! handlers {
             updates::check_update, updates::download_update, updates::install_update,
             updates::read_update_state, updates::prepare_update_install, updates::cancel_update_install,
             quick_save::quickbar_update_ready, quick_save::ack_quickbar_update,
-            quick_save::begin_quick_save, quick_save::end_quick_save, $($extra),*]
+            quick_save::begin_quick_save, quick_save::end_quick_save,
+            quick_save::begin_data_migration, quick_save::finish_data_migration, $($extra),*]
     };
 }
 

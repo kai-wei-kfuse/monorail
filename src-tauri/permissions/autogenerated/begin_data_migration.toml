@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-begin-data-migration"
+description = "Enables the begin_data_migration command without any pre-configured scope."
+commands.allow = ["begin_data_migration"]
+
+[[permission]]
+identifier = "deny-begin-data-migration"
+description = "Denies the begin_data_migration command without any pre-configured scope."
+commands.deny = ["begin_data_migration"]

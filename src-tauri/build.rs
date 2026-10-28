@@ -23,6 +23,8 @@ fn main() {
             "ack_quickbar_update",
             "begin_quick_save",
             "end_quick_save",
+            "begin_data_migration",
+            "finish_data_migration",
         ]),
     ))
     .expect("Tauri build configuration failed");

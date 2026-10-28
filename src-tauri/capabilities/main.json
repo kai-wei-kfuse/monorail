@@ -18,6 +18,8 @@
     "allow-read-update-state",
     "allow-prepare-update-install",
     "allow-cancel-update-install",
+    "allow-begin-data-migration",
+    "allow-finish-data-migration",
     "core:default",
     "dialog:allow-open",
     "fs:allow-read-text-file",

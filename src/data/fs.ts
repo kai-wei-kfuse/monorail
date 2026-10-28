@@ -1,7 +1,7 @@
 export interface FileSnapshot { text: string; version: string }
 export interface FileSystem {
   read(path: string): Promise<FileSnapshot | null>;
-  list(directory: string): Promise<string[]>;
+  list(directory: string, recursive?: boolean): Promise<string[]>;
   atomicWrite(path: string, text: string): Promise<void>;
   remove(path: string): Promise<void>;
 }
@@ -24,10 +24,19 @@ export async function tauriFs(root: string): Promise<FileSystem> {
       const info = await fs.stat(full);
       return { text: await fs.readTextFile(full), version: `${info.mtime?.getTime()}:${info.size}` };
     },
-    async list(directory) {
-      const full = await resolve(directory);
+    async list(directory, recursive = false) {
+      const full = directory ? await resolve(directory) : root;
       if (!await fs.exists(full)) return [];
-      return (await fs.readDir(full)).filter(e => e.isFile).map(e => `${directory}/${e.name}`).sort();
+      const collect = async (relative: string, absolute: string): Promise<string[]> => {
+        const result: string[] = [];
+        for (const entry of await fs.readDir(absolute)) {
+          const name = relative ? `${relative}/${entry.name}` : entry.name;
+          if (entry.isFile) result.push(name);
+          else if (recursive && entry.isDirectory) result.push(...await collect(name, await join(absolute, entry.name)));
+        }
+        return result;
+      };
+      return (await collect(directory, full)).sort();
     },
     async atomicWrite(path, text) {
       const full = await resolve(path);
