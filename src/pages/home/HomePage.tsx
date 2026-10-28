@@ -21,8 +21,9 @@ import { CardFrame } from './CardFrame';
 import { playAfterWipe, playColdIntro, playResumeIntro } from './intro';
 import { TimerBar } from './TimerBar';
 import type { EntryValue, TimerActions } from './TimerBar';
-import type { ReadoutOutcome, ReadoutRequest } from './TimeField';
+import type { Cover, ReadoutOutcome, ReadoutRequest } from './TimeField';
 import { PresetRow } from './PresetRow';
+import { ManualForm } from './ManualForm';
 import { favorites, timerView } from './timerView';
 
 /** 首页需要的动作。由外壳的适配层（app/actions）提供，出错由适配层统一报告。 */
@@ -45,8 +46,12 @@ export interface HomeActions {
   pause(at: string): Promise<unknown>;
   continueEntry(entryId: string, at: string): Promise<unknown>;
   commitReadout(req: ReadoutRequest, seen: unknown): Promise<ReadoutOutcome>;
-  addFavorite(value: EntryValue, at: string): Promise<unknown>;
+  manual(value: EntryValue, start: string, end: string, at: string): Promise<unknown>;
+  overlaps(start: string, end: string): Cover[];
+  startPreset(presetId: string, at: string): Promise<unknown>;
+  favorite(entryId: string, at: string): Promise<unknown>;
   reorderFavorites(ids: string[], at: string): Promise<unknown>;
+  createProject(name: string, at: string): Promise<unknown>;
   createTag(tag: string, at: string): Promise<unknown>;
 }
 export interface HomeLook { titleScale: number; topoMode: TopoMode; topoDepth: number; shrinkMaxLevel: number; timeboxDefault: number }
@@ -83,7 +88,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     onGuide: (kind: GuideKind) => void; onOpenReview: () => void; onAddRest?: () => void }) {
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), settings = useStore(appStore, s => s.settings);
-  const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer');
+  const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer'), [prefill, setPrefill] = useState<EntryValue | null>(null);
   const now = useNow();
   const stage = useRef<HTMLDivElement>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -132,7 +137,12 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
 
   // 计时条的动作：点击时刻在这里取；抽卡、开始卡和卡区一样走 act，换卡期间按钮不可点
   const now_ = () => new Date().toISOString(), favs = favorites(settings);
-  const startFavorite = (id: string) => { const f = favs.find(x => x.id === id); if (f) void actions.startFree({ description: f.name, project: f.project, tags: f.tags }, now_()); };
+  // 收藏：计时时从待确认的起点开始；手动补录时用它填表
+  const startFavorite = (id: string) => {
+    const f = favs.find(x => x.id === id);
+    if (!f) return;
+    if (timerMode === 'manual') setPrefill({ description: f.name, project: f.project, tags: f.tags }); else void actions.startPreset(id, now_());
+  };
   const timerActions: TimerActions = {
     beginPending: () => void actions.beginPending(now_()),
     cancelPending: id => void actions.cancelPending(id, now_()),
@@ -144,8 +154,9 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     startFavorite,
     startCard: id => void act(() => actions.start(id, now_())),
     continueEntry: id => void actions.continueEntry(id, now_()),
-    favorite: id => { const e = home.entry; if (e?.id === id) void actions.addFavorite({ description: e.description, project: e.project, tags: e.tags }, now_()); },
+    favorite: id => void actions.favorite(id, now_()),
     readout: actions.commitReadout,
+    createProject: name => void actions.createProject(name, now_()),
     createTag: tag => void actions.createTag(tag, now_()),
   };
 
@@ -175,7 +186,10 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   } else body = <GuideCard kind={home.mode === 'guide' ? home.guideKind : 'allDone'} look={cardLook} onAction={() => onGuide(home.mode === 'guide' ? home.guideKind : 'allDone')} />;
 
   return <div className="home">
-    <TimerBar view={timerView({ home, entries, cards, tasks, settings })} actions={timerActions} mode={timerMode} onMode={setTimerMode} />
+    <TimerBar view={timerView({ home, entries, cards, tasks, settings })} actions={timerActions} mode={timerMode} onMode={setTimerMode}
+      manual={<ManualForm projects={settings.lists.projects} knownTags={settings.lists.tags} overlaps={actions.overlaps} prefill={prefill}
+        onAdd={(v, start, end) => void actions.manual(v, start, end, now_())}
+        onCreateProject={name => void actions.createProject(name, now_())} onCreateTag={tag => void actions.createTag(tag, now_())} />} />
     <PresetRow items={favs} onPick={startFavorite} onReorder={ids => void actions.reorderFavorites(ids, now_())} />
     <div ref={stage} className="home-stage">
     {body}

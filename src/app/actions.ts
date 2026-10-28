@@ -5,6 +5,7 @@ import type { Ctx } from '../services/commit';
 import * as card from '../services/cardService';
 import type { ShrinkCommand } from '../services/cardService';
 import * as timer from '../services/homeService';
+import * as preset from '../services/presetService';
 import { returnFromRest } from '../services/degradeService';
 import { changeLists } from '../services/settingsService';
 import type { BackfillResult } from '../shared/notices';
@@ -39,17 +40,14 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
       try { return await timer.commitReadout(ctx, req, seen as Parameters<typeof timer.commitReadout>[2]); }
       catch (error) { return { kind: 'error', message: error instanceof Error ? error.message : String(error) }; }
     },
-    // 收藏：位置是计时条的预设，方式是切换，不带卡。同名的收藏已经有了就不再加
-    addFavorite: guard(async (value: EntryValue, at: string) => {
-      const list = ctx.settings.lists.presets;
-      if (list.some(p => p.place === '计时条' && p.name === value.description)) return;
-      await changeLists(ctx, { presets: [...list, { id: crypto.randomUUID(), name: value.description, project: value.project, tags: value.tags, mode: '切换', place: '计时条' }] }, at);
-    }),
-    // 拖动排序：收藏按 ids 的顺序排在前面，快捷活动的相对顺序不变
-    reorderFavorites: guard((ids: string[], at: string) => {
-      const list = ctx.settings.lists.presets, favs = ids.flatMap(id => list.filter(p => p.id === id && p.place === '计时条'));
-      return changeLists(ctx, { presets: [...favs, ...list.filter(p => !favs.includes(p))] }, at);
-    }),
+    // 手动补录：E1 共存；overlaps 是同步只读查询，只用来提示
+    manual: guard((value: EntryValue, start: string, end: string, at: string) => timer.manual(ctx, value, start, end, at)),
+    overlaps: (start: string, end: string) => timer.overlaps(ctx, start, end),
+    // 收藏（presetService）：从计时条起点开始、把正在计的这条设为收藏、拖动排序
+    startPreset: guard((presetId: string, at: string) => timer.startPreset(ctx, presetId, at)),
+    favorite: guard((entryId: string, at: string) => preset.favorite(ctx, entryId, at)),
+    reorderFavorites: guard((ids: string[], at: string) => preset.reorderFavorites(ctx, ids, at)),
+    createProject: guard((name: string, at: string) => preset.createProject(ctx, name, at)),
     createTag: guard((tag: string, at: string) => {
       const tags = ctx.settings.lists.tags;
       return tags.includes(tag) ? Promise.resolve() : changeLists(ctx, { tags: [...tags, tag] }, at);

@@ -24,10 +24,9 @@ describe('timerView', () => {
     const v = timerView(source({ entry: asEntry(idle) }, [idle]));
     expect([v.idle, v.paused, v.canDraw, v.waitingCard]).toEqual([true, null, true, false]);
   });
-  it('暂停：继续的是暂停前最后结束的那条普通条目', () => {
-    const a = entry('a', '学 408', '学习', t(8), t(9)), toilet = entry('b', '厕所', '生活', t(9), t(9, 10), '插入'),
-      c = entry('c', '写周报', '工作', t(9, 10), t(10)), pause = entry('d', '待机', '待机', t(10), null, '暂停');
-    expect(timerView(source({ entry: asEntry(pause) }, [a, toilet, c, pause])).paused).toBe('写周报');
+  it('暂停：继续的那件事取 homeSlice 的回到目标', () => {
+    const pause = entry('d', '待机', '待机', t(10), null, '暂停');
+    expect(timerView(source({ entry: asEntry(pause), resumeDescription: '写周报' }, [pause])).paused).toBe('写周报');
   });
   it('收藏只取位置是计时条的预设；最近的条目新到旧', () => {
     const a = entry('a', '学 408', '学习', t(8), t(9)), c = entry('c', '写周报', '工作', t(9, 10), null);

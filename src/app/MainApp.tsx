@@ -154,7 +154,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     Q: () => void actions.showQuickbar(),
     // 数字键 1–9 在首页启动收藏（v0.3）。快捷活动弹层开着时由弹层自己接，不会到这里
     ...(page === 'home' ? Object.fromEntries(favorites(settings).slice(0, 9).map((f, i) =>
-      [String(i + 1), () => void actions.startFree({ description: f.name, project: f.project, tags: f.tags }, now())])) : {}),
+      [String(i + 1), () => void actions.startPreset(f.id, now())])) : {}),
   });
 
   const routes = readyRoutes();

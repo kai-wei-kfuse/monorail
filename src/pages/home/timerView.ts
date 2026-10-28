@@ -12,23 +12,10 @@ type TimeEntry = Projection['entries'][number];
 
 export interface TimerSource { home: HomeSlice; entries: readonly TimeEntry[]; cards: readonly Card[]; tasks: readonly TaskView[]; settings: Settings }
 
-/**
- * 暂停中点「继续」会接着计的那件事。暂停是一条待机（kind 暂停），回到目标没有投影出来，
- * 先取暂停开始前最后结束的那条普通条目（pauseInTx 只在普通条目上记回到目标）。
- */
-function pausedTarget(home: HomeSlice, entries: readonly TimeEntry[]): string | null {
-  const e = home.entry;
-  if (!e || e.project !== '待机' || e.kind !== '暂停') return null;
-  const at = Date.parse(e.startedAt);
-  const before = entries.filter(x => x.kind === '普通' && x.project !== '待机' && x.ended_at !== null && Date.parse(x.ended_at) <= at)
-    .sort((a, b) => Date.parse(b.ended_at!) - Date.parse(a.ended_at!));
-  return before[0]?.description ?? null;
-}
-
 export function timerView({ home, entries, cards, tasks, settings }: TimerSource): TimerView {
   const track = (c: Card) => tasks.find(t => t.id === c.task_id)?.slot === '主线' ? '主线' as const : '支线' as const;
   return {
-    entry: home.entry, idle: home.entry?.project === '待机', pending: home.pending, paused: pausedTarget(home, entries),
+    entry: home.entry, idle: home.entry?.project === '待机', pending: home.pending, paused: home.resumeDescription,
     waitingCard: home.card?.status === '待做', canDraw: !home.card && home.mode !== 'rest',
     projects: settings.lists.projects, knownTags: settings.lists.tags,
     suggest: {
