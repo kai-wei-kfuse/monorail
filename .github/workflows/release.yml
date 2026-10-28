@@ -9,6 +9,11 @@ on:
         description: 'Existing tag matching package.json, e.g. v0.1.2'
         required: true
         type: string
+      publish:
+        description: 'Publish Release after building; false saves signed artifacts for manual publication'
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -53,7 +58,16 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri -- build
+      - name: Preserve signed NSIS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.RELEASE_TAG }}-signed-nsis
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/nsis/*.exe.sig
+          if-no-files-found: error
       - name: Publish complete private release
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh

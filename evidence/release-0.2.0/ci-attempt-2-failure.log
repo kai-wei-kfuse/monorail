@@ -1,0 +1,40 @@
+release	Publish complete private release	﻿2026-10-28T12:19:41.7307448Z ##[group]Run $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+release	Publish complete private release	2026-10-28T12:19:41.7314613Z ^[[36;1m$version = (Get-Content package.json -Raw | ConvertFrom-Json).version^[[0m
+release	Publish complete private release	2026-10-28T12:19:41.7315378Z ^[[36;1mnode scripts/publish-release.mjs --tag "$env:RELEASE_TAG" --notes "docs/releases/$version.md" --installer "src-tauri/target/release/bundle/nsis/单轨_${version}_x64-setup.exe"^[[0m
+release	Publish complete private release	2026-10-28T12:19:41.7498044Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+release	Publish complete private release	2026-10-28T12:19:41.7498795Z env:
+release	Publish complete private release	2026-10-28T12:19:41.7499068Z   RELEASE_TAG: v0.2.0
+release	Publish complete private release	2026-10-28T12:19:41.7499412Z   VITE_VERIFY: false
+release	Publish complete private release	2026-10-28T12:19:41.7499734Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+release	Publish complete private release	2026-10-28T12:19:41.7500044Z   CARGO_INCREMENTAL: 0
+release	Publish complete private release	2026-10-28T12:19:41.7500272Z   CARGO_TERM_COLOR: always
+release	Publish complete private release	2026-10-28T12:19:41.7500534Z   CACHE_ON_FAILURE: false
+release	Publish complete private release	2026-10-28T12:19:41.7540566Z   GH_TOKEN: ***
+release	Publish complete private release	2026-10-28T12:19:41.7540875Z ##[endgroup]
+release	Publish complete private release	2026-10-28T12:19:52.7453269Z node:internal/errors:986
+release	Publish complete private release	2026-10-28T12:19:52.7453995Z   const err = new Error(message);
+release	Publish complete private release	2026-10-28T12:19:52.7454519Z               ^
+release	Publish complete private release	2026-10-28T12:19:52.7454937Z
+release	Publish complete private release	2026-10-28T12:19:52.7457548Z Error: Command failed: gh release create v0.2.0 C:\Users\RUNNER~1\AppData\Local\Temp\monorail-release-axWVgC\monorail_0.2.0_windows-x86_64_setup.exe C:\Users\RUNNER~1\AppData\Local\Temp\monorail-release-axWVgC\monorail_0.2.0_windows-x86_64_setup.exe.sig --repo kai-wei-kfuse/monorail --title 单轨 v0.2.0 --notes-file D:\a\monorail\monorail\docs\releases\0.2.0.md --draft --target fa591f75ddefe1ca60d3c9a91dc5e094050ecf82
+release	Publish complete private release	2026-10-28T12:19:52.7460042Z HTTP 403: Resource not accessible by integration (https://api.github.com/repos/kai-wei-kfuse/monorail/releases)
+release	Publish complete private release	2026-10-28T12:19:52.7460653Z
+release	Publish complete private release	2026-10-28T12:19:52.7460869Z     at genericNodeError (node:internal/errors:986:15)
+release	Publish complete private release	2026-10-28T12:19:52.7461371Z     at wrappedFn (node:internal/errors:540:14)
+release	Publish complete private release	2026-10-28T12:19:52.7461860Z     at checkExecSyncError (node:child_process:943:11)
+release	Publish complete private release	2026-10-28T12:19:52.7462353Z     at execFileSync (node:child_process:979:15)
+release	Publish complete private release	2026-10-28T12:19:52.7462925Z     at gh (file:///D:/a/monorail/monorail/scripts/publish-release.mjs:14:20)
+release	Publish complete private release	2026-10-28T12:19:52.7463603Z     at file:///D:/a/monorail/monorail/scripts/publish-release.mjs:34:13 {
+release	Publish complete private release	2026-10-28T12:19:52.7464071Z   status: 1,
+release	Publish complete private release	2026-10-28T12:19:52.7464311Z   signal: null,
+release	Publish complete private release	2026-10-28T12:19:52.7464585Z   output: [
+release	Publish complete private release	2026-10-28T12:19:52.7464821Z     null,
+release	Publish complete private release	2026-10-28T12:19:52.7465082Z     '',
+release	Publish complete private release	2026-10-28T12:19:52.7465793Z     'HTTP 403: Resource not accessible by integration (https://api.github.com/repos/kai-wei-kfuse/monorail/releases)\n'
+release	Publish complete private release	2026-10-28T12:19:52.7466417Z   ],
+release	Publish complete private release	2026-10-28T12:19:52.7466663Z   pid: 4260,
+release	Publish complete private release	2026-10-28T12:19:52.7466958Z   stdout: '',
+release	Publish complete private release	2026-10-28T12:19:52.7467596Z   stderr: 'HTTP 403: Resource not accessible by integration (https://api.github.com/repos/kai-wei-kfuse/monorail/releases)\n'
+release	Publish complete private release	2026-10-28T12:19:52.7468316Z }
+release	Publish complete private release	2026-10-28T12:19:52.7468483Z
+release	Publish complete private release	2026-10-28T12:19:52.7468622Z Node.js v24.22.1
+release	Publish complete private release	2026-10-28T12:19:52.8012178Z ##[error]Process completed with exit code 1.
