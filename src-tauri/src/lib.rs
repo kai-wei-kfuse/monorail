@@ -8,6 +8,7 @@ mod updates;
 mod update_state;
 mod windows;
 mod mini_window;
+mod mini_visibility;
 
 use std::{fs, path::PathBuf};
 use tauri::Manager;
@@ -23,7 +24,7 @@ macro_rules! handlers {
         tauri::generate_handler![read_config, save_config, save_quick_record, save_attachment, evidence,
             power::read_lifecycle, reminders::set_reminders, windows::show_quickbar,
             windows::dialog_active, windows::set_shortcut,
-            mini_window::toggle_mini, mini_window::show_main,
+            mini_window::toggle_mini, mini_window::show_main, mini_visibility::read_mini_visibility,
             updates::check_update, updates::download_update, updates::install_update,
             updates::read_update_state, updates::prepare_update_install, updates::cancel_update_install,
             quick_save::quickbar_update_ready, quick_save::ack_quickbar_update,

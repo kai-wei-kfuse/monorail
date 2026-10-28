@@ -11,6 +11,7 @@ fn main() {
             "set_reminders",
             "show_quickbar",
             "toggle_mini",
+            "read_mini_visibility",
             "show_main",
             "dialog_active",
             "set_shortcut",

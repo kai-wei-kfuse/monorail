@@ -30,6 +30,10 @@ fn create(app: &tauri::AppHandle) -> Result<WebviewWindow, String> {
     let config = app.config().app.windows.iter().find(|window| window.label == "mini").ok_or("缺少小窗配置")?;
     let geometry = read_geometry(&super::config_dir(app)?.join("mini-window.json"))?;
     let window = tauri::WebviewWindowBuilder::from_config(app, config).map_err(|e| e.to_string())?.build().map_err(|e| e.to_string())?;
+    if let Err(error) = super::mini_visibility::install(&window) {
+        window.destroy().map_err(|cleanup| format!("{error}；小窗清理失败：{cleanup}"))?;
+        return Err(error);
+    }
     if let Some(value) = geometry {
         window.set_size(PhysicalSize::new(value.width, value.height)).map_err(|e| e.to_string())?;
         window.set_position(PhysicalPosition::new(value.x, value.y)).map_err(|e| e.to_string())?;

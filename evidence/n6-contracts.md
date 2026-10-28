@@ -63,3 +63,27 @@
 - Claude 的 MiniApp 尺寸调整目前有空 catch，会吞掉原生失败；建议在 UI 线仅对明确的浏览器预览跳过原生调用，真实 Tauri 错误应显示或报告，避免下次权限问题被隐藏。本次未越界修改 app 文件。
 - 融合布局仍保留在 0.2.0 范围，建议 Claude 在真实窗口验收和卡头接线后实现；本次没有修改阶段计划或新增列表设置。
 - 提交建议：`fix(n6): allow mini window sizing and expose home card timing metadata`。未推送、未发版，原有 journal-real.json 改动保留。
+
+## 42d9883 后续：小窗真实可见状态（2026-10-28）
+
+问题是 MiniApp 默认关闭按钮直接调用 `getCurrentWindow().hide()`，不会经过 `toggle_mini`。仅在 toggle 的返回值后更新按钮文案，会漏掉小窗自身关闭或托盘操作。
+本次在 Windows 原生 HWND 上监听显示/隐藏变化，保留现有 UI 调用方式。没有新增轮询、超时、第二套开关业务，也没有修改 UI/app。
+
+```ts
+// platform/miniWindow.ts
+miniWindow.subscribeVisibility(handler: (visible: boolean) => void): Promise<() => void>
+miniWindow.isVisible(): Promise<boolean>
+// 原有 toggle(): Promise<boolean> / showMain(): Promise<void> 保持不变
+```
+
+Claude：主窗口挂载时调用 subscribeVisibility，回调接 UI 的 miniOpen 状态；卸载时调用返回的取消订阅函数，订阅失败走现有错误报告。按真实状态显示「开启小窗口 / 关闭小窗口」即可。toggle 的返回值不再用作持久 UI 状态；MiniApp 的直接 hide() 无需改写。
+
+- 原生事件名 `mini-visibility`，发给 main，载荷 `{visible:boolean, revision:number}`。新增只读命令 `read_mini_visibility`，只授权 main；小窗未创建时返回 false。
+- 监听器先注册事件，再查询初始状态。原生在同一窗口线程采样可见状态与 revision，JS 丢弃乱序的旧 revision，避免初始查询覆盖后来收到的状态。
+- 使用 Win32 `WM_WINDOWPOSCHANGED` 的 show/hide 标志；用户的关闭按钮、主窗口开关、托盘开关、原生关闭/销毁均进入同一观察入口。没有用焦点变化猜测隐藏。
+- `WM_NCDESTROY` 清理 subclass 和回调；销毁前 Windows 可能先发隐藏消息，按当前窗口的观察结果去重。监听安装失败会销毁尚未显示的小窗并显式报错。
+- 代码位置：src-tauri/src/mini_visibility.rs（观察与只读查询）、mini_window.rs（首次显示前安装）、platform/miniWindow.ts（订阅与初始查询）、两处测试；原生清单新增只读命令权限，windows-sys 启用已有依赖的 Win32_UI_Shell 功能。
+- 验证：npm test 58 个文件、383 条通过；原生单测 14 条通过，新增实际 HWND 的显示/隐藏/销毁、尺寸变化不误报、回调释放与安装失败清理。单测进程沿用项目 60 秒期限，编译单独执行。
+- 完整 check 与普通原生构建证据：mini-visibility-check.log、mini-visibility-build.log；其余为 mini-visibility-tests.log、mini-visibility-rust-compile.log、mini-visibility-rust-tests.log。
+- 未实测此次主窗口文案联动：Claude 尚需接上订阅并恢复状态文案；本次真实 HWND 底层测试不等于完整 Tauri UI 端到端验收。
+- 提交建议：`fix(n6): publish native mini window visibility changes`。不推送、不发版。
