@@ -5,11 +5,11 @@
 
 .titlebar { display: flex; align-items: center; gap: 14px; padding-left: 14px; background: var(--bar-bg); border-bottom: 1px solid var(--line); }
 .titlebar.inactive > * { opacity: .55; }
-.brand { display: flex; align-items: center; gap: 9px; }
+.brand { flex: none; display: flex; align-items: center; gap: 9px; white-space: nowrap; }
 .brand > svg { width: 18px; height: 18px; }
 .brand b { font: 520 13px/1 var(--f-cn); letter-spacing: .08em; }
 .tabs { display: flex; align-self: stretch; margin-left: 6px; padding-left: 6px; border-left: 1px solid var(--line-2); }
-.tab-btn { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 14px; font: 520 13px/1 var(--f-cn); letter-spacing: .06em; color: var(--mute); }
+.tab-btn { position: relative; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 14px; white-space: nowrap; font: 520 13px/1 var(--f-cn); letter-spacing: .06em; color: var(--mute); }
 .tab-btn i { font: 500 8px/1 var(--f-en); letter-spacing: .2em; font-style: normal; color: var(--mute-2); }
 .tab-btn:hover { color: var(--ink); background: #d2d2cc; }
 .tab-btn[aria-selected="true"] { color: var(--ink); }
@@ -27,3 +27,9 @@
 
 .dock { position: relative; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--bar-bg); border-top: 1px solid var(--line); }
 .dock-right { margin-left: auto; display: flex; align-items: center; gap: 18px; font: 330 12px/1 var(--f-cn); color: var(--mute); letter-spacing: .04em; }
+/* v0.3 多了日历、列表两页：窗口不够宽时先收起英文小字、收窄间距，中文不换行（最小宽 960 时六个标签加状态块放得下） */
+@media (max-width: 1240px) {
+  .tab-btn { padding: 0 10px; }
+  .tab-btn i { display: none; }
+  .tab-btn[aria-selected="true"]::after { left: 10px; right: 10px; }
+}
