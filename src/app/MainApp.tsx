@@ -18,6 +18,7 @@ import type { ToastItem } from '../ui/overlay/Toast';
 import { motionLevel, play, setMotionLevel } from '../ui/effects/animate';
 import { Backfill } from '../widgets/notices/Backfill';
 import { cardView, HomePage, useNow } from '../pages/home/HomePage';
+import { favorites } from '../pages/home/timerView';
 import type { GuideKind } from '../pages/home/GuideCard';
 import { bootstrap } from './bootstrap';
 import { createActions } from './actions';
@@ -151,7 +152,9 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   useHotkeys({
     M: () => void toggleMini(),
     Q: () => void actions.showQuickbar(),
-    ...Object.fromEntries(acts.slice(0, 9).map((a, i) => [String(i + 1), () => void (a.id === awayId ? actions.resume(now()) : actions.insert(a.id, now()))])),
+    // 数字键 1–9 在首页启动收藏（v0.3）。快捷活动弹层开着时由弹层自己接，不会到这里
+    ...(page === 'home' ? Object.fromEntries(favorites(settings).slice(0, 9).map((f, i) =>
+      [String(i + 1), () => void actions.startFree({ description: f.name, project: f.project, tags: f.tags }, now())])) : {}),
   });
 
   const routes = readyRoutes();

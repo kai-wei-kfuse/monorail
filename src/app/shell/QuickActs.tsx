@@ -26,11 +26,16 @@ export function QuickActs({ acts, current, onPick, onSleep, onTemp }:
   useEffect(() => {
     if (!open) return;
     const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    // 弹层开着时，数字键 1–9 启动弹层里的那几个（不在输入框里时）；拦下来，不再交给外壳启动收藏
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+      const i = /^[1-9]$/.test(e.key) && !e.ctrlKey && !e.altKey && !e.metaKey && !(e.target instanceof HTMLInputElement) ? +e.key - 1 : -1;
+      if (i >= 0 && i < acts.length) { e.preventDefault(); e.stopPropagation(); pick(() => onPick(acts[i].id, new Date().toISOString())); }
+    };
     document.addEventListener('pointerdown', away);
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
-  }, [open]);
+  }, [open, acts, onPick]);
   const active = acts.find(a => a.id === current);
   const pick = (fn: () => void) => { fn(); setTimeout(() => setOpen(false), 650); };
   return <div ref={box}>

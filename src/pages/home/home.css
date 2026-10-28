@@ -67,6 +67,8 @@
 .dlg-pat dt { font-weight: 520; color: var(--ink-3); }
 .dlg-pat dd { margin: 0; }
 
+/* 首页：上面计时条、收藏行，下面卡区铺满剩下的高度（UI 规范 §11.2） */
+.home { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; }
 /* 首页舞台：铺满内容区 */
 .home-stage { display: grid; min-height: 0; }
 .home-stage > .card { grid-area: 1 / 1; }

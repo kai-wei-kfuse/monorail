@@ -51,7 +51,8 @@ export interface TimerActions {
   /** 把这一条的描述、项目、标签存成收藏（预设，位置计时条）。 */
   favorite: (entryId: string) => void;
   readout: (req: ReadoutRequest, seen: unknown) => Promise<ReadoutOutcome>;
-  createProject: (name: string) => void;
+  /** 就地新建项目（自动配色，N4）。没给时项目选择里不能新建。 */
+  createProject?: (name: string) => void;
   createTag: (tag: string) => void;
 }
 
@@ -65,7 +66,7 @@ const same = (a: string[], b: string[]) => a.length === b.length && a.every((x, 
  * 点输入框和点抽卡是同一件事：从第一次点的那一刻起计时（待确认），确认做什么时才写盘。
  * 输入框、项目、标签算一组：焦点在组内移动不写盘，离开这一组才写盘。写了字就开始这件事；正在计时点进去是改这一条；
  * 没写字就离开，接着计待确认；Esc 放弃。带卡的那一条在这里只读，改卡在卡上改。
- * onDraft 把正在写的字交给下面的卡区照着显示（不在写时交 null）。manual 是「手动补录」时显示的表单。
+ * onDraft 把正在写的字交给下面的卡区照着显示（不在写时交 null）。manual 是「手动补录」时显示的表单，没给就不能切过去。
  */
 export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
   { view: TimerView; actions: TimerActions; mode: 'timer' | 'manual'; onMode: (mode: 'timer' | 'manual') => void; manual?: ReactNode;
@@ -81,6 +82,8 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
   const kind = deciding ? 'pending' : !running ? 'idle' : running.kind !== '普通' ? 'away' : 'focus';
   const draft = focused && !locked ? text : null;
   useEffect(() => { onDraft?.(draft); }, [draft, onDraft]);
+  // 读数下面那一行说的是改读数时那一条；换成别的事、开始或放弃了待确认，就不再显示
+  useEffect(() => { setNote(null); }, [entry?.id, pending?.id]);
 
   function begin() {
     if (focused) return;
@@ -129,7 +132,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
   return <section className="tbar">
     <div className="tbar-head"><span className="k">TIMER<em>计时条</em></span>
       <span className="tbar-tip">{mode === 'manual' ? '补一段过去做过的事：开始、结束、时长填两项' : '点输入框就开始计时；写下在做什么，或者抽一张卡'}</span>
-      <Segmented label="计时方式" value={mode} onChange={onMode} options={[{ value: 'timer', label: '计时' }, { value: 'manual', label: '手动补录' }]} />
+      <Segmented label="计时方式" value={mode} onChange={onMode} options={[{ value: 'timer', label: '计时' }, { value: 'manual', label: '手动补录', disabled: !manual }]} />
     </div>
     {mode === 'manual' ? manual : <>
       <div className="tbar-row">

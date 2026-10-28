@@ -19,6 +19,11 @@ import { RestCard } from './RestCard';
 import { ReviewCard } from './ReviewCard';
 import { CardFrame } from './CardFrame';
 import { playAfterWipe, playColdIntro, playResumeIntro } from './intro';
+import { TimerBar } from './TimerBar';
+import type { EntryValue, TimerActions } from './TimerBar';
+import type { ReadoutOutcome, ReadoutRequest } from './TimeField';
+import { PresetRow } from './PresetRow';
+import { favorites, timerView } from './timerView';
 
 /** 首页需要的动作。由外壳的适配层（app/actions）提供，出错由适配层统一报告。 */
 export interface HomeActions {
@@ -32,6 +37,17 @@ export interface HomeActions {
   resume(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
   returnFromRest(answer: string, at: string): Promise<unknown>;
+  // 计时条
+  beginPending(at: string): Promise<unknown>;
+  cancelPending(pendingId: string, at: string): Promise<unknown>;
+  startFree(value: EntryValue, at: string): Promise<unknown>;
+  editOpen(entryId: string, patch: Partial<EntryValue>, at: string): Promise<unknown>;
+  pause(at: string): Promise<unknown>;
+  continueEntry(entryId: string, at: string): Promise<unknown>;
+  commitReadout(req: ReadoutRequest, seen: unknown): Promise<ReadoutOutcome>;
+  addFavorite(value: EntryValue, at: string): Promise<unknown>;
+  reorderFavorites(ids: string[], at: string): Promise<unknown>;
+  createTag(tag: string, at: string): Promise<unknown>;
 }
 export interface HomeLook { titleScale: number; topoMode: TopoMode; topoDepth: number; shrinkMaxLevel: number; timeboxDefault: number }
 
@@ -66,6 +82,8 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     shrinkFor: string | null; onShrinkConsumed: () => void;
     onGuide: (kind: GuideKind) => void; onOpenReview: () => void; onAddRest?: () => void }) {
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
+  const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), settings = useStore(appStore, s => s.settings);
+  const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer');
   const now = useNow();
   const stage = useRef<HTMLDivElement>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -112,6 +130,25 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     setWipe({ no: next.slotNo, meta: `${next.task} · ${next.type}${next.goalMinutes ? ` · ${next.goalMinutes} 分钟` : ''}`, title: next.content.replace(/[[\]]/g, '') });
   }
 
+  // 计时条的动作：点击时刻在这里取；抽卡、开始卡和卡区一样走 act，换卡期间按钮不可点
+  const now_ = () => new Date().toISOString(), favs = favorites(settings);
+  const startFavorite = (id: string) => { const f = favs.find(x => x.id === id); if (f) void actions.startFree({ description: f.name, project: f.project, tags: f.tags }, now_()); };
+  const timerActions: TimerActions = {
+    beginPending: () => void actions.beginPending(now_()),
+    cancelPending: id => void actions.cancelPending(id, now_()),
+    startFree: v => void actions.startFree(v, now_()),
+    editOpen: (id, patch) => void actions.editOpen(id, patch, now_()),
+    pause: () => void actions.pause(now_()),
+    resume: () => void act(() => actions.resume(now_())),
+    draw: () => void act(() => actions.draw(now_())),
+    startFavorite,
+    startCard: id => void act(() => actions.start(id, now_())),
+    continueEntry: id => void actions.continueEntry(id, now_()),
+    favorite: id => { const e = home.entry; if (e?.id === id) void actions.addFavorite({ description: e.description, project: e.project, tags: e.tags }, now_()); },
+    readout: actions.commitReadout,
+    createTag: tag => void actions.createTag(tag, now_()),
+  };
+
   let body;
   if (home.mode === 'rest') body = <RestCard suggestion={home.rest?.suggestion ?? null} look={cardLook} onAddRest={onAddRest} onBack={(answer, at) => void act(() => actions.returnFromRest(answer, at))} />;
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
@@ -137,7 +174,10 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
         onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />} />;
   } else body = <GuideCard kind={home.mode === 'guide' ? home.guideKind : 'allDone'} look={cardLook} onAction={() => onGuide(home.mode === 'guide' ? home.guideKind : 'allDone')} />;
 
-  return <div ref={stage} className="home-stage">
+  return <div className="home">
+    <TimerBar view={timerView({ home, entries, cards, tasks, settings })} actions={timerActions} mode={timerMode} onMode={setTimerMode} />
+    <PresetRow items={favs} onPick={startFavorite} onReorder={ids => void actions.reorderFavorites(ids, now_())} />
+    <div ref={stage} className="home-stage">
     {body}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}
       resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at } : null)} />}
@@ -146,5 +186,6 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {dialog?.kind === 'shrink' && full && <ShrinkDialog original={full.content} type={full.type} timeboxMinutes={full.timebox_minutes}
       level={full.shrink_level} maxLevel={look.shrinkMaxLevel} defaultTimebox={look.timeboxDefault} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.shrink(dialog.cardId, { content: r.content, type: r.type, minutes: r.timeboxMinutes }, r.at)); }} />}
+    </div>
   </div>;
 }
