@@ -1,40 +1,43 @@
-# 单轨（MONORAIL）
+# 单轨 MONORAIL
 
-个人任务 / 计时桌面软件。目录遵循上级 `架构设计.md` v1.1。
+一个 Windows 桌面上的「现在做什么」：写下手头的事就开始计时，不知道做什么就从任务池里抽一张卡。所有时间都落成可以改的条目，数据是本地的 Markdown 文件。
 
-产品原名「像素记录」，现统一使用「单轨 / MONORAIL」。内部 npm/Cargo 包名 `pixel-record`、Rust 库名 `pixel_record_lib` 及应用标识 `local.pixelrecord.app` 保留；它们不是界面显示名。更名范围和验证结果见 `修改日志.md`，打包说明见 `src-tauri/RELEASE.md`。
+![写下一件事开始计时，停止，再抽一张卡开始做](docs/assets/demo.gif)
 
-私有源码与发布仓库：https://github.com/kai-wei-kfuse/monorail 。安装带更新功能的版本后，在「设置 → 关于」检查更新、下载并重启安装。当前私有开发版复用本机 GitHub CLI 登录，先安装 gh 并执行 `gh auth login`；账号必须能读取此仓库。接入、发版及验收方法见 `docs/updates.md`。
+## 主要功能
 
-## 运行
+**计时就是首页。** 点输入框就开始计时，写下在做什么、选项目和标签就确认；暂停可以〔继续〕接回来，停止就回到待机。读数点一下能直接改，`45`、`1:30`、`+10` 都认。常用的事存成收藏，数字键 1–9 一键开始。
 
-- 使用 Node 24、已安装的 Rust 1.95.0 MSVC 工具链、Windows C++ 构建工具和 WebView2。
-- `npm ci`
-- `npm run check`：类型、分层/无环 lint、测试；测试进程硬上限 60 秒。
-- `npm run tauri -- build --debug --no-bundle`：构建嵌入前端的 Windows 可执行文件，不启动开发服务器，不安装到系统。
-- 程序：`src-tauri/target/debug/pixel-record.exe`。首次启动用原生 dialog 选择数据目录。应用 identifier 保留原值，以继续使用已有数据位置及授权。
-- 快捷键初始为 Ctrl+Alt+Shift+R；可用进程环境变量 `TASK_TERMINAL_SHORTCUT` 显式设置。注册冲突显示错误，应用继续运行，不自动尝试其他组合。
+![融合布局：计时条并进大卡](docs/assets/home-fused.png)
 
-## 集成验证构建
+**抽卡做事。** 要做的事按主线、支线任务放进任务池，每项是一张卡。首页抽到哪张做哪张，可以完成、缩小、再抽一张；卡上的时间单独累计，中途去厕所、吃饭不算在内。
 
-`npm run tauri -- build --debug --no-bundle --features verify --config src-tauri/tauri.verify.conf.json`
+| 做卡中（分开布局） | 任务池 |
+|---|---|
+| ![做卡中](docs/assets/home-card.png) | ![任务池](docs/assets/task-pool.png) |
 
-启动后先等日志中出现 `verification-ready-main` 和 `verification-ready-quickbar`，再运行同一 exe 加 `--verify-start`。它调用真实窗口和插件 API，记录条复用同一个保存函数。后台计时开始后保持主窗口隐藏至少 10 分钟，再运行不带参数的同一 exe 唤回；日志会核对时长。验证会暂时开关本应用自启并恢复原设置，不重启计算机、不让系统真实休眠。
+**日历和列表。** 一周的时间块一目了然，拖动就能新建、移动、改起止；列表按天合并同名记录。忘了计的那段可以手动补录。
 
-验证入口位于 `src/verification/`，只由 Vite verify mode 引入；原生模拟电源和触发入口由 Cargo `verify` feature 编译隔离。普通生产前端包不包含验证入口，普通 Rust 构建没有对应命令处理器。
+![日历](docs/assets/calendar.png)
 
-原生运行证据：`%APPDATA%/local.pixelrecord.app/evidence.jsonl`、`lifecycle.json`；验证归档在 `evidence/`。测试数据在 `.verification-data/`，不提交。早期骨架使用的 `local.taskterminal.skeleton` 标识仅见历史记录。
+**小窗。** 独立的置顶小窗，和主窗口同时开着，能暂停、继续、完成，点名字改名称，点读数改时间。
 
-## 一致性约定
+![小窗](docs/assets/mini.png)
 
-- service 经一个提交队列读取最新状态并分配 seq。写入 journal 先落盘，文件依次替换，重启先重放再 reconcile。
-- 记录转卡的 ID 由记录 ID 推导。重复事件/重启重放不会创建第二张卡。
-- seq 标识逻辑片段的覆盖优先级。跨日物理切片沿用相同 id/seq，必须互不重叠；不同逻辑片段不能复用 seq。
-- 当前段以真实时间戳计算时长，JS 心跳只刷新显示。Rust 每分钟保存 last_alive，并在启动时保留 previous_last_alive。
-- 运行中外部修改实体文件会被版本/内容比较拒绝；这里不实现在线协同编辑。
-- data/repos 创建仓库及 transact；bootstrap 恢复 journal、全量校验计时一次，再注入当前 settings.yaml 配置。
-- 普通提交只读当前段所在活动日与今日；open_segment_day 在旧骨架数据首次启动时补齐。
-- 用户动作调用 run(rootCtx, callback, at)，复用逻辑只接 tx 并命名为 InTx；run(tx, ...) 明确拒绝重入，根动作正常排队。
-- services 收集不透明 Write，不拼路径；设置文件包含 lists.quickActivities、lists.restPool、lists.idleName。
+另外还有：快速记录条（全局快捷键，主窗口隐藏时也能存一条待办）、到期提醒、休息池、每周回顾、睡眠和离线时段追问、开机自启、应用内更新。
 
-程序内 API 实测、真实用户触发路径与未测项分别见上级 `验证-技术骨架.md`，不能把 API 成功直接等同于通知弹窗可见或用户路径全部通过。
+## 安装与开发
+
+- 安装：从 [Releases](https://github.com/kai-wei-kfuse/monorail/releases) 下载 `monorail_<版本>_windows-x86_64_setup.exe`。仓库是私有的，应用内更新需要本机 `gh auth login` 登录能读取仓库的账号，见 [docs/updates.md](docs/updates.md)。
+- 开发：Node 24 + Rust 1.95.0（MSVC）+ WebView2。
+
+  ```powershell
+  npm ci
+  npm run check                                   # tsc → eslint（分层、无环）→ vitest
+  npm run tauri -- build --debug --no-bundle      # 产物 src-tauri/target/debug/pixel-record.exe
+  ```
+
+- 技术栈：Tauri 2 + React 19 + TypeScript + zustand；数据是 Markdown + YAML，带 journal 的多文件事务。
+- 分层和约定见 [CLAUDE.md](CLAUDE.md)，构建、验证和一致性细节见 [docs/开发说明.md](docs/开发说明.md)，发版说明在 [docs/releases/](docs/releases/)。
+
+截图和动图由 [docs/assets/readme-shots.mjs](docs/assets/readme-shots.mjs) 从开发预览页（`gallery.html`，内存数据）生成。
