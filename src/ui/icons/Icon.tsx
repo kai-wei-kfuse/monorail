@@ -24,6 +24,7 @@ const PATHS = {
   parcel: <path fill="currentColor" fillRule="evenodd" d="M1.5 3.2h13v2.6h-13zM2.3 6.6h11.4v7.9H2.3zM6.9 3.2h2.2v6.1H6.9zM9.9 11h2.5v2.1H9.9z" />,
   meal: <><path fill="currentColor" d="M1.5 8h13c0 3.1-2.3 5.4-5.2 5.9v1.3H6.7v-1.3C3.8 13.4 1.5 11.1 1.5 8zM3.8 7.2C4.3 5.4 6 4.2 8 4.2s3.7 1.2 4.2 3z" /><path {...S} strokeWidth="1.2" strokeLinecap="round" d="M9.4 6.4 13.6 1.2M11 6.6l3.9-3.9" /></>,
   break: <><path fill="currentColor" d="M1.8 6.2h9.7v4.2c0 2.5-2 4.6-4.6 4.6h-.5c-2.6 0-4.6-2.1-4.6-4.6z" /><path {...S} strokeWidth="1.5" d="M11.5 7.8h1.2a1.9 1.9 0 0 1 0 3.8h-1.5" /><path {...S} strokeWidth="1.2" strokeLinecap="round" d="M4.8 1.2c-.8 1 .8 1.9 0 3.1M8.4 1.2c-.8 1 .8 1.9 0 3.1" /></>,
+  cards: <path {...S} strokeWidth="1.5" d="M2.5 5.2h8v8.8h-8zM5.5 2.2h8v8.8" />,
   sleep: <path fill="currentColor" d="M9.6 1.6A6.6 6.6 0 1 0 14.4 10 5.4 5.4 0 0 1 9.6 1.6z" />,
   logo: <><path style={{ fill: 'var(--yellow)' }} d="M.6 2h14.8L8 15.2z" /><path {...S} stroke="#161616" strokeWidth="1.15" d="M3.2 4.9c1.6-.8 3.1.7 4.8 0s2.9-.6 4.8-.1M5.2 8.1c1-.5 2 .5 3 0s1.8-.3 2.7 0" /></>,
 } satisfies Record<string, ReactElement>;

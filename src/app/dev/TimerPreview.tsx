@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { formatReadout } from '../../shared/duration';
 import { HitNote, TimeField } from '../../pages/home/TimeField';
 import type { Cover, ReadoutNote, ReadoutOutcome, ReadoutRequest } from '../../pages/home/TimeField';
+import { TimerBar } from '../../pages/home/TimerBar';
+import type { EntryValue, TimerEntry } from '../../pages/home/TimerBar';
+import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
 
 const MIN = 60_000;
 interface Entry { id: string; description: string; start: number; end: number | null }
@@ -58,5 +61,66 @@ export function TimerPreview() {
       <div style={{ minHeight: 18 }}>{note('mini')}</div>
     </div>
     <ol id="entries">{entries.map(e => <li key={e.id}>{e.description} {new Date(e.start).toTimeString().slice(0, 8)} – {e.end ? new Date(e.end).toTimeString().slice(0, 8) : '现在'}</li>)}</ol>
+  </div>;
+}
+
+interface Row extends TimerEntry { end: number | null }
+const iso = (t: number) => new Date(t).toISOString();
+
+/**
+ * 计时条预览（只在开发时用）：按原型 model.js 的规则做了个内存里的假计时系统，够点一遍待确认、写字开始、改这一条、
+ * 暂停、继续、＋、读数。规则以计时系统为准，这里只为看界面。下面列出所有条目和待确认，方便截图核对。
+ */
+export function TimerBarPreview() {
+  const [mode, setMode] = useState<'timer' | 'manual'>('timer');
+  const [draft, setDraft] = useState<string | null>(null);
+  const [projects, setProjects] = useState(PREVIEW_PROJECTS), [tags, setTags] = useState(PREVIEW_TAGS);
+  const [s, setS] = useState(() => {
+    const t = Date.now(), row = (id: string, description: string, project: string, a: number, b: number | null): Row =>
+      ({ id, description, project, tags: [], startedAt: iso(t - a * MIN), end: b === null ? null : t - b * MIN, cardId: null, kind: '普通' });
+    return { rows: [row('r1', '学 408', '学习', 90, 40), row('r2', '待机', '待机', 40, null)], pending: null as { id: string; startedAt: string } | null,
+      resume: null as string | null, drawn: false };
+  });
+  const open = s.rows.find(r => r.end === null)!;
+  const idle = open.project === '待机';
+  // 从 from 起开始一条新的：正在计的那条在 from 截断（整个在 from 之后的去掉），待确认清掉
+  const start = (v: EntryValue & { cardId?: string | null }, from = Date.now()) => setS(x => ({ ...x, pending: null, resume: null,
+    rows: [...x.rows.flatMap(r => r.end !== null ? [r] : Date.parse(r.startedAt) >= from ? [] : [{ ...r, end: from }]),
+      { id: crypto.randomUUID(), ...v, cardId: v.cardId ?? null, kind: '普通' as const, startedAt: iso(from), end: null }] }));
+  const take = () => s.pending ? Date.parse(s.pending.startedAt) : Date.now();
+  const row = (id: string) => s.rows.find(r => r.id === id)!;
+  const readout = async (req: ReadoutRequest): Promise<ReadoutOutcome> => {
+    if (req.milliseconds < 0) return { kind: 'error', message: '读数不能小于 0' };
+    const startAt = Date.parse(req.at) - req.milliseconds;
+    if (req.target.mode === 'pending') { setS(x => ({ ...x, pending: x.pending && { ...x.pending, startedAt: iso(startAt) } })); return { kind: 'done', hit: [] }; }
+    setS(x => ({ ...x, rows: x.rows.map(r => r.id === req.target.id ? { ...r, startedAt: iso(startAt) } : r) }));
+    return { kind: 'done', hit: [] };
+  };
+
+  return <div style={{ padding: '24px 16px', display: 'grid', gap: 24 }}>
+    <TimerBar mode={mode} onMode={setMode} onDraft={setDraft} manual={<p className="tbar-sub">（手动补录表单另做）</p>}
+      view={{ entry: open, idle, pending: s.pending, paused: idle && s.resume ? row(s.resume).description : null, waitingCard: s.drawn, canDraw: !s.drawn,
+        projects, knownTags: tags, suggest: {
+          favorites: [{ id: 'f1', name: '学 408', project: '学习', tags: ['408'] }],
+          cards: [{ id: 'c1', content: '写周报', track: '主线' }, { id: 'c2', content: '改简历', track: '支线' }],
+          recent: [...s.rows].reverse().map(r => ({ id: r.id, description: r.description, project: r.project, tags: r.tags })),
+        } }}
+      actions={{
+        beginPending: () => setS(x => x.pending ? x : { ...x, pending: { id: crypto.randomUUID(), startedAt: iso(Date.now()) } }),
+        cancelPending: id => setS(x => x.pending?.id === id ? { ...x, pending: null } : x),
+        startFree: v => start(v, take()),
+        editOpen: (id, patch) => setS(x => ({ ...x, rows: x.rows.map(r => r.id === id ? { ...r, ...patch } : r) })),
+        pause: () => { const id = open.id; start({ description: '待机', project: '待机', tags: [] }); setS(x => ({ ...x, resume: id })); },
+        resume: () => { const r = row(s.resume!); start({ description: r.description, project: r.project, tags: r.tags, cardId: r.cardId }); },
+        draw: () => setS(x => ({ ...x, drawn: true, pending: x.pending ?? { id: crypto.randomUUID(), startedAt: iso(Date.now()) } })),
+        startFavorite: () => start({ description: '学 408', project: '学习', tags: ['408'] }, take()),
+        startCard: id => start({ description: id === 'c1' ? '写周报' : '改简历', project: '工作', tags: [], cardId: id }, take()),
+        continueEntry: id => { const r = row(id); start({ description: r.description, project: r.project, tags: r.tags }, take()); },
+        readout, createProject: name => setProjects(l => [...l, { name, color: '#16a085' }]), createTag: t => setTags(l => [...l, t]),
+      }} />
+    <div id="state" style={{ font: '330 12px/1.6 var(--f-cn)' }}>
+      <div>待确认：{s.pending ? new Date(s.pending.startedAt).toTimeString().slice(0, 8) : '无'} · 卡区照着显示：{draft ?? '（不在写）'}</div>
+      <ol>{s.rows.map(r => <li key={r.id}>{r.description} [{r.project}{r.tags.map(t => ' #' + t).join('')}]{r.cardId ? ' 卡' : ''} {new Date(r.startedAt).toTimeString().slice(0, 8)} – {r.end ? new Date(r.end).toTimeString().slice(0, 8) : '现在'}</li>)}</ol>
+    </div>
   </div>;
 }

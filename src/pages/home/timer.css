@@ -1,5 +1,54 @@
 /* 计时条和读数（UI 规范 §11.1–11.3），照原型 new.css。 */
 
+/* 计时条：头一行（小标题、提示、计时 / 手动补录）+ 主体一行 + 下面一行说明 */
+.tbar { position: relative; z-index: 6; display: grid; gap: 6px; }
+.tbar-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.tbar-tip { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 330 12px/1.4 var(--f-cn); color: var(--mute); }
+.tbar-head .seg { margin-left: auto; flex: none; }
+.tbar-head .seg button { min-width: 76px; height: 28px; font-size: 12px; }
+.tbar-row { display: flex; align-items: stretch; gap: 10px; min-height: 64px; padding: 8px 10px 8px 0; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 3px 0 var(--line); }
+.tbar-tag { flex: none; width: 58px; margin: -8px 0; display: grid; place-content: center; justify-items: center; gap: 9px; background: var(--ink); color: var(--yellow); font: 600 expanded 10px/1 var(--f-en); letter-spacing: .2em; }
+.tbar-tag[data-kind="idle"] { color: #8f8f8a; }
+.tbar-tag[data-kind="pending"] .st-led { animation: blink 1s steps(1) infinite; }
+.tbar-group { flex: 1 1 440px; min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tbar-input { position: relative; flex: 1 1 260px; min-width: 0; display: flex; align-items: center; align-self: stretch; }
+.tbar-input input { width: 100%; height: 100%; min-height: 44px; padding: 0 10px; border: 0; background: transparent; font: 520 21px/1.2 var(--f-cn); letter-spacing: .02em; color: var(--ink); user-select: text; transition: box-shadow .2s; }
+.tbar-input input::placeholder { font: 500 19px/1 var(--f-en); letter-spacing: .04em; color: var(--mute-2); }
+.tbar-input input:focus { outline: none; box-shadow: inset 0 -3px 0 var(--yellow); }
+.tbar-input input[readonly] { color: var(--ink-3); }
+.tbar-input input.paused::placeholder { font: 520 21px/1.2 var(--f-cn); letter-spacing: .02em; color: var(--mute); }
+.tbar-pills { position: absolute; right: 6px; display: flex; gap: 6px; pointer-events: none; }
+.tbar-pill { padding: 4px 7px; background: var(--cyan); color: var(--ink); font: 520 11px/1 var(--f-cn); letter-spacing: .04em; }
+.tbar-pill.is-card { background: var(--ink); color: var(--yellow); }
+.tbar-time { position: relative; flex: none; display: flex; }
+.tbar-clock { min-width: 150px; display: grid; align-content: center; justify-items: end; gap: 7px; padding: 0 12px; border-left: 1px solid var(--line); }
+.tbar-clock b { font: 600 expanded 30px/.8 var(--f-en); letter-spacing: -.01em; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; transition: box-shadow .2s; }
+.tbar-clock b small { font-size: 17px; color: var(--mute); }
+.tbar-clock.idle b { color: var(--mute-2); }
+.tbar-acts { flex: none; display: flex; align-items: center; gap: 8px; }
+.tbar-acts .abtn { height: 46px; }
+.tbar-new { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--paper-2); box-shadow: 0 3px 0 var(--line-2); transition: transform .09s, box-shadow .09s, border-color .2s; }
+.tbar-new svg { width: 14px; height: 14px; }
+.tbar-new:hover:not(:disabled) { border-color: var(--ink); }
+.tbar-new:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+.tbar-new:disabled { opacity: .4; }
+.tbar-sub { display: flex; flex-wrap: wrap; gap: 4px 18px; min-height: 18px; padding: 0 2px; font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+.tbar-sub b { font: 600 12px/1 var(--f-en); color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* 自动完成：收藏 / 待做的卡 / 最近的记录。弹层沿用下拉的 .sel-pop */
+.sug { left: 0; right: auto; top: calc(100% + 6px); width: min(560px, 100%); max-height: 430px; overflow: auto; z-index: 30; }
+.sug li::before { display: none; }
+.sug .sug-h { height: 30px; gap: 8px; padding: 12px 6px 2px; pointer-events: none; }
+.sug .sug-h b { font: 520 12px/1 var(--f-cn); letter-spacing: .08em; }
+.sug .sug-h span { font: 500 8px/1 var(--f-en); letter-spacing: .2em; color: var(--mute-2); }
+.sug .sug-h::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.sug-i svg { flex: none; width: 12px; height: 12px; color: var(--mute); }
+.sug-i span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sug-i em { font-style: normal; font-size: 11px; color: var(--mute); }
+.sug .sug-none { font-size: 12px; color: var(--mute); }
+.sug .sug-foot { height: auto; margin-top: 6px; padding: 8px 10px; border-top: 1px solid var(--line); font-size: 11px; line-height: 1.5; color: var(--mute); white-space: normal; }
+.sug .sug-h:hover, .sug .sug-none:hover, .sug .sug-foot:hover { background: none; }
+
 /* 读数直接可改：平时是按钮，悬停出现强调色下划线；点了原地变成同样字号的输入框 */
 .time-btn { font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit; text-align: inherit; cursor: text; transition: box-shadow .2s; }
 .time-btn:hover:not(:disabled) { box-shadow: inset 0 -.12em 0 var(--yellow); }
