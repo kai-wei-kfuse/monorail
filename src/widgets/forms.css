@@ -14,3 +14,13 @@
 .fm-pick button:hover { border-color: var(--ink); }
 .fm-pick button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #f6f6f3; }
 .fm-pick button i { margin-left: auto; font: 500 10px/1 var(--f-en); font-style: normal; letter-spacing: .16em; color: var(--mute); }
+.fm-row small { font: 330 12px/1.5 var(--f-cn); color: var(--mute); }
+
+/* 事项列表编辑器（UI 规范 §11.10）：编号、输入框、去掉按钮 */
+.ie { display: grid; gap: 6px; }
+.ie-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) 30px; align-items: center; gap: 8px; }
+.ie-no { font: 600 12px/1 var(--f-en); color: var(--mute-2); font-variant-numeric: tabular-nums; }
+.ie-rm { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid transparent; color: var(--mute); }
+.ie-rm:hover { border-color: var(--ink); background: var(--yellow); color: var(--ink); }
+.ie-rm svg { width: 10px; height: 10px; }
+.ie-foot { display: flex; align-items: center; gap: 10px; font: 330 12px/1.4 var(--f-cn); color: var(--mute); }

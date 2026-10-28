@@ -8,22 +8,26 @@ import { TextArea } from '../ui/controls/TextArea';
 import { DateTimeInput } from '../ui/controls/DateTimeInput';
 import { Dropdown } from '../ui/controls/Dropdown';
 import { LOOSE } from '../shared/backpack';
+import type { CardFields } from '../shared/backpack';
+import { ProjectPicker } from '../ui/controls/ProjectPicker';
+import type { ProjectOption } from '../ui/controls/ProjectPicker';
+import { TagPicker } from '../ui/controls/TagPicker';
 import './forms.css';
 
-export interface CardFields {
-  content: string; type: '结果卡' | '时间盒卡'; timeboxMinutes: number | null;
-  blocking: boolean; dueAt: string | null; noShrink: boolean; taskId: string | null;
-}
-export const NEW_CARD: CardFields = { content: '', type: '结果卡', timeboxMinutes: null, blocking: false, dueAt: null, noShrink: false, taskId: null };
+export type { CardFields };
+export const NEW_CARD: CardFields = { content: '', type: '结果卡', timeboxMinutes: null, blocking: false, dueAt: null, noShrink: false, taskId: null, project: null, tags: [] };
 
 /**
  * 编辑或新建一张卡。卡必须能明确判断是否完成：要么是一个具体结果，要么是一段计满的时间。
+ * 计时项目没单独设时跟随所属任务的默认项目（卡 → 任务 → 未分类）；选回和任务默认一样的就当没单独设。
  * PASS 只对能 PASS 的卡开放；已缩小的卡要先处理它缩小出来的卡（附录 A6），这时按钮置灰并说明原因。
  */
-export function CardEditor({ initial, isNew, tasks, defaultTimebox, passBlocked, onSave, onPass, onCancel }:
-  { initial: CardFields; isNew: boolean; tasks: { id: string; name: string }[]; defaultTimebox: number;
-    passBlocked?: string; onSave: (fields: CardFields, at: string) => void; onPass?: (at: string) => void; onCancel: () => void }) {
-  const [f, setF] = useState<CardFields>(initial);
+export function CardEditor({ initial, isNew, tasks, defaultTimebox, passBlocked, projects, knownTags, onCreateProject, onCreateTag, onSave, onPass, onCancel }:
+  { initial: CardFields; isNew: boolean; tasks: { id: string; name: string; defaultProject?: string }[]; defaultTimebox: number;
+    passBlocked?: string; projects: ProjectOption[]; knownTags: string[]; onCreateProject?: (name: string) => void; onCreateTag?: (tag: string) => void;
+    onSave: (fields: CardFields, at: string) => void; onPass?: (at: string) => void; onCancel: () => void }) {
+  const [f, setF] = useState<CardFields>({ ...initial, project: initial.project ?? null, tags: initial.tags ?? [] });
+  const follow = tasks.find(t => t.id === f.taskId)?.defaultProject ?? '未分类';
   const set = (patch: Partial<CardFields>) => setF(prev => ({ ...prev, ...patch }));
   const ok = f.content.trim().length > 0;
   const save = () => { if (ok) onSave({ ...f, content: f.content.trim() }, new Date().toISOString()); };
@@ -42,9 +46,17 @@ export function CardEditor({ initial, isNew, tasks, defaultTimebox, passBlocked,
         {f.type === '时间盒卡' && <Slider label="目标时长" value={f.timeboxMinutes ?? defaultTimebox} min={5} max={240} step={5} unit="MIN" ticks={16}
           onChange={timeboxMinutes => set({ timeboxMinutes })} />}
       </div></div>
-      <div className="fm-f"><span>所属项目</span>
-        <Dropdown label="所属项目" value={f.taskId ?? ''} onChange={id => set({ taskId: id || null })}
+      <div className="fm-f"><span>所属任务</span>
+        <Dropdown label="所属任务" value={f.taskId ?? ''} onChange={id => set({ taskId: id || null })}
           options={[{ value: '', label: LOOSE.option }, ...tasks.map(p => ({ value: p.id, label: p.name }))]} />
+      </div>
+      <div className="fm-f"><span>计时项目</span><div className="fm-row">
+        <ProjectPicker id="card-project" label="计时项目" value={f.project ?? follow} options={projects} onCreate={onCreateProject}
+          onChange={v => set({ project: v === follow ? null : v })} />
+        <small>{f.project ? `单独设了；所属任务默认是「${follow}」` : `跟随所属任务：${follow}`}</small>
+      </div></div>
+      <div className="fm-f"><span>标签</span>
+        <TagPicker id="card-tags" value={f.tags ?? []} options={knownTags} onCreate={onCreateTag} onChange={tags => set({ tags })} />
       </div>
       <div className="fm-f"><span>期限</span><div className="fm-row">
         <DateTimeInput label="期限" value={f.dueAt} onChange={dueAt => set({ dueAt })} />

@@ -45,3 +45,6 @@
 .qc.new i { font: 500 8px/1 var(--f-en); letter-spacing: .22em; font-style: normal; }
 .qc.new:hover { border-color: var(--ink); color: var(--ink); }
 .qc.new:hover .qi { background: var(--yellow); border-color: var(--ink); }
+/* E4：超出支线上限的任务，边框和一行提示用 --over */
+.qc.excess { border-color: var(--over); }
+.qc-over { margin: 0; padding: 4px 8px; border-left: 3px solid var(--over); font: 330 12px/1.5 var(--f-cn); color: var(--ink-3); }

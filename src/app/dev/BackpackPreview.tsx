@@ -6,6 +6,8 @@ import type { BackpackActions, BackpackTab } from '../../pages/backpack/Backpack
 import { BackpackPage } from '../../pages/backpack/BackpackPage';
 import type { IdeaView, TaskView, QueueGroup } from '../../pages/backpack/types';
 import { NEW_CARD } from '../../widgets/CardEditor';
+import type { PoolView } from '../../pages/backpack/TaskPool';
+import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
 import { BaselineMarks } from '../shell/BaselineMarks';
 
 const ago = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
@@ -29,25 +31,37 @@ const IDEAS: IdeaView[] = [
   { id: 'i2', text: '把读过的 Agent 文章整理成一份对比表', tags: ['AI'], needs: '大量 token', pool: '活跃池', createdAt: ago(41), lastTouchedAt: ago(41) },
   { id: 'i3', text: '给打印机做个喷头清洁提醒', tags: [], needs: null, pool: '已转任务', createdAt: ago(3), lastTouchedAt: ago(1) },
 ];
-const noop: BackpackActions = { createTask() {}, freezeTask() {}, abandonTask() {}, restoreTask() {}, saveCard() {}, passCard() {}, convertIdea() {}, deleteIdea() {} };
+const noop: BackpackActions = { createTask() {}, addItem() {}, setDefaultProject() {}, freezeTask() {}, abandonTask() {}, restoreTask() {}, saveCard() {}, passCard() {},
+  convertIdea() {}, deleteIdea() {}, createProject() {}, createTag() {} };
+// 任务池按上面的队列组装：每张卡一个事项；不属于任务的那组当成一个只有一项的支线任务
+const item = (c: QueueGroup['cards'][number]) => ({ id: c.id, content: c.fields.content, type: c.fields.type, timeboxMinutes: c.fields.timeboxMinutes,
+  elapsedMs: c.status === '进行中' ? 52 * 60_000 : 0, running: c.status === '进行中', blocking: c.fields.blocking, dueAt: c.fields.dueAt,
+  shrinkLevel: c.shrinkLevel, project: c.fields.project ?? null, tags: c.fields.tags ?? [] });
+const pool = (full: boolean): PoolView => ({
+  mains: [{ id: 'p1', name: '找工作', track: '主线', defaultProject: '求职', items: QUEUE[0].cards.map(item) }],
+  sides: [{ id: 'p2', name: '小游戏房间系统', track: '支线', defaultProject: '未分类', items: QUEUE[1].cards.map(item) },
+    { id: 'p4', name: '查一下几台服务器有没有被攻击', track: '支线', defaultProject: '未分类', items: [{ ...item(QUEUE[2].cards[0]), content: '查一下几台服务器有没有被攻击' }] }],
+  parked: [{ id: 'p3', name: '学日语', track: '主线', itemCount: 6 }], doneSides: [], mainMax: 1, sideMax: full ? 1 : 3, mainItems: 5,
+  projects: PREVIEW_PROJECTS, excessSideIds: full ? ['p4'] : [],
+});
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
 
-// ?full：支线只有 1 格，背包两格都满（看放回背包时的腾位交互）
+// ?full：支线上限 1，两个支线任务里超出的那个按 E4 标出来
 const FULL = new URLSearchParams(location.search).has('full');
 
-/** 背包页预览（只在开发时用）：?tab=tasks|queue|ideas，?o=task|card|idea|abandon|restore 打开对应对话框。 */
+/** 背包页预览（只在开发时用）：?tab=pool|ideas，?o=task|card|idea 打开对应对话框。 */
 export function BackpackPreview({ tab: initial, overlay }: { tab: string; overlay: string | null }) {
-  const [tab, setTab] = useState<BackpackTab>((['tasks', 'queue', 'ideas'].includes(initial) ? initial : 'tasks') as BackpackTab);
+  const [tab, setTab] = useState<BackpackTab>(initial === 'ideas' ? 'ideas' : 'pool');
   useEffect(() => {
     // 用点击模拟打开对话框，走的是页面里真实的打开路径
-    const pick = { task: '.bp-tools .sbtn.ink', card: '.ls-acts .sbtn', idea: '.ls-acts .sbtn.ink', abandon: '.slot-acts .sbtn.danger', restore: '.ls-acts .sbtn' }[overlay ?? ''];
+    const pick = { task: '.qc.new', card: '.qc-item', idea: '.ls-acts .sbtn.ink' }[overlay ?? ''];
     if (pick) setTimeout(() => document.querySelector<HTMLButtonElement>(pick)?.click(), 50);
   }, [overlay]);
   const title = <TitleBar name="单轨" tabs={TABS} active="backpack" onTab={() => {}}>
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
   return <Frame titleBar={title} statusBar={<StatusBar right={<BaselineMarks main side={false} />} />}>
-    <BackpackPage tab={tab} onTab={setTab} tasks={TASKS} queue={QUEUE} ideas={IDEAS}
-      mainTasks={1} sideTasks={FULL ? 1 : 2} ideaLimit={10} defaultTimebox={60} actions={noop} />
+    <BackpackPage tab={tab} onTab={setTab} pool={pool(FULL)} tasks={TASKS} queue={QUEUE} ideas={IDEAS} knownTags={PREVIEW_TAGS}
+      ideaLimit={10} defaultTimebox={60} actions={noop} />
   </Frame>;
 }

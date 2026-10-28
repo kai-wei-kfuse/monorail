@@ -14,13 +14,15 @@ export interface PoolItem {
   id: string; content: string; type: '结果卡' | '时间盒卡'; timeboxMinutes: number | null; elapsedMs: number; running: boolean;
   blocking: boolean; dueAt: string | null; shrinkLevel: number; project: string | null; tags: string[];
 }
-export interface PoolTask { id: string; name: string; track: '主线' | '支线'; items: PoolItem[]; defaultProject: string }
+export interface PoolTask { id: string; name: string; track: '主线' | '支线'; items: PoolItem[]; defaultProject: string; overLimit?: boolean }
 export interface ParkedTask { id: string; name: string; track: '主线' | '支线'; itemCount: number }
 export interface PoolView {
   mains: PoolTask[]; sides: PoolTask[]; parked: ParkedTask[]; doneSides: string[];
   /** 三个上限：主线任务数、支线任务数、每个主线任务下的事项数。 */
   mainMax: number; sideMax: number; mainItems: number;
   projects: ProjectOption[];
+  /** E4：支线满了时用记录条存的待办照常保存，超出上限的这几个支线任务要标出来。 */
+  excessSideIds?: string[];
 }
 export interface PoolActions {
   newTask: (track: '主线' | '支线') => void;
@@ -52,7 +54,7 @@ function Meta({ item }: { item: PoolItem }) {
 }
 
 /** 任务卡牌：左边竖条标主 / 支，中间是事项，底下一行「计时记到」，最底下是操作。 */
-function QuestCard({ task, mainItems, projects, actions }: { task: PoolTask; mainItems: number; projects: ProjectOption[]; actions: PoolActions }) {
+function QuestCard({ task, mainItems, projects, excess, actions }: { task: PoolTask; mainItems: number; projects: ProjectOption[]; excess: boolean; actions: PoolActions }) {
   const [confirm, setConfirm] = useState(false), [adding, setAdding] = useState<string | null>(null);
   const main = task.track === '主线', one = isSingle(task), room = main ? mainItems - task.items.length : Infinity;
   const add = () => { if (adding?.trim()) actions.addItem(task.id, adding.trim()); setAdding(null); };
@@ -61,7 +63,7 @@ function QuestCard({ task, mainItems, projects, actions }: { task: PoolTask; mai
     if (e.key === 'Enter') add();
     if (e.key === 'Escape') setAdding(null);
   };
-  return <article className={`qc ${main ? 'main' : 'side'}`} aria-label={`${task.track}任务：${task.name}`}>
+  return <article className={`qc ${main ? 'main' : 'side'}${excess ? ' excess' : ''}`} aria-label={`${task.track}任务：${task.name}`}>
     <div className="qc-strip" aria-hidden="true"><span className="vt-t">{main ? 'MAIN' : 'SIDE'}</span><b>{main ? '主' : '支'}</b><Tri2 /><i className="vt-hatch" /></div>
     <div className="qc-body">
       <div className="qc-top"><span className="k">{main ? 'MAIN QUEST' : 'SIDE QUEST'}</span>
@@ -74,6 +76,7 @@ function QuestCard({ task, mainItems, projects, actions }: { task: PoolTask; mai
               <i /><span>{plainText(item.content)}</span><Meta item={item} /></button></li>)}
             {task.items.length === 0 && <li className="qc-empty">没有待做的事项了，加一项吧</li>}
           </ul></>}
+      {excess && <p className="qc-over">超出支线上限：先做完、冷藏或放弃一个支线任务</p>}
       {adding !== null && <div className="qc-add">
         <TextInput autoFocus aria-label="新的一件事" value={adding} placeholder={one ? '拆成具体的一件事' : '再加一件事'} onChange={e => setAdding(e.target.value)} onKeyDown={keys} />
         <Button size="sm" tone="ink" disabled={!adding.trim()} onClick={add}>加上</Button></div>}
@@ -84,7 +87,8 @@ function QuestCard({ task, mainItems, projects, actions }: { task: PoolTask; mai
           <Button size="sm" onClick={() => setConfirm(false)}>算了</Button></div></div>}
     </div>
     <footer className="qc-acts">
-      <Button size="sm" disabled={room <= 0} title={room <= 0 ? `每个主线任务下最多 ${mainItems} 项` : '在这个任务下面加一件事'} onClick={() => setAdding('')}>{one ? '拆开' : '＋ 加一项'}</Button>
+      {/* 只有一项的第一次拆开是替换那一项，不占位置，满了也能拆 */}
+      <Button size="sm" disabled={room <= 0 && !one} title={room <= 0 && !one ? `每个主线任务下最多 ${mainItems} 项` : '在这个任务下面加一件事'} onClick={() => setAdding('')}>{one ? '拆开' : '＋ 加一项'}</Button>
       <span />
       <Button size="sm" onClick={() => actions.freeze(task.id)}>冷藏</Button>
       <Button size="sm" tone="danger" onClick={() => setConfirm(true)}>放弃</Button>
@@ -100,9 +104,9 @@ const NewTile = ({ text, en, onClick }: { text: string; en: string; onClick: () 
  * 只有一项、而且就是任务本身的合成一行；第一次「拆开」时，那一项由逻辑线换成拆出来的事。新建任务、编辑事项的对话框由页面打开。
  */
 export function TaskPool({ view, actions }: { view: PoolView; actions: PoolActions }) {
-  const { mains, sides, parked, doneSides, mainMax, sideMax, mainItems, projects } = view;
+  const { mains, sides, parked, doneSides, mainMax, sideMax, mainItems, projects, excessSideIds = [] } = view;
   const free = { 主线: mains.length < mainMax, 支线: sides.length < sideMax };
-  const card = (t: PoolTask) => <QuestCard key={t.id} task={t} mainItems={mainItems} projects={projects} actions={actions} />;
+  const card = (t: PoolTask) => <QuestCard key={t.id} task={t} mainItems={mainItems} projects={projects} excess={excessSideIds.includes(t.id)} actions={actions} />;
   return <>
     <Group cn="主线任务" en="MAIN QUEST" right={`${mains.length} / ${mainMax} 个 · 每个最多 ${mainItems} 项`}>
       <div className="qc-grid">{mains.map(card)}
