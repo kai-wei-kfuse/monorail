@@ -93,7 +93,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   useEffect(() => { setMotionLevel(settings.motion); document.documentElement.style.setProperty('--yellow', settings.accent); }, [settings.motion, settings.accent]);
   const nowMs = useNow();
   const [page, setPage] = useState<Route['id']>('home');
-  const [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
+  const [miniOpen, setMiniOpen] = useState<boolean | null>(null), [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
   const [backfill, setBackfill] = useState(false);
   const [completeAt, setCompleteAt] = useState<string | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
@@ -137,6 +137,11 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     }, MINI_HEARTBEAT_MS);
     return () => { void off.then(fn => fn()); };
   }, [ctx]);
+  // 底栏按钮跟着小窗真实的显示状态（小窗自己关、托盘开关也算）；toggle 的返回值不当状态用
+  useEffect(() => {
+    const off = miniWindow.subscribeVisibility(setMiniOpen).catch(error => { report(error); return () => {}; });
+    return () => { void off.then(fn => fn()); };
+  }, []);
   function onGuide(kind: GuideKind) {
     // 建项目、设主线、给主线拆卡都在背包页做；卡都做完了就去写一条
     if (kind === 'allDone') { void actions.showQuickbar(); return; }
@@ -181,7 +186,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     left={<><QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.insert(id, at))} onSleep={at => void actions.sleep(at)}
       onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />
-      <MiniToggle onClick={() => void toggleMini()} /></>}
+      <MiniToggle on={miniOpen} onClick={() => void toggleMini()} /></>}
     right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;
 
   return <>

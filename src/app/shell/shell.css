@@ -74,4 +74,6 @@
 .mini-body .mini-stack { gap: 0; justify-items: stretch; }
 .mini-body .mini-cap { max-width: none; padding: 5px 10px; }
 .mini-toggle { margin-left: 8px; }
+.mini-toggle[aria-pressed="true"] { border-color: var(--ink); }
+.mini-toggle[aria-pressed="true"] .chev { background: var(--yellow); color: var(--ink); }
 .mini-edit-row > :last-child { flex: 1 1 180px; max-width: none; }
