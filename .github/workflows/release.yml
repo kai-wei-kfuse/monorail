@@ -42,6 +42,10 @@ jobs:
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           if ($env:RELEASE_TAG -ne "v$version") { throw 'Tag does not match package.json' }
       - run: npm test
+        env:
+          # Migration fixtures use UTC midnight with Asia/Shanghai activity-day expectations.
+          # Scope the fixture timezone to tests; the packaged app still uses the user's timezone.
+          TZ: Asia/Shanghai
       - run: node node_modules/typescript/bin/tsc --noEmit
       - run: node node_modules/eslint/bin/eslint.js src
       - name: Build signed NSIS

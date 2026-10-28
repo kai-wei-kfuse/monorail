@@ -1,0 +1,38 @@
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+ ❯ src/data/migrations/v2.test.ts (6 tests | 2 failed) 297ms
+   × migrates once, preserves old effective totals, splits IDs, restores the open tail, and backs up all business files 130ms
+   × recovers after every write boundary without a mixed schema or overwritten backup 38ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  12:05:52
+   Duration  959ms (tests 47%, import 42%, transform 9%, worker 1%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/migrations/v2.test.ts > migrates once, preserves old effective totals, splits IDs, restores the open tail, and backs up all business files
+TypeError: Cannot read properties of null (reading 'text')
+ ❯ src/data/migrations/v2.test.ts:39:64
+     37|   const entries = (await fs.list('timelog')).flatMap(path => path).len…
+     38|   expect(entries).toBe(1);
+     39|   const rows = parse((await fs.read('timelog/2026-10-28.md'))!.text);
+       |                                                                ^
+     40|   expect(new Set(rows.map((row: { id: string }) => row.id)).size).toBe…
+     41|   expect(rows.find((row: { id: string }) => row.id === ids[0])).toMatc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/data/migrations/v2.test.ts > recovers after every write boundary without a mixed schema or overwritten backup
+TypeError: Cannot read properties of null (reading 'text')
+ ❯ src/data/migrations/v2.test.ts:69:69
+     67|     expect(parse((await fs.read('state.yaml'))!.text).schemaVersion).t…
+     68|     expect((await fs.list('.journal')).length).toBe(0);
+     69|     const history = parse((await fs.read('timelog/2026-10-28.md'))!.te…
+       |                                                                     ^
+     70|     expect(history.every((entry: Record<string, unknown>) => 'descript…
+     71|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯

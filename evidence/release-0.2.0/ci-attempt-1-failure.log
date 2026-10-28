@@ -1,0 +1,131 @@
+release	Run npm test	﻿2026-10-28T12:02:08.1976005Z ##[group]Run npm test
+release	Run npm test	2026-10-28T12:02:08.1976487Z ^[[36;1mnpm test^[[0m
+release	Run npm test	2026-10-28T12:02:08.2066350Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+release	Run npm test	2026-10-28T12:02:08.2066800Z env:
+release	Run npm test	2026-10-28T12:02:08.2067088Z   RELEASE_TAG: v0.2.0
+release	Run npm test	2026-10-28T12:02:08.2067343Z   VITE_VERIFY: false
+release	Run npm test	2026-10-28T12:02:08.2067860Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+release	Run npm test	2026-10-28T12:02:08.2068200Z   CARGO_INCREMENTAL: 0
+release	Run npm test	2026-10-28T12:02:08.2068476Z   CARGO_TERM_COLOR: always
+release	Run npm test	2026-10-28T12:02:08.2068738Z   CACHE_ON_FAILURE: false
+release	Run npm test	2026-10-28T12:02:08.2068995Z ##[endgroup]
+release	Run npm test	2026-10-28T12:02:09.1279994Z
+release	Run npm test	2026-10-28T12:02:09.1318080Z > pixel-record@0.2.0 test
+release	Run npm test	2026-10-28T12:02:09.1318584Z > node test-runner.mjs
+release	Run npm test	2026-10-28T12:02:09.1319916Z
+release	Run npm test	2026-10-28T12:02:09.7326242Z
+release	Run npm test	2026-10-28T12:02:09.7347059Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv5.0.5 ^[[39m^[[90mD:/a/monorail/monorail^[[39m
+release	Run npm test	2026-10-28T12:02:09.7350013Z
+release	Run npm test	2026-10-28T12:02:12.0139621Z  ^[[32m✓^[[39m src/services/reviewService.test.ts ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[33m 527^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:12.0140934Z  ^[[32m✓^[[39m src/services/mini.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 148^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:12.3778065Z  ^[[32m✓^[[39m src/services/backpackService.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[32m 280^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:12.9551827Z  ^[[32m✓^[[39m src/services/cardService.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 267^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:13.4414887Z  ^[[32m✓^[[39m src/services/ideaService.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 184^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.0430987Z  ^[[32m✓^[[39m src/services/commit.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[33m 1056^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.0432074Z    ^[[33m^[[2m✓^[[22m^[[39m 20 rapid start/complete pairs keep sequence unique and effective intervals disjoint^[[33m 902^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.1737565Z  ^[[31m❯^[[39m src/data/migrations/v2.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m | ^[[22m^[[31m2 failed^[[39m^[[2m)^[[22m^[[32m 127^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.1739250Z ^[[31m   ^[[31m×^[[31m migrates once, preserves old effective totals, splits IDs, restores the open tail, and backs up all business files^[[39m^[[32m 64^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.1740646Z    ^[[32m✓^[[39m clears fully covered review/return references and records the sole allowed card status change^[[32m 14^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.1741879Z ^[[31m   ^[[31m×^[[31m recovers after every write boundary without a mixed schema or overwritten backup^[[39m^[[32m 25^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.1766945Z    ^[[32m✓^[[39m recovers when deletion fails at old task^[[32m 10^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.1771473Z    ^[[32m✓^[[39m recovers when deletion fails at journal^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.1772447Z    ^[[32m✓^[[39m restores byte-identical v1 business data from backup and the frozen reader accepts it^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:15.6918748Z  ^[[32m✓^[[39m src/services/n4.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 193^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:16.1046836Z  ^[[32m✓^[[39m src/services/settingsService.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 112^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:16.5917166Z  ^[[32m✓^[[39m src/services/timeEditService.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 183^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:17.0703145Z  ^[[32m✓^[[39m src/services/dealService.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[32m 194^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:17.5481200Z  ^[[32m✓^[[39m src/services/scheduler.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 186^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:18.0083707Z  ^[[32m✓^[[39m src/services/degradeService.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 170^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:18.4574607Z  ^[[32m✓^[[39m src/services/homeService.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 149^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:18.6279281Z  ^[[32m✓^[[39m src/pages/calendar/grid.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:19.0984191Z  ^[[32m✓^[[39m src/services/homeProjection.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 167^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:19.2632093Z  ^[[32m✓^[[39m src/domain/timeline/entry.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 7^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:19.4852196Z  ^[[32m✓^[[39m src/data/journal.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 19^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:19.6384396Z  ^[[32m✓^[[39m src/pages/list/listGroups.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 7^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:19.9448080Z  ^[[32m✓^[[39m src/services/updateController.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:20.1072535Z  ^[[32m✓^[[39m src/ui/controls/controls.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:20.4357074Z  ^[[32m✓^[[39m src/services/updateService.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 43^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:20.8769122Z  ^[[32m✓^[[39m src/services/n3.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 127^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:21.1144983Z  ^[[32m✓^[[39m src/data/schemas.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 20^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:21.2676982Z  ^[[32m✓^[[39m src/domain/picker/pick.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:21.4171362Z  ^[[32m✓^[[39m src/domain/card/card.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 8^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:21.5771638Z  ^[[32m✓^[[39m src/pages/home/timerView.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:21.9512440Z  ^[[32m✓^[[39m src/services/recordService.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 105^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:22.3496541Z  ^[[32m✓^[[39m src/app/bootstrap.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 68^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:23.1028332Z  ^[[32m✓^[[39m src/app/readoutRegression.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 112^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:23.2435290Z  ^[[32m✓^[[39m src/shared/duration.test.ts ^[[2m(^[[22m^[[2m23 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:23.5465424Z  ^[[32m✓^[[39m src/data/settingsRepo.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 70^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:23.8406806Z  ^[[32m✓^[[39m src/data/mdRepo.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 32^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:23.9955501Z  ^[[32m✓^[[39m src/platform/miniWindow.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:24.1477472Z  ^[[32m✓^[[39m src/ui/controls/picker.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:24.2784890Z  ^[[32m✓^[[39m src/domain/review/schedule.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:24.4134792Z  ^[[32m✓^[[39m src/pages/home/fused.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:24.5498061Z  ^[[32m✓^[[39m src/domain/reminders.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:24.8386205Z  ^[[32m✓^[[39m src/data/timelogIndex.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 29^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:25.1044736Z  ^[[32m✓^[[39m src/data/timelogV2Repo.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 31^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:25.2527665Z  ^[[32m✓^[[39m src/pages/home/cardArea.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:25.4009975Z  ^[[32m✓^[[39m src/ui/effects/effects.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 17^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:25.5484273Z  ^[[32m✓^[[39m src/services/tracking/api.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:25.6889796Z  ^[[32m✓^[[39m src/data/migrations/v1/effective.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 8^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:25.8377042Z  ^[[32m✓^[[39m src/pages/home/suggestions.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:25.9761635Z  ^[[32m✓^[[39m src/ui/effects/reveal.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:26.1302635Z  ^[[32m✓^[[39m src/pages/home/manualRange.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 8^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:26.2689662Z  ^[[32m✓^[[39m src/domain/task/pool.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:26.5160693Z  ^[[32m✓^[[39m src/pages/review/ReviewPage.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:26.6603076Z  ^[[32m✓^[[39m src/widgets/cardProgress.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 5^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:26.7972071Z  ^[[32m✓^[[39m src/domain/degrade/refusal.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:26.9471606Z  ^[[32m✓^[[39m src/shared/time.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:27.0840277Z  ^[[32m✓^[[39m src/domain/timeline/stats.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 7^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:27.2849028Z  ^[[32m✓^[[39m src/platform/windowBus.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 3^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:27.4350881Z  ^[[32m✓^[[39m src/pages/home/title.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:27.6160223Z  ^[[32m✓^[[39m src/data/frontmatter.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:27.7526736Z  ^[[32m✓^[[39m src/domain/record/record.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:27.8873197Z  ^[[32m✓^[[39m src/shared/tags.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:28.0399823Z  ^[[32m✓^[[39m src/pages/home/reorder.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 4^[[2mms^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:28.0581772Z
+release	Run npm test	2026-10-28T12:02:28.0581876Z
+release	Run npm test	2026-10-28T12:02:28.0590554Z ^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m^[[1m^[[41m Failed Tests 2 ^[[49m^[[22m^[[31m⎯⎯⎯⎯⎯⎯⎯^[[39m
+release	Run npm test	2026-10-28T12:02:28.0591481Z ^[[2m Test Files ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m58 passed^[[39m^[[22m^[[90m (59)^[[39m
+release	Run npm test	2026-10-28T12:02:28.0592487Z
+release	Run npm test	2026-10-28T12:02:28.0592987Z ^[[2m      Tests ^[[22m ^[[1m^[[31m2 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m387 passed^[[39m^[[22m^[[90m (389)^[[39m
+release	Run npm test	2026-10-28T12:02:28.0594576Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/data/migrations/v2.test.ts^[[2m > ^[[22mmigrates once, preserves old effective totals, splits IDs, restores the open tail, and backs up all business files
+release	Run npm test	2026-10-28T12:02:28.0595448Z ^[[2m   Start at ^[[22m 12:02:09
+release	Run npm test	2026-10-28T12:02:28.0596221Z ^[[31m^[[1mTypeError^[[22m: Cannot read properties of null (reading 'text')^[[39m
+release	Run npm test	2026-10-28T12:02:28.0596940Z ^[[2m   Duration ^[[22m 18.32s^[[2m (tests 44%, import 39%, transform 15%, worker 2%)^[[22m
+release	Run npm test	2026-10-28T12:02:28.0597776Z ^[[36m ^[[2m❯^[[22m src/data/migrations/v2.test.ts:^[[2m39:64^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:28.0598057Z
+release	Run npm test	2026-10-28T12:02:28.0598598Z     ^[[90m 37|^[[39m   const entries = (await fs.list('timelog')).flatMap(path => path).len…
+release	Run npm test	2026-10-28T12:02:28.0600984Z ^[[2m    Isolate ^[[22m ^[[33m59 workers spawned^[[39m^[[2m · ~114ms startup each (spawn + environment, per file)^[[22m
+release	Run npm test	2026-10-28T12:02:28.0601989Z     ^[[90m 38|^[[39m   expect(entries).toBe(1);
+release	Run npm test	2026-10-28T12:02:28.0602821Z ^[[2m            ^[[22m ^[[2mat least ~6.64s faster with ^[[22m^[[33misolate: false^[[39m^[[2m — reuses workers across files instead of one per file^[[22m
+release	Run npm test	2026-10-28T12:02:28.0607026Z     ^[[90m 39|^[[39m   const rows = parse((await fs.read('timelog/2026-10-28.md'))!.text);
+release	Run npm test	2026-10-28T12:02:28.0608252Z
+release	Run npm test	2026-10-28T12:02:28.0609399Z     ^[[90m   |^[[39m                                                                ^[[31m^^[[39m
+release	Run npm test	2026-10-28T12:02:28.0609703Z
+release	Run npm test	2026-10-28T12:02:28.0610283Z     ^[[90m 40|^[[39m   expect(new Set(rows.map((row: { id: string }) => row.id)).size).toBe…
+release	Run npm test	2026-10-28T12:02:28.0640567Z ##[error]TypeError: Cannot read properties of null (reading 'text')
+release	Run npm test	 ❯ src/data/migrations/v2.test.ts:39:64
+release	Run npm test
+release	Run npm test
+release	Run npm test	2026-10-28T12:02:28.0646784Z     ^[[90m 41|^[[39m   expect(rows.find((row: { id: string }) => row.id === ids[0])).toMatc…
+release	Run npm test	2026-10-28T12:02:28.0647359Z
+release	Run npm test	2026-10-28T12:02:28.0647540Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:28.0647712Z
+release	Run npm test	2026-10-28T12:02:28.0648170Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/data/migrations/v2.test.ts^[[2m > ^[[22mrecovers after every write boundary without a mixed schema or overwritten backup
+release	Run npm test	2026-10-28T12:02:28.0648784Z ^[[31m^[[1mTypeError^[[22m: Cannot read properties of null (reading 'text')^[[39m
+release	Run npm test	2026-10-28T12:02:28.0649225Z ^[[36m ^[[2m❯^[[22m src/data/migrations/v2.test.ts:^[[2m69:69^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:28.0650188Z     ^[[90m 67|^[[39m     expect(parse((await fs.read('state.yaml'))!.text).schemaVersion).t…
+release	Run npm test	2026-10-28T12:02:28.0650625Z     ^[[90m 68|^[[39m     expect((await fs.list('.journal')).length).toBe(0);
+release	Run npm test	2026-10-28T12:02:28.0651058Z     ^[[90m 69|^[[39m     const history = parse((await fs.read('timelog/2026-10-28.md'))!.te…
+release	Run npm test	2026-10-28T12:02:28.0651471Z     ^[[90m   |^[[39m                                                                     ^[[31m^^[[39m
+release	Run npm test	2026-10-28T12:02:28.0651895Z     ^[[90m 70|^[[39m     expect(history.every((entry: Record<string, unknown>) => 'descript…
+release	Run npm test	2026-10-28T12:02:28.0652213Z     ^[[90m 71|^[[39m   }
+release	Run npm test	2026-10-28T12:02:28.0652317Z
+release	Run npm test	2026-10-28T12:02:28.0652477Z ^[[31m^[[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯^[[22m^[[39m
+release	Run npm test	2026-10-28T12:02:28.0652635Z
+release	Run npm test	2026-10-28T12:02:28.0652652Z
+release	Run npm test	2026-10-28T12:02:28.0653779Z ##[error]TypeError: Cannot read properties of null (reading 'text')
+release	Run npm test	 ❯ src/data/migrations/v2.test.ts:69:69
+release	Run npm test
+release	Run npm test
+release	Run npm test	2026-10-28T12:02:28.1605487Z ##[error]Process completed with exit code 1.

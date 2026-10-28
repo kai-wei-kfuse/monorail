@@ -27,6 +27,10 @@ npm run version:check
 
 `.github/workflows/release.yml` 在 `v*` tag 推送时使用 Windows runner 执行检查、构建并发布。仓库 Secrets 中的 `TAURI_SIGNING_PRIVATE_KEY` 和 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 用于签名；公钥已在 Tauri 配置中。私钥和密码保存在仓库外，不能提交或作为 Release 资产上传。
 
+CI 的 `npm test` 步骤显式使用 `TZ=Asia/Shanghai`：当前迁移测试的 UTC 时间戳夹具按北京时间断言活动日。这个环境变量只影响测试，不进入构建或安装包；程序仍按用户本地时区划分活动日。
+
+若 tag 已推送但 CI 失败，先查日志，不覆盖或删除 tag 和已有 Release。仅工作流环境需要修复、应用源码无需修改且尚未创建 Release 时，可以把工作流修复提交到 master，再运行 `gh workflow run release.yml --ref master -f tag=v0.2.0`。工作流定义来自 master，checkout 和构建仍使用输入的原 tag；核对 checkout 的提交哈希，并分别记录工作流提交和源码提交。已有草稿时先检查失败点，不直接重跑发布创建步骤。
+
 发布脚本先创建 draft 并上传 exe 与 sig，然后根据实际资产 ID 生成 latest.json，最后公开该 Release 给仓库授权用户。清单的签名字段是 sig 文件内容，下载 URL 为需要认证的 GitHub asset API。应用拒绝把凭据发送到其他仓库或主机；HTTPS 跨主机重定向由 reqwest 移除敏感请求头。相同 tag 的 Release 不覆盖，失败草稿需检查具体错误后处理。
 
 本机手动签名构建使用当前 PowerShell 进程环境变量，密钥内容和密码不得写在命令历史里：
