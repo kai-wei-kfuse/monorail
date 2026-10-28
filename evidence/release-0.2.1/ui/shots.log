@@ -1,0 +1,9 @@
+mini: .mini-cap count = 0
+fused idle: 开始想下一件事 | 开始START
+fused running: 停止 | 暂停PAUSE
+fused after stop: 开始想下一件事 | 开始START
+fused after pause: 开始想下一件事 | 继续RESUME
+split idle: 开始想下一件事 | 开始START
+split running: 停止 | 暂停PAUSE,暂停PAUSE
+split after stop: 开始想下一件事 | 开始START
+split after pause: 开始想下一件事 | 继续RESUME,继续RESUME

@@ -1,0 +1,5 @@
+
+> pixel-record@0.2.1 version:check
+> node scripts/version.mjs --check
+
+Version 0.2.1: consistent
