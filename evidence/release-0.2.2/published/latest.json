@@ -1,0 +1,11 @@
+{
+  "version": "0.2.2",
+  "notes": "# 单轨 0.2.2\n\n小改动，不涉及数据格式，不用升级数据。\n\n- 首页与小窗的读数就地编辑改为与「正在做」一致的无框体验：点开时间不再出现底色矩形框，也不全选文字，而是保持原字号与位置，仅显示末尾光标与底部黄色下划线，输入时宽度随内容自然伸缩。\n",
+  "pub_date": "2026-10-29T11:19:57.715Z",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://api.github.com/repos/kai-wei-kfuse/monorail/releases/assets/688313725",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSbVJhUmZUNUxzbmp4SSt5RVcwc2xGa1phdE9seEdLWi9RUW45U1FpSk1SdDV4RktraWZKSlIrVUZ3YVlCbUFFK0lPMVVxWEV2dlVweWUrRGl4dUtvVnV0RS9sU2NaL1FRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjcyNjY0CWZpbGU65Y2V6L2oXzAuMi4yX3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjIuMgpsbGZSbFFQM2pCT1k5enorTWw0alRhNE95ZlZzeTRLcVdpU0hIeGNEbzRjREk0Zno3c2VJR25LVG1pWkt1ZStWaTErc2RYU1N4WG9PZ0dsRTYrMmpBZz09Cg=="
+    }
+  }
+}
