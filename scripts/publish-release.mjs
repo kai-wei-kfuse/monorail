@@ -12,11 +12,9 @@ const config = JSON.parse(await readFile('src-tauri/tauri.conf.json', 'utf8'));
 const pkg = JSON.parse(await readFile('package.json', 'utf8'));
 const repository = config.plugins.privateUpdater.repository;
 const gh = args => execFileSync('gh', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-const repo = JSON.parse(gh(['api', `repos/${repository}`]));
-// The current distribution requirement is private; publishing to a public repository is an error.
-if (!repo.private) throw new Error('This release pipeline requires a private repository');
 const expectedTag = `${values.prerelease ? 'update-test-' : ''}v${pkg.version}`;
 if (values.tag !== expectedTag) throw new Error(`Expected release tag ${expectedTag}`);
+const taggedCommit = execFileSync('git', ['rev-parse', '--verify', `${values.tag}^{commit}`], { encoding: 'utf8' }).trim();
 const installer = resolve(values.installer);
 const signaturePath = installer + '.sig';
 const signature = (await readFile(signaturePath, 'utf8')).trim();
@@ -29,7 +27,7 @@ await copyFile(installer, stagedInstaller);
 await copyFile(signaturePath, stagedInstaller + '.sig');
 const args = ['release', 'create', values.tag, stagedInstaller, stagedInstaller + '.sig', '--repo', repository,
   '--title', `${values.prerelease ? '更新验收' : '单轨'} v${pkg.version}`, '--notes-file', resolve(values.notes), '--draft',
-  '--target', execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()];
+  '--target', taggedCommit, '--verify-tag'];
 if (values.prerelease) args.push('--prerelease');
 console.log(gh(args));
 // The tag REST endpoint excludes draft releases; gh view provides the draft's numeric API URL.

@@ -31,6 +31,16 @@ CI 的 `npm test` 步骤显式使用 `TZ=Asia/Shanghai`：当前迁移测试的 
 
 若 tag 已推送但 CI 失败，先查日志，不覆盖或删除 tag 和已有 Release。仅工作流环境需要修复、应用源码无需修改且尚未创建 Release 时，可以把工作流修复提交到 master，再手动触发工作流。工作流定义来自 master，checkout 和构建仍使用输入的原 tag；核对 checkout 的提交哈希，并分别记录工作流提交和源码提交。已有草稿时先检查失败点，不直接重跑发布创建步骤。
 
+发版工具测试从工作流所在提交读取；指定 `validation_ref` 时从该验证提交读取。旧标签没有这些测试文件时也可重跑，应用测试和构建仍使用选定的源码提交。
+
+如果原 tag 的测试依赖未提交的本地数据，可以在 master 将测试改成合成夹具，再用固定的验证提交重跑。`validation_ref` 必须是完整提交 SHA，且只能搭配 `publish=false`。工作流会验证该提交与原 tag 只在指定的测试、发版工具和本文档上不同，运行检查后切回原 tag 构建；任何产品文件变化都会使构建停止。
+
+```powershell
+gh workflow run release.yml --ref master -f tag=v0.2.2 -f publish=false -f validation_ref=<验证提交的完整SHA>
+```
+
+这条路径只产出签名构建资产。核对资产后，使用 master 中修复后的发布脚本手动发布原 tag；脚本会确认远端标签存在，并使用标签指向的提交，不会创建或覆盖标签。
+
 每次签名构建后，CI 会保存 `<tag>-signed-nsis` artifact（只有安装包和 `.sig`，不包含密钥）。GitHub 创建 Release API 对目标提交与默认分支间的工作流文件差异有额外权限要求，`GITHUB_TOKEN` 无法获得所需的 workflow 修改权限。遇到这种 `403 Resource not accessible by integration` 时，可显式选择仅构建，然后用本机已授权且有 `repo`、`workflow` scope 的 gh 登录发布，凭据不上传到 Actions：
 
 ```powershell
@@ -40,7 +50,7 @@ gh run download <成功的运行ID> --name v0.2.0-signed-nsis --dir <产物目�
 
 核对 CI checkout、版本和签名后，按下方「发布已有产物」运行同一发布脚本。`publish` 默认是 true；仅构建是显式操作，发布失败不会自动降级成成功。GitHub 权限规则见 [Create a release](https://docs.github.com/en/rest/releases/releases#create-a-release)。
 
-发布脚本先创建 draft 并上传 exe 与 sig，然后根据实际资产 ID 生成 latest.json，最后公开该 Release 给仓库授权用户。清单的签名字段是 sig 文件内容，下载 URL 为需要认证的 GitHub asset API。应用拒绝把凭据发送到其他仓库或主机；HTTPS 跨主机重定向由 reqwest 移除敏感请求头。相同 tag 的 Release 不覆盖，失败草稿需检查具体错误后处理。
+发布脚本先创建 draft 并上传 exe 与 sig，然后根据实际资产 ID 生成 latest.json，最后公开该 Release。仓库为公开状态时，Release 对所有人可见。清单的签名字段是 sig 文件内容，下载 URL 为 GitHub asset API。应用拒绝把凭据发送到其他仓库或主机；HTTPS 跨主机重定向由 reqwest 移除敏感请求头。相同 tag 的 Release 不覆盖，失败草稿需检查具体错误后处理。
 
 本机手动签名构建使用当前 PowerShell 进程环境变量，密钥内容和密码不得写在命令历史里：
 

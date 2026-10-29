@@ -14,6 +14,10 @@ on:
         required: true
         default: true
         type: boolean
+      validation_ref:
+        description: 'Optional commit with test/publisher-only fixes for rebuilding an existing tag; requires publish=false'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -27,11 +31,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ inputs.validation_ref || inputs.tag || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
+      - name: Verify recovery validation differs only in tests and release tooling
+        if: github.event_name == 'workflow_dispatch' && inputs.validation_ref != ''
+        env:
+          RELEASE_PUBLISH: ${{ inputs.publish }}
+          VALIDATION_REF: ${{ inputs.validation_ref }}
+        shell: pwsh
+        run: node scripts/verify-release-recovery.mjs "$env:RELEASE_TAG" "$env:VALIDATION_REF" "$env:RELEASE_PUBLISH"
+      - name: Check out release tooling for its tests
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.validation_ref || github.workflow_sha }}
+          path: .release-tooling
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            scripts/publish-release.mjs
+            scripts/publish-release.test.mjs
+            scripts/verify-release-recovery.mjs
+            scripts/verify-release-recovery.test.mjs
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: '1.95.0'
@@ -51,8 +75,16 @@ jobs:
           # Migration fixtures use UTC midnight with Asia/Shanghai activity-day expectations.
           # Scope the fixture timezone to tests; the packaged app still uses the user's timezone.
           TZ: Asia/Shanghai
+      - name: Test release tooling
+        run: node --experimental-test-module-mocks --test --test-timeout=60000 .release-tooling/scripts/publish-release.test.mjs .release-tooling/scripts/verify-release-recovery.test.mjs
       - run: node node_modules/typescript/bin/tsc --noEmit
       - run: node node_modules/eslint/bin/eslint.js src
+      - name: Restore the tagged source for the signed build
+        if: github.event_name == 'workflow_dispatch' && inputs.validation_ref != ''
+        shell: pwsh
+        run: |
+          git checkout --detach "$env:RELEASE_TAG"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build signed NSIS
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
