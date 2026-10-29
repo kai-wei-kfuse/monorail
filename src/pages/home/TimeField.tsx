@@ -60,8 +60,8 @@ export function TimeField({ id, kind, shown, disabled, target, submit, onNote, c
   if (draft === null) return <button type="button" id={id} className="time-btn" disabled={disabled}
     title={disabled ? '现在没有在计时，没有要改的时间' : '点一下直接改：45 = 45 分钟，+10 / -5 = 加减分钟，也认 1h 30m'}
     onClick={beginEdit}>{children}</button>;
-  return <input id={id} className="time-in" value={draft} aria-label="新的读数" style={{ width: `${Math.max(4, draft.length + 1)}ch` }}
-    ref={el => { if (el && !el.dataset.f) { el.dataset.f = '1'; el.focus(); el.select(); } }}
+  return <input id={id} className="time-in" value={draft} aria-label="新的读数"
+    ref={el => { if (el && !el.dataset.f) { el.dataset.f = '1'; el.focus(); const n = el.value.length; el.setSelectionRange(n, n); } }}
     onChange={e => setDraft(e.target.value)} onBlur={() => finish(true)}
     onKeyDown={e => {
       if (e.nativeEvent.isComposing) return;

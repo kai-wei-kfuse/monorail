@@ -76,13 +76,14 @@
 .sug .sug-foot { height: auto; margin-top: 6px; padding: 8px 10px; border-top: 1px solid var(--line); font-size: 11px; line-height: 1.5; color: var(--mute); white-space: normal; }
 .sug .sug-h:hover, .sug .sug-none:hover, .sug .sug-foot:hover { background: none; }
 
-/* 读数直接可改：平时是按钮，悬停出现强调色下划线；点了原地变成同样字号的输入框 */
+/* 读数直接可改：平时是按钮，悬停和编辑时都只带强调色下划线，原地变成同样字号的透明输入框 */
 .time-btn { font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit; text-align: inherit; cursor: text; transition: box-shadow .2s; }
 .time-btn:hover:not(:disabled) { box-shadow: inset 0 -.12em 0 var(--yellow); }
 .time-btn:disabled { cursor: default; }
-.time-in { min-width: 3ch; margin: 0; padding: 0; border: 0; outline: none; font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit; text-align: inherit; font-variant-numeric: tabular-nums;
-  background: color-mix(in srgb, var(--yellow) 40%, transparent); box-shadow: inset 0 -.12em 0 var(--ink); user-select: text; }
-.mini-time .time-in { background: #2e2e2d; box-shadow: inset 0 -3px 0 var(--yellow); }
+.time-in { field-sizing: content; min-width: 1ch; height: 1lh; margin: 0; padding: 0; border: 0; outline: none; background: transparent;
+  font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit; text-align: inherit; font-variant-numeric: tabular-nums;
+  caret-color: currentColor; box-shadow: inset 0 -.12em 0 var(--yellow); user-select: text; }
+.mini-time .time-in { box-shadow: inset 0 -3px 0 var(--yellow); }
 
 /* 读数下面那一行：已调整、已截断、不合法、等确认 */
 .tbar-warn { padding: 0 6px; background: var(--ink); color: var(--yellow); }
