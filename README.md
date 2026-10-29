@@ -7,6 +7,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 [![build](https://github.com/kai-wei-kfuse/monorail/actions/workflows/release.yml/badge.svg)](https://github.com/kai-wei-kfuse/monorail/actions/workflows/release.yml)
 
+注：现在还处于项目的雏形，需要经过大量使用调整，所以现在并不是最终状态。
+
 一个 Windows 桌面上的「现在做什么」：写下手头的事就开始计时，不知道做什么就从任务池里抽一张卡。所有时间都落成可以改的条目，数据是本地的 Markdown 文件。
 
 ![写下一件事开始计时，停止，再抽一张卡开始做](docs/assets/demo.gif)
