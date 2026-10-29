@@ -1,0 +1,3 @@
+timer: passed {"focused":true,"focusVisible":true,"selectionStart":8,"selectionEnd":8,"length":8,"outlineStyle":"none","borderWidth":"0px","background":"rgba(0, 0, 0, 0)","shadow":"rgb(255, 250, 0) 0px -3.6px 0px 0px inset"}
+card: passed {"focused":true,"focusVisible":true,"selectionStart":5,"selectionEnd":5,"length":5,"outlineStyle":"none","borderWidth":"0px","background":"rgba(0, 0, 0, 0)","shadow":"rgb(255, 250, 0) 0px -7.68px 0px 0px inset"}
+mini: passed {"focused":true,"focusVisible":true,"selectionStart":5,"selectionEnd":5,"length":5,"outlineStyle":"none","borderWidth":"0px","background":"rgba(0, 0, 0, 0)","shadow":"rgb(255, 250, 0) 0px -3px 0px 0px inset"}

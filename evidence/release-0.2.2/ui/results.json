@@ -1,0 +1,72 @@
+{
+  "browser": "Chrome/156.0.8078.49",
+  "environment": "gallery preview with synthetic data",
+  "results": [
+    {
+      "scenario": {
+        "page": "timer",
+        "selector": "#elapsed",
+        "name": "timer"
+      },
+      "initial": {
+        "value": "00:19:59",
+        "start": 8,
+        "end": 8,
+        "focused": true,
+        "background": "rgba(0, 0, 0, 0)",
+        "border": "0px",
+        "shadow": "rgb(255, 250, 0) 0px -3.6px 0px 0px inset",
+        "fieldSizing": "content",
+        "width": 109.40625
+      },
+      "after": {
+        "value": "00:19:590000000000",
+        "width": 313.984375
+      }
+    },
+    {
+      "scenario": {
+        "page": "timer",
+        "selector": "#card",
+        "name": "card"
+      },
+      "initial": {
+        "value": "49:59",
+        "start": 5,
+        "end": 5,
+        "focused": true,
+        "background": "rgba(0, 0, 0, 0)",
+        "border": "0px",
+        "shadow": "rgb(255, 250, 0) 0px -7.68px 0px 0px inset",
+        "fieldSizing": "content",
+        "width": 176.203125
+      },
+      "after": {
+        "value": "49:590000000000",
+        "width": 573
+      }
+    },
+    {
+      "scenario": {
+        "page": "mini",
+        "selector": "#mini-elapsed",
+        "name": "mini"
+      },
+      "initial": {
+        "value": "25:00",
+        "start": 5,
+        "end": 5,
+        "focused": true,
+        "background": "rgba(0, 0, 0, 0)",
+        "border": "0px",
+        "shadow": "rgb(255, 250, 0) 0px -3px 0px 0px inset",
+        "fieldSizing": "content",
+        "width": 85.265625
+      },
+      "after": {
+        "value": "25:000000000000",
+        "width": 279.734375
+      }
+    }
+  ]
+}
