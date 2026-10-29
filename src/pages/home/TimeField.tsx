@@ -2,12 +2,13 @@ import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import { formatReadout, parseReadout } from '../../shared/duration';
 import type { ReadoutKind } from '../../shared/duration';
+import { InlineInput } from '../../ui/controls/InlineInput';
 import './timer.css';
 
 /** 被盖掉的一条（计时系统读数预览的 hit）：from、to 是相交的那一段。 */
 export interface Cover { id: string; description: string; from: string; to: string }
-/** 改的是哪一条：待确认的起点、正在计的条目，或这张卡的「已用」（id 都是点开读数时的那一条）。 */
-export interface ReadoutTarget { mode: 'pending' | 'entry' | 'ref'; id: string }
+/** 改的是哪一条：待机直接改表进入待确认、待确认的起点、正在计的条目，或这张卡的「已用」（id 都是点开读数时的那一条）。 */
+export interface ReadoutTarget { mode: 'idle' | 'pending' | 'entry' | 'ref'; id: string }
 /** 交给计时系统的请求。at 是按下回车的时刻，预览和确认以后的重算都按它算。 */
 export interface ReadoutRequest { target: ReadoutTarget; milliseconds: number; at: string }
 /**
@@ -31,23 +32,22 @@ export function TimeField({ id, kind, shown, disabled, target, submit, onNote, c
   { id?: string; kind: ReadoutKind; shown: number; disabled?: boolean; target: () => ReadoutTarget | null;
     submit: (req: ReadoutRequest, seen: unknown) => Promise<ReadoutOutcome>; onNote: (note: ReadoutNote | null) => void; children: ReactNode }) {
   const [draft, setDraft] = useState<string | null>(null);
-  const first = useRef(''), done = useRef(false), editing = useRef<{ target: ReadoutTarget; shown: number } | null>(null);
+  const first = useRef(''), editing = useRef<{ target: ReadoutTarget; shown: number } | null>(null);
 
   const beginEdit = () => {
     const t = target();
     if (!t) return;
     editing.current = { target: t, shown };
-    done.current = false; first.current = formatReadout(shown, kind); setDraft(first.current);
+    first.current = formatReadout(shown, kind); setDraft(first.current);
     onNote(null);
   };
   const send = async (req: ReadoutRequest, seen: unknown) => {
     const r = await submit(req, seen);
     onNote(r.kind === 'confirm' ? { kind: 'confirm', hit: r.hit, ok: () => void send(req, r.plan), cancel: () => onNote(null) } : r);
   };
-  // 回车提交后输入框被卸掉，还会再收到一次失焦；done 保证只交一次
+  // 光标落于末尾与防重入由 InlineInput 统一负责
   const finish = (keep: boolean) => {
-    if (done.current || !editing.current) return;
-    done.current = true;
+    if (!editing.current) return;
     const text = draft ?? '', { target: t, shown: was } = editing.current;
     editing.current = null; setDraft(null);
     if (!keep || text.trim() === first.current) return;
@@ -60,14 +60,8 @@ export function TimeField({ id, kind, shown, disabled, target, submit, onNote, c
   if (draft === null) return <button type="button" id={id} className="time-btn" disabled={disabled}
     title={disabled ? '现在没有在计时，没有要改的时间' : '点一下直接改：45 = 45 分钟，+10 / -5 = 加减分钟，也认 1h 30m'}
     onClick={beginEdit}>{children}</button>;
-  return <input id={id} className="time-in" value={draft} aria-label="新的读数"
-    ref={el => { if (el && !el.dataset.f) { el.dataset.f = '1'; el.focus(); const n = el.value.length; el.setSelectionRange(n, n); } }}
-    onChange={e => setDraft(e.target.value)} onBlur={() => finish(true)}
-    onKeyDown={e => {
-      if (e.nativeEvent.isComposing) return;
-      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-      if (e.key === 'Escape') { e.preventDefault(); finish(false); }
-    }} />;
+  return <InlineInput id={id} className="time-in" value={draft} aria-label="新的读数"
+    onChange={setDraft} onDone={finish} />;
 }
 
 /** 被盖掉的记录写成一句话。只盖了几秒的也要说出来。 */

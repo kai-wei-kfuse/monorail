@@ -16,7 +16,7 @@ export function QuickBarFields({ value, onChange, tasks }:
   { value: DraftFields; onChange: (next: DraftFields) => void; tasks: { id: string; name: string }[] }) {
   const set = (patch: Partial<DraftFields>) => onChange({ ...value, ...patch });
   const todo = value.kind === '待办';
-  return <div className="qb-fields">
+  return <div className="qb-fields" data-tauri-drag-region>
     <Segmented label="类型" value={value.kind} onChange={kind => set({ kind })}
       options={[{ value: '想法', label: '想法' }, { value: '待办', label: '待办' }]} />
     {todo && <button type="button" className="qb-toggle" aria-pressed={value.blocking} title="这件事挡住了别的事，选卡时排最前"

@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { formatHotkey } from './hotkey';
 import type { KeyLike } from './hotkey';
 import { clampStep } from './clampStep';
 import { composeDateTime, formatDate, parseDate, parseTime } from './localTime';
+import { createInlineGate, focusInlineEnd } from './InlineInput';
 
 const key = (over: Partial<KeyLike>): KeyLike => ({ key: 'r', code: 'KeyR', ctrlKey: false, altKey: false, shiftKey: false, metaKey: false, ...over });
 
@@ -71,5 +72,58 @@ describe('localTime', () => {
     expect(formatDate(new Date(2026, 9, 28).toISOString(), now)).toBe('10/28');
     expect(formatDate(new Date(2027, 0, 5).toISOString(), now)).toBe('2027/1/5');
     expect(formatDate(null, now)).toBe('');
+  });
+});
+
+describe('InlineInput gate & focus', () => {
+  it('Enter followed by synchronous unmount blur fires onDone(true) only once', () => {
+    const calls: boolean[] = [];
+    const gate = createInlineGate(keep => {
+      calls.push(keep);
+      // 模拟 onDone 卸载输入框时同步触发的 onBlur
+      gate.finish(true);
+    });
+    const preventDefault = vi.fn();
+    gate.keyDown({ key: 'Enter', preventDefault });
+    gate.finish(true);
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(calls).toEqual([true]);
+  });
+
+  it('Escape followed by synchronous unmount blur fires onDone(false) only once', () => {
+    const calls: boolean[] = [];
+    const gate = createInlineGate(keep => {
+      calls.push(keep);
+      gate.finish(true);
+    });
+    const preventDefault = vi.fn();
+    gate.keyDown({ key: 'Escape', preventDefault });
+    gate.finish(true);
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(calls).toEqual([false]);
+  });
+
+  it('ignores Enter and Escape during IME composition and resets cleanly on reopen', () => {
+    const first = vi.fn();
+    const gate1 = createInlineGate(first);
+    const preventDefault = vi.fn();
+    gate1.keyDown({ key: 'Enter', nativeEvent: { isComposing: true }, preventDefault });
+    gate1.keyDown({ key: 'Escape', isComposing: true, preventDefault });
+    expect(first).not.toHaveBeenCalled();
+    expect(preventDefault).not.toHaveBeenCalled();
+    gate1.finish(true);
+    expect(first).toHaveBeenCalledTimes(1);
+    // 重新进入编辑重新挂载时创建新 gate，状态重置
+    const second = vi.fn();
+    const gate2 = createInlineGate(second);
+    gate2.keyDown({ key: 'Enter', preventDefault });
+    expect(second).toHaveBeenCalledWith(true);
+  });
+
+  it('places cursor at the end on mount without selecting all', () => {
+    const focus = vi.fn(), setSelectionRange = vi.fn();
+    focusInlineEnd({ value: '尝试使用Runner', focus, setSelectionRange });
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(setSelectionRange).toHaveBeenCalledWith(10, 10);
   });
 });

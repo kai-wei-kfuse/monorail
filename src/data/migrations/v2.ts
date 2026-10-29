@@ -117,7 +117,7 @@ export async function migrateV2(fs: FileSystem, options: MigrationOptions): Prom
   if (resumeRef && !resume && state.current_card === resumeRef) { nextState.current_card = null; nextState.home_mode = 'blank'; }
   output.set('state.yaml', stringify(nextState));
   const nextSettings: Record<string, unknown> = { ...settings, schemaVersion: 2, mainTasks: settings.mainSlots, sideTasks: 10, mainItems: 5,
-    homeLayout: 'split', calendarSnapMinutes: 5, calendarShowIdle: true,
+    homeLayout: 'split', miniMode: 'mini', calendarSnapMinutes: 5, calendarShowIdle: true,
     lists: { ...settings.lists, presets: settings.lists.quickActivities.map(activity => ({ id: activity.id, name: activity.name, project: activity.category, tags: [], mode: '插入', place: '弹层' })),
       projects: [...new Set(segments.map(segment => segment.category))].filter(name => !['主线', '支线', '待机', '休息', '睡眠', '离线', '回顾'].includes(name)).map(name => ({ name, color: '#888888' })), tags: [] } };
   delete nextSettings.mainSlots; delete nextSettings.sideSlots;

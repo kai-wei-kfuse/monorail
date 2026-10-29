@@ -55,7 +55,10 @@ const listsSchema = z.object({
 }).passthrough();
 const settingShape = Object.fromEntries(settingEntries.map(entry => {
   if (entry.type === 'number') return [entry.key, z.number().int().min(entry.min).max(entry.max).refine(value => (value - entry.min) % entry.step === 0, '不符合设置步长')];
-  if (entry.type === 'enum') return [entry.key, z.enum(entry.options)];
+  if (entry.type === 'enum') {
+    const schema = z.enum(entry.options);
+    return [entry.key, entry.key === 'miniMode' ? schema.default(entry.default) : schema];
+  }
   return [entry.key, entry.type === 'boolean' ? z.boolean() : z.string().min(1)];
 })) as { [K in SettingKey]: z.ZodType<SettingValues[K]> };
 export const settingsSchema = z.object({ ...settingShape, schemaVersion: z.literal(2), lists: listsSchema }).passthrough();

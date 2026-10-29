@@ -34,6 +34,7 @@ export const settingDefinitions = {
   mainHotkey: { type: 'string', default: 'Ctrl+Alt+Shift+M', unit: 'shortcut' },
   autostart: { type: 'boolean', default: true, unit: 'boolean' },
   alwaysOnTop: { type: 'boolean', default: false, unit: 'boolean' },
+  miniMode: { type: 'enum', default: 'mini', options: ['mini', 'tiny'], unit: 'mode' },
 } as const;
 
 export type SettingKey = keyof typeof settingDefinitions;

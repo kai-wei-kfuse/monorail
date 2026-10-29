@@ -1,4 +1,6 @@
 import { stringify } from 'yaml';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
 import { createRepos } from '../data/repos';
 import { MemoryFs } from '../data/memoryFs';
@@ -10,6 +12,9 @@ import { createContext } from '../services/commit';
 import type { Snapshot } from '../services/commit';
 import { reconcile } from '../services/recordService';
 import { restoreRepositories } from './bootstrap';
+import { MiniWindow } from './shell/MiniWindow';
+import { QuickBar } from '../pages/quickbar/QuickBar';
+import { InlineInput } from '../ui/controls/InlineInput';
 import { cardView } from '../pages/home/HomePage';
 
 it('migrates a restart snapshot with B away without counting A or the interruption', async () => {
@@ -55,4 +60,24 @@ it('migrates a restart snapshot with B away without counting A or the interrupti
     closedEffectiveMs: 27715, currentSegStartedAt: null, activity: { kind: 'away', startedAt: awayAt } });
   expect(cardView(home, Date.parse(at))?.elapsedMs).toBe(27715);
   expect(cardView(home, Date.parse(at) + 60000)?.elapsedMs).toBe(27715);
+});
+
+it('renders MiniWindow inline title input and tiny compact layout without dialog popup', () => {
+  const baseProps = { strip: '—', meta: '记到 学习', title: '尝试使用Runner', stateEn: 'RUNNING', digits: '38:59',
+    miniFilled: 10, running: true, topoDepth: 0, paused: false, canResume: false,
+    onPause: () => {}, onResume: () => {}, onClose: () => {}, onTitle: () => {} };
+  const normalHtml = renderToStaticMarkup(createElement(MiniWindow, { ...baseProps, mode: 'mini',
+    titleInput: createElement(InlineInput, { id: 'mini-name', className: 'mini-title-in', value: '尝试使用Runner', onChange: () => {}, onDone: () => {} }) }));
+  expect(normalHtml).toContain('class="miniwin"');
+  expect(normalHtml).toContain('class="inline-in mini-title-in"');
+  expect(normalHtml).toContain('记到 学习');
+  expect(normalHtml).not.toContain('mini-edit');
+  const tinyHtml = renderToStaticMarkup(createElement(MiniWindow, { ...baseProps, mode: 'tiny' }));
+  expect(tinyHtml).toContain('class="miniwin tiny"');
+  expect(tinyHtml).not.toContain('记到 学习');
+  expect(tinyHtml).not.toContain('RUNNING');
+  expect(tinyHtml).not.toContain('mbars');
+  const qbHtml = renderToStaticMarkup(createElement(QuickBar, { tasks: [], onSave: async () => {}, onHide: () => {} }));
+  expect(qbHtml).toContain('class="qb" data-tauri-drag-region="true"');
+  expect(qbHtml).toContain('class="qb-fields" data-tauri-drag-region="true"');
 });

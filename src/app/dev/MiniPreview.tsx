@@ -7,11 +7,12 @@ import { MiniApp } from '../MiniApp';
  * 暂停 / 继续、改名（editOpen）、待确认开始和放弃、改读数（直接改开始时刻）、完成（只回一句）。?stale 时从不发快照，看「主窗口未响应」。
  */
 export function MiniPreview() {
-  const stale = new URLSearchParams(location.search).has('stale');
+  const params = new URLSearchParams(location.search);
+  const stale = params.has('stale'), tiny = params.has('tiny');
   const bus = useMemo<MiniWindowBus>(() => {
     const iso = (t: number) => new Date(t).toISOString(), t0 = Date.now();
     let s: MiniSnapshot = {
-      accent: '#fffa00', revision: 1, entryId: 'e1', cardId: null, pending_id: null,
+      accent: '#fffa00', miniMode: tiny ? 'tiny' : 'mini', revision: 1, entryId: 'e1', cardId: null, pending_id: null,
       entry: { id: 'e1', description: '写周报', project: '工作', tags: [], startedAt: iso(t0 - 25 * 60_000), cardId: null, kind: '普通' },
       pending: null, resumeDescription: null, card: null, closedEffectiveMs: 0, currentSegStartedAt: null, awayActivity: null,
       projects: [{ name: '未分类', color: '#888884' }, { name: '工作', color: '#7c5cff' }, { name: '学习', color: '#1aa3ff' }], knownTags: ['周报', '408'],
@@ -33,7 +34,8 @@ export function MiniPreview() {
           return { kind: 'done' };
         }
         case 'setReadout':
-          if (c.target.mode === 'pending') push({ pending: { ...s.pending!, startedAt: iso(Date.parse(c.at) - c.milliseconds) } });
+          if (c.target.mode === 'idle') push({ pending: { id: 'p' + s.revision, startedAt: iso(Date.parse(c.at) - c.milliseconds) }, pending_id: 'p' + s.revision });
+          else if (c.target.mode === 'pending') push({ pending: { ...s.pending!, startedAt: iso(Date.parse(c.at) - c.milliseconds) } });
           else push({ entry: { ...s.entry!, startedAt: iso(Date.parse(c.at) - c.milliseconds) } });
           return { kind: 'done' };
         default: return { kind: 'error', message: `预览里没做「${c.type}」` };
@@ -45,6 +47,6 @@ export function MiniPreview() {
       ready: async () => { if (!stale) { onSnap?.(s); setInterval(() => onSnap?.(s), 1000); } },
       send: async c => { setTimeout(() => onReply?.({ requestId: c.requestId, outcome: handle(c) }), 30); },
     };
-  }, [stale]);
-  return <div className="mini-body" style={{ width: 520 }}><MiniApp bus={bus} onClose={async () => {}} /></div>;
+  }, [stale, tiny]);
+  return <div className="mini-body" style={{ width: tiny ? 320 : 520 }}><MiniApp bus={bus} onClose={async () => {}} /></div>;
 }

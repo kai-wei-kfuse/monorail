@@ -1,6 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import { fixture, at, card, seed, task, open, entries, getCard } from './serviceFixture';
 import { startFree, startCard, beginPending, cancelPending, commitReadout, dispatchMiniCommand } from './homeService';
+import { change } from './settingsService';
 import { projectMini } from './miniProjection';
 import { connectMini } from './miniController';
 import { run } from './commit';
@@ -134,4 +135,21 @@ it('native effect failures return an error reply instead of leaving the mini com
     receive({ command: { ...seen(f), type: 'openMain' } });
     expect((await done).outcome).toEqual({ kind: 'error', message: 'window failed' });
   } finally { stop(); }
+});
+it('projects miniMode from settings onto MiniSnapshot', async () => {
+  const f = fixture(); await startFree(f.ctx, value, at());
+  expect(projectMini(f.ctx.snapshot()!).miniMode).toBe('mini');
+  await change(f.ctx, 'miniMode', 'tiny', at(5));
+  expect(projectMini(f.ctx.snapshot()!).miniMode).toBe('tiny');
+});
+it('idle setReadout starts a pending session with the requested elapsed time and rejects if idle state changed', async () => {
+  const f = fixture(); await seed(f, []); f.clock(at(20));
+  const idleEntry = open(f);
+  expect(idleEntry.project).toBe('待机');
+  await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'setReadout', pending_id: null,
+    target: { mode: 'idle', id: idleEntry.id }, milliseconds: 15 * 60000, seen: null });
+  expect(f.home().pending).toMatchObject({ startedAt: at(5) });
+  // Once pending has started, another idle setReadout for the old idle state must reject
+  await expect(dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'setReadout', pending_id: f.home().pending!.id,
+    target: { mode: 'idle', id: idleEntry.id }, milliseconds: 10 * 60000, seen: null })).rejects.toThrow('已经换成');
 });

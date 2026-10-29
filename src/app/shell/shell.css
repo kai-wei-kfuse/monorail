@@ -35,15 +35,22 @@
   position: relative; width: 520px; height: 88px;
   display: grid; grid-template-columns: 24px minmax(0, 1fr) auto;
   background: var(--paper); color: var(--ink);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
 }
 .mini-l { position: relative; min-width: 0; display: grid; align-content: center; gap: 7px; padding: 0 18px 12px 16px; overflow: hidden; box-shadow: inset 0 1px 0 var(--line-2), inset 0 -1px 0 var(--line-2); }
+.mini-l:has(.combo-pop) { overflow: visible; z-index: 10; }
 .mini-l > :not(canvas) { position: relative; }
 .mini-l .k { font-size: 8px; }
-.mini-l b { font: 630 16px/1.25 var(--f-cn); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-meta { display: inline-flex; align-items: center; gap: 3px; z-index: 5; }
+.mini-meta .combo.flat { gap: 3px; }
+.mini-meta .combo.flat .combo-dot { width: 6px; height: 6px; margin-left: 1px; }
+.mini-meta .combo.flat input { height: 1lh; padding: 0 2px; font: inherit; letter-spacing: inherit; color: var(--mute); }
+.mini-meta .combo.flat input:focus { color: var(--ink); }
+.mini-meta .combo-pop, .mini-meta .combo-pop.up { top: calc(100% + 4px); bottom: auto; max-height: 150px; letter-spacing: normal; text-transform: none; color: var(--ink); }
+.mini-l b { display: block; font: 630 16px/1.25 var(--f-cn); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-l b .hl { padding: 0 .14em; }
 .mini-l .mbars { position: absolute; left: 16px; right: 18px; bottom: 10px; }
-.mini-r { display: flex; align-items: center; gap: 8px; padding: 0 20px 0 22px; background: var(--ink); clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px); }
+.mini-r { display: flex; align-items: center; gap: 8px; padding: 0 20px 0 22px; background: var(--ink);
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 16px); }
 .mini-read { display: grid; gap: 7px; margin-right: 8px; }
 .mini-read .k { font-size: 8px; color: #8a8a86; }
 .mini-time { font: 600 expanded 26px/1 var(--f-en); color: var(--yellow); font-variant-numeric: tabular-nums; }
@@ -53,27 +60,36 @@
 .mini-btn svg { width: 14px; height: 14px; }
 .mini-btn.go { background: var(--yellow); color: var(--ink); }
 
-/* v0.3 独立小窗（UI 规范 §11.9）：窗口里自上而下是小窗本体、编辑面板（打开时）、一条说明（有提示时） */
-.mini-stack { display: grid; gap: 6px; justify-items: start; }
+/* v0.3 独立小窗（UI 规范 §11.9）：窗口里自上而下是小窗本体、一条说明（有提示时）；名称点一下就地变成透明输入框 */
+.mini-stack { display: grid; gap: 6px; justify-items: start; width: 520px; }
+.mini-stack.tiny { width: 320px; }
 .mini-btn:disabled { opacity: .4; }
-.mini-title { display: block; width: 100%; min-width: 0; overflow: hidden; text-align: left; cursor: pointer; }
+.mini-title { display: block; width: 100%; min-width: 0; overflow: hidden; text-align: left; font: 630 16px/1.25 var(--f-cn); cursor: pointer; }
 .mini-title:hover b, .mini-title:focus-visible b { box-shadow: inset 0 -3px 0 var(--yellow); }
+.mini-title-in { --inline-bar: 3px; display: block; width: 100%; min-width: 0; font: 630 16px/1.25 var(--f-cn); color: var(--ink); }
+.mini-title-in::placeholder { font: 500 14px/1.25 var(--f-en); color: var(--mute-2); }
 .mini-time .time-btn:hover:not(:disabled) { box-shadow: inset 0 -3px 0 var(--yellow); }
 .mini-cap { max-width: 520px; padding: 3px 7px; background: var(--ink); color: #b9b9b4; font: 330 11px/1.3 var(--f-cn); }
-.mini-edit { position: relative; width: 520px; max-width: 100%; padding: 22px 16px 14px; display: grid; gap: 10px; background: var(--paper); border: 1px solid var(--ink); }
-.mini-edit::before { content: ""; position: absolute; left: 0; top: 0; width: 64px; height: 7px; background: var(--ink); }
-.mini-edit::after { content: ""; position: absolute; left: 64px; top: 0; width: 18px; height: 7px; background: var(--yellow); }
-.mini-edit-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.mini-edit-t { margin: 0; font: 330 11px/1.4 var(--f-cn); color: var(--mute); }
-.mini-edit-name.inp { font: 520 17px/1.3 var(--f-cn); }
-.mini-edit-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.mini-edit-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
-/* 小窗窗口不透明：底色用黑，说明那一条铺满宽度，整个窗口看起来是一块 */
+.mini-stack.tiny .mini-cap { max-width: 320px; }
+
+/* 小小窗口（最精简模式，320×46）：去掉标签条、项目小字、进度竖条与状态英文，单行显示事件名 + 时间 + 按钮 */
+.miniwin.tiny { width: 320px; height: 46px; grid-template-columns: minmax(0, 1fr) auto; }
+.miniwin.tiny .mini-l { padding: 0 12px; gap: 0; box-shadow: inset 1px 0 0 var(--line-2), inset 0 1px 0 var(--line-2), inset 0 -1px 0 var(--line-2); }
+.miniwin.tiny .mini-title, .miniwin.tiny .mini-title b, .miniwin.tiny .mini-title-in { font: 630 14px/1.25 var(--f-cn); }
+.miniwin.tiny .mini-title-in::placeholder { font: 500 12px/1.25 var(--f-en); }
+.miniwin.tiny .mini-r { gap: 6px; padding: 0 10px 0 16px;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+.miniwin.tiny .mini-read { gap: 0; margin-right: 4px; }
+.miniwin.tiny .mini-time { font-size: 20px; }
+.miniwin.tiny .mini-btn { width: 26px; height: 26px; }
+.miniwin.tiny .mini-btn svg { width: 12px; height: 12px; }
+
+/* 小窗窗口不透明：底色用黑，说明那一条铺满宽度，整个窗口看起来是一块；真窗口下宽度跟随原生窗口 */
 .mini-body { background: var(--ink); overflow: hidden; }
 .mini-body #root { height: auto; }
-.mini-body .mini-stack { gap: 0; justify-items: stretch; }
+.mini-body .mini-stack, .mini-body .mini-stack.tiny { gap: 0; justify-items: stretch; width: 100%; }
+.mini-body .miniwin, .mini-body .miniwin.tiny { width: 100%; }
 .mini-body .mini-cap { max-width: none; padding: 5px 10px; }
 .mini-toggle { margin-left: 8px; }
 .mini-toggle[aria-pressed="true"] { border-color: var(--ink); }
 .mini-toggle[aria-pressed="true"] .chev { background: var(--yellow); color: var(--ink); }
-.mini-edit-row > :last-child { flex: 1 1 180px; max-width: none; }

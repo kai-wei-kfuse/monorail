@@ -22,7 +22,6 @@ import { playAfterWipe, playColdIntro, playResumeIntro } from './intro';
 import { TimerBar } from './TimerBar';
 import type { EntryValue, TimerActions } from './TimerBar';
 import type { Cover, ReadoutOutcome, ReadoutRequest } from './TimeField';
-import { PresetRow } from './PresetRow';
 import { ManualForm } from './ManualForm';
 import { favorites, timerView } from './timerView';
 import { cardArea } from './cardArea';
@@ -229,7 +228,6 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
 
   return <div className={`home${fused ? ' fused' : ''}`}>
     {!fused && <TimerBar view={tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
-    <PresetRow items={favs} onPick={startFavorite} onReorder={ids => void actions.reorderFavorites(ids, now_())} />
     <div ref={stage} className="home-stage">
     {body}
     {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}

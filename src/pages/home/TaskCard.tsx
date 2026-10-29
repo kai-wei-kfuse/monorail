@@ -1,7 +1,8 @@
-import type { ReactNode, Ref } from 'react';
+import type { CSSProperties, ReactNode, Ref } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { Progress } from '../../widgets/cardProgress';
 import { formatMinutes } from '../../widgets/cardProgress';
+import { InlineInput } from '../../ui/controls/InlineInput';
 import { Corners } from '../../ui/marks/Corners';
 import { TrackMark } from '../../ui/marks/TrackMark';
 import { VBars } from '../../ui/marks/VBars';
@@ -42,25 +43,24 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     meta?: ReactNode; picks?: ReactNode; digits?: ReactNode; note?: ReactNode; stateText?: readonly [string, string]; placeholder?: string;
     title?: ReactNode; slotLabel?: string }) {
   const hero = useRef<HTMLDivElement>(null), title = useRef<HTMLHeadingElement>(null);
-  const [draft, setDraft] = useState<string | null>(null), done = useRef(false), editing = useRef<{ id: string; content: string } | null>(null);
+  const [draft, setDraft] = useState<string | null>(null), [ts, setTs] = useState(62), editing = useRef<{ id: string; content: string } | null>(null);
   const { progress } = view;
   const [cn, en] = stateText ?? STATE[progress.state];
   const stateCn = progress.state === 'away' && view.awayActivity ? `${cn} · ${view.awayActivity}` : cn;
   const canEdit = !!onEditContent && view.id !== undefined;
-  // 双击时就记下改的是哪张卡：编辑期间首页换了卡，保存时仍交出原来那张的 id。
-  // 回车保存后输入框被卸掉，还会再收到一次失焦；done 保证只交出一次
-  const beginEdit = () => { done.current = false; editing.current = { id: view.id!, content: view.content }; setDraft(view.content); };
+  // 点击标题就地改卡的内容：编辑期间首页换了卡，保存时仍交出原来那张的 id；光标落于末尾与防重入由 InlineInput 统一负责
+  const beginEdit = () => { editing.current = { id: view.id!, content: view.content }; setDraft(view.content); };
   const finish = (keep: boolean) => {
-    if (done.current || !editing.current) return;
-    done.current = true;
+    if (!editing.current) return;
     const text = draft?.trim(), { id, content } = editing.current;
     if (keep && text && text !== content) onEditContent?.(id, text);
     editing.current = null;
     setDraft(null);
   };
+  const isEditing = draft !== null;
 
   useLayoutEffect(() => {
-    // 编辑时标题换成了输入框，不用排字号；换回来以后重新排
+    // 编辑时标题换成了同字号透明输入框，保留编辑前算好的 --ts；换回来以后重新排
     const h = hero.current, t = title.current;
     if (!h || !t) return;
     const box = t.parentElement!;
@@ -73,13 +73,15 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
       t.style.maxWidth = availW + 'px';
       const size = fitTitleSize(s => { t.style.setProperty('--ts', s + 'px'); return t.scrollWidth <= availW + 1 && t.scrollHeight <= availH + 1; }, titleScale);
       t.style.setProperty('--ts', size + 'px');
+      setTs(size);
     };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(h);
     return () => ro.disconnect();
-  }, [view.content, titleScale, view.progressNote, draft === null, note, !titleSlot]);
+  }, [view.content, titleScale, view.progressNote, isEditing, note, !titleSlot]);
 
+  const titleStyle = { '--ts': `${ts}px` } as CSSProperties;
   return <CardFrame look={look} running={progress.state === 'run'} slotNo={view.slotNo} slotOf={view.slotOf} slotLabel={slotLabel} cardRef={cardRef} innerRef={innerRef} fx={fx}>
     <div className="c-head" data-fx="head">
       <TrackMark /><b>{view.task}</b>
@@ -90,13 +92,10 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     <div className="hero" ref={hero}>
       <Corners>
         {titleSlot ?? (draft !== null
-          ? <input className="title-edit" aria-label="卡的内容" value={draft} autoFocus onChange={e => setDraft(e.target.value)} onBlur={() => finish(true)}
-              onKeyDown={e => {
-                if (e.nativeEvent.isComposing) return;
-                if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-                if (e.key === 'Escape') { e.preventDefault(); finish(false); }
-              }} />
-          : <h1 className="title" ref={title} data-fx="title" title={canEdit ? '双击编辑' : undefined} onDoubleClick={canEdit ? beginEdit : undefined}>
+          ? <InlineInput className="title-edit" style={titleStyle} aria-label="卡的内容" value={draft}
+              onChange={setDraft} onDone={finish} />
+          : <h1 className={`title${canEdit ? ' editable' : ''}`} ref={title} style={titleStyle} data-fx="title"
+              title={canEdit ? '点一下直接编辑' : undefined} onClick={canEdit ? beginEdit : undefined} onDoubleClick={canEdit ? beginEdit : undefined}>
               {view.content ? <MarkedText content={view.content} /> : <span className="ph">{placeholder}</span>}
             </h1>)}
       </Corners>

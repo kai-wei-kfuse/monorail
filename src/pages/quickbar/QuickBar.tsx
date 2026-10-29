@@ -34,19 +34,20 @@ export function QuickBar({ tasks, onSave, onHide, onDirtyChange }:
     } catch (e) { setError(`没存上：${e instanceof Error ? e.message : String(e)}`); }
     finally { setSaving(false); }
   }
-  return <div className={`qb${att.over ? ' drop' : ''}`} onDragOver={att.onDragOver} onDragLeave={att.onDragLeave} onDrop={att.onDrop}>
-    <div className="qb-line">
-      <span className="qb-tab"><Tri2 /></span>
+  return <div className={`qb${att.over ? ' drop' : ''}`} data-tauri-drag-region
+    onDragOver={att.onDragOver} onDragLeave={att.onDragLeave} onDrop={att.onDrop}>
+    <div className="qb-line" data-tauri-drag-region>
+      <span className="qb-tab" data-tauri-drag-region><Tri2 /></span>
       <TextArea autoGrow maxRows={10} autoFocus className="qb-input" aria-label="记录" placeholder="写一行。#标签 会自动提取"
         value={text} onChange={e => setText(e.target.value)} onPaste={att.onPaste}
         onKeyDown={e => {
           if (e.key === 'Escape') { e.preventDefault(); onHide(); }
           else if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void save(); }
         }} />
-      <span className="qb-save">{saving ? '保存中…' : <><Keycap keys="Enter" small />保存</>}</span>
+      <span className="qb-save" data-tauri-drag-region>{saving ? '保存中…' : <><Keycap keys="Enter" small />保存</>}</span>
     </div>
     <QuickBarFields value={fields} onChange={setFields} tasks={tasks} />
-    {att.items.length > 0 && <div className="qb-files">{att.items.map(a => <Chip key={a.id} label={a.name} onRemove={() => att.remove(a.id)} />)}</div>}
-    {error && <p className="qb-msg" role="alert">{error}</p>}
+    {att.items.length > 0 && <div className="qb-files" data-tauri-drag-region>{att.items.map(a => <Chip key={a.id} label={a.name} onRemove={() => att.remove(a.id)} />)}</div>}
+    {error && <p className="qb-msg" role="alert" data-tauri-drag-region>{error}</p>}
   </div>;
 }

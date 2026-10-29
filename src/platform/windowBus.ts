@@ -17,12 +17,13 @@ export const miniCommandSchema = z.discriminatedUnion('type', [
   z.object({ ...edit, type: z.literal('editOpen'), pending_id: id.nullable(), patch: metadata }).strict(),
   z.object({ ...edit, type: z.literal('editCard'), cardId: id, content: z.string().min(1), project: z.string().nullable().optional(), tags: z.array(z.string()).optional() }).strict(),
   z.object({ ...edit, type: z.literal('setReadout'), pending_id: id.nullable(),
-    target: z.object({ mode: z.enum(['pending', 'entry', 'ref']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
+    target: z.object({ mode: z.enum(['idle', 'pending', 'entry', 'ref']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
 ]);
 export type MiniCommand = z.infer<typeof miniCommandSchema>;
 export type MiniReadoutPlan = z.infer<typeof plan>;
 export interface MiniSnapshot {
   accent: string;
+  miniMode?: 'mini' | 'tiny';
   revision: number; entryId: string | null; cardId: string | null; pending_id: string | null;
   entry: { id: string; description: string; project: string; tags: string[]; startedAt: string; cardId: string | null; kind: '普通' | '插入' | '暂停' } | null;
   pending: { id: string; startedAt: string } | null; resumeDescription: string | null;

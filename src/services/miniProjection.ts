@@ -9,5 +9,5 @@ export function projectMini(snapshot: Snapshot): MiniSnapshot {
     card: card && home.card ? { id: card.id, content: card.content, status: home.card.status, project: card.project, tags: card.tags,
       goalMinutes: home.card.goalMinutes } : null,
     closedEffectiveMs: home.closedEffectiveMs, currentSegStartedAt: home.currentSegStartedAt, awayActivity: home.awayActivity,
-    projects: snapshot.backpack.pool.projects, knownTags: home.knownTags, accent: settings.accent });
+    projects: snapshot.backpack.pool.projects, knownTags: home.knownTags, accent: settings.accent, miniMode: settings.miniMode });
 }

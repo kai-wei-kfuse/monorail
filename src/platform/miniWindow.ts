@@ -1,5 +1,19 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
+
+// Keep the compact modes short enough to remain floating controls, while allowing longer titles.
+export const miniWindowSizes = {
+  mini: { width: 520, height: 88, minWidth: 320, maxWidth: 760 },
+  tiny: { width: 320, height: 46, minWidth: 320, maxWidth: 520 },
+} as const;
+
+export async function resizeMiniWindow(mode: 'mini' | 'tiny', width: number, height: number): Promise<void> {
+  const bounds = miniWindowSizes[mode], window = getCurrentWindow();
+  // Native hit testing disables vertical resizing. Equal min/max heights let Windows' resize frame clip the client area.
+  await window.setSizeConstraints({ minWidth: bounds.minWidth, maxWidth: bounds.maxWidth });
+  await window.setSize(new LogicalSize(Math.max(bounds.minWidth, Math.min(width, bounds.maxWidth)), height));
+}
 
 export interface MiniVisibility { visible: boolean; revision: number }
 export interface MiniWindowPort {

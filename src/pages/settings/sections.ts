@@ -68,7 +68,8 @@ export const SECTIONS: SettingSection[] = [
   { id: 'window', no: '08', cn: '窗口与数据', en: 'WINDOW', desc: '程序常驻托盘，关闭窗口只是隐藏，计时继续。', groups: [
     { cn: '窗口', en: 'WINDOW', rows: [
       { key: 'autostart', cn: '开机自启' },
-      { key: 'alwaysOnTop', cn: '主窗口置顶' } ] },
+      { key: 'alwaysOnTop', cn: '主窗口置顶' },
+      { key: 'miniMode', cn: '小窗口样式', desc: '小窗口显示项目、名称与进度格；小小窗口只保留单行名称、计时与按钮', labels: { mini: '小窗口', tiny: '小小窗口' } } ] },
     { cn: '数据', en: 'DATA', rows: [{ custom: 'dataDir', cn: '数据目录', desc: 'Markdown + YAML，Obsidian、VS Code 都能直接打开' }] } ] },
   { id: 'about', no: '09', cn: '关于', en: 'ABOUT', desc: '', groups: [{ cn: '关于', en: 'ABOUT', rows: [{ custom: 'about', cn: '关于' }] }] },
 ];

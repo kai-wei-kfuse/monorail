@@ -26,11 +26,12 @@
 
 .hero { position: relative; min-height: 0; display: grid; align-content: center; justify-items: start; }
 .title { position: relative; margin: 0; max-width: 100%; font: 630 var(--ts, 62px)/1.2 var(--f-cn); letter-spacing: .005em; color: var(--ink); overflow-wrap: anywhere; }
+.title.editable { cursor: text; transition: box-shadow .2s; }
+.title.editable:hover { box-shadow: inset 0 -4px 0 var(--yellow); }
 .title .hl { line-height: 1.06; }
-/* 双击标题就地编辑（原型 new.css 的 .title-edit）。外面的角标框按内容定宽，所以输入框跟着字数伸缩 */
-.title-edit { field-sizing: content; min-width: 8em; max-width: 900px; padding: 4px 12px; border: 1px solid var(--ink); background: var(--paper-2); box-shadow: inset 6px 0 0 var(--yellow);
-  font: 630 42px/1.25 var(--f-cn); color: var(--ink); user-select: text; }
-.title-edit:focus { outline: none; }
+/* 点击卡片标题就地编辑：透明无框与去黑框由 .inline-in 提供，这里只设字号 --ts、内容定宽与 4px 强调色下划线 */
+.title-edit { --inline-bar: 4px; field-sizing: content; min-width: 1ch; max-width: 100%;
+  font: 630 var(--ts, 62px)/1.2 var(--f-cn); letter-spacing: .005em; color: var(--ink); }
 .c-note { margin: 0 0 0 2px; max-width: 46em; font: 330 13px/1.6 var(--f-cn); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .c-note b { font-weight: 520; color: var(--ink-3); margin-right: 8px; }
 
@@ -66,8 +67,8 @@
 .dlg-pat dt { font-weight: 520; color: var(--ink-3); }
 .dlg-pat dd { margin: 0; }
 
-/* 首页：上面计时条、收藏行，下面卡区铺满剩下的高度（UI 规范 §11.2） */
-.home { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; }
+/* 首页：上面计时条，下面卡区铺满剩下的高度（UI 规范 §11.2） */
+.home { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
 /* 首页舞台：铺满内容区 */
 .home-stage { display: grid; min-height: 0; }
 .home-stage > .card { grid-area: 1 / 1; }
@@ -76,8 +77,8 @@
 .title .ph { color: var(--mute-2); }
 .c-picks { position: relative; z-index: 9; display: inline-flex; align-items: center; gap: 6px; }
 
-/* 融合布局（UI 规范 §11.3，原型 new.css）：计时条并进大卡，标题区就是输入框；没有上方计时条，收藏行下面就是这张卡 */
-.home.fused { grid-template-rows: auto minmax(0, 1fr); }
+/* 融合布局（UI 规范 §11.3，原型 new.css）：计时条并进大卡，标题区就是输入框；没有上方计时条，直接铺满这张卡 */
+.home.fused { grid-template-rows: minmax(0, 1fr); }
 .hero:has(> .tbox > .f-input) { justify-items: stretch; }
 .f-input { position: relative; z-index: 8; width: min(100%, 980px); }
 .f-title { width: 100%; padding: 2px 6px; border: 0; background: transparent; font: 630 clamp(30px, 6cqh, 58px)/1.2 var(--f-cn); letter-spacing: .005em; color: var(--ink); user-select: text; transition: box-shadow .2s; }
@@ -89,7 +90,8 @@
 .f-sub b { font: 600 12px/1 var(--f-en); color: var(--ink); font-variant-numeric: tabular-nums; }
 .home.fused .actions { flex-wrap: wrap; }
 .home.fused .tbar-new { width: 52px; height: 52px; }
-.readout .time-btn:hover:not(:disabled), .readout .time-in { box-shadow: inset 0 -6px 0 var(--yellow); }
+.readout .time-btn:hover:not(:disabled) { box-shadow: inset 0 -6px 0 var(--yellow); }
+.readout .time-in { --inline-bar: 6px; }
 .home.fused .t-row b { white-space: nowrap; }
 /* 手动补录放进对话框：去掉左边的黑块和厚度阴影 */
 .f-manual { margin-top: 4px; }

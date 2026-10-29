@@ -14,6 +14,7 @@ import type { Ctx } from '../services/commit';
 import { Frame, StatusBar } from '../ui/frame/StatusBar';
 import { TitleBar } from '../ui/frame/TitleBar';
 import { WindowButtons } from '../ui/frame/WindowButtons';
+import { Icon } from '../ui/icons/Icon';
 import type { IconName } from '../ui/icons/Icon';
 import type { ToastItem } from '../ui/overlay/Toast';
 import { motionLevel, play, setMotionLevel } from '../ui/effects/animate';
@@ -97,6 +98,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const [backfill, setBackfill] = useState(false);
   const [completeAt, setCompleteAt] = useState<string | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
+  const wasHidden = useRef(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const stage = useRef<HTMLDivElement>(null);
   // 说明性通知 6 秒后自己消失；出错通知要用户手动关
@@ -116,9 +118,19 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     void windowControls.isMaximized().then(setMaximized);
     // 双击标题栏、拖到屏幕边缘也会改变最大化状态，所以随窗口尺寸变化重新读一次
     const onResize = () => void windowControls.isMaximized().then(setMaximized);
+    const onVisibility = () => { if (document.hidden) wasHidden.current = true; };
     window.addEventListener('resize', onResize);
-    const offs = [listen('main-visible', () => setIntro({ kind: 'resume' }))];
-    return () => { window.removeEventListener('resize', onResize); offs.forEach(off => void off.then(fn => fn())); };
+    document.addEventListener('visibilitychange', onVisibility);
+    const offs = [listen('main-visible', () => {
+      if (!wasHidden.current) return;
+      wasHidden.current = false;
+      setIntro({ kind: 'resume' });
+    })];
+    return () => {
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
+      offs.forEach(off => void off.then(fn => fn()));
+    };
   }, []);
   useEffect(() => {
     // 页面切换：新页面从左往右擦入（UI 规范 §8.5）
@@ -181,12 +193,16 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     <StatusBlock kind={home.activity.kind} label={home.activity.label || settings.lists.idleName} startedAt={home.activity.startedAt} onClick={() => setBackfill(true)} />
     <WindowButtons pinned={pinned} maximized={maximized}
       onPin={() => void windowControls.setPinned(!pinned).then(() => setPinned(!pinned))} onMinimize={() => void windowControls.minimize()}
-      onMaximize={() => void windowControls.toggleMaximize().then(() => windowControls.isMaximized()).then(setMaximized)} onClose={() => void windowControls.hide()} />
+      onMaximize={() => void windowControls.toggleMaximize().then(() => windowControls.isMaximized()).then(setMaximized)}
+      onClose={() => { wasHidden.current = true; void windowControls.hide(); }} />
   </TitleBar>;
   const statusBar = <StatusBar
     left={<><QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.startPreset(id, at))} onSleep={at => void actions.sleep(at)}
       onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />
+      <button type="button" className="dock-toggle mini-toggle" title="打开快速记录条（Q）" onClick={() => void actions.showQuickbar()}>
+        <span className="chev"><Icon name="plus" /></span><span className="t-cn">快速记录</span>
+      </button>
       <MiniToggle on={miniOpen} onClick={() => void toggleMini()} /></>}
     right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;
 

@@ -34,5 +34,9 @@ it('entry schema rejects invalid timestamps and legacy-only fields', () => {
 });
 it('settings schema validates calendar hours and positive reminder duration', () => {
   expect(settingsSchema.safeParse(defaults).success).toBe(true);
-  for (const change of [{ dayBoundaryHour: 24 }, { dayBoundaryHour: 1.5 }, { longActivityMinutes: 0 }, { deadlineLeadMinutes: -1 }]) expect(settingsSchema.safeParse({ ...defaults, ...change }).success).toBe(false);
+  const withoutMiniMode = { ...defaults } as Record<string, unknown>;
+  delete withoutMiniMode.miniMode;
+  expect(settingsSchema.parse(withoutMiniMode).miniMode).toBe('mini');
+  expect(settingsSchema.parse({ ...defaults, miniMode: 'tiny' }).miniMode).toBe('tiny');
+  for (const change of [{ dayBoundaryHour: 24 }, { dayBoundaryHour: 1.5 }, { longActivityMinutes: 0 }, { deadlineLeadMinutes: -1 }, { miniMode: 'huge' }]) expect(settingsSchema.safeParse({ ...defaults, ...change }).success).toBe(false);
 });

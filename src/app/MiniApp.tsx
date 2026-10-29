@@ -1,14 +1,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { miniWindowSizes, resizeMiniWindow } from '../platform/miniWindow';
 import { miniUnresponsive, miniWindowBus } from '../platform/windowBus';
 import type { MiniCommand, MiniOutcome, MiniSnapshot, MiniWindowBus } from '../platform/windowBus';
 import { formatReadout } from '../shared/duration';
+import { parseEntryText } from '../shared/tags';
+import { InlineInput } from '../ui/controls/InlineInput';
+import { ProjectPicker } from '../ui/controls/ProjectPicker';
 import { cardProgress } from '../widgets/cardProgress';
 import { HitNote, TimeField } from '../pages/home/TimeField';
 import type { ReadoutNote, ReadoutOutcome, ReadoutRequest } from '../pages/home/TimeField';
 import { MiniWindow } from './shell/MiniWindow';
-import { MiniEdit } from './shell/MiniEdit';
-import type { MiniEditValue } from './shell/MiniEdit';
 
 type Send = (command: Record<string, unknown> & { type: MiniCommand['type'] }, at?: string) => Promise<MiniOutcome>;
 const REPLY_TIMEOUT_MS = 5000;
@@ -17,13 +19,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
 /**
  * 小窗入口（架构 §5.5，N6 接线草案 evidence/n6-contracts.md）：只接收主窗口发来的快照，只发命令；不读写数据目录，不建 Ctx。
  * 先注册快照和回复，再告诉主窗口准备好了。每条命令带上打开编辑时那份快照的 entryId / cardId；回复按 requestId 对上。
- * 超过 3 秒没收到快照，说明那一条写「主窗口未响应」。窗口高度跟着内容走（编辑面板打开时变高）。
+ * 超过 3 秒没收到快照，说明那一条写「主窗口未响应」。窗口宽高跟着内容走（支持普通小窗口与小小窗口切换）。
  */
 export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow().hide() }: { bus?: MiniWindowBus; onClose?: () => Promise<void> }) {
   const [snap, setSnap] = useState<MiniSnapshot | null>(null), latest = useRef<MiniSnapshot | null>(null);
   const [lastAt, setLastAt] = useState<number | null>(null), mountedAt = useRef(Date.now());
   const [now, setNow] = useState(Date.now());
-  const [edit, setEdit] = useState<{ startedHere: boolean; snap: MiniSnapshot } | null>(null);
+  const [edit, setEdit] = useState<{ startedHere: boolean; snap: MiniSnapshot; draft: string } | null>(null);
   const [note, setNote] = useState<ReadoutNote | null>(null), [error, setError] = useState<string | null>(null);
   const waiting = useRef(new Map<string, (outcome: MiniOutcome) => void>()), root = useRef<HTMLDivElement>(null);
 
@@ -36,19 +38,42 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     ]).then(async fns => { if (alive) await bus.ready(); return fns; });
     return () => { alive = false; void offs.then(fns => fns.forEach(f => f())); };
   }, [bus]);
-  // 窗口高度跟着内容：小窗本体 88，有提示时下面多一条说明，编辑面板打开时再加上它
+  const hasSnap = !!snap, mode = snap?.miniMode ?? 'mini';
+  const stale = miniUnresponsive(lastAt, mountedAt.current, now);
+  const hasPicker = Boolean(snap && (
+    (snap.card && ((snap.entry && snap.entry.project !== '待机' && snap.entry.cardId === snap.card.id) || (snap.pending && snap.card.status === '待做'))) ||
+    (snap.entry && snap.entry.project !== '待机')
+  ));
+  const prevMode = useRef<'mini' | 'tiny' | null>(null), targetW = useRef<number>(miniWindowSizes.mini.width), inFlight = useRef(false);
+  // 窗口宽高所有权：模式切换决定目标宽度（520 / 320），平时保留用户当前窗口宽度；高度仅随模式、底栏说明与项目下拉弹层变化
   useLayoutEffect(() => {
     const el = root.current;
-    if (!el) return;
-    // 开发预览里没有 Tauri，不调；真窗口里改尺寸失败，说明那一条写出来，不悄悄吞掉
-    if (!('__TAURI_INTERNALS__' in window)) return;
-    const fit = () => void getCurrentWindow().setSize(new LogicalSize(520, Math.ceil(el.getBoundingClientRect().height)))
-      .catch(e => setError(`小窗没能调整高度：${String(e)}`));
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    if (!el || !hasSnap || !('__TAURI_INTERNALS__' in window)) return;
+    const bounds = miniWindowSizes[mode];
+    const modeWidth = bounds.width;
+    const modeChanged = prevMode.current !== mode;
+    prevMode.current = mode;
+    if (modeChanged) targetW.current = modeWidth;
+    const fit = (forceWidth: boolean) => {
+      const curW = Math.round(window.innerWidth), curH = Math.round(window.innerHeight);
+      if (!forceWidth && !inFlight.current && curW >= bounds.minWidth) targetW.current = curW;
+      const r = el.getBoundingClientRect(), pop = el.querySelector<HTMLElement>('.combo-pop');
+      const popH = pop ? Math.ceil(pop.getBoundingClientRect().bottom - r.top + 4) : 0;
+      const w = targetW.current;
+      const h = Math.max(Math.ceil(r.height) || bounds.height, popH);
+      if (!forceWidth && w === curW && h === curH) return;
+      inFlight.current = true;
+      void resizeMiniWindow(mode, w, h)
+        .catch(e => setError(`小窗没能调整尺寸：${String(e)}`))
+        .finally(() => { inFlight.current = false; });
+    };
+    fit(modeChanged);
+    const combo = el.querySelector('.combo');
+    if (!combo) return;
+    const mo = new MutationObserver(() => fit(false));
+    mo.observe(combo, { childList: true });
+    return () => mo.disconnect();
+  }, [hasSnap, mode, stale, error, note, hasPicker]);
 
   const base = edit?.snap ?? snap;
   const send: Send = (command, at = new Date().toISOString()) => new Promise(resolve => {
@@ -71,25 +96,47 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     : pending ? pend : entry ? now - Date.parse(entry.startedAt) : 0;
   const progress = cardProgress(total, c?.goalMinutes ?? null, !!running, away);
   const title = c ? c.content : pending ? '待确认' : running ? running.description : resumeDescription ? `已暂停：${resumeDescription}` : '待机';
-  const meta = c || running ? `记到 ${c?.project ?? running?.project ?? '未分类'}` : '没有在做的事';
+  const currentProject = c?.project ?? running?.project ?? '未分类';
+  const pickProject = (project: string) => {
+    const s = latest.current ?? snap;
+    if (c) act({ type: 'editCard', revision: s.revision, cardId: c.id, content: c.content, project });
+    else if (running) act({ type: 'editOpen', revision: s.revision, pending_id: s.pending_id, patch: { project } });
+  };
+  const meta = c || running
+    ? <>记到 <ProjectPicker flat id="mini-project" value={currentProject} options={snap.projects} onChange={pickProject} /></>
+    : '没有在做的事';
   const overText = progress.overMs > 0 ? `+${Math.floor(progress.overMs / 60_000)}:${pad(Math.floor(progress.overMs / 1000) % 60)}` : null;
   const stateEn = pending ? 'PENDING' : !running ? (resumeDescription ? 'PAUSED' : 'IDLE') : away ? 'AWAY' : overText ?? 'RUNNING';
-  const stale = miniUnresponsive(lastAt, mountedAt.current, now);
 
-  // 点名字：待机时和点主窗口输入框一样，从这一刻起计时（待确认）
+  // 点名字就地变成透明输入框：待机时和点主窗口输入框一样，从这一刻起计时（待确认）
   const openEdit = () => {
     setNote(null); setError(null);
     const startedHere = !running && !pending;
     if (startedHere) act({ type: 'beginPending', pending_id: null });
-    setEdit({ startedHere, snap });
+    const cardRun = snap.card && snap.entry?.cardId === snap.card.id ? snap.card : null;
+    const editingRun = !!(snap.entry && snap.entry.project !== '待机') && !snap.pending;
+    const draft = cardRun ? cardRun.content : editingRun ? snap.entry!.description : '';
+    setEdit({ startedHere, snap, draft });
   };
-  const closeEdit = (save: MiniEditValue | null) => {
+  const closeEdit = (keep: boolean) => {
     if (!edit) return;
     const s = edit.snap, cardRun = s.card && s.entry?.cardId === s.card.id ? s.card : null, now_ = latest.current ?? s;
+    const editingRun = !!(s.entry && s.entry.project !== '待机') && !s.pending;
+    const raw = edit.draft.trim();
     setEdit(null);
-    if (save && cardRun) { if (save.name.trim()) act({ type: 'editCard', revision: now_.revision, cardId: cardRun.id, content: save.name.trim(), project: save.project, tags: save.tags }); return; }
-    if (save && save.name.trim()) { act({ type: 'editOpen', revision: now_.revision, pending_id: now_.pending_id, patch: { description: save.name.trim(), project: save.project, tags: save.tags } }); return; }
-    if (edit.startedHere && now_.pending_id) act({ type: 'cancelPending', pending_id: now_.pending_id });
+    if (keep && cardRun && raw) {
+      if (raw !== cardRun.content) act({ type: 'editCard', revision: now_.revision, cardId: cardRun.id, content: raw });
+      return;
+    }
+    if (keep && raw) {
+      const p = parseEntryText(raw, snap.projects.map(o => o.name));
+      const description = p.description || raw;
+      const project = p.project ?? (editingRun ? s.entry!.project : '未分类');
+      const tags = p.tags.length ? [...new Set([...(editingRun ? s.entry!.tags : []), ...p.tags])] : (editingRun ? s.entry!.tags : []);
+      act({ type: 'editOpen', revision: now_.revision, pending_id: now_.pending_id, patch: { description, project, tags } });
+      return;
+    }
+    if (!keep && edit.startedHere && now_.pending_id) act({ type: 'cancelPending', pending_id: now_.pending_id });
   };
   // 改读数：确认以后按原来的时刻、目标和读数，带上预览再交一次；版本取最新的快照
   const submit = async (req: ReadoutRequest, seen: unknown): Promise<ReadoutOutcome> => {
@@ -97,21 +144,23 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     const o = await send({ type: 'setReadout', revision: s.revision, pending_id: s.pending_id, target: req.target, milliseconds: req.milliseconds, seen: seen ?? null }, req.at);
     return o.kind === 'confirm' ? { kind: 'confirm', hit: o.hit, plan: o.plan } : o.kind === 'error' ? { kind: 'error', message: o.message } : { kind: 'done', hit: [] };
   };
-  const target = () => pending ? { mode: 'pending' as const, id: pending.id } : c && running ? { mode: 'ref' as const, id: c.id } : running ? { mode: 'entry' as const, id: running.id } : null;
-  const editingRun = !!edit && !!(edit.snap.entry && edit.snap.entry.project !== '待机') && !edit.snap.pending;
-  const editCard = edit?.snap.card && edit.snap.entry?.cardId === edit.snap.card.id ? edit.snap.card : null;
+  const canEditTime = !!running || !!pending || (!!entry && !resumeDescription);
+  const target = () => pending ? { mode: 'pending' as const, id: pending.id }
+    : c && running ? { mode: 'ref' as const, id: c.id }
+    : running ? { mode: 'entry' as const, id: running.id }
+    : entry && !resumeDescription ? { mode: 'idle' as const, id: entry.id } : null;
 
   return <div ref={root}>
-    <MiniWindow strip={c ? '卡' : '—'} meta={meta} title={title} stateEn={stateEn} miniFilled={progress.miniFilled} running={!!running} topoDepth={0}
+    <MiniWindow mode={mode} strip={c ? '卡' : '—'} meta={meta} title={title} stateEn={stateEn} miniFilled={progress.miniFilled} running={!!running} topoDepth={0}
       paused={!running} canResume={!!resumeDescription}
       onPause={() => act({ type: 'pause' })} onResume={() => act({ type: 'resume' })}
       onComplete={c && c.status === '进行中' ? () => act({ type: 'complete', cardId: c.id }) : undefined}
       onClose={() => void onClose().catch(e => setError(`小窗没能关闭：${String(e)}`))} onTitle={openEdit}
-      digits={<TimeField id="mini-elapsed" kind="mmss" shown={total} disabled={!running && !pending} target={target} submit={submit} onNote={setNote}>{formatReadout(total, 'mmss')}</TimeField>}
-      editor={edit && <MiniEdit editing={editingRun} isCard={!!editCard} pendingSince={edit.snap.pending?.startedAt ?? (edit.startedHere ? new Date().toISOString() : null)}
-        initial={editCard ? { name: editCard.content, project: editCard.project ?? edit.snap.entry!.project, tags: editCard.tags }
-          : editingRun ? { name: edit.snap.entry!.description, project: edit.snap.entry!.project, tags: edit.snap.entry!.tags } : { name: '', project: '未分类', tags: [] }}
-        projects={snap.projects} knownTags={snap.knownTags} onSave={v => closeEdit(v)} onCancel={() => closeEdit(null)} />}
+      titleInput={edit && <InlineInput id="mini-name" className="mini-title-in" aria-label="名称"
+        placeholder="I am working on…" value={edit.draft}
+        onChange={draft => setEdit({ ...edit, draft })}
+        onDone={closeEdit} />}
+      digits={<TimeField id="mini-elapsed" kind="mmss" shown={total} disabled={!canEditTime} target={target} submit={submit} onNote={setNote}>{formatReadout(total, 'mmss')}</TimeField>}
       caption={stale ? '主窗口未响应' : error ? error : note ? <HitNote note={note} /> : null} />
   </div>;
 }
