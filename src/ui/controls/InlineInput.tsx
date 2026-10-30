@@ -21,19 +21,20 @@ export function focusInlineEnd(el: Pick<HTMLInputElement, 'value' | 'focus' | 's
   el.setSelectionRange(n, n);
 }
 
-/** 单次完成锁：先置 done.current = true 再调用 onDone，防止 Enter/Escape 卸载触发的同步 blur 二次进入。 */
+/** 单次完成锁：先置 done = true 再调用 onDone，防止 Enter/Escape 卸载触发的同步 blur 二次进入。 */
 export function createInlineGate(onDone: (keep: boolean) => void) {
   let done = false;
+  const finish = (keep: boolean) => {
+    if (done) return;
+    done = true;
+    onDone(keep);
+  };
   return {
-    finish(keep: boolean) {
-      if (done) return;
-      done = true;
-      onDone(keep);
-    },
+    finish,
     keyDown(e: { key: string; nativeEvent?: { isComposing?: boolean }; isComposing?: boolean; preventDefault(): void }) {
       if (e.nativeEvent?.isComposing || e.isComposing) return;
-      if (e.key === 'Enter') { e.preventDefault(); this.finish(true); }
-      if (e.key === 'Escape') { e.preventDefault(); this.finish(false); }
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      if (e.key === 'Escape') { e.preventDefault(); finish(false); }
     },
   };
 }

@@ -5,7 +5,8 @@ import { Switch } from '../../ui/controls/Switch';
 import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import { Icon } from '../../ui/icons/Icon';
 import { activityDayStart, addDays } from '../../shared/time';
-import { isoWeek, viewDays } from './grid';
+import { CAL_ZOOMS, isoWeek, viewDays } from './grid';
+import type { CalZoom } from './grid';
 import { CalendarBoard } from './CalendarBoard';
 import type { CalEntry } from './CalendarBoard';
 import { EntryPopover } from './EntryPopover';
@@ -32,6 +33,7 @@ export interface CalendarActions {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const MIN = 60_000;
+let lastZoom: CalZoom = 1;
 
 /** 每 30 秒刷新一次「现在」：正在计时的块变长、现在线往下走。 */
 function useNow(period = 30_000): number {
@@ -48,7 +50,9 @@ export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapM
   { entries: readonly CalendarEntry[]; projects: ProjectOption[]; knownTags: string[]; boundaryHour: number; snapMinutes: number;
     showIdle: boolean; isIdle: (e: CalEntry) => boolean; actions: CalendarActions; onRange?: (start: number, end: number) => void }) {
   const now = useNow();
-  const [view, setView] = useState<'day' | 'week'>('week'), [shift, setShift] = useState(0), [pop, setPop] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [view, setView] = useState<'day' | 'week'>('week'), [shift, setShift] = useState(0), [zoom, setZoom] = useState<CalZoom>(() => lastZoom);
+  const pickZoom = (next: CalZoom) => { lastZoom = next; setZoom(next); };
+  const [pop, setPop] = useState<{ id: string; x: number; y: number } | null>(null);
   const days = viewDays(now, boundaryHour, view, shift), today = activityDayStart(now, boundaryHour);
   // 看的是哪几天交给接线层，它按这个范围查条目
   const first = days[0], end = addDays(days[days.length - 1], 1);
@@ -63,6 +67,8 @@ export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapM
       <button type="button" title="往后" onClick={() => setShift(shift + 1)}><Icon name="arrow" /></button>
     </div>
     <Segmented label="视图" value={view} onChange={v => { setView(v); setShift(0); }} options={[{ value: 'day', label: '日' }, { value: 'week', label: '周' }]} />
+    <Segmented label="比例" value={String(zoom)} onChange={v => pickZoom(Number(v) as CalZoom)}
+      options={CAL_ZOOMS.map(z => ({ value: String(z), label: `${z}×` }))} />
     <span className="pg-switch"><Switch checked={showIdle} onChange={actions.setShowIdle} label="显示待机" /><span>显示待机</span></span>
   </>;
   // 复制到它后面那一段；后面放不下（会超过现在）就复制到它前面
@@ -71,10 +77,10 @@ export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapM
     actions.copy(e.id, end + len <= Date.now() ? end : start - len);
   };
   return <PageFrame className="cal" no={no} en="CALENDAR" cn="日历" tools={tools}
-    desc={`拖空白处新建 · 拖上下边改起止 · 拖整块移动（可以跨天） · 按住 Ctrl 拖是复制 · 点一下编辑 · 吸附 ${snapMinutes} 分钟 · 同一段时间的几件事并排显示`}>
+    desc={`拖空白处新建 · 拖上下边改起止 · 拖整块移动（可以跨天） · 按住 Ctrl 拖是复制 · Ctrl + 滚轮缩放 · 点一下编辑 · 吸附 ${snapMinutes} 分钟 · 同一段时间的几件事并排显示`}>
     <div style={{ display: 'contents' }} onPointerDownCapture={() => setPop(null)}>
       <CalendarBoard days={days} today={today} now={now} entries={entries} isIdle={isIdle} showIdle={showIdle} colorOf={colorOf}
-        step={snapMinutes * MIN} boundaryHour={boundaryHour}
+        step={snapMinutes * MIN} boundaryHour={boundaryHour} zoom={zoom} onZoom={pickZoom}
         onCreate={(start, end, x, y) => void actions.create(start, end).then(id => { if (id) setPop({ id, x, y }); })}
         onChange={actions.update} onCopy={actions.copy} onOpen={(id, x, y) => setPop({ id, x, y })} />
     </div>

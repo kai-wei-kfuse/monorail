@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { fixture, at, card, seed, task, open, entries, getCard } from './serviceFixture';
-import { startFree, startCard, beginPending, cancelPending, commitReadout, dispatchMiniCommand } from './homeService';
+import { startFree, startCard, pause, beginPending, cancelPending, commitReadout, dispatchMiniCommand } from './homeService';
 import { change } from './settingsService';
 import { projectMini } from './miniProjection';
 import { connectMini } from './miniController';
@@ -142,14 +142,31 @@ it('projects miniMode from settings onto MiniSnapshot', async () => {
   await change(f.ctx, 'miniMode', 'tiny', at(5));
   expect(projectMini(f.ctx.snapshot()!).miniMode).toBe('tiny');
 });
-it('idle setReadout starts a pending session with the requested elapsed time and rejects if idle state changed', async () => {
-  const f = fixture(); await seed(f, []); f.clock(at(20));
+it('idle and pending setReadout preview overlapping entries before committing and reject if idle state changed', async () => {
+  const f = fixture(); await seed(f, []);
+  await startFree(f.ctx, { description: '专注', project: '学习', tags: [] }, at(0));
+  f.clock(at(50)); await pause(f.ctx, at(50));
+  f.clock(at(60));
   const idleEntry = open(f);
   expect(idleEntry.project).toBe('待机');
-  await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'setReadout', pending_id: null,
-    target: { mode: 'idle', id: idleEntry.id }, milliseconds: 15 * 60000, seen: null });
-  expect(f.home().pending).toMatchObject({ startedAt: at(5) });
+  // 10 分钟落在 50..60 的待机段内，无重叠，直接进入待确认
+  const withinIdle = await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'setReadout', pending_id: null,
+    target: { mode: 'idle', id: idleEntry.id }, milliseconds: 5 * 60000, seen: null });
+  expect(withinIdle.kind).toBe('done');
+  expect(f.home().pending).toMatchObject({ startedAt: at(55) });
   // Once pending has started, another idle setReadout for the old idle state must reject
   await expect(dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'setReadout', pending_id: f.home().pending!.id,
     target: { mode: 'idle', id: idleEntry.id }, milliseconds: 10 * 60000, seen: null })).rejects.toThrow('已经换成');
+  // 取消待确认回到待机，再把读数改成 30 分钟（会覆盖专注 0..50 的后 20 分钟），必须先返回 confirm 预览
+  await cancelPending(f.ctx, f.home().pending!.id, at(60));
+  const overlapReq = { ...editSeen(f), type: 'setReadout' as const, pending_id: null,
+    target: { mode: 'idle' as const, id: idleEntry.id }, milliseconds: 30 * 60000, seen: null };
+  const preview = await dispatchMiniCommand(f.ctx, overlapReq);
+  expect(preview.kind).toBe('confirm');
+  expect(f.home().pending).toBeNull();
+  if (preview.kind !== 'confirm') throw new Error('expected confirmation');
+  expect(preview.hit).toEqual([expect.objectContaining({ description: '专注', from: at(30), to: at(50) })]);
+  const confirmed = await dispatchMiniCommand(f.ctx, { ...overlapReq, revision: f.home().dataVersion, seen: preview.plan });
+  expect(confirmed.kind).toBe('done');
+  expect(f.home().pending).toMatchObject({ startedAt: at(30) });
 });

@@ -113,10 +113,12 @@ describe('InlineInput gate & focus', () => {
     expect(preventDefault).not.toHaveBeenCalled();
     gate1.finish(true);
     expect(first).toHaveBeenCalledTimes(1);
-    // 重新进入编辑重新挂载时创建新 gate，状态重置
+    // 重新进入编辑重新挂载时创建新 gate，状态重置（且解构调用 keyDown/finish 不依赖 this）
     const second = vi.fn();
-    const gate2 = createInlineGate(second);
-    gate2.keyDown({ key: 'Enter', preventDefault });
+    const { keyDown, finish } = createInlineGate(second);
+    keyDown({ key: 'Enter', preventDefault });
+    finish(true);
+    expect(second).toHaveBeenCalledTimes(1);
     expect(second).toHaveBeenCalledWith(true);
   });
 

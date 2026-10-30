@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayTotal, dragTo, HOUR_PX, isoWeek, layoutDay, piece, snap, timeAt, viewDays } from './grid';
+import { dayHeight, dayTotal, dragTo, HOUR_PX, isoWeek, layoutDay, piece, snap, stepZoom, timeAt, viewDays, zoomScrollTop } from './grid';
 
 const MIN = 60_000, HOUR = 60 * MIN, STEP = 5 * MIN;
 const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).getTime();   // 2026 年 10 月，本地时间
@@ -23,6 +23,14 @@ describe('viewDays', () => {
 });
 
 describe('piece 与 timeAt', () => {
+  it('缩小时使用原滚动位置保持中心时刻，放大可还原，靠近顶部时不返回负位置', () => {
+    const top = 2200, height = 326;
+    const reduced = zoomScrollTop(top, height, 1 / 4);
+    expect(reduced).toBe(427.75);
+    expect((reduced + height / 2) / HOUR_PX).toBe((top + height / 2) / (4 * HOUR_PX));
+    expect(zoomScrollTop(reduced, height, 4)).toBe(top);
+    expect(zoomScrollTop(0, height, 1 / 4)).toBe(0);
+  });
   it('10:00–11:00 在 04:00 起的列里是第 6 小时，高一小时', () => expect(piece(at(28, 10), at(28, 11), DAY)).toEqual({ top: 6 * HOUR_PX, height: HOUR_PX }));
   it('跨过日边界的条目在两天里各画一段', () => {
     expect(piece(at(29, 3), at(29, 5), DAY)).toEqual({ top: 23 * HOUR_PX, height: HOUR_PX });
@@ -35,6 +43,21 @@ describe('piece 与 timeAt', () => {
     expect(timeAt(DAY, 99 * HOUR_PX)).toBe(at(29, 4));
   });
   it('吸附到 5 分钟', () => expect(snap(at(28, 10, 3), STEP)).toBe(at(28, 10, 5)));
+  it('按比例放大时，列高、块位置和纵坐标换算按 hourPx 同步缩放', () => {
+    const zoomPx = 4 * HOUR_PX;
+    expect(dayHeight(DAY, zoomPx)).toBe(24 * zoomPx);
+    expect(piece(at(28, 10), at(28, 10, 15), DAY, zoomPx)).toEqual({ top: 6 * zoomPx, height: 0.25 * zoomPx });
+    expect(timeAt(DAY, 6 * zoomPx, zoomPx)).toBe(at(28, 10));
+    expect(layoutDay([entry('short', at(28, 10), at(28, 10, 15))], DAY, at(28, 15), zoomPx)[0].height).toBe(0.25 * zoomPx);
+  });
+  it('stepZoom 在 1× ~ 4× 之间切换并夹住边界', () => {
+    expect(stepZoom(1, -1)).toBe(1);
+    expect(stepZoom(1, 1)).toBe(2);
+    expect(stepZoom(2, 1)).toBe(3);
+    expect(stepZoom(3, 1)).toBe(4);
+    expect(stepZoom(4, 1)).toBe(4);
+    expect(stepZoom(4, -1)).toBe(3);
+  });
 });
 
 describe('dragTo', () => {

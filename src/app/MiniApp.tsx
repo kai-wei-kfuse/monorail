@@ -45,34 +45,38 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     (snap.entry && snap.entry.project !== '待机')
   ));
   const prevMode = useRef<'mini' | 'tiny' | null>(null), targetW = useRef<number>(miniWindowSizes.mini.width), inFlight = useRef(false);
-  // 窗口宽高所有权：模式切换决定目标宽度（520 / 320），平时保留用户当前窗口宽度；高度仅随模式、底栏说明与项目下拉弹层变化
+  // 窗口宽高所有权：仅在模式实际切换（mini <-> tiny）时重置为默认宽度，首份快照及平时保留用户当前宽度；高度随内容、说明换行与下拉筛选项变化
   useLayoutEffect(() => {
     const el = root.current;
     if (!el || !hasSnap || !('__TAURI_INTERNALS__' in window)) return;
     const bounds = miniWindowSizes[mode];
-    const modeWidth = bounds.width;
-    const modeChanged = prevMode.current !== mode;
+    const firstRun = prevMode.current === null;
+    const modeChanged = !firstRun && prevMode.current !== mode;
     prevMode.current = mode;
-    if (modeChanged) targetW.current = modeWidth;
-    const fit = (forceWidth: boolean) => {
+    if (modeChanged) targetW.current = bounds.width;
+    const fit = (forceWidth: boolean, forceApply: boolean) => {
       const curW = Math.round(window.innerWidth), curH = Math.round(window.innerHeight);
-      if (!forceWidth && !inFlight.current && curW >= bounds.minWidth) targetW.current = curW;
+      if (!forceWidth && !inFlight.current && curW > 0) {
+        targetW.current = Math.max(bounds.minWidth, Math.min(curW, bounds.maxWidth));
+      }
       const r = el.getBoundingClientRect(), pop = el.querySelector<HTMLElement>('.combo-pop');
       const popH = pop ? Math.ceil(pop.getBoundingClientRect().bottom - r.top + 4) : 0;
       const w = targetW.current;
       const h = Math.max(Math.ceil(r.height) || bounds.height, popH);
-      if (!forceWidth && w === curW && h === curH) return;
+      if (!forceApply && !forceWidth && w === curW && h === curH) return;
       inFlight.current = true;
       void resizeMiniWindow(mode, w, h)
         .catch(e => setError(`小窗没能调整尺寸：${String(e)}`))
         .finally(() => { inFlight.current = false; });
     };
-    fit(modeChanged);
+    fit(modeChanged, firstRun || modeChanged);
+    const ro = new ResizeObserver(() => fit(false, false));
+    ro.observe(el);
     const combo = el.querySelector('.combo');
-    if (!combo) return;
-    const mo = new MutationObserver(() => fit(false));
-    mo.observe(combo, { childList: true });
-    return () => mo.disconnect();
+    if (!combo) return () => ro.disconnect();
+    const mo = new MutationObserver(() => fit(false, false));
+    mo.observe(combo, { childList: true, subtree: true });
+    return () => { ro.disconnect(); mo.disconnect(); };
   }, [hasSnap, mode, stale, error, note, hasPicker]);
 
   const base = edit?.snap ?? snap;

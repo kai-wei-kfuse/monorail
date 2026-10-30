@@ -200,7 +200,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     left={<><QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.startPreset(id, at))} onSleep={at => void actions.sleep(at)}
       onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />
-      <button type="button" className="dock-toggle mini-toggle" title="打开快速记录条（Q）" onClick={() => void actions.showQuickbar()}>
+      <button type="button" className="dock-toggle mini-toggle" title={`打开快速记录条（Q / ${settings.quickbarHotkey}）`} onClick={() => void actions.showQuickbar()}>
         <span className="chev"><Icon name="plus" /></span><span className="t-cn">快速记录</span>
       </button>
       <MiniToggle on={miniOpen} onClick={() => void toggleMini()} /></>}

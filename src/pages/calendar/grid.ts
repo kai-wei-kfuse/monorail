@@ -3,7 +3,18 @@
 import { activityDayStart, addDays, HOUR, unionLength } from '../../shared/time';
 
 export const HOUR_PX = 46;
-const PX_PER_MS = HOUR_PX / HOUR;
+export const CAL_ZOOMS = [1, 2, 3, 4] as const;
+export type CalZoom = (typeof CAL_ZOOMS)[number];
+
+/** 滚轮或按钮增减比例档位（1× / 2× / 3× / 4×），夹在最小和最大档之间。 */
+export function stepZoom(cur: CalZoom, dir: 1 | -1): CalZoom {
+  const i = CAL_ZOOMS.indexOf(cur);
+  return CAL_ZOOMS[Math.max(0, Math.min(CAL_ZOOMS.length - 1, (i < 0 ? 0 : i) + dir))];
+}
+
+/** 用缩放前保存的滚动位置换算，避免 DOM 缩短后浏览器先夹紧 scrollTop。 */
+export const zoomScrollTop = (scrollTop: number, viewportHeight: number, ratio: number) =>
+  Math.max(0, (scrollTop + viewportHeight / 2) * ratio - viewportHeight / 2);
 
 export interface Span { id: string; started_at: string; ended_at: string | null }
 const range = (e: Span, now: number): [number, number] => [Date.parse(e.started_at), e.ended_at === null ? now : Date.parse(e.ended_at)];
@@ -20,16 +31,16 @@ export function viewDays(now: number, boundaryHour: number, view: 'day' | 'week'
 export const snap = (t: number, step: number) => Math.round(t / step) * step;
 
 /** 一天那一列有多高。有夏令时的那天不是 24 小时。 */
-export const dayHeight = (day: number) => (addDays(day, 1) - day) * PX_PER_MS;
+export const dayHeight = (day: number, hourPx = HOUR_PX) => (addDays(day, 1) - day) * (hourPx / HOUR);
 
 /** 一段时间在某一天那一列里的位置；和这一天不相交就是 null。跨过日边界的条目，在两天里各画一段。 */
-export function piece(start: number, end: number, day: number): { top: number; height: number } | null {
-  const a = Math.max(start, day), b = Math.min(end, addDays(day, 1));
-  return b > a ? { top: (a - day) * PX_PER_MS, height: (b - a) * PX_PER_MS } : null;
+export function piece(start: number, end: number, day: number, hourPx = HOUR_PX): { top: number; height: number } | null {
+  const a = Math.max(start, day), b = Math.min(end, addDays(day, 1)), pxPerMs = hourPx / HOUR;
+  return b > a ? { top: (a - day) * pxPerMs, height: (b - a) * pxPerMs } : null;
 }
 
 /** 列里的纵坐标（像素）换成时刻，夹在这一天之内。 */
-export const timeAt = (day: number, y: number) => Math.max(day, Math.min(addDays(day, 1), day + y / PX_PER_MS));
+export const timeAt = (day: number, y: number, hourPx = HOUR_PX) => Math.max(day, Math.min(addDays(day, 1), day + y / (hourPx / HOUR)));
 
 export type DragKind = 'create' | 'move' | 'copy' | 'top' | 'bottom';
 /** t0 是按下时的时刻；start / end 是被拖那一条原来的起止（新建时没有；正在计时的 end 是 null）。 */
@@ -62,10 +73,10 @@ export interface Placed<T> { entry: T; top: number; height: number; col: number;
  * 某一天里的条目怎么并排：互相重叠的归成一簇，簇里每条放进最靠左的空列，宽度是 1 / 这一簇的列数。
  * 待机由调用方先去掉（待机画成底纹，不参加分栏）。
  */
-export function layoutDay<T extends Span>(entries: readonly T[], day: number, now: number): Placed<T>[] {
+export function layoutDay<T extends Span>(entries: readonly T[], day: number, now: number, hourPx = HOUR_PX): Placed<T>[] {
   const next = addDays(day, 1);
   const items = entries.flatMap(entry => {
-    const [s, f] = range(entry, now), p = piece(s, f, day);
+    const [s, f] = range(entry, now), p = piece(s, f, day, hourPx);
     return p ? [{ entry, ...p, s: Math.max(s, day), f: Math.min(f, next), col: 0, cols: 1 }] : [];
   }).sort((a, b) => a.s - b.s || b.f - a.f);
   let cluster: typeof items = [], colEnds: number[] = [], clusterEnd = -Infinity;

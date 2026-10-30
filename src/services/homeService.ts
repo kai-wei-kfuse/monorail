@@ -110,19 +110,25 @@ export function editOpenInTx(tx: Transaction, entryId: string, patch: Partial<Pi
 export const editOpen = (ctx: Ctx, entryId: string, patch: Partial<Pick<EntryTemplate, 'description' | 'project' | 'tags'>>, at: string) => action(ctx, at, tx => editOpenInTx(tx, entryId, patch));
 export interface HomeReadoutRequest { target: { mode: 'idle' | 'pending' | 'entry' | 'ref'; id: string }; milliseconds: number; at: string }
 export function commitReadoutInTx(tx: Transaction, request: HomeReadoutRequest, seen: ReadoutPlan | null) {
-  if (request.target.mode === 'idle') {
+  if (request.target.mode === 'idle' || request.target.mode === 'pending') {
     const open = tracking.openInTx(tx);
-    if (tx.state.pending_id || !open || open.project !== '待机' || open.id !== request.target.id) throw new Error('已经换成别的事了');
+    if (request.target.mode === 'idle') {
+      if (tx.state.pending_id || !open || open.project !== '待机' || open.id !== request.target.id) throw new Error('已经换成别的事了');
+    } else if (request.target.id !== tx.state.pending_id) {
+      throw new Error('待确认会话已改变');
+    }
+    const at = Date.parse(request.at);
+    if (!Number.isFinite(at)) throw new Error('命令时间早于当前计时');
     if (!Number.isFinite(request.milliseconds) || request.milliseconds < 0) throw new Error('读数不能小于 0');
-    beginPendingInTx(tx);
-    tx.state.pending_at = new Date(Date.parse(request.at) - request.milliseconds).toISOString();
-    return { kind: 'done' as const, hit: [] };
-  }
-  if (request.target.mode === 'pending') {
-    if (request.target.id !== tx.state.pending_id) throw new Error('待确认会话已改变');
-    if (!Number.isFinite(request.milliseconds) || request.milliseconds < 0) throw new Error('读数不能小于 0');
-    tx.state.pending_at = new Date(Date.parse(request.at) - request.milliseconds).toISOString();
-    return { kind: 'done' as const, hit: [] };
+    const start = new Date(at - request.milliseconds).toISOString();
+    const hit = request.milliseconds > 0
+      ? tracking.overlaps(tx.entries, start, request.at, request.at).filter(entry => entry.id !== open?.id)
+      : [];
+    const plan: ReadoutPlan = { entryId: open?.id ?? request.target.id, start, hit };
+    if (hit.length && JSON.stringify(plan) !== JSON.stringify(seen)) return { kind: 'confirm' as const, plan, hit };
+    if (request.target.mode === 'idle') beginPendingInTx(tx);
+    tx.state.pending_at = start;
+    return { kind: 'done' as const, hit };
   }
   const open = tracking.openInTx(tx);
   if (!open || (request.target.mode === 'ref' ? open.card_id : open.id) !== request.target.id) throw new Error('已经换成别的事了');

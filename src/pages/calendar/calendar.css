@@ -21,7 +21,7 @@
 .cal-day.today em, .cal-day.today span i { color: #9a9a95; }
 
 .cal-scroll { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
-.cal-grid { position: relative; touch-action: none; user-select: none; background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 46px); }
+.cal-grid { position: relative; touch-action: none; user-select: none; background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--hour-px, 46px)); }
 .cal-hours { position: relative; }
 .cal-hours span { position: absolute; right: 8px; transform: translateY(-50%); font: 400 10px/1 var(--f-mono); color: var(--mute); }
 .cal-hours span:first-child { transform: translateY(4px); }
@@ -31,6 +31,8 @@
 /* 记录块：左侧 4px 项目色，正在计时的底部多一条 mint；待机是淡色斜纹，不能点 */
 .blk { position: absolute; left: 2px; right: 2px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; padding: 3px 6px 3px 10px; background: var(--paper); border: 1px solid var(--line-2); box-shadow: inset 4px 0 0 var(--c), 0 2px 0 var(--line-2); cursor: grab; }
 .blk:hover { z-index: 2; border-color: var(--ink); }
+.blk.compact { padding-block: 0; justify-content: center; }
+.blk.compact .blk-t { font-size: 11px; line-height: 1; }
 .blk-t { font: 520 12px/1.3 var(--f-cn); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .blk-s { font: 500 10px/1.2 var(--f-en); letter-spacing: .02em; color: var(--mute); white-space: nowrap; overflow: hidden; }
 .blk.running { box-shadow: inset 4px 0 0 var(--c), inset 0 -3px 0 var(--mint), 0 2px 0 var(--line-2); }
