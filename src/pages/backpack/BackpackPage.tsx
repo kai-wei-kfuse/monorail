@@ -27,6 +27,7 @@ export interface BackpackActions {
   /** 放回：用户选主线还是支线；那一边满了时带上腾位的选择。 */
   restoreTask: (id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => void;
   saveCard: (cardId: string | null, fields: CardFields, at: string) => void;
+  startCard: (cardId: string, at: string) => void;
   passCard: (cardId: string, at: string) => void;
   convertIdea: (ideaId: string, input: IdeaTaskInput, at: string) => void;
   deleteIdea: (ideaId: string, at: string) => void;
@@ -72,6 +73,7 @@ export function BackpackPage({ tab, onTab, pool, tasks, queue, ideas, knownTags,
       {tab === 'pool' && <TaskPool view={pool} actions={{
         newTask: slot => setOpen({ kind: 'task', slot }),
         editItem: cardId => setOpen({ kind: 'card', cardId }),
+        startItem: cardId => actions.startCard(cardId, at()),
         addItem: (id, content) => actions.addItem(id, content, at()),
         setDefaultProject: (id, project) => actions.setDefaultProject(id, project, at()),
         freeze: id => actions.freezeTask(id, at()),

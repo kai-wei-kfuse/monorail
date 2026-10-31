@@ -42,6 +42,7 @@ export function TaskPoolPreview() {
     <PanelHeader no="01" en="TASK POOL" cn="任务池" desc="要做的事都在这里，分主线任务和支线任务。首页抽到的卡，就是任务下面的事项。每个任务可以设「计时记到」哪个项目。点事项可以编辑。" />
     <TaskPool view={{ ...v, projects }} actions={{
       newTask: track => note(`新建${track}任务`), editItem: id => note(`编辑事项 ${id}`),
+      startItem: id => { setV(x => ({ ...x, mains: x.mains.map(t => ({ ...t, items: t.items.map(i => ({ ...i, running: i.id === id })) })), sides: x.sides.map(t => ({ ...t, items: t.items.map(i => ({ ...i, running: i.id === id })) })) })); note(`开始事项 ${id}`); },
       // 只有一项、而且就是任务本身的：第一次拆开时那一项换成拆出来的事
       addItem: (id, content) => patchTask(id, t => ({ ...t, items: t.items.length === 1 && t.items[0].content === t.name
         ? [{ ...t.items[0], content }] : [...t.items, item(crypto.randomUUID(), content)] })),

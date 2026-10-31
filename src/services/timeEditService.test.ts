@@ -35,10 +35,15 @@ it('raw clock and duration edits preserve the historical date, report invalid in
   await time.setStart(f.ctx, id, '930', at(120));
   await time.setDuration(f.ctx, id, '1h 30m', at(120));
   expect(entries(f).find(e => e.id === id)).toMatchObject({ started_at: at(-30), ended_at: at(60) });
+  // 列表显示的 MM:SS（如 45:00 -> 45:01）与 HH:MM:SS（如 01:15:01）按分:秒与时:分:秒解析
+  await time.setDuration(f.ctx, id, '45:01', at(120));
+  expect(entries(f).find(e => e.id === id)?.ended_at).toBe(new Date(Date.parse(at(-30)) + (45 * 60 + 1) * 1000).toISOString());
+  await time.setDuration(f.ctx, id, '01:15:01', at(120));
+  expect(entries(f).find(e => e.id === id)?.ended_at).toBe(new Date(Date.parse(at(-30)) + (75 * 60 + 1) * 1000).toISOString());
   await time.setEnd(f.ctx, id, '1130', at(120)); expect(entries(f).find(e => e.id === id)?.ended_at).toBe(at(90));
   const before = entries(f), transact = vi.spyOn(f.ctx.repos, 'transact');
   for (const text of ['bad', '', '25:00']) await expect(time.setStart(f.ctx, id, text, at(120))).rejects.toThrow('无法识别');
-  for (const text of ['bad', '', '-5', '0']) await expect(time.setDuration(f.ctx, id, text, at(120))).rejects.toThrow('时长');
+  for (const text of ['bad', '', '-500', '0']) await expect(time.setDuration(f.ctx, id, text, at(120))).rejects.toThrow('时长');
   await expect(time.setDuration(f.ctx, id, '10h', at(120))).rejects.toThrow();
   expect(entries(f)).toEqual(before); expect(transact).not.toHaveBeenCalled();
 });

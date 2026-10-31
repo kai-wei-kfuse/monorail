@@ -5,6 +5,7 @@ import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import { TagPicker } from '../../ui/controls/TagPicker';
 import { Icon } from '../../ui/icons/Icon';
 import { popupPlacement } from '../../ui/controls/picker';
+import { formatReadout } from '../../shared/duration';
 import type { EntryGroup, ListEntry } from './listGroups';
 import '../../ui/overlay/overlay.css';
 import './list.css';
@@ -28,7 +29,7 @@ export interface RowContext { now: number; projects: ProjectOption[]; knownTags:
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const clock = (t: number) => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-export const duration = (ms: number) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
+export const duration = (ms: number) => formatReadout(ms, 'mmss');
 const colorOf = (ctx: RowContext, name: string) => ctx.projects.find(p => p.name === name)?.color ?? 'var(--mute-2)';
 
 /** 点别处或回车才提交的输入格。平时显示 value；改了以后交给 onCommit；Esc 放弃。 */
@@ -90,15 +91,15 @@ export function EntryRow({ e, ctx }: { e: ListEntry; ctx: RowContext }) {
       {fromCard && <span className="lv-flag">卡</span>}
       {ctx.overlaps.has(e.id) && <span className="lv-flag par" title="这段时间里同时还有别的事">并行</span>}
     </div>
-    <ProjectPicker small value={e.project} options={ctx.projects} disabled={fromCard || idle} onChange={project => a.patch(e.id, { project })} onCreate={a.createProject} />
-    <TagPicker value={e.tags} options={ctx.knownTags} disabled={idle} onChange={tags => a.patch(e.id, { tags })} onCreate={a.createTag} />
+    <ProjectPicker flat value={e.project} options={ctx.projects} disabled={fromCard || idle} onChange={project => a.patch(e.id, { project })} onCreate={a.createProject} />
+    <TagPicker flat value={e.tags} options={ctx.knownTags} disabled={idle} onChange={tags => a.patch(e.id, { tags })} onCreate={a.createTag} />
     <span className="lv-time">
       <Cell className="lv-tin" label="开始" value={clock(start)} onCommit={t => a.setStart(e.id, t)} />
       <i>–</i>
       <Cell className="lv-tin" label="结束" value={running ? 'NOW' : clock(end)} readOnly={running} onCommit={t => a.setEnd(e.id, t)} />
     </span>
     <Cell className="lv-dur" label="时长" value={duration(end - start)} readOnly={running}
-      title={running ? '正在计时，时长随时间增长' : '改时长：90、1:30、1h 30m'} onCommit={t => a.setDuration(e.id, t)} />
+      title={running ? '正在计时，时长随时间增长' : '改时长：45:00、01:30:00、90、1h 30m'} onCommit={t => a.setDuration(e.id, t)} />
     <button type="button" className="lv-ibtn go" title="继续：用同样的描述、项目、标签开始一条新的" onClick={() => a.continueEntry(e.id)}><Icon name="play" /></button>
     <Menu e={e} ctx={ctx} />
   </div>;

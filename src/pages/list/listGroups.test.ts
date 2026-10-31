@@ -1,6 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import { createElement, isValidElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import type * as React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
 import { dayLabel, groupKey, listDays, matchesQuery, overlapping } from './listGroups';
 import type { ListEntry } from './listGroups';
+import { EntryRow, duration } from './EntryRow';
+import type { RowContext } from './EntryRow';
+
+vi.mock('react', async importOriginal => ({
+  ...await importOriginal<typeof React>(),
+  useState: vi.fn((init: unknown) => [typeof init === 'function' ? (init as () => unknown)() : init, vi.fn()]),
+  useRef: vi.fn((init = null) => ({ current: init })),
+  useId: vi.fn(() => 'id-mock'),
+  useEffect: vi.fn(),
+}));
+
+function walk(node: ReactNode, visit: (el: ReactElement<Record<string, unknown>>) => void): void {
+  if (!node) return;
+  if (Array.isArray(node)) { node.forEach(child => walk(child, visit)); return; }
+  if (!isValidElement(node)) return;
+  const el = node as ReactElement<Record<string, unknown>>;
+  if (typeof el.type === 'function') {
+    walk((el.type as (props: Record<string, unknown>) => ReactNode)(el.props), visit);
+    return;
+  }
+  visit(el);
+  walk(el.props.children as ReactNode, visit);
+}
 
 const MIN = 60_000;
 const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).getTime();   // 2026 年 10 月，本地时间
@@ -61,5 +88,58 @@ describe('其他', () => {
     expect(dayLabel(at(28, 4), at(28, 4))).toBe('今天');
     expect(dayLabel(at(27, 4), at(28, 4))).toBe('昨天');
     expect(dayLabel(at(25, 4), at(28, 4))).toBe('10 月 25 日 周日');
+  });
+  it('EntryRow 使用与首页一致的 flat 简约分类与标签选择器，且时长不到 1 小时省略 00:', async () => {
+    const ctx: RowContext = {
+      now: at(28, 10, 45),
+      projects: [{ name: '学习', color: '#1aa3ff' }],
+      knownTags: ['408'],
+      isIdle,
+      overlaps: new Set(),
+      actions: {
+        patch: vi.fn(), setStart: vi.fn(), setEnd: vi.fn(), setDuration: vi.fn(),
+        continueEntry: vi.fn(), copy: vi.fn(), favorite: vi.fn(), saveAsCard: vi.fn(),
+        remove: vi.fn(), createProject: vi.fn(), createTag: vi.fn(),
+      },
+    };
+    const html = renderToStaticMarkup(createElement(EntryRow, {
+      e: entry(at(28, 10), at(28, 10, 45), '学 408', { tags: ['408'] }),
+      ctx,
+    }));
+    expect(html).toContain('class="combo flat"');
+    expect(html).toContain('class="tagpick flat"');
+    expect(html).not.toContain('class="combo sm"');
+    expect(duration(45 * MIN)).toBe('45:00');
+    expect(duration(75 * MIN)).toBe('01:15:00');
+
+    // 验证时长输入格（Cell）未修改直接失焦不调用 setDuration，改为 45:01 时才提交
+    const { useState } = await import('react');
+    // EntryRow 内 Cell 调用顺序：描述(1)、ProjectPicker(3)、TagPicker(3)、开始(1)、结束(1)、时长(1)
+    vi.mocked(useState)
+      .mockReturnValueOnce([null, vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()]).mockReturnValueOnce([-1, vi.fn()]).mockReturnValueOnce(['', vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()]).mockReturnValueOnce([-1, vi.fn()]).mockReturnValueOnce(['', vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()])
+      .mockReturnValueOnce(['45:00', vi.fn()]);
+    let durBlur: (() => void) | null = null;
+    walk(createElement(EntryRow, { e: entry(at(28, 10), at(28, 10, 45), '学 408'), ctx }), el => {
+      if (el.type === 'input' && el.props['aria-label'] === '时长') durBlur = el.props.onBlur as () => void;
+    });
+    durBlur!();
+    expect(ctx.actions.setDuration).not.toHaveBeenCalled();
+
+    vi.mocked(useState)
+      .mockReturnValueOnce([null, vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()]).mockReturnValueOnce([-1, vi.fn()]).mockReturnValueOnce(['', vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()]).mockReturnValueOnce([-1, vi.fn()]).mockReturnValueOnce(['', vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()])
+      .mockReturnValueOnce([null, vi.fn()])
+      .mockReturnValueOnce(['45:01', vi.fn()]);
+    walk(createElement(EntryRow, { e: entry(at(28, 10), at(28, 10, 45), '学 408', { id: 'e-dur' }), ctx }), el => {
+      if (el.type === 'input' && el.props['aria-label'] === '时长') durBlur = el.props.onBlur as () => void;
+    });
+    durBlur!();
+    expect(ctx.actions.setDuration).toHaveBeenCalledWith('e-dur', '45:01');
   });
 });

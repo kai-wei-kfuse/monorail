@@ -1,0 +1,28 @@
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.2.2
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.2.2
+(node:47284) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ publishes signed assets for a public repository using the existing tag (13.7562ms)
+✔ publishes signed assets for a private repository using the existing tag (5.8131ms)
+Validated aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; signed build will use tagged commit bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+(node:52140) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ accepts test and release-tool changes (10.2645ms)
+✔ rejects a changed product source (2.2342ms)
+✔ rejects publishing from a recovery build (2.7868ms)
+✔ rejects an unpinned validation ref (3.2454ms)
+✔ rejects a different checked-out commit (2.0284ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 207.5381

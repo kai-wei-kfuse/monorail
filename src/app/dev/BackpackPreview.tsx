@@ -31,7 +31,7 @@ const IDEAS: IdeaView[] = [
   { id: 'i2', text: '把读过的 Agent 文章整理成一份对比表', tags: ['AI'], needs: '大量 token', pool: '活跃池', createdAt: ago(41), lastTouchedAt: ago(41) },
   { id: 'i3', text: '给打印机做个喷头清洁提醒', tags: [], needs: null, pool: '已转任务', createdAt: ago(3), lastTouchedAt: ago(1) },
 ];
-const noop: BackpackActions = { createTask() {}, addItem() {}, setDefaultProject() {}, freezeTask() {}, abandonTask() {}, restoreTask() {}, saveCard() {}, passCard() {},
+const noop: BackpackActions = { createTask() {}, addItem() {}, setDefaultProject() {}, freezeTask() {}, abandonTask() {}, restoreTask() {}, saveCard() {}, startCard() {}, passCard() {},
   convertIdea() {}, deleteIdea() {}, createProject() {}, createTag() {} };
 // 任务池按上面的队列组装：每张卡一个事项；不属于任务的那组当成一个只有一项的支线任务
 const item = (c: QueueGroup['cards'][number]) => ({ id: c.id, content: c.fields.content, type: c.fields.type, timeboxMinutes: c.fields.timeboxMinutes,

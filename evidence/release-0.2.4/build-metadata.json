@@ -1,0 +1,7 @@
+{
+  "fileVersion": "0.2.4",
+  "productVersion": "0.2.4",
+  "sha256": "AD65D32FFA7FBE9EAF10F1F9A085D2164A87C46BB4974C6572FF7B9065828B69",
+  "buildConfiguration": "tauri.conf.json; debug; no-bundle; VITE_VERIFY=false",
+  "productName": "单轨"
+}

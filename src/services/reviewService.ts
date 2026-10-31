@@ -3,14 +3,12 @@ import { progress, navigate, completeReview } from '../domain/review/flow';
 import type { ActiveReview, ReviewStep } from '../domain/review/flow';
 import { activityDay } from '../domain/timeline/day';
 import { createRecord } from '../domain/record/record';
-import { releaseCard } from '../domain/card/transitions';
 import { inBackpack } from '../domain/task/task';
 import { activeIdeas, coldOffer } from '../domain/idea/pool';
 import type { MakeRoom, TaskDraft } from '../shared/backpack';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import { refreshInTx } from './dealService';
-import { openInTx, startSystemInTx } from './tracking/api';
 import { reviveInTx, resolveDuelInTx } from './ideaService';
 import { createTaskInTx, restoreTaskInTx } from './backpackService';
 import { currentReview } from './reviewProjection';
@@ -24,7 +22,6 @@ function active(tx: Transaction, step?: ReviewStep): ActiveReview {
 }
 async function finishInTx(tx: Transaction, review: ActiveReview): Promise<void> {
   tx.saveReview(completeReview(review, tx.at, overLimit(tx)));
-  if (openInTx(tx)?.id === review.timer_entry_id) startSystemInTx(tx, '待机');
   refreshInTx(tx);
 }
 async function coldDoneInTx(tx: Transaction, review: ActiveReview): Promise<void> {
@@ -33,7 +30,7 @@ async function coldDoneInTx(tx: Transaction, review: ActiveReview): Promise<void
   else await finishInTx(tx, done);
 }
 
-/** Enter explicitly: changing pages/hiding the window never calls a timer stop. */
+/** Open or resume review progress without changing the current activity. */
 export const enter = (ctx: Ctx, at: string) => run(ctx, async tx => {
   refreshInTx(tx);
   const day = activityDay(at, tx.settings.dayBoundaryHour), period = isoWeek(day);
@@ -48,12 +45,6 @@ export const enter = (ctx: Ctx, at: string) => run(ctx, async tx => {
   // A main changed from the backpack page already received its explicit decision.
   review = { ...review, bet_done_ids: [...new Set([...review.bet_done_ids, ...review.bet_task_ids.filter(id =>
     !tx.tasks.some(task => task.id === id && inBackpack(task) && task.slot === '主线'))])] };
-  if (openInTx(tx)?.id !== review.timer_entry_id) {
-    for (const card of tx.cards.filter(card => card.status === '进行中')) tx.saveCard(releaseCard(card));
-    tx.state.rest = null;
-    startSystemInTx(tx, '回顾');
-    review = { ...review, timer_entry_id: tx.state.open_entry };
-  }
   tx.saveReview({ ...review, status: '进行中' });
   if (review.step === 'bet' && review.bet_task_ids.every(id => review.bet_done_ids.includes(id))) {
     await finishInTx(tx, review); return;

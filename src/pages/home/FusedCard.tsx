@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useState } from 'react';
 import { ActionButton } from '../../ui/controls/Button';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
@@ -71,6 +71,11 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
   const progress = cardProgress(elapsed, null, !!running || !!pending, kind === 'away' || (kind === 'idle' && !!paused));
   const placeholder = card?.status === '进行中' ? '接下来做什么（确认后卡在这一刻截断）' : card ? '写别的事（写好后抽到的卡放回卡池）' : 'I am working on…';
   const free = card && !write && card.status === '待做';
+  const showSuggest = E.focused && !E.editing && !E.locked;
+  // 已输入内容（或正在计自由记录）且未展开建议框时，.f-input 与 .f-title 紧贴文字实际宽度（compact），使 L 形角标像任务卡一样紧贴文字
+  const hasContent = Boolean(E.inputProps.value.trim());
+  const compact = hasContent && !showSuggest;
+  const baseTs = Math.max(26, Math.floor(96 * titleScale / 100));
   return <TaskCard look={look} titleScale={titleScale} fx={fx} meta="自由记录" slotLabel="NOW" stateText={state} digits={digits} note={line}
     view={{ slotNo: '—', task: label, type: '结果卡', goalMinutes: null, content: '', elapsedMs: elapsed, progress }}
     picks={<span className="c-meta c-picks" {...E.groupProps}>记到
@@ -79,9 +84,9 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
       <TagPicker flat id="f-tags" value={E.tagsValue} options={view.knownTags} onChange={E.pickTags} onCreate={actions.createTag}
         disabled={E.locked} onKeyDown={E.keys} />
     </span>}
-    title={<div className="f-input" {...E.groupProps}>
+    title={<div className={`f-input${compact ? ' compact' : ''}`} style={{ '--ts': `${baseTs}px` } as CSSProperties} {...E.groupProps}>
       <input id="what" className="f-title" aria-label="在做什么" autoComplete="off" {...E.inputProps} placeholder={placeholder} />
-      {E.focused && !E.editing && !E.locked && <Suggest query={E.inputProps.value} data={view.suggest}
+      {showSuggest && <Suggest query={E.inputProps.value} data={view.suggest}
         onFavorite={id => E.choose(() => actions.startFavorite(id))} onCard={id => E.choose(() => actions.startCard(id))}
         onRecent={id => E.choose(() => actions.continueEntry(id))} />}
     </div>}

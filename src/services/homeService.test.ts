@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
-import { fixture, at, card, seed, entries, open, getCard } from './serviceFixture';
-import { start } from './cardService';
-import { insert, resume, pause, stop, backfillRange, settleOffline, answerOffline, sleep, wake, beginPending, cancelPending, startFree, commitReadout } from './homeService';
+import { fixture, at, card, task, seed, entries, open, getCard } from './serviceFixture';
+import { start, redraw } from './cardService';
+import { insert, resume, pause, stop, backfillRange, settleOffline, answerOffline, sleep, wake, beginPending, cancelPending, startFree, startCard, commitReadout } from './homeService';
 import { activeRefInTx } from './tracking/api';
 import { run } from './commit';
 
@@ -81,4 +81,63 @@ it('pending ID survives a start-time edit and old cancellation cannot affect ano
   expect((await f.ctx.repos.state.read()).pending_id).toBe(current); expect(current).not.toBe(old);
   await startFree(f.ctx, { description: 'free', project: '学习', tags: [] }, at(5));
   expect(await f.ctx.repos.state.read()).toMatchObject({ pending_id: null, pending_at: null });
+});
+it('starting a backpack card switches from active/paused/rest/pending states, is idempotent on repeat click, and rejects parked tasks', async () => {
+  const f = fixture();
+  f.ctx.settings.refusalThreshold = 1;
+  await seed(f, [
+    card('c1', { task_id: 'm1', content: '改 [简历]' }),
+    card('c2', { task_id: 'm1', content: '投 5 家公司', order: 2 }),
+    card('s1', { task_id: 'side1', content: '研究CPA无损更新方法', order: 3 }),
+    card('cold-card', { task_id: 'cold', content: '冷藏事项', order: 4 }),
+  ], [
+    { ...task('m1'), default_project: '求职' },
+    { ...task('side1'), slot: '支线', slot_index: 2, default_project: '未分类' },
+    { ...task('cold'), slot: '支线', slot_index: null, status: '冷藏' },
+  ]);
+
+  // 1. 待确认（pending）中从背包点击开始：沿用 pending_at 作为计时起点并清理 pending
+  await beginPending(f.ctx, at(2));
+  f.clock(at(5));
+  await startCard(f.ctx, 's1', at(5));
+  expect(open(f)).toMatchObject({ card_id: 's1', description: '研究CPA无损更新方法', project: '未分类', started_at: at(2) });
+  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: 's1', home_mode: 'task', pending_id: null, pending_at: null });
+  expect(f.publish.mock.calls.at(-1)![0].backpack.pool.sides[0].items[0].running).toBe(true);
+
+  // 2. 连续点击同一张进行中的卡：幂等不新建重复计时条目
+  const entryId = open(f).id;
+  const countBefore = entries(f).length;
+  f.clock(at(6));
+  await startCard(f.ctx, 's1', at(6));
+  expect(open(f).id).toBe(entryId);
+  expect(entries(f)).toHaveLength(countBefore);
+
+  // 3. 切换到另一张卡（如主线下的小任务 c1）：自动释放旧卡 s1 并开始新卡
+  f.clock(at(10));
+  await startCard(f.ctx, 'c1', at(10));
+  expect((await getCard(f, 's1')).status).toBe('待做');
+  expect((await getCard(f, 'c1')).status).toBe('进行中');
+  expect(open(f)).toMatchObject({ card_id: 'c1', description: '改 简历', project: '求职', started_at: at(10) });
+
+  // 4. 暂停后从背包直接启动另一张小任务 c2
+  f.clock(at(15));
+  await pause(f.ctx, at(15));
+  f.clock(at(18));
+  await startCard(f.ctx, 'c2', at(18));
+  expect((await getCard(f, 'c1')).status).toBe('待做');
+  expect((await getCard(f, 'c2')).status).toBe('进行中');
+  expect(open(f)).toMatchObject({ card_id: 'c2', description: '投 5 家公司', project: '求职', started_at: at(18) });
+
+  // 5. 降级休息中从背包直接启动卡片：清除 rest 并切到该卡计时
+  f.clock(at(20));
+  await redraw(f.ctx, 'c2', at(20));
+  expect((await f.ctx.repos.state.read()).rest).not.toBeNull();
+  expect(open(f).project).toBe('休息');
+  f.clock(at(25));
+  await startCard(f.ctx, 's1', at(25));
+  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: 's1', home_mode: 'task', rest: null });
+  expect(open(f)).toMatchObject({ card_id: 's1', started_at: at(25) });
+
+  // 6. 不在背包的卡片抛错拒绝
+  await expect(startCard(f.ctx, 'cold-card', at(26))).rejects.toThrow('不在背包');
 });

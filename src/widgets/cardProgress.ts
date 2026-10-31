@@ -1,4 +1,5 @@
 // 进度竖条的格数映射（设计文档「对 UI 规范的影响」），首页和小窗共用。只做算术，不读时钟。
+import { formatReadout } from '../shared/duration';
 
 export const CELLS = 60;
 export const MINI_CELLS = 30;
@@ -25,10 +26,9 @@ export function cardProgress(elapsedMs: number, targetMinutes: number | null, ru
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** 计时读数：分钟不进位成小时，75:12 而不是 1:15:12。 */
+/** 计时读数：不到 1 小时显示 MM:SS（不显示 00:），满 1 小时起进位成 HH:MM:SS。复用 shared/duration 唯一规则源。 */
 export function formatMinutes(ms: number): string {
-  const s = Math.floor(Math.max(0, ms) / 1000);
-  return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+  return formatReadout(ms, 'mmss');
 }
 
 /** 标题栏状态块：超过一小时显示 h:mm:ss。 */

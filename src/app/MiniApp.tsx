@@ -14,7 +14,6 @@ import { MiniWindow } from './shell/MiniWindow';
 
 type Send = (command: Record<string, unknown> & { type: MiniCommand['type'] }, at?: string) => Promise<MiniOutcome>;
 const REPLY_TIMEOUT_MS = 5000;
-const pad = (n: number) => String(n).padStart(2, '0');
 
 /**
  * 小窗入口（架构 §5.5，N6 接线草案 evidence/n6-contracts.md）：只接收主窗口发来的快照，只发命令；不读写数据目录，不建 Ctx。
@@ -109,7 +108,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const meta = c || running
     ? <>记到 <ProjectPicker flat id="mini-project" value={currentProject} options={snap.projects} onChange={pickProject} /></>
     : '没有在做的事';
-  const overText = progress.overMs > 0 ? `+${Math.floor(progress.overMs / 60_000)}:${pad(Math.floor(progress.overMs / 1000) % 60)}` : null;
+  const overText = progress.overMs > 0 ? `+${formatReadout(progress.overMs, 'mmss')}` : null;
   const stateEn = pending ? 'PENDING' : !running ? (resumeDescription ? 'PAUSED' : 'IDLE') : away ? 'AWAY' : overText ?? 'RUNNING';
 
   // 点名字就地变成透明输入框：待机时和点主窗口输入框一样，从这一刻起计时（待确认）

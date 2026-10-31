@@ -1,0 +1,19 @@
+
+> pixel-record@0.2.4 check
+> tsc --noEmit && eslint src && npm test
+
+
+> pixel-record@0.2.4 test
+> node test-runner.mjs
+
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+
+ Test Files  62 passed (62)
+      Tests  424 passed (424)
+   Start at  18:25:12
+   Duration  9.43s (tests 44%, import 37%, transform 18%, worker 1%)
+
+    Isolate  62 workers spawned · ~526ms startup each (spawn + environment, per file)
+             at least ~2.44s faster with isolate: false — reuses workers across files instead of one per file

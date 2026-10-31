@@ -9,6 +9,7 @@ import { Icon } from '../../ui/icons/Icon';
 import { StatusLed } from '../../ui/marks/StatusLed';
 import { Suggest } from './Suggest';
 import type { SuggestData } from './suggestions';
+import { formatReadout } from '../../shared/duration';
 import { TimeField } from './TimeField';
 import type { ReadoutOutcome, ReadoutRequest } from './TimeField';
 import { EntryLine, useEntry } from './useEntry';
@@ -58,8 +59,6 @@ export interface TimerActions {
   createTag: (tag: string) => void;
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
 /** 正在计时时「＋」的位置换成它（融合大卡也用）；不在计时时那里还是「＋」。 */
 export function StopButton({ onClick }: { onClick: () => void }) {
   return <button type="button" className="tbar-new" aria-label="停止" title="停止计时，转为待机" onClick={onClick}><Icon name="stop" /></button>;
@@ -78,7 +77,8 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
   useEffect(() => { onDraft?.(draft); }, [draft, onDraft]);
 
   const elapsed = Math.max(0, now - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
-  const sec = Math.floor(elapsed / 1000), [hh, mm, ss] = [Math.floor(sec / 3600), Math.floor(sec / 60) % 60, sec % 60].map(pad);
+  const readoutText = formatReadout(elapsed, 'mmss'), splitAt = readoutText.lastIndexOf(':');
+  const headDigits = readoutText.slice(0, splitAt), tailSec = readoutText.slice(splitAt);
   const label = {
     pending: ['WAIT', 'PENDING', '待确认'], idle: paused ? ['PAUSE', 'PAUSED', '暂停中'] : ['IDLE', 'IDLE', '待机'],
     away: running?.kind === '暂停' ? ['PAUSE', 'PAUSED', '暂停中'] : ['AWAY', 'AWAY', '离开中'], focus: ['NOW', 'ELAPSED', '这一条'],
@@ -116,9 +116,9 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
         </div>
         <div className="tbar-time">
           <div className={`tbar-clock${kind === 'idle' ? ' idle' : ''}`}><span className="k">{label[1]}<em>{label[2]}</em></span>
-            <b><TimeField id="elapsed" kind="hms" shown={elapsed} disabled={kind === 'idle'} submit={actions.readout} onNote={E.setNote}
+            <b><TimeField id="elapsed" kind="mmss" shown={elapsed} disabled={kind === 'idle'} submit={actions.readout} onNote={E.setNote}
               target={() => pending ? { mode: 'pending', id: pending.id } : running ? { mode: 'entry', id: running.id } : null}>
-              {hh}:{mm}<small>:{ss}</small></TimeField></b>
+              {headDigits}<small>{tailSec}</small></TimeField></b>
           </div>
         </div>
         <div className="tbar-acts">

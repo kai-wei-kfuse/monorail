@@ -46,11 +46,29 @@ describe('parseClock', () => {
 });
 
 describe('formatReadout', () => {
-  it('分:秒 不进位成小时', () => expect(formatReadout((75 * 60 + 3) * 1000, 'mmss')).toBe('75:03'));
-  it('时:分:秒', () => expect(formatReadout((75 * 60 + 3) * 1000, 'hms')).toBe('01:15:03'));
-  it('负数按 0', () => expect(formatReadout(-5000, 'mmss')).toBe('00:00'));
-  it('显示出来的再输回去，读数不变', () => {
-    const ms = (61 * 60 + 9) * 1000;
-    for (const kind of ['mmss', 'hms'] as const) expect(parseReadout(formatReadout(ms, kind), kind, 0)).toBe(ms);
+  it('mmss 不到 1 小时显示 MM:SS（不显示 00:），满 1 小时及超过 24 小时进位显示 HH:MM:SS', () => {
+    expect(formatReadout((45 * 60 + 3) * 1000, 'mmss')).toBe('45:03');
+    expect(formatReadout((59 * 60 + 59) * 1000, 'mmss')).toBe('59:59');
+    expect(formatReadout(3600 * 1000, 'mmss')).toBe('01:00:00');
+    expect(formatReadout((75 * 60 + 3) * 1000, 'mmss')).toBe('01:15:03');
+    expect(formatReadout((25 * 3600 + 4 * 60 + 5) * 1000, 'mmss')).toBe('25:04:05');
+  });
+  it('hms 始终显示 HH:MM:SS（保持与 parseReadout(hms) 的 3 段契约一致）', () => {
+    expect(formatReadout((45 * 60 + 3) * 1000, 'hms')).toBe('00:45:03');
+    expect(formatReadout((59 * 60 + 59) * 1000, 'hms')).toBe('00:59:59');
+    expect(formatReadout(3600 * 1000, 'hms')).toBe('01:00:00');
+    expect(formatReadout((75 * 60 + 3) * 1000, 'hms')).toBe('01:15:03');
+    expect(formatReadout((25 * 3600 + 4 * 60 + 5) * 1000, 'hms')).toBe('25:04:05');
+  });
+  it('负数按 0', () => {
+    expect(formatReadout(-5000, 'mmss')).toBe('00:00');
+    expect(formatReadout(-5000, 'hms')).toBe('00:00:00');
+  });
+  it('两种 kind 下显示出来的再输回去，读数不变', () => {
+    for (const ms of [(45 * 60 + 9) * 1000, (59 * 60 + 59) * 1000, 3600 * 1000, (61 * 60 + 9) * 1000, (25 * 3600 + 4 * 60 + 5) * 1000]) {
+      for (const kind of ['mmss', 'hms'] as const) {
+        expect(parseReadout(formatReadout(ms, kind), kind, 0)).toBe(ms);
+      }
+    }
   });
 });

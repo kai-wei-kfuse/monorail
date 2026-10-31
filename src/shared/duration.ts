@@ -51,9 +51,9 @@ export function parseReadout(text: string, kind: ReadoutKind, shown: number): nu
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** 读数的显示：mmss 写成 分:秒（超过一小时照样往上累加分钟），hms 写成 时:分:秒。负数按 0。 */
-export function formatReadout(ms: number, kind: ReadoutKind): string {
-  const sec = Math.max(0, Math.floor(ms / 1000));
-  if (kind === 'mmss') return `${pad(Math.floor(sec / 60))}:${pad(sec % 60)}`;
-  return `${pad(Math.floor(sec / 3600))}:${pad(Math.floor(sec / 60) % 60)}:${pad(sec % 60)}`;
+/** 读数的显示：mmss 不到 1 小时写成 MM:SS（不显示 00:）、满 1 小时起进位成 HH:MM:SS；hms 始终写成 HH:MM:SS。负数按 0。 */
+export function formatReadout(ms: number, kind: ReadoutKind = 'mmss'): string {
+  const sec = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(sec / 3600);
+  const mmss = `${pad(Math.floor(sec / 60) % 60)}:${pad(sec % 60)}`;
+  return kind === 'hms' || h > 0 ? `${pad(h)}:${mmss}` : mmss;
 }

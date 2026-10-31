@@ -43,7 +43,7 @@ export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, a
     <span className="pg-switch"><Switch checked={showIdle} onChange={onShowIdle} label="显示待机" /><span>显示待机</span></span>
   </>;
   return <PageFrame no={pad(count)} en={`LIST · ${days} DAYS`} cn="列表" tools={tools}
-    desc="点文字直接改；时间填 9:30，时长填 1h 30m；▶ 继续；同一天相同的记录合成一组，点左边的数字展开。">
+    desc="点文字直接改；时间填 9:30，时长填 45:00、01:30:00 或 1h 30m；▶ 继续；同一天相同的记录合成一组，点左边的数字展开。">
     {!list.length && <p className="ls-empty">最近 {days} 天没有{query.trim() ? '符合筛选的' : ''}记录。</p>}
     {list.map(d => {
       const x = new Date(d.day);

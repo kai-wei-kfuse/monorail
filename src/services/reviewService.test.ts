@@ -44,7 +44,7 @@ it('A8 persisted step and completed prefix survive a fresh context; completed st
   const ctx = createContext({ ...f.ctx, settings: await f.ctx.repos.settings.read() });
   await enter(ctx, at(1));
   expect(view(f)).toMatchObject({ step: 'arena', done: ['recap', 'newIdeas'], addedIdeas: ['restart idea'] });
-  expect(f.ctx.repos.times.snapshot().filter(entry => entry.project === '回顾')).toHaveLength(1);
+  expect(f.ctx.repos.times.snapshot().filter(entry => entry.project === '回顾')).toHaveLength(0);
   await goto(ctx, 'recap', at(1)); await goto(ctx, 'newIdeas', at(1)); await goto(ctx, 'arena', at(1));
   expect(view(f).step).toBe('arena');
 });
@@ -56,12 +56,15 @@ it('A8 navigation cannot skip future steps or finish before their completion', a
   expect(view(f).step).toBe('recap');
 });
 
-it('A8 page refresh and hiding-equivalent idle time do not end review; quick activity and another card do', async () => {
+it('A8 entering and reentering review preserve the running card and inserted activity', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
-  f.clock(at(1)); await enter(f.ctx, at(1)); expect((await getCard(f, 'a')).status).toBe('待做');
+  const cardEntry = structuredClone(open(f));
+  f.clock(at(1)); await enter(f.ctx, at(1)); expect((await getCard(f, 'a')).status).toBe('进行中');
+  expect(open(f)).toEqual(cardEntry);
   const id = open(f).id; f.clock(at(5)); await refresh(f.ctx, at(5)); expect(open(f).id).toBe(id);
   f.clock(at(6)); await insert(f.ctx, 'wc', at(6)); expect(open(f).project).toBe('生活');
-  f.clock(at(7)); await enter(f.ctx, at(7)); expect(open(f).project).toBe('回顾');
+  const activity = structuredClone(open(f));
+  f.clock(at(7)); await enter(f.ctx, at(7)); expect(open(f)).toEqual(activity);
   f.clock(at(8)); await start(f.ctx, 'a', at(8)); expect(open(f).card_id).toBe('a');
   expect((await saved(f))[0].status).toBe('进行中');
 });
@@ -71,7 +74,7 @@ it('finishing after a quick activity does not end that unrelated activity', asyn
   const id = open(f).id; await finish(f.ctx, at(2)); expect(open(f).id).toBe(id);
 });
 
-it('an identically named custom review activity is not mistaken for this review timer', async () => {
+it('finishing review preserves an explicitly started activity named 每周回顾', async () => {
   const f = fixture(); f.ctx.settings.lists.presets = [{ id: 'custom', name: '每周回顾', project: '回顾', tags: [], mode: '插入', place: '弹层' }];
   await toCold(f); f.clock(at(1)); await insert(f.ctx, 'custom', at(1));
   const id = open(f).id; await finish(f.ctx, at(1)); expect(open(f).id).toBe(id);

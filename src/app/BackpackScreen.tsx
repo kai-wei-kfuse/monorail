@@ -8,6 +8,7 @@ import * as backpack from '../services/backpackService';
 import * as ideas from '../services/ideaService';
 import * as preset from '../services/presetService';
 import { pass } from '../services/cardService';
+import { startCard } from '../services/homeService';
 import { changeLists } from '../services/settingsService';
 
 /** Wires the backpack page to the store projection and the N4 services. Errors surface through `report`. */
@@ -24,6 +25,7 @@ export function BackpackScreen({ ctx, report }: { ctx: Ctx; report: (error: unkn
     abandonTask: (id, at) => call(() => backpack.abandonTask(ctx, id, at)),
     restoreTask: (id, slot, at, makeRoom) => call(() => backpack.restoreTask(ctx, id, slot, at, makeRoom)),
     saveCard: (cardId, fields, at) => call(() => backpack.saveCard(ctx, cardId, fields, at)),
+    startCard: (cardId, at) => call(() => startCard(ctx, cardId, at)),
     passCard: (cardId, at) => call(() => pass(ctx, cardId, at)),
     convertIdea: (ideaId, input, at) => call(() => ideas.convertIdeaToTask(ctx, ideaId, input, at)),
     deleteIdea: (ideaId, at) => call(() => ideas.deleteIdea(ctx, ideaId, at)),

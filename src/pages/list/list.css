@@ -9,28 +9,30 @@
 .lv-dayhead em { font: 330 12px/1 var(--f-cn); font-style: normal; color: var(--mute); }
 .lv-dayhead strong { margin-left: 4px; font: 600 16px/1 var(--f-en); color: var(--ink); font-variant-numeric: tabular-nums; }
 
-.lv-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; min-height: 52px; padding: 7px 6px; border-bottom: 1px solid var(--line); }
+.lv-row { display: flex; align-items: center; flex-wrap: nowrap; gap: 8px; min-height: 52px; padding: 7px 6px; border-bottom: 1px solid var(--line); }
 .lv-row:hover { background: var(--paper-2); }
 .lv-row.running { background: color-mix(in srgb, var(--yellow) 14%, var(--paper)); box-shadow: inset 3px 0 0 var(--ink); }
 .lv-row.idle { color: var(--mute); }
 .lv-dot { flex: none; width: 10px; height: 10px; }
-.lv-desc { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.lv-desc { flex: 1 1 120px; min-width: 80px; display: flex; align-items: center; gap: 6px; }
 .lv-desc b { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 520 14px/1.3 var(--f-cn); }
-.lv-din { flex: 1; min-width: 0; height: 32px; padding: 0 8px; border: 1px solid transparent; background: transparent; font: 520 14px/1 var(--f-cn); color: inherit; user-select: text; }
+.lv-din { flex: 1; min-width: 0; height: 32px; padding: 0 8px; border: 1px solid transparent; background: transparent; font: 520 14px/1 var(--f-cn); color: inherit; user-select: text; text-overflow: ellipsis; }
 .lv-din:not([readonly]):hover, .lv-tin:not([readonly]):hover, .lv-dur:not([readonly]):hover { border-color: var(--line-2); background: var(--paper-2); }
 .lv-din:focus, .lv-tin:focus, .lv-dur:focus { outline: none; border-color: var(--ink); background: var(--paper-2); box-shadow: inset 3px 0 0 var(--yellow); }
 .lv-flag { flex: none; padding: 3px 5px; background: var(--ink); color: var(--yellow); font: 520 10px/1 var(--f-cn); }
 .lv-flag.par { background: var(--cyan); color: var(--ink); }
-.lv-row .tagpick { flex: 0 1 220px; }
-.lv-time { display: inline-flex; align-items: center; gap: 2px; color: var(--mute); }
+.lv-row .combo.flat { min-width: 56px; }
+.lv-row .tagpick.flat { flex: 0 1 136px; min-width: 52px; flex-wrap: wrap; }
+.lv-time { flex: none; display: inline-flex; align-items: center; gap: 2px; color: var(--mute); }
 .lv-time i { font-style: normal; }
-.lv-tin { width: 54px; height: 30px; border: 1px solid transparent; background: transparent; text-align: center; font: 500 13px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink-3); user-select: text; }
-.lv-dur { width: 92px; height: 30px; padding: 0 6px; border: 1px solid transparent; background: transparent; text-align: right; font: 600 17px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink); user-select: text; }
-.lv-time.static { width: 118px; justify-content: center; font: 500 13px/1 var(--f-en); }
+.lv-tin { width: 48px; height: 30px; border: 1px solid transparent; background: transparent; text-align: center; font: 500 13px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink-3); user-select: text; }
+.lv-dur { flex: none; width: 82px; height: 30px; padding: 0 4px; border: 1px solid transparent; background: transparent; text-align: right; font: 600 17px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink); user-select: text; }
+.lv-time.static { width: 106px; justify-content: center; font: 500 13px/1 var(--f-en); }
 .lv-dur.static { display: inline-block; line-height: 30px; }
-.lv-cat { width: 128px; display: inline-flex; align-items: center; gap: 6px; font: 520 13px/1 var(--f-cn); }
+.lv-cat { flex: none; min-width: 56px; display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 4px 2px; font: 520 14px/1 var(--f-cn); letter-spacing: .02em; }
 .lv-cat .combo-dot { margin: 0; }
-.lv-tags { flex: 0 1 220px; min-width: 120px; display: flex; flex-wrap: wrap; gap: 4px; }
+.lv-tags { flex: 0 1 136px; min-width: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lv-tags .chip { height: auto; gap: 3px; padding: 0; border: 0; background: none; font: 520 14px/1 var(--f-cn); color: var(--ink); }
 .lv-ibtn { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--paper-2); font: 600 14px/1 var(--f-en); }
 .lv-ibtn svg { width: 11px; height: 11px; }
 .lv-ibtn:hover { border-color: var(--ink); }

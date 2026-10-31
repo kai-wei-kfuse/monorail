@@ -9,7 +9,7 @@ import { Emblem } from '../ui/marks/Emblem';
 
 /**
  * Wires the weekly review page to store.review and reviewService. Errors surface through `report`.
- * Mounting the page is the explicit "enter" (starts or resumes the review timer); unmounting or hiding never stops it.
+ * Mounting the page opens or resumes review progress without changing the current timer.
  * store.review === null after entering means this period's review is done (or nothing is in progress).
  */
 export function ReviewScreen({ ctx, report }: { ctx: Ctx; report: (error: unknown) => void }) {
@@ -20,7 +20,7 @@ export function ReviewScreen({ ctx, report }: { ctx: Ctx; report: (error: unknow
 
   useEffect(() => {
     void review.enter(ctx, new Date().toISOString()).catch(report).finally(() => setEntered(true));
-    // 只在进入页面时调用一次；离开页面不结束回顾计时
+    // 只在进入页面时恢复回顾进度，不控制计时
   }, [ctx]);
 
   const actions: ReviewActions = {

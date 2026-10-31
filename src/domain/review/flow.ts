@@ -6,6 +6,7 @@ export interface ReviewProgress {
   done: ReviewStep[]; started_at: string | null; completed_at: string | null;
   added_idea_ids: string[]; bet_task_ids: string[]; bet_done_ids: string[];
   cold_duel: { left: string; right: string } | null;
+  /** Historical reference only; review progress no longer controls timing. */
   timer_entry_id: string | null;
 }
 export type ActiveReview = Review & ReviewProgress;

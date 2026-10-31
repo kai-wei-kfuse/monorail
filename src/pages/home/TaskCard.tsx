@@ -43,7 +43,7 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     meta?: ReactNode; picks?: ReactNode; digits?: ReactNode; note?: ReactNode; stateText?: readonly [string, string]; placeholder?: string;
     title?: ReactNode; slotLabel?: string }) {
   const hero = useRef<HTMLDivElement>(null), title = useRef<HTMLHeadingElement>(null);
-  const [draft, setDraft] = useState<string | null>(null), [ts, setTs] = useState(62), editing = useRef<{ id: string; content: string } | null>(null);
+  const [draft, setDraft] = useState<string | null>(null), [ts, setTs] = useState(() => Math.max(26, Math.floor(96 * titleScale / 100))), editing = useRef<{ id: string; content: string } | null>(null);
   const { progress } = view;
   const [cn, en] = stateText ?? STATE[progress.state];
   const stateCn = progress.state === 'away' && view.awayActivity ? `${cn} · ${view.awayActivity}` : cn;

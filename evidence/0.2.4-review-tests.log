@@ -1,0 +1,8 @@
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  15:49:18
+   Duration  1.17s (tests 60%, import 25%, transform 14%, worker 1%)

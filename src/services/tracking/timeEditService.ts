@@ -4,7 +4,7 @@ import type { EntryTemplate, TimeEntry } from '../../domain/timeline/entry';
 import { place } from '../../domain/timeline/place';
 import type { TrackingTransaction } from './transaction';
 import { acceptInTx } from './transaction';
-import { parseClock, parseDuration } from '../../shared/duration';
+import { parseClock, parseReadout } from '../../shared/duration';
 import { addDays } from '../../shared/time';
 
 function findEntry(tx: TrackingTransaction, id: string): TimeEntry {
@@ -54,9 +54,11 @@ export function setEndInTx(tx: TrackingTransaction, id: string, text: string): v
   editInTx(tx, id, { ended_at: end });
 }
 export function setDurationInTx(tx: TrackingTransaction, id: string, text: string): void {
-  const entry = findEntry(tx, id), length = parseDuration(text);
+  const entry = findEntry(tx, id);
   if (entry.ended_at === null) throw new Error('正在计时的条目不能修改时长');
-  if (length === null || !Number.isFinite(length) || length <= 0) throw new Error('无法识别正数时长，请输入 1h 30m');
+  const current = Date.parse(entry.ended_at) - Date.parse(entry.started_at);
+  const length = parseReadout(text, 'mmss', current);
+  if (length === null || !Number.isFinite(length) || length <= 0) throw new Error('无法识别正数时长，请输入 45:00、01:30:00 或 1h 30m');
   editInTx(tx, id, { ended_at: new Date(Date.parse(entry.started_at) + length).toISOString() });
 }
 

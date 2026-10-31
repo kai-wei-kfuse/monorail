@@ -23,8 +23,12 @@ describe('cardProgress', () => {
 });
 
 describe('格式化', () => {
-  it('读数的分钟不进位成小时', () => {
-    expect(formatMinutes(min(75) + 12_000)).toBe('75:12');
+  it('读数不到 1 小时显示 MM:SS（不显示 00:），满 1 小时及超过 24 小时进位显示 HH:MM:SS', () => {
+    expect(formatMinutes(min(45) + 12_000)).toBe('45:12');
+    expect(formatMinutes(min(59) + 59_000)).toBe('59:59');
+    expect(formatMinutes(min(60))).toBe('01:00:00');
+    expect(formatMinutes(min(75) + 12_000)).toBe('01:15:12');
+    expect(formatMinutes(min(25 * 60 + 4) + 5_000)).toBe('25:04:05');
     expect(formatMinutes(-5)).toBe('00:00');
   });
   it('状态块超过一小时显示 h:mm:ss', () => {

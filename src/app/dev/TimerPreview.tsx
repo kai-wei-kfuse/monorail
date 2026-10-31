@@ -50,8 +50,8 @@ export function TimerPreview() {
 
   return <div style={{ padding: 32, display: 'grid', gap: 24, maxWidth: 900, font: '330 12px/1.5 var(--f-cn)' }}>
     <div style={box}>
-      <span>计时条（时:分:秒，改这一条）· 正在计「{open.description}」</span>
-      <b style={{ font: '600 30px/1 var(--f-en)' }}>{field('elapsed', 'entry', 'hms', now - open.start)}</b>
+      <span>计时条（不到 1 小时 分:秒，满 1 小时 时:分:秒，改这一条）· 正在计「{open.description}」</span>
+      <b style={{ font: '600 30px/1 var(--f-en)' }}>{field('elapsed', 'entry', 'mmss', now - open.start)}</b>
       <div style={{ minHeight: 18 }}>{note('elapsed')}</div>
     </div>
     <div style={box}>
