@@ -1,6 +1,6 @@
-# 0.2.4 整体审核与发版准备
+# 0.2.4 整体审核与发布记录
 
-日期：2026-10-31。审核基线为 `ad914d0ccd0c6cc6d384b628b0b2db17a5ca137e`（0.2.3），范围为本次 0.2.4 产品代码、测试、版本文件及相关规格的全部改动。本轮仅准备本地发布提交，不推送、不打标签、不创建 Release，也不安装或替换用户日常程序。
+日期：2026-10-31。审核基线为 `ad914d0ccd0c6cc6d384b628b0b2db17a5ca137e`（0.2.3），范围为本次 0.2.4 产品代码、测试、版本文件及相关规格的全部改动。先完成准备提交 `f6bcc0a9e08a8a45aa2ec8c2e2dce455a5b0a746`，随后按用户「好，发版吧」的明确授权公开发布；未安装或替换用户日常程序。
 
 ## 审核结论
 
@@ -36,11 +36,17 @@
 
 ## 规格与提交边界
 
-- 当前计划更新至 v1.10，用户修改说明见 `docs/releases/0.2.4.md`；回顾解耦见 ADR 0004，背包入口与读数契约见 ADR 0005。
+- 当前计划更新至 v1.11，用户修改说明见 `docs/releases/0.2.4.md`；回顾解耦见 ADR 0004，背包入口与读数契约见 ADR 0005。
 - 同步仓库外的 `../架构设计.md`、`../像素记录系统 设计文档 v0.3.md`、`../UI风格规范.md`，消除「首页唯一入口」及旧读数、布局示例冲突；改动归档为零上下文补丁 `spec-sync.patch`。这些原文不在 app Git 仓库中，换机器需带上补丁，在包含这三份文档的目录使用 `git apply --unidiff-zero`。
 - 原有 `CLAUDE.md`、`evidence/journal-real.json`、`docs/版本开发流程.md` 和 0.2.3 发布证据不暂存、不回退。真实数据及隔离数据副本不纳入提交。
 - 建议/本次本地提交标题：`feat(0.2.4): 完成背包直启与计时交互优化`。
 
-## 后续发布
+## 本次发布结果
 
-本地提交准备好后，从该提交推送 master，再推送 `v0.2.4`。确认签名 CI 成功、安装包与 `.sig` 及 `latest.json` 完整且版本正确，再记录公开发布结果。保留已有标签和 Release；如失败，按 `docs/updates.md` 查因，不覆盖标签。安装或应用内升级的实际结果另行记录。
+- 标签 `v0.2.4` 保持指向审核提交 `f6bcc0a9e08a8a45aa2ec8c2e2dce455a5b0a746`；先推 master，再推标签，没有覆盖或删除标签。
+- [签名 CI 41193987242](https://github.com/kai-wei-kfuse/monorail/actions/runs/41193987242) 成功；源码 SHA 与标签一致，见 `ci-result.json`。
+- [公开 Release](https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.2.4) 已于 `2026-10-31T10:50:30Z` 发布，是最新正式版本，非 draft、非 prerelease。
+- 三份资产完整：`monorail_0.2.4_windows-x86_64_setup.exe`、同名 `.sig`、`latest.json`。安装包 8,936,392 字节，SHA-256 为 `4bdd3efc43a3be4ce7e3c4dce23f5083acdd0512e7ff9749d257dd71791bb522`。
+- 从公开 Release 下载的三份文件哈希均匹配 GitHub digest；安装包和签名与 CI `v0.2.4-signed-nsis` artifact 一致。更新清单版本为 0.2.4，说明匹配仓库发版说明，下载 API 指向本次安装包，清单签名匹配 `.sig`。见 `verification.json`。
+- 使用应用配置中的公钥及 `minisign_verify` 验证安装包与可信注释成功，并验证修改首字节后的副本被拒绝。见 `signature-verification.log`；仅在内存修改副本，未修改下载产物。
+- 原始下载留在本地 `published/` 与 `ci-artifacts/`，不将安装包重复提交到源码仓库。未在本次发布中执行本机安装或应用内更新，结果不写成已验收。

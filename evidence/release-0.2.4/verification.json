@@ -1,0 +1,33 @@
+{
+  "tag": "v0.2.4",
+  "url": "https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.2.4",
+  "releaseId": 429875943,
+  "publishedAt": "2026-10-31T10:50:30Z",
+  "commit": "f6bcc0a9e08a8a45aa2ec8c2e2dce455a5b0a746",
+  "ciUrl": "https://github.com/kai-wei-kfuse/monorail/actions/runs/41193987242",
+  "assets": [
+    {
+      "name": "latest.json",
+      "id": 695120895,
+      "size": 1979,
+      "digest": "sha256:febf126d13736f79f11035ab9395cbfc6e30fb8084dd7a6610102ab5c30b42cb"
+    },
+    {
+      "name": "monorail_0.2.4_windows-x86_64_setup.exe",
+      "id": 695120836,
+      "size": 8936392,
+      "digest": "sha256:4bdd3efc43a3be4ce7e3c4dce23f5083acdd0512e7ff9749d257dd71791bb522"
+    },
+    {
+      "name": "monorail_0.2.4_windows-x86_64_setup.exe.sig",
+      "id": 695120837,
+      "size": 436,
+      "digest": "sha256:eeea628aac02a6595e003cc6b3959f6ac59cd0e157d7f88bf89900acd4653d9d"
+    }
+  ],
+  "manifestVersion": "0.2.4",
+  "notesMatch": true,
+  "manifestSignatureMatches": true,
+  "ciArtifactHashesMatch": true,
+  "isLatest": true
+}
