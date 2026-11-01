@@ -6,6 +6,7 @@ import { decode, encode } from './frontmatter';
 
 export interface Entity<T> { value: T; body: string; text: string; version: string }
 export class MdRepo<T extends { id: string }> {
+  private cache = new Map<string, Entity<T>>();
   constructor(private fs: FileSystem, private directory: string, private schema: z.ZodType<T>) {}
   path(id: string) {
     if (!/^[a-zA-Z0-9-]+$/.test(id)) throw new Error('Invalid entity ID');
@@ -13,19 +14,30 @@ export class MdRepo<T extends { id: string }> {
   }
   async get(id: string): Promise<Entity<T> | null> {
     const path = this.path(id), file = await this.fs.read(path);
-    if (!file) return null;
+    if (!file) { this.cache.delete(id); return null; }
+    const cached = this.cache.get(id);
+    if (cached && cached.version === file.version && cached.text === file.text) {
+      return { ...cached, value: structuredClone(cached.value) };
+    }
+    this.cache.delete(id);
     const parsed = decode(file.text, path);
-    try { return { value: this.schema.parse(parsed.meta), body: parsed.body, ...file }; }
+    try {
+      const entity = { value: this.schema.parse(parsed.meta), body: parsed.body, ...file };
+      // The caller owns the parsed value; the cache owns a separate copy from the first read onward.
+      this.cache.set(id, { ...entity, value: structuredClone(entity.value) });
+      return entity;
+    }
     catch (error) { throw new Error(`${path}: invalid entity`, { cause: error }); }
   }
   async list(): Promise<Entity<T>[]> {
-    const result = [];
-    for (const path of (await this.fs.list(this.directory)).filter(p => p.endsWith('.md'))) {
+    const paths = (await this.fs.list(this.directory)).filter(path => path.endsWith('.md'));
+    const ids = new Set(paths.map(path => path.slice(this.directory.length + 1, -3)));
+    for (const id of this.cache.keys()) if (!ids.has(id)) this.cache.delete(id);
+    return Promise.all(paths.map(async path => {
       const id = path.slice(this.directory.length + 1, -3), entity = await this.get(id);
       if (!entity) throw new Error(`Entity disappeared: ${path}`);
-      result.push(entity);
-    }
-    return result;
+      return entity;
+    }));
   }
   async write(value: T, original: Entity<T> | null, body = original?.body ?? ''): Promise<Write> {
     const path = this.path(value.id), current = await this.fs.read(path);

@@ -1,0 +1,725 @@
+{
+  "status": "passed",
+  "rows": [
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 0,
+      "parseCache": "cold",
+      "entityParses": 18,
+      "ipc": {
+        "plugin:path|join": 33,
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 411.59999999403954,
+      "queueWaitMs": 0.3999999910593033,
+      "readAndParseMs": 267.90000000596046,
+      "prepareWritesMs": 25.5,
+      "journalMs": 109.59999999403954,
+      "projectionAndPublishMs": 8.100000008940697
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 1,
+      "parseCache": "warm",
+      "entityParses": 18,
+      "ipc": {
+        "plugin:path|join": 33,
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 316.90000000596046,
+      "queueWaitMs": 0,
+      "readAndParseMs": 186.70000000298023,
+      "prepareWritesMs": 23.099999994039536,
+      "journalMs": 106.79999999701977,
+      "projectionAndPublishMs": 0.30000001192092896
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 2,
+      "parseCache": "warm",
+      "entityParses": 18,
+      "ipc": {
+        "plugin:path|join": 33,
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 347.90000000596046,
+      "queueWaitMs": 0,
+      "readAndParseMs": 198.29999999701977,
+      "prepareWritesMs": 27.600000008940697,
+      "journalMs": 121.8999999910593,
+      "projectionAndPublishMs": 0.10000000894069672
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 3,
+      "parseCache": "warm",
+      "entityParses": 18,
+      "ipc": {
+        "plugin:path|join": 33,
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 374.8999999910593,
+      "queueWaitMs": 0,
+      "readAndParseMs": 214.5,
+      "prepareWritesMs": 43.599999994039536,
+      "journalMs": 116.59999999403954,
+      "projectionAndPublishMs": 0.10000000894069672
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 4,
+      "parseCache": "warm",
+      "entityParses": 18,
+      "ipc": {
+        "plugin:path|join": 33,
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 330.29999999701977,
+      "queueWaitMs": 0,
+      "readAndParseMs": 190.20000000298023,
+      "prepareWritesMs": 27.900000005960464,
+      "journalMs": 112.09999999403954,
+      "projectionAndPublishMs": 0.09999999403953552
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 5,
+      "parseCache": "warm",
+      "entityParses": 18,
+      "ipc": {
+        "plugin:path|join": 33,
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 365,
+      "queueWaitMs": 0,
+      "readAndParseMs": 200.80000001192093,
+      "prepareWritesMs": 30,
+      "journalMs": 133.8999999910593,
+      "projectionAndPublishMs": 0.29999999701976776
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 0,
+      "parseCache": "cold",
+      "entityParses": 18,
+      "ipc": {
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 190.70000000298023,
+      "queueWaitMs": 0.29999999701976776,
+      "readAndParseMs": 94.79999999701977,
+      "prepareWritesMs": 17.5,
+      "journalMs": 77.1000000089407,
+      "projectionAndPublishMs": 1
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 1,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 207.20000000298023,
+      "queueWaitMs": 0,
+      "readAndParseMs": 90.70000000298023,
+      "prepareWritesMs": 19.799999997019768,
+      "journalMs": 96.40000000596046,
+      "projectionAndPublishMs": 0.29999999701976776
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 2,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 201.8999999910593,
+      "queueWaitMs": 0,
+      "readAndParseMs": 105.8999999910593,
+      "prepareWritesMs": 17.80000001192093,
+      "journalMs": 78,
+      "projectionAndPublishMs": 0.09999999403953552
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 3,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 193.40000000596046,
+      "queueWaitMs": 0,
+      "readAndParseMs": 88.6000000089407,
+      "prepareWritesMs": 18.299999997019768,
+      "journalMs": 86,
+      "projectionAndPublishMs": 0.4000000059604645
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 4,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 277.5,
+      "queueWaitMs": 0.09999999403953552,
+      "readAndParseMs": 160.80000001192093,
+      "prepareWritesMs": 26.799999997019768,
+      "journalMs": 89.5,
+      "projectionAndPublishMs": 0.20000000298023224
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      },
+      "round": 5,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 29,
+        "plugin:fs|stat": 25,
+        "plugin:fs|read_text_file": 25,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 220,
+      "queueWaitMs": 0,
+      "readAndParseMs": 107.40000000596046,
+      "prepareWritesMs": 22.5,
+      "journalMs": 89.69999998807907,
+      "projectionAndPublishMs": 0.30000001192092896
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 0,
+      "parseCache": "cold",
+      "entityParses": 180,
+      "ipc": {
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 863.5,
+      "queueWaitMs": 0,
+      "readAndParseMs": 746.8000000119209,
+      "prepareWritesMs": 27.299999997019768,
+      "journalMs": 88.8999999910593,
+      "projectionAndPublishMs": 0.5
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 1,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 750,
+      "queueWaitMs": 0,
+      "readAndParseMs": 655.9000000059605,
+      "prepareWritesMs": 18.299999997019768,
+      "journalMs": 75.5,
+      "projectionAndPublishMs": 0.29999999701976776
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 2,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 796.5,
+      "queueWaitMs": 0,
+      "readAndParseMs": 695.6000000089407,
+      "prepareWritesMs": 18.700000002980232,
+      "journalMs": 81.69999998807907,
+      "projectionAndPublishMs": 0.4000000059604645
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 3,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 767.8000000119209,
+      "queueWaitMs": 0,
+      "readAndParseMs": 677.1000000089407,
+      "prepareWritesMs": 17.5,
+      "journalMs": 73,
+      "projectionAndPublishMs": 0.20000000298023224
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 4,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 750.7999999970198,
+      "queueWaitMs": 0,
+      "readAndParseMs": 659.6999999880791,
+      "prepareWritesMs": 16,
+      "journalMs": 74.80000001192093,
+      "projectionAndPublishMs": 0.29999999701976776
+    },
+    {
+      "variant": "optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 5,
+      "parseCache": "warm",
+      "entityParses": 0,
+      "ipc": {
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 1043.5999999940395,
+      "queueWaitMs": 0,
+      "readAndParseMs": 906.0999999940395,
+      "prepareWritesMs": 22.400000005960464,
+      "journalMs": 115,
+      "projectionAndPublishMs": 0.09999999403953552
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 0,
+      "parseCache": "cold",
+      "entityParses": 180,
+      "ipc": {
+        "plugin:path|join": 195,
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 1773,
+      "queueWaitMs": 0.09999999403953552,
+      "readAndParseMs": 1628,
+      "prepareWritesMs": 29.200000002980232,
+      "journalMs": 115.20000000298023,
+      "projectionAndPublishMs": 0.5
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 1,
+      "parseCache": "warm",
+      "entityParses": 180,
+      "ipc": {
+        "plugin:path|join": 195,
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 2140.5999999940395,
+      "queueWaitMs": 0,
+      "readAndParseMs": 1979.7000000029802,
+      "prepareWritesMs": 34,
+      "journalMs": 126.5,
+      "projectionAndPublishMs": 0.3999999910593033
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 2,
+      "parseCache": "warm",
+      "entityParses": 180,
+      "ipc": {
+        "plugin:path|join": 195,
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 1942.4000000059605,
+      "queueWaitMs": 0,
+      "readAndParseMs": 1788,
+      "prepareWritesMs": 27.600000008940697,
+      "journalMs": 125.8999999910593,
+      "projectionAndPublishMs": 0.7999999970197678
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 3,
+      "parseCache": "warm",
+      "entityParses": 180,
+      "ipc": {
+        "plugin:path|join": 195,
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 1944.0999999940395,
+      "queueWaitMs": 0,
+      "readAndParseMs": 1793.7000000029802,
+      "prepareWritesMs": 29,
+      "journalMs": 121,
+      "projectionAndPublishMs": 0.3999999910593033
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 4,
+      "parseCache": "warm",
+      "entityParses": 180,
+      "ipc": {
+        "plugin:path|join": 195,
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 1871.5,
+      "queueWaitMs": 0,
+      "readAndParseMs": 1731.1000000089407,
+      "prepareWritesMs": 27.5,
+      "journalMs": 112.19999998807907,
+      "projectionAndPublishMs": 0.7000000029802322
+    },
+    {
+      "variant": "baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      },
+      "round": 5,
+      "parseCache": "warm",
+      "entityParses": 180,
+      "ipc": {
+        "plugin:path|join": 195,
+        "plugin:fs|exists": 191,
+        "plugin:fs|stat": 187,
+        "plugin:fs|read_text_file": 187,
+        "plugin:fs|read_dir": 4,
+        "plugin:path|dirname": 3,
+        "plugin:fs|mkdir": 3,
+        "plugin:fs|write_text_file": 3,
+        "plugin:fs|rename": 3,
+        "plugin:fs|remove": 1
+      },
+      "totalMs": 1872,
+      "queueWaitMs": 0.10000000894069672,
+      "readAndParseMs": 1705.5,
+      "prepareWritesMs": 37.3999999910593,
+      "journalMs": 128.29999999701977,
+      "projectionAndPublishMs": 0.7000000029802322
+    }
+  ]
+}

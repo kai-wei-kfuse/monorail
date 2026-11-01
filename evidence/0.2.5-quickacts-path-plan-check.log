@@ -1,0 +1,59 @@
+[
+  {
+    "root": "C:\\",
+    "full": "C:/settings.yaml",
+    "parent": "C:",
+    "expectedParent": "C:\\",
+    "parentIsAbsolute": false,
+    "matchesExpected": false
+  },
+  {
+    "root": "C:/",
+    "full": "C:/settings.yaml",
+    "parent": "C:",
+    "expectedParent": "C:\\",
+    "parentIsAbsolute": false,
+    "matchesExpected": false
+  },
+  {
+    "root": "C:\\data",
+    "full": "C:\\data\\settings.yaml",
+    "parent": "C:\\data",
+    "expectedParent": "C:\\data",
+    "parentIsAbsolute": true,
+    "matchesExpected": true
+  },
+  {
+    "root": "C:\\data\\",
+    "full": "C:\\data\\settings.yaml",
+    "parent": "C:\\data",
+    "expectedParent": "C:\\data",
+    "parentIsAbsolute": true,
+    "matchesExpected": true
+  },
+  {
+    "root": "C:/用户 数据/",
+    "full": "C:/用户 数据/settings.yaml",
+    "parent": "C:/用户 数据",
+    "expectedParent": "C:\\用户 数据",
+    "parentIsAbsolute": true,
+    "matchesExpected": true
+  },
+  {
+    "root": "\\\\server\\share\\",
+PLAN_PATH_CHECK_FAILED: proposed parentOf loses a Windows volume root separator
+    "full": "\\\\server\\share\\settings.yaml",
+    "parent": "\\\\server\\share",
+    "expectedParent": "\\\\server\\share\\",
+    "parentIsAbsolute": true,
+    "matchesExpected": true
+  },
+  {
+    "root": "\\\\?\\C:\\",
+    "full": "\\\\?\\C:\\settings.yaml",
+    "parent": "\\\\?\\C:",
+    "expectedParent": "\\\\?\\C:\\",
+    "parentIsAbsolute": true,
+    "matchesExpected": false
+  }
+]

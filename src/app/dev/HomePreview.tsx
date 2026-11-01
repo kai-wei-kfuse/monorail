@@ -12,7 +12,6 @@ import { RestCard } from '../../pages/home/RestCard';
 import { ReviewCard } from '../../pages/home/ReviewCard';
 import { playAfterWipe, playColdIntro } from '../../pages/home/intro';
 import { QuickActs } from '../shell/QuickActs';
-import { BaselineMarks } from '../shell/BaselineMarks';
 import { MiniPreview } from './MiniPreview';
 import { QuickBar } from '../../pages/quickbar/QuickBar';
 import { CompleteDialog } from '../../pages/home/CompleteDialog';
@@ -61,8 +60,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
     <StatusBlock kind={page === 'rest' ? 'away' : 'focus'} label={page === 'rest' ? '休息' : '沿 Python 往下学'} startedAt={new Date(Date.now() - view.elapsedMs).toISOString()} onClick={() => {}} />
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
-  const dock = <StatusBar left={<QuickActs acts={[{ id: 'wc', name: '厕所', icon: 'wc' }, { id: 'p', name: '拿快递', icon: 'parcel' }]} current={null} onPick={() => {}} onSleep={() => {}} onTemp={() => {}} />}
-    right={<BaselineMarks main side={false} />} />;
+  const dock = <StatusBar left={<QuickActs acts={[{ id: 'wc', name: '厕所', icon: 'wc' }, { id: 'p', name: '拿快递', icon: 'parcel' }]} current={null} onPick={() => {}} onSleep={() => {}} onTemp={() => {}} />} />;
   return <div ref={app} style={{ height: '100%' }}><Frame titleBar={title} statusBar={dock}>
     <div ref={stage} style={{ display: 'grid', minHeight: 0 }} onDoubleClick={e => { if (!(e.target as HTMLElement).closest('.title, .title-edit')) setWipe(true); }}>
       {(page === 'card' || page === 'over') && <TaskCard view={view} look={look} titleScale={65} onEditContent={(_, text) => setContent(text)}

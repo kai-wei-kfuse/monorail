@@ -1,0 +1,65 @@
+{
+  "pendingAndAwayControls": {
+    "fused": {
+      "pause": false,
+      "stop": false,
+      "buttons": [
+        {
+          "text": "手动补录",
+          "label": null
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "label": null
+        },
+        {
+          "text": "放弃DISCARD",
+          "label": null
+        },
+        {
+          "text": "01:00",
+          "label": null
+        }
+      ]
+    },
+    "split": {
+      "pause": false,
+      "stop": false,
+      "buttons": [
+        {
+          "text": "计时",
+          "label": null
+        },
+        {
+          "text": "手动补录",
+          "label": null
+        },
+        {
+          "text": "28:30",
+          "label": null
+        },
+        {
+          "text": "放弃DISCARD",
+          "label": null
+        },
+        {
+          "text": "抽卡DRAW",
+          "label": null
+        }
+      ]
+    }
+  },
+  "rejectedPendingCreation": {
+    "initiallyReadOnly": true,
+    "reportedErrors": [
+REVIEW_REPRO_FAILED: required controls missing or uncommitted pending shown as active
+      "injected beginPending transaction failure",
+      "injected beginPending transaction failure"
+    ],
+    "beginPendingCalls": 2,
+    "committedPending": null,
+    "uiDeciding": true,
+    "uiFrozen": false,
+    "inputReadOnly": false
+  }
+}

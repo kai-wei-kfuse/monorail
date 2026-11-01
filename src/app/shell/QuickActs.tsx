@@ -37,7 +37,7 @@ export function QuickActs({ acts, current, onPick, onSleep, onTemp }:
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
   }, [open, acts, onPick]);
   const active = acts.find(a => a.id === current);
-  const pick = (fn: () => void) => { fn(); setTimeout(() => setOpen(false), 650); };
+  const pick = (fn: () => void) => { setOpen(false); fn(); };
   return <div ref={box}>
     <button type="button" className={`dock-toggle${active ? ' has-act' : ''}`} aria-expanded={open} onClick={() => setOpen(!open)}>
       <span className="chev"><Icon name="chev" /></span><span className="t-cn">快捷活动</span><span className="cnt">{active ? active.name : acts.length}</span>

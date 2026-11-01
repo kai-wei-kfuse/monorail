@@ -1,0 +1,10 @@
+{
+  "launched": true,
+  "builtAt": "2026-11-01T21:55:15.6159109+08:00",
+  "productName": "单轨隔离测试025",
+  "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+  "sha256": "DCEDBD3C58B8F24E0D91C52DA6CB182D779DC43F785212AF4B7C292EA79008A0",
+  "executable": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\Monorail-0.2.5-p2e.exe",
+  "version": "0.2.5",
+  "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.test025.tdb06cfcd51d6"
+}

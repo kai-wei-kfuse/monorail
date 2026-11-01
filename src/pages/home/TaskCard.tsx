@@ -11,6 +11,7 @@ import type { CardLook } from './CardFrame';
 import { CardFrame } from './CardFrame';
 import { fitTitleSize } from './title';
 import { MarkedText } from '../../ui/marks/MarkedText';
+import { ActivityActions } from './ActivityActions';
 
 export interface TaskCardView {
   id?: string;                 // 卡的 id；有它才能双击改内容
@@ -27,7 +28,7 @@ export interface TaskCardView {
 }
 
 const STATE = {
-  ready: ['待开始', 'READY'], run: ['进行中', 'RUNNING'], away: ['离开中', 'AWAY'], over: ['已超出目标', 'OVERTIME'],
+  ready: ['待开始', 'READY'], run: ['进行中', 'RUNNING'], away: ['进行中（暂停）', 'PAUSED'], over: ['已超出目标', 'OVERTIME'],
 } as const;
 
 /**
@@ -37,16 +38,16 @@ const STATE = {
  * note 换掉「上次做到」那一行，stateText 换掉状态字，placeholder 是内容为空时标题位置的提示。
  * 融合布局的大卡也用它：title 换掉整个标题（换成输入框），slotLabel 是左侧标签条的字。
  */
-export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef, innerRef, onEditContent, meta, picks, digits, note, stateText, placeholder, title: titleSlot, slotLabel }:
+export function TaskCard({ view, look, titleScale, actions, actionsDisabled, corner, fx, cardRef, innerRef, onEditContent, meta, picks, digits, note, stateText, placeholder, title: titleSlot, slotLabel }:
   { view: TaskCardView; look: CardLook; titleScale: number; actions: ReactNode; corner?: ReactNode; fx?: ReactNode;
     cardRef?: Ref<HTMLElement>; innerRef?: Ref<HTMLDivElement>; onEditContent?: (cardId: string, content: string) => void;
     meta?: ReactNode; picks?: ReactNode; digits?: ReactNode; note?: ReactNode; stateText?: readonly [string, string]; placeholder?: string;
-    title?: ReactNode; slotLabel?: string }) {
+    title?: ReactNode; slotLabel?: string; actionsDisabled?: boolean }) {
   const hero = useRef<HTMLDivElement>(null), title = useRef<HTMLHeadingElement>(null);
   const [draft, setDraft] = useState<string | null>(null), [ts, setTs] = useState(() => Math.max(26, Math.floor(96 * titleScale / 100))), editing = useRef<{ id: string; content: string } | null>(null);
   const { progress } = view;
   const [cn, en] = stateText ?? STATE[progress.state];
-  const stateCn = progress.state === 'away' && view.awayActivity ? `${cn} · ${view.awayActivity}` : cn;
+  const stateCn = cn;
   const canEdit = !!onEditContent && view.id !== undefined;
   // 点击标题就地改卡的内容：编辑期间首页换了卡，保存时仍交出原来那张的 id；光标落于末尾与防重入由 InlineInput 统一负责
   const beginEdit = () => { editing.current = { id: view.id!, content: view.content }; setDraft(view.content); };
@@ -103,7 +104,7 @@ export function TaskCard({ view, look, titleScale, actions, corner, fx, cardRef,
     </div>
     <VBars filled={progress.filled} state={progress.state} />
     <div className="foot">
-      <div className="actions" data-fx="actions">{actions}</div>
+      <ActivityActions className="actions" data-fx="actions" disabled={actionsDisabled}>{actions}</ActivityActions>
       <Readout state={progress.state} stateCn={stateCn} stateEn={en} digits={digits ?? formatMinutes(view.elapsedMs)}
         over={progress.overMs > 0 ? `+${formatMinutes(progress.overMs)}` : null} />
     </div>

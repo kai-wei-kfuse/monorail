@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+import { CalendarPage } from './CalendarPage';
 import { dayHeight, dayTotal, dragTo, HOUR_PX, isoWeek, layoutDay, piece, snap, stepZoom, timeAt, viewDays, zoomScrollTop } from './grid';
 
 const MIN = 60_000, HOUR = 60 * MIN, STEP = 5 * MIN;
@@ -106,4 +109,16 @@ describe('dayTotal 与 isoWeek', () => {
     expect(dayTotal(list, DAY, at(29, 6))).toBe(2.5 * HOUR);
   });
   it('2026-10-28 是第 44 周', () => expect(isoWeek(at(28, 10))).toBe(44));
+  it('CalendarPage 不再渲染顶部操作提示说明行（.s-desc）', () => {
+    const html = renderToStaticMarkup(createElement(CalendarPage, {
+      entries: [], projects: [], knownTags: [], boundaryHour: 4, snapMinutes: 5, showIdle: true,
+      isIdle: () => false,
+      actions: {
+        create: vi.fn(), update: vi.fn(), copy: vi.fn(), patch: vi.fn(), continueEntry: vi.fn(),
+        favorite: vi.fn(), saveAsCard: vi.fn(), remove: vi.fn(), createProject: vi.fn(), createTag: vi.fn(), setShowIdle: vi.fn(),
+      },
+    }));
+    expect(html).not.toContain('拖空白处新建');
+    expect(html).not.toContain('class="s-desc"');
+  });
 });

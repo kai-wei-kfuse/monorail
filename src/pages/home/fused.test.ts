@@ -1,10 +1,14 @@
-import { createElement } from 'react';
+import { createElement, isValidElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { AwayDrawer } from './AwayDrawer';
+import { FreeCard } from './FreeCard';
 import { fusedState } from './fused';
 import { FusedCard } from './FusedCard';
 import { TaskCard } from './TaskCard';
+import { TimerBar } from './TimerBar';
 import { cardProgress } from '../../widgets/cardProgress';
 import type { TimerActions, TimerEntry, TimerView } from './TimerBar';
 
@@ -12,8 +16,23 @@ vi.mock('react', async importOriginal => ({
   ...await importOriginal<typeof React>(),
   useState: vi.fn((init: unknown) => [typeof init === 'function' ? (init as () => unknown)() : init, vi.fn()]),
   useRef: vi.fn((init = null) => ({ current: init })),
+  useId: vi.fn(() => 'id-mock'),
   useLayoutEffect: vi.fn(),
+  useEffect: vi.fn(),
 }));
+
+function walk(node: ReactNode, visit: (el: ReactElement<Record<string, unknown>>) => void): void {
+  if (!node) return;
+  if (Array.isArray(node)) { node.forEach(child => walk(child, visit)); return; }
+  if (!isValidElement(node)) return;
+  const el = node as ReactElement<Record<string, unknown>>;
+  if (typeof el.type === 'function') {
+    walk((el.type as (props: Record<string, unknown>) => ReactNode)(el.props), visit);
+    return;
+  }
+  visit(el);
+  walk(el.props.children as ReactNode, visit);
+}
 
 const e = (more: Partial<TimerEntry> = {}): TimerEntry =>
   ({ id: 'e', description: '写周报', project: '工作', tags: [], startedAt: '2026-10-28T08:00:00Z', cardId: null, kind: '普通', ...more });
@@ -89,5 +108,114 @@ describe('fusedState', () => {
     expect(layoutCbs).toHaveLength(1);
     layoutCbs[0]();
     expect(setTs).not.toHaveBeenCalled();
+  });
+
+  it('ADR 0006：临时活动时底层内容只读、底部整组禁用并提示回来后可用，AwayDrawer 绑定当前临时活动', () => {
+    const actions: TimerActions = {
+      beginPending: vi.fn(), cancelPending: vi.fn(), startFree: vi.fn(), editOpen: vi.fn(),
+      pause: vi.fn(), stop: vi.fn(), resume: vi.fn(), draw: vi.fn(), startFavorite: vi.fn(),
+      startCard: vi.fn(), continueEntry: vi.fn(), favorite: vi.fn(),
+      readout: vi.fn(), createProject: vi.fn(), createTag: vi.fn(),
+    };
+    const resumeFree = e({
+      id: 'resume-1', description: '学 408', project: '学习', tags: ['408'],
+      startedAt: '2026-10-28T08:00:00Z', endedAt: '2026-10-28T08:25:00Z',
+    });
+    const awayWc = e({
+      id: 'away-1', description: '上厕所', project: '生活', tags: [],
+      startedAt: '2026-10-28T08:25:00Z', kind: '插入',
+    });
+    const awayView: TimerView = {
+      entry: resumeFree, away: awayWc,
+      idle: false, pending: null, paused: null, waitingCard: false, canDraw: true,
+      projects: [{ name: '未分类', color: '#888' }, { name: '学习', color: '#00b4ff' }, { name: '生活', color: '#d9a400' }],
+      knownTags: ['408'],
+      suggest: { favorites: [], cards: [], recent: [] },
+    };
+    const now = Date.parse('2026-10-28T08:27:15Z');
+    const look = { topoMode: 'off' as const, topoDepth: 0, paused: false };
+
+    // 1. 融合布局：保留原按钮布局，整组禁用。
+    const fusedHtml = renderToStaticMarkup(createElement(FusedCard, {
+      view: awayView, card: null, cardView: null, now,
+      look, titleScale: 65, actions, onManual: vi.fn(),
+    }));
+    expect(fusedHtml).toContain('value="学 408"');
+    expect(fusedHtml).toContain('readOnly=""');
+    expect(fusedHtml).toContain('>25:00<');
+    expect(fusedHtml).toContain('<b>进行中（暂停）</b><i>PAUSED</i>');
+    expect(fusedHtml).toContain('class="tbar-new stop" data-entry-keep="" aria-label="停止"');
+    expect(fusedHtml).toContain('d="M3 3h10v10H3z"');
+    expect(fusedHtml).toContain('aria-label="开始想下一件事"');
+    expect(fusedHtml).not.toContain('回来 ·');
+    expect(fusedHtml).toContain('disabled="" aria-label="底部活动操作" title="从临时活动回来后可用"');
+
+    // 2. 分开布局（TimerBar + FreeCard）：时长冻结在 25:00，FreeCard 仍展示原项目「学习」和标签「#408」但禁用编辑
+    const tbarHtml = renderToStaticMarkup(createElement(TimerBar, {
+      view: awayView, actions, mode: 'timer', onMode: vi.fn(),
+    }));
+    expect(tbarHtml).toContain('value="学 408"');
+    expect(tbarHtml).toContain('readOnly=""');
+    expect(tbarHtml).toContain('25<small>:00</small>');
+    expect(tbarHtml).toContain('aria-label="停止"');
+    expect(tbarHtml).toContain('aria-label="开始想下一件事"');
+    expect(tbarHtml).toContain('disabled="" aria-label="底部活动操作" title="从临时活动回来后可用"');
+
+    const freeHtml = renderToStaticMarkup(createElement(FreeCard, {
+      view: awayView, draft: null, over: null, now, look, titleScale: 65, actions,
+    }));
+    expect(freeHtml).toContain('学 408');
+    expect(freeHtml).toContain('value="学习"');
+    expect(freeHtml).toContain('#408');
+    expect(freeHtml).toContain('>25:00<');
+    expect(freeHtml).toContain('<b>进行中（暂停）</b><i>PAUSED</i>');
+    expect(freeHtml).not.toContain('class="title editable"');
+    expect(freeHtml).not.toContain('回来 ·');
+    expect(freeHtml).toContain('disabled="" aria-label="底部活动操作" title="从临时活动回来后可用"');
+
+    // 回来后解除整组禁用；抽卡仍遵守 canDraw，自身不可用不能被组恢复覆盖。
+    for (const pending of [null, { id: 'pending', startedAt: awayWc.startedAt }]) {
+      for (const away of [awayWc, null]) {
+        const view = { ...awayView, pending, away, canDraw: false };
+        for (const component of [
+          createElement(FusedCard, { view, card: null, cardView: null, now, look, titleScale: 65, actions, onManual: vi.fn() }),
+          createElement(TimerBar, { view, actions, mode: 'timer', onMode: vi.fn() }),
+          createElement(FreeCard, { view, draft: null, over: null, now, look, titleScale: 65, actions }),
+        ]) {
+          const html = renderToStaticMarkup(component);
+          expect(html.includes('title="从临时活动回来后可用"')).toBe(!!away);
+          expect(html).toContain('disabled="" class="abtn');
+        }
+      }
+    }
+
+    // 3. 任务卡进行中 + 临时活动：状态为「进行中（暂停）」，底层读数 target 为 null；若同时有 pending 则 target 指向 pending
+    expect(fusedState({ ...awayView, entry: e({ cardId: 'k', endedAt: '2026-10-28T08:25:00Z' }) }, doing, false)).toMatchObject({
+      show: 'card', onCard: false, away: true, target: null,
+    });
+    expect(fusedState({ ...awayView, pending }, doing, false)).toMatchObject({
+      show: 'card', away: true, target: { mode: 'pending', id: 'p' },
+    });
+
+    // 4. AwayDrawer：渲染临时活动「上厕所」、02:15 读数、flat 项目/标签选择器与〔回来〕按钮，且回调绑定 away-1
+    const drawerTree = createElement(AwayDrawer, {
+      away: awayWc, now, look, projects: awayView.projects, knownTags: awayView.knownTags, actions,
+    });
+    const drawerHtml = renderToStaticMarkup(drawerTree);
+    expect(drawerHtml).toContain('<b>临时活动</b>');
+    expect(drawerHtml).toContain('上厕所');
+    expect(drawerHtml).toContain('value="生活"');
+    expect(drawerHtml).toContain('>02:15<');
+    expect(drawerHtml).toContain('aria-label="回来 · 上厕所"');
+
+    let clickResume: (() => void) | null = null;
+    walk(drawerTree, el => {
+      if (el.type === 'button' && el.props['aria-label'] === '回来 · 上厕所') {
+        clickResume = el.props.onClick as () => void;
+      }
+    });
+    expect(clickResume).not.toBeNull();
+    clickResume!();
+    expect(actions.resume).toHaveBeenCalledOnce();
   });
 });

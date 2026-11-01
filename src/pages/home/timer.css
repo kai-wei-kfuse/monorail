@@ -27,11 +27,14 @@
 .tbar-clock.idle b { color: var(--mute-2); }
 .tbar-acts { flex: none; display: flex; align-items: center; gap: 8px; }
 .tbar-acts .abtn { height: 46px; }
-.tbar-new { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--paper-2); box-shadow: 0 3px 0 var(--line-2); transition: transform .09s, box-shadow .09s, border-color .2s; }
+.tbar-new { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--paper-2); box-shadow: 0 3px 0 var(--line-2); transition: transform .09s, box-shadow .09s, border-color .2s, background .2s, color .2s; }
 .tbar-new svg { width: 14px; height: 14px; }
 .tbar-new:hover:not(:disabled) { border-color: var(--ink); }
 .tbar-new:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
 .tbar-new:disabled { opacity: .4; }
+.tbar-new.stop { color: var(--red); }
+.tbar-new.stop svg { width: 22px; height: 22px; }
+.tbar-new.stop:hover:not(:disabled) { background: var(--red); border-color: var(--red); color: #fff; }
 /* 手动补录：开始、结束、时长三格 */
 .tbar-row.manual { align-items: center; }
 .tbar-tag[data-kind="manual"] { margin: -8px 0; align-self: stretch; }

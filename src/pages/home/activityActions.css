@@ -1,0 +1,5 @@
+.activity-actions { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+.activity-actions.actions { padding-bottom: 3px; }
+.activity-actions:disabled { filter: grayscale(1); cursor: not-allowed; }
+/* Let the group receive hover so disabled buttons still expose the reason in its native tooltip. */
+.activity-actions:disabled button { pointer-events: none; }

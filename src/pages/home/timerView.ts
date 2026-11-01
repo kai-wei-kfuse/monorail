@@ -15,8 +15,12 @@ export interface TimerSource { home: HomeSlice; entries: readonly TimeEntry[]; c
 
 export function timerView({ home, entries, cards, tasks, settings, projects }: TimerSource): TimerView {
   const track = (c: Card) => tasks.find(t => t.id === c.task_id)?.slot === '主线' ? '主线' as const : '支线' as const;
+  const isAway = home.entry?.kind === '插入';
+  const away = isAway ? home.entry : null;
+  const baseEntry = isAway ? (home.resumeEntry ?? null) : home.entry;
   return {
-    entry: home.entry, idle: home.entry?.project === '待机', pending: home.pending, paused: home.resumeDescription,
+    entry: baseEntry, away, idle: !baseEntry || baseEntry.project === '待机', pending: home.pending,
+    paused: isAway ? null : home.resumeDescription,
     waitingCard: home.card?.status === '待做', canDraw: !home.card && home.mode !== 'rest',
     projects: [...projects], knownTags: home.knownTags,
     suggest: {

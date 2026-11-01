@@ -1,0 +1,12 @@
+{
+  "launched": false,
+  "identifier": "local.pixelrecord.test025.tdb06cfcd51d6",
+  "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.test025.tdb06cfcd51d6",
+  "executable": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\Monorail-0.2.5-p2d.exe",
+  "version": "0.2.5",
+  "builtAt": "2026-11-01T21:15:07.0567671+08:00",
+  "note": "Latest P2d artifact; user must close prior isolated process before opening; no user window controlled",
+  "productName": "单轨隔离测试025",
+  "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+  "sha256": "51040F06216347FBEDA31D06EDB097BF8A5E8CE3BD27013C99A0FAB20ED30F67"
+}

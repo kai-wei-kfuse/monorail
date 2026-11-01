@@ -1,0 +1,12 @@
+{
+  "buildLog": "evidence/0.2.5-p2e-rebuild-launch.log",
+  "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+  "startedAt": "2026-11-01T21:55:15.7180663+08:00",
+  "sha256": "DCEDBD3C58B8F24E0D91C52DA6CB182D779DC43F785212AF4B7C292EA79008A0",
+  "executable": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\Monorail-0.2.5-p2e.exe",
+  "replacedPid": 24484,
+  "pid": 22832,
+  "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.test025.tdb06cfcd51d6",
+  "responding": true,
+  "mainWindowHandle": 17764800
+}

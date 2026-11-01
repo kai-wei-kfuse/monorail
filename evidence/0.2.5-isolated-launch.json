@@ -1,0 +1,19 @@
+{
+  "sourceData": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-024-996489dfcb0e\\data",
+  "buildMode": "debug; no-bundle; production frontend; no verify feature",
+  "normalPid": 27148,
+  "version": "0.2.5",
+  "identifier": "local.pixelrecord.test025.tdb06cfcd51d6",
+  "config": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\tauri.isolated.json",
+  "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6",
+  "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+  "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.test025.tdb06cfcd51d6",
+  "executable": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\Monorail-0.2.5-isolated.exe",
+  "humanTest": "not performed by agent",
+  "pid": 10052,
+  "executableSha256": "00E23A97521F95C33F18A7AA369E364DEEDB1BD03393F4A4AB9B87B7EC6545FF",
+  "productVersion": "0.2.5",
+  "productName": "单轨隔离测试025",
+  "startedAt": "2026-11-01T19:18:14.6030880+08:00",
+  "buildResult": "passed"
+}

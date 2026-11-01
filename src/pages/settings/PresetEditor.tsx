@@ -57,8 +57,8 @@ export function PresetEditor({ presets, place, projects, knownTags, placeholder,
     {mine.map((p, i) => <div key={p.id} className="pe-row">
       <span className="le-no">{String(i + 1).padStart(2, '0')}</span>
       <NameField value={p.name} onCommit={name => set(p.id, { name })} />
-      <ProjectPicker small id={`pe-${p.id}-project`} value={p.project} options={projects} onChange={project => set(p.id, { project })} onCreate={onCreateProject} />
-      <TagPicker id={`pe-${p.id}-tags`} value={p.tags} options={knownTags} onChange={tags => set(p.id, { tags })} onCreate={onCreateTag} />
+      <ProjectPicker flat id={`pe-${p.id}-project`} value={p.project} options={projects} onChange={project => set(p.id, { project })} onCreate={onCreateProject} />
+      <TagPicker flat id={`pe-${p.id}-tags`} value={p.tags} options={knownTags} onChange={tags => set(p.id, { tags })} onCreate={onCreateTag} />
       <Segmented label="方式" value={p.mode} onChange={mode => set(p.id, { mode })}
         options={[{ value: '切换', label: '切换' }, { value: '插入', label: '插入' }]} />
       <span className="pe-acts">

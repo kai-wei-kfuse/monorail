@@ -1,0 +1,10 @@
+{
+  "command": "node --experimental-test-module-mocks --test --test-timeout=60000 scripts/publish-release.test.mjs scripts/verify-release-recovery.test.mjs",
+  "date": "2026-11-01",
+  "exitCode": 0,
+  "tests": 7,
+  "passed": 7,
+  "failed": 0,
+  "actualPublishExecuted": false,
+  "note": "Publish output in this test uses mocked modules and example repository URLs. It is not a live release."
+}

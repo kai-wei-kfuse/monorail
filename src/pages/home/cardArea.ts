@@ -8,7 +8,7 @@ import type { TimerView } from './TimerBar';
  * - 没卡时，计时条上有事（在计、待确认、暂停中）就显示它；
  * - 都没有：none，由首页按 mode 显示空卡、引导卡或回顾卡。
  */
-export function cardArea(draft: string | null, view: Pick<TimerView, 'entry' | 'idle' | 'pending' | 'paused'>, cardStatus: '待做' | '进行中' | null): 'card' | 'free' | 'none' {
+export function cardArea(draft: string | null, view: Pick<TimerView, 'entry' | 'away' | 'idle' | 'pending' | 'paused'>, cardStatus: '待做' | '进行中' | null): 'card' | 'free' | 'none' {
   const running = view.entry && !view.idle ? view.entry : null;
   const mirror = !!draft?.trim();
   const free = !!running && !view.pending && !running.cardId && cardStatus !== '进行中';

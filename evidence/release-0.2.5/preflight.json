@@ -1,0 +1,12 @@
+{
+  "localSigningEnvironmentPresent": false,
+  "workflowModified": false,
+  "remoteTag025Present": false,
+  "remoteMaster": "5a393bf5df80975feecccb02316559a2e992d1df",
+  "checkedAt": "2026-11-01T22:19:07.6022324+08:00",
+  "latestRelease": "v0.2.4",
+  "publishExecuted": false,
+  "latestReleaseUrl": "https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.2.4",
+  "localHead": "5a393bf5df80975feecccb02316559a2e992d1df",
+  "authenticatedPushPermission": true
+}

@@ -8,7 +8,6 @@ import { ReviewPage } from '../../pages/review/ReviewPage';
 import { SavedBadge, SettingsPage } from '../../pages/settings/SettingsPage';
 import type { Settings } from '../../shared/settings';
 import { defaults } from '../../shared/settings';
-import { BaselineMarks } from '../shell/BaselineMarks';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
 
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
@@ -17,7 +16,7 @@ const shell = (active: string, body: ReactElement, right?: ReactElement) => <Fra
   titleBar={<TitleBar name="单轨" tabs={TABS} active={active} onTab={() => {}}>
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>}
-  statusBar={<StatusBar right={<>{right}<BaselineMarks main side /></>} />}>{body}</Frame>;
+  statusBar={<StatusBar right={right} />}>{body}</Frame>;
 
 function reviewData(step: ReviewStep): ReviewData {
   const order: ReviewStep[] = ['recap', 'newIdeas', 'arena', 'coldPick', 'bet'];
@@ -51,12 +50,14 @@ export function ReviewPreview({ step: initial }: { step: string }) {
 /** 设置页预览（只在开发时用）：?sec=deal|degrade|ideas|timer|lists|look|keys|window|about。 */
 export function SettingsPreview({ sec: initial }: { sec: string }) {
   const [sec, setSec] = useState(initial), [saves, setSaves] = useState(0);
-  const [s, setS] = useState<Settings>({ ...defaults, lists: { projects: [], tags: [], idleName: '待机',
+  const [s, setS] = useState<Settings>({ ...defaults, lists: { projects: [...PREVIEW_PROJECTS], tags: [...PREVIEW_TAGS], idleName: '待机',
     presets: [{ id: 'q1', name: '厕所', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q2', name: '拿快递', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q3', name: '刷视频', project: '休息', tags: [], mode: '插入', place: '弹层' },
       { id: 'f1', name: '学 408', project: '学习', tags: ['408'], mode: '切换', place: '计时条' }, { id: 'f2', name: '回消息', project: '工作', tags: [], mode: '切换', place: '计时条' }],
     restPool: [{ id: 'r1', name: '眺望窗外' }, { id: 'r2', name: '走走' }] } });
-  return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.1.0" dataDir="D:\\Notes\\monorail"
-    projects={PREVIEW_PROJECTS} knownTags={PREVIEW_TAGS}
+  return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.2.5" dataDir="D:\\Notes\\monorail"
+    projects={s.lists.projects} knownTags={s.lists.tags}
+    onCreateProject={name => { setS(x => ({ ...x, lists: { ...x.lists, projects: [...x.lists.projects, { name, color: '#00f5a0' }] } })); setSaves(n => n + 1); }}
+    onCreateTag={tag => { setS(x => ({ ...x, lists: { ...x.lists, tags: [...x.lists.tags, tag] } })); setSaves(n => n + 1); }}
     onChange={(k, v) => { setS({ ...s, [k]: v }); setSaves(n => n + 1); }} onListsChange={lists => { setS(x => ({ ...x, lists: { ...x.lists, ...lists } })); setSaves(n => n + 1); }}
     onChangeDir={() => {}} errors={sec === 'keys' ? { mainHotkey: 'Ctrl+Alt+Shift+M 已被其他软件占用，没有生效' } : {}} />, <SavedBadge saves={saves} />);
 }

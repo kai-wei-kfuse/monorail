@@ -4,7 +4,7 @@ export const settingDefinitions = {
   mainTasks: { type: 'number', default: 1, min: 1, max: 3, step: 1, unit: 'slots' },
   sideTasks: { type: 'number', default: 10, min: 1, max: 30, step: 1, unit: 'slots' },
   mainItems: { type: 'number', default: 5, min: 1, max: 10, step: 1, unit: 'items' },
-  homeLayout: { type: 'enum', default: 'split', options: ['split', 'fused'], unit: 'layout' },
+  homeLayout: { type: 'enum', default: 'fused', options: ['split', 'fused'], unit: 'layout' },
   // Exact minute arithmetic uses JavaScript safe integers; no product-specific upper cap is imposed.
   calendarSnapMinutes: { type: 'number', default: 5, min: 1, max: Number.MAX_SAFE_INTEGER, step: 1, unit: 'minutes' },
   calendarShowIdle: { type: 'boolean', default: true, unit: 'boolean' },
@@ -25,7 +25,7 @@ export const settingDefinitions = {
   longActivityMinutes: { type: 'number', default: 240, min: 30, max: 720, step: 30, unit: 'minutes' },
   deadlineLeadMinutes: { type: 'number', default: 60, min: 5, max: 1440, step: 1, unit: 'minutes' },
   offlineAskMinMinutes: { type: 'number', default: 5, min: 1, max: 60, step: 1, unit: 'minutes' },
-  accent: { type: 'enum', default: '#fffa00', options: ['#fffa00', '#00f5a0', '#20b8ff', '#ff7a1a'], unit: 'color' },
+  accent: { type: 'enum', default: '#00f5a0', options: ['#fffa00', '#00f5a0', '#20b8ff', '#ff7a1a'], unit: 'color' },
   titleScale: { type: 'number', default: 65, min: 50, max: 100, step: 1, unit: '%' },
   topoMode: { type: 'enum', default: 'dynamic', options: ['dynamic', 'static', 'off'], unit: 'mode' },
   topoDepth: { type: 'number', default: 60, min: 0, max: 100, step: 1, unit: '%' },

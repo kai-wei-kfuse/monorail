@@ -1,0 +1,689 @@
+{
+  "status": "passed",
+  "rows": [
+    {
+      "layout": "fused",
+      "state": "idle",
+      "controls": [
+        {
+          "text": "开始START",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 238.53125,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 302.53125,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 414.2578125,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "开始START",
+          "disabled": false
+        },
+        {
+          "text": "",
+          "disabled": false
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    },
+    {
+      "layout": "fused",
+      "state": "free",
+      "controls": [
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 607.328125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 238.53125,
+          "y": 607.328125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 302.53125,
+          "y": 607.328125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 414.2578125,
+          "y": 607.328125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "暂停PAUSE",
+          "disabled": false
+        },
+        {
+          "text": "",
+          "disabled": false
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    },
+    {
+      "layout": "fused",
+      "state": "pending",
+      "controls": [
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 163.5234375,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "放弃DISCARD",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 304.6171875,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 427.3515625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 520.71875,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": false
+        },
+        {
+          "text": "放弃DISCARD",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    },
+    {
+      "layout": "fused",
+      "state": "card",
+      "controls": [
+        {
+          "text": "开始START",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 558.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "缩小SHRINK",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 267.8984375,
+          "y": 558.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "再抽一张NEXT",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 408.9921875,
+          "y": 558.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "放弃DISCARD",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 267.8984375,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 361.265625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "开始START",
+          "disabled": false
+        },
+        {
+          "text": "缩小SHRINK",
+          "disabled": false
+        },
+        {
+          "text": "再抽一张NEXT",
+          "disabled": false
+        },
+        {
+          "text": "放弃DISCARD",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    },
+    {
+      "layout": "split",
+      "state": "idle",
+      "controls": [
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 794.8984375,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 881.265625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 935.265625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 1021.6328125,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "开始START",
+          "disabled": false
+        },
+        {
+          "text": "",
+          "disabled": false
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": false
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    },
+    {
+      "layout": "split",
+      "state": "free",
+      "controls": [
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 794.8984375,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 881.265625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 935.265625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 1021.6328125,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 607.328125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 286.2578125,
+          "y": 607.328125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "暂停PAUSE",
+          "disabled": false
+        },
+        {
+          "text": "",
+          "disabled": false
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": false
+        },
+        {
+          "text": "暂停PAUSE",
+          "disabled": false
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    },
+    {
+      "layout": "split",
+      "state": "pending",
+      "controls": [
+        {
+          "text": "放弃DISCARD",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 730.1640625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 848.8984375,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 935.265625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 1021.6328125,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "放弃DISCARD",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 267.8984375,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 358.265625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 466.9921875,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "放弃DISCARD",
+          "disabled": false
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": false
+        },
+        {
+          "text": "放弃DISCARD",
+          "disabled": false
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    },
+    {
+      "layout": "split",
+      "state": "card",
+      "controls": [
+        {
+          "text": "放弃DISCARD",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 730.1640625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "暂停PAUSE",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 848.8984375,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.4",
+          "x": 935.265625,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 1021.6328125,
+          "y": 102,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "开始START",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 145.1640625,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "缩小SHRINK",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 267.8984375,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        },
+        {
+          "text": "再抽一张NEXT",
+          "disabled": true,
+          "focusBlocked": true,
+          "title": "从临时活动回来后可用",
+          "filter": "grayscale(1)",
+          "opacity": "0.45",
+          "x": 408.9921875,
+          "y": 622.828125,
+          "hoverTitle": "从临时活动回来后可用"
+        }
+      ],
+      "restored": [
+        {
+          "text": "放弃DISCARD",
+          "disabled": false
+        },
+        {
+          "text": "抽卡DRAW",
+          "disabled": true
+        },
+        {
+          "text": "开始START",
+          "disabled": false
+        },
+        {
+          "text": "缩小SHRINK",
+          "disabled": false
+        },
+        {
+          "text": "再抽一张NEXT",
+          "disabled": false
+        }
+      ],
+      "clicksDidNotChangeState": true,
+      "returnEnabled": true
+    }
+  ]
+}

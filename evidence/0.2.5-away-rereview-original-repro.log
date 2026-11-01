@@ -1,0 +1,79 @@
+{
+  "pendingAndAwayControls": {
+    "fused": {
+      "pause": true,
+      "stop": true,
+      "buttons": [
+        {
+          "text": "手动补录",
+          "label": null
+        },
+        {
+          "text": "抽一张卡DRAW",
+          "label": null
+        },
+        {
+          "text": "放弃DISCARD",
+          "label": null
+        },
+        {
+          "text": "暂停PAUSE",
+          "label": null
+        },
+        {
+          "text": "",
+          "label": "停止"
+        },
+        {
+          "text": "01:00",
+          "label": null
+        }
+      ]
+    },
+    "split": {
+      "pause": true,
+      "stop": true,
+      "buttons": [
+        {
+          "text": "计时",
+          "label": null
+        },
+        {
+          "text": "手动补录",
+          "label": null
+        },
+        {
+          "text": "54:17",
+          "label": null
+        },
+        {
+          "text": "放弃DISCARD",
+          "label": null
+        },
+        {
+          "text": "暂停PAUSE",
+          "label": null
+        },
+        {
+          "text": "",
+          "label": "停止"
+        },
+        {
+          "text": "抽卡DRAW",
+          "label": null
+        }
+      ]
+    }
+  },
+  "rejectedPendingCreation": {
+    "initiallyReadOnly": true,
+    "reportedErrors": [
+      "injected beginPending transaction failure"
+    ],
+    "beginPendingCalls": 1,
+    "committedPending": null,
+    "uiDeciding": false,
+    "uiFrozen": true,
+    "inputReadOnly": true
+  }
+}

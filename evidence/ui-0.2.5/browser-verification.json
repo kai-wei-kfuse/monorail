@@ -1,0 +1,150 @@
+{
+  "viewport": "960x820",
+  "checks": {
+    "look": {
+      "rootYellow": "#00f5a0",
+      "checkedRadios": [
+        "融合",
+        "",
+        "动态",
+        "完整"
+      ],
+      "swatchName": "薄荷绿"
+    },
+    "window": {
+      "radios": [
+        {
+          "text": "小窗口",
+          "checked": "true"
+        },
+        {
+          "text": "mini窗口",
+          "checked": "false"
+        }
+      ],
+      "desc": [
+        "小窗口显示项目、名称与进度格；mini窗口只保留单行名称、计时与按钮",
+        "Markdown + YAML，Obsidian、VS Code 都能直接打开"
+      ]
+    },
+    "listsInitial960": [
+      {
+        "title": "收藏",
+        "rowCount": 2,
+        "rows": [
+          {
+            "name": "学 408",
+            "comboClass": "combo flat",
+            "tagpickClass": "tagpick flat",
+            "comboBorderWidth": "0px",
+            "tagBorderWidth": "0px",
+            "chevDisplay": "none",
+            "rowRect": {
+              "width": 603,
+              "height": 82
+            },
+            "actsRightWithinRow": true
+          },
+          {
+            "name": "回消息",
+            "comboClass": "combo flat",
+            "tagpickClass": "tagpick flat",
+            "comboBorderWidth": "0px",
+            "tagBorderWidth": "0px",
+            "chevDisplay": "none",
+            "rowRect": {
+              "width": 603,
+              "height": 82
+            },
+            "actsRightWithinRow": true
+          }
+        ]
+      },
+      {
+        "title": "快捷活动",
+        "rowCount": 3,
+        "rows": [
+          {
+            "name": "厕所",
+            "comboClass": "combo flat",
+            "tagpickClass": "tagpick flat",
+            "comboBorderWidth": "0px",
+            "tagBorderWidth": "0px",
+            "chevDisplay": "none",
+            "rowRect": {
+              "width": 603,
+              "height": 82
+            },
+            "actsRightWithinRow": true
+          },
+          {
+            "name": "拿快递",
+            "comboClass": "combo flat",
+            "tagpickClass": "tagpick flat",
+            "comboBorderWidth": "0px",
+            "tagBorderWidth": "0px",
+            "chevDisplay": "none",
+            "rowRect": {
+              "width": 603,
+              "height": 82
+            },
+            "actsRightWithinRow": true
+          },
+          {
+            "name": "刷视频",
+            "comboClass": "combo flat",
+            "tagpickClass": "tagpick flat",
+            "comboBorderWidth": "0px",
+            "tagBorderWidth": "0px",
+            "chevDisplay": "none",
+            "rowRect": {
+              "width": 603,
+              "height": 82
+            },
+            "actsRightWithinRow": true
+          }
+        ]
+      },
+      {
+        "title": "休息池",
+        "rowCount": 0,
+        "rows": []
+      }
+    ],
+    "projectInteraction": {
+      "popItemsBefore": [
+        "待机",
+        "未分类",
+        "求职",
+        "学习",
+        "生活",
+        "运动",
+        "工作"
+      ],
+      "popItemsFiltered": [
+        "＋ 新建项目「家务」"
+      ]
+    },
+    "projectAndTagCommit": {
+      "projAfterCreate": "家务",
+      "chipsAfterAdd": [
+        {
+          "text": "#急",
+          "borderWidth": "0px"
+        }
+      ]
+    },
+    "tagRemoveInFavorites": {
+      "chipsBefore": [
+        "#408"
+      ],
+      "chipsAfter": []
+    },
+    "liveHomeDefault": {
+      "homeClass": "home fused",
+      "isFused": true,
+      "hasFusedCard": false,
+      "rootYellow": "#00f5a0"
+    }
+  }
+}

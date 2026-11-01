@@ -33,6 +33,7 @@ export function projectHome(input: ProjectionInput): HomeSlice {
     shrink: selected.no_shrink ? 'locked' as const : selected.shrink_level >= settings.shrinkMaxLevel ? 'max' as const : 'ok' as const,
   } : null;
   const mode = state.home_mode;
+  const resume = entries.find(entry => entry.id === state.resume_entry_id);
   return {
     mode, card, guideKind: guide(cards, tasks), closedEffectiveMs,
     currentSegStartedAt: tail?.started_at ?? null,
@@ -43,8 +44,10 @@ export function projectHome(input: ProjectionInput): HomeSlice {
     activity: { kind: current?.kind === '插入' ? 'away' : current?.project !== '待机' ? 'focus' : 'idle', label: current?.description ?? settings.lists.idleName, startedAt: current?.started_at ?? null },
     entry: current ? { id: current.id, description: current.description, project: current.project, tags: current.tags,
       startedAt: current.started_at, cardId: current.card_id, paused: current.kind === '暂停', kind: current.kind } : null,
+    resumeEntry: resume ? { id: resume.id, description: resume.description, project: resume.project, tags: resume.tags,
+      startedAt: resume.started_at, endedAt: resume.ended_at, cardId: resume.card_id, kind: resume.kind } : null,
     pending: state.pending_id ? { id: state.pending_id, startedAt: state.pending_at! } : null,
-    resumeDescription: entries.find(entry => entry.id === state.resume_entry_id)?.description ?? null,
+    resumeDescription: resume?.description ?? null,
     knownTags: knownTags([...entries, ...settings.lists.presets, ...cards], settings.lists.tags),
     dataVersion: version,
   };

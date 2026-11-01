@@ -1,0 +1,20 @@
+{
+  "newIsolatedLaunched": false,
+  "formalExe": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\Monorail-0.2.5-formal.exe",
+  "benchmarkStopped": true,
+  "userProcesses": [
+    {
+      "Id": 10052,
+      "Path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\Monorail-0.2.5-isolated.exe",
+      "Responding": true
+    },
+    {
+      "Id": 27148,
+      "Path": "C:\\Users\\kai_wei\\AppData\\Local\\单轨\\pixel-record.exe",
+      "Responding": true
+    }
+  ],
+  "formalProduct": "单轨",
+  "checkedAt": "2026-11-01T21:19:09.3150191+08:00",
+  "formalSha256": "0BF3E88AB0F33FDD142F4DFC81E526D4F8911670B418A769F3BB379C75E57584"
+}

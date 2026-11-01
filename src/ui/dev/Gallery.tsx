@@ -51,8 +51,7 @@ export function Gallery({ page: initial }: { page: string }) {
     <WindowButtons pinned={pinned} maximized={false} onPin={() => setPinned(!pinned)} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
   const statusBar = <StatusBar
-    left={<Button size="sm">快捷活动</Button>}
-    right={<><span>主线 ✓</span><span>支线 ·</span></>} />;
+    left={<Button size="sm">快捷活动</Button>} />;
   return <Frame titleBar={titleBar} statusBar={statusBar}>
     {page === 'home' && <HomeMock />}
     {page === 'settings' && <SettingsMock />}
@@ -117,7 +116,7 @@ function HomeMock() {
 
 function SettingsMock() {
   const [sec, setSec] = useState('timer'), [on, setOn] = useState(true), [v, setV] = useState(60), [seg, setSeg] = useState(0);
-  const [dd, setDd] = useState(0), [accent, setAccent] = useState('#fffa00'), [hk, setHk] = useState('Ctrl+Alt+Shift+R');
+  const [dd, setDd] = useState(0), [accent, setAccent] = useState('#00f5a0'), [hk, setHk] = useState('Ctrl+Alt+Shift+R');
   const items = [['card', '出卡', 'DEAL'], ['degrade', '降级', 'DEGRADE'], ['idea', '想法与回顾', 'IDEAS'], ['timer', '计时', 'TIMER'],
     ['acts', '快捷活动与休息池', 'LISTS'], ['look', '外观', 'APPEARANCE'], ['keys', '快捷键', 'HOTKEYS'], ['data', '窗口与数据', 'DATA'], ['about', '关于', 'ABOUT']]
     .map(([id, cn, en], i) => ({ id, cn, en, no: String(i + 1).padStart(2, '0') }));

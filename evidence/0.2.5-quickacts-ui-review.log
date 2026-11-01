@@ -1,0 +1,16 @@
+{
+  "openBeforeClick": true,
+  "closedImmediatelyOnTile": true,
+  "pickTimestampAccurate": true,
+  "reopenedImmediately": true,
+  "stillOpenAfter700ms": true,
+  "closedImmediatelyOnDigit": true,
+  "closedImmediatelyOnSleep": true,
+  "closedImmediatelyOnTemp": true,
+  "closedOnFailedTx": true,
+  "failedTxReportedWithoutOptimisticState": true,
+  "eventsCount": 5,
+  "errors": [
+    "tx_failed:pick"
+  ]
+}

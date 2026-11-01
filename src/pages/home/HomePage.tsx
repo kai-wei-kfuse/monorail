@@ -27,6 +27,8 @@ import { favorites, timerView } from './timerView';
 import { cardArea } from './cardArea';
 import { FreeCard } from './FreeCard';
 import { FusedCard } from './FusedCard';
+import { AwayDrawer } from './AwayDrawer';
+import { ActivityActions } from './ActivityActions';
 import { Dialog } from '../../ui/overlay/Dialog';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
 import { TagPicker } from '../../ui/controls/TagPicker';
@@ -202,15 +204,14 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
   else if (home.mode === 'blank') body = <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
     <div /><div className="alt-hero"><h1>现在做什么？</h1><p>抽一张卡，开始下一件事。</p></div><div />
-    <div className="foot"><ActionButton primary cn="抽卡" en="DRAW" icon="play" onClick={() => void act(() => actions.draw(new Date().toISOString()))} /></div>
+    <div className="foot"><ActivityActions className="actions" disabled={!!tv.away}><ActionButton primary cn="抽卡" en="DRAW" icon="play" onClick={() => void act(() => actions.draw(new Date().toISOString()))} /></ActivityActions></div>
   </CardFrame>;
   else if (home.mode === 'task' && view && task) {
-    const away = home.awayActivity !== null;
     const corner = <>
-      {away && <button type="button" className="c-link" onClick={() => void act(() => actions.resume(new Date().toISOString()))}>回来 · {home.awayActivity}</button>}
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
     </>;
-    body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner} picks={task.picks}
+    body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner} picks={task.picks} actionsDisabled={!!tv.away}
+      stateText={tv.away && home.card?.status === '进行中' && !tv.pending ? ['进行中（暂停）', 'PAUSED'] : undefined}
       onEditContent={task.onEditContent} actions={task.actions} fx={task.fx} />;
   } else body = <GuideCard kind={home.mode === 'guide' ? home.guideKind : 'allDone'} look={cardLook} onAction={() => onGuide(home.mode === 'guide' ? home.guideKind : 'allDone')} />;
 
@@ -230,6 +231,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {!fused && <TimerBar view={tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
     <div ref={stage} className="home-stage">
     {body}
+    {tv.away && home.mode !== 'rest' && <AwayDrawer away={tv.away} now={now} look={cardLook} projects={projects} knownTags={home.knownTags} actions={timerActions} />}
     {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}
       resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at } : null)} />}

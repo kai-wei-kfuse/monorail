@@ -41,7 +41,7 @@ export function CalendarPreview() {
     <StatusTag kind="focus" label="写周报" time="40:12" />
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
-  return <Frame titleBar={title} statusBar={<StatusBar left={<span>快捷活动</span>} right={<><span>主线 ✓</span><span>支线 ·</span></>} />}>
+  return <Frame titleBar={title} statusBar={<StatusBar left={<span>快捷活动</span>} />}>
     <CalendarPage entries={entries} projects={projects} knownTags={tags} boundaryHour={4} snapMinutes={5} showIdle={showIdle}
       isIdle={e => e.project === '待机'} actions={{
         create: async (start, end) => {

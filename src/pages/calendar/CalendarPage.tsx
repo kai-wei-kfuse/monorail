@@ -76,8 +76,7 @@ export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapM
     const start = Date.parse(e.started_at), end = Date.parse(e.ended_at!), len = end - start;
     actions.copy(e.id, end + len <= Date.now() ? end : start - len);
   };
-  return <PageFrame className="cal" no={no} en="CALENDAR" cn="日历" tools={tools}
-    desc={`拖空白处新建 · 拖上下边改起止 · 拖整块移动（可以跨天） · 按住 Ctrl 拖是复制 · Ctrl + 滚轮缩放 · 点一下编辑 · 吸附 ${snapMinutes} 分钟 · 同一段时间的几件事并排显示`}>
+  return <PageFrame className="cal" no={no} en="CALENDAR" cn="日历" tools={tools}>
     <div style={{ display: 'contents' }} onPointerDownCapture={() => setPop(null)}>
       <CalendarBoard days={days} today={today} now={now} entries={entries} isIdle={isIdle} showIdle={showIdle} colorOf={colorOf}
         step={snapMinutes * MIN} boundaryHour={boundaryHour} zoom={zoom} onZoom={pickZoom}

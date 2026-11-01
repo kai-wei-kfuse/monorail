@@ -5,7 +5,7 @@ const S = { fill: 'none', stroke: 'currentColor' } as const;
 const PATHS = {
   play: <path fill="currentColor" d="M4.5 2.6v10.8L13.2 8z" />,
   pause: <path fill="currentColor" d="M3.8 3h3v10h-3zM9.2 3h3v10h-3z" />,
-  stop: <path fill="currentColor" d="M3.5 3.5h9v9h-9z" />,
+  stop: <path fill="currentColor" d="M3 3h10v10H3z" />,
   check: <path {...S} strokeWidth="1.8" d="M2.8 8.4 6.4 12l6.8-7.6" />,
   shrink: <path {...S} strokeWidth="1.7" d="M2.5 13.5 6.8 9.2M7 13.2V9H2.8M13.5 2.5 9.2 6.8M9 2.8V7h4.2" />,
   lower: <path {...S} strokeWidth="1.7" d="M8 2.5v8M4.6 7.2 8 10.6l3.4-3.4M3 13.6h10" />,
@@ -13,6 +13,7 @@ const PATHS = {
   swap: <path {...S} strokeWidth="1.7" d="M2 5.5h10.5M9.8 2.7l2.8 2.8-2.8 2.8M14 10.5H3.5M6.2 7.7l-2.8 2.8 2.8 2.8" />,
   plus: <path {...S} strokeWidth="1.7" d="M8 2.5v11M2.5 8h11" />,
   arrow: <path {...S} strokeWidth="1.7" d="M2.5 8h10.5M9 4l4 4-4 4" />,
+  back: <path {...S} strokeWidth="1.7" d="M13.5 8H3M7 4 3 8l4 4" />,
   x: <path {...S} strokeWidth="1.6" d="M3.5 3.5l9 9M12.5 3.5l-9 9" />,
   chev: <path {...S} strokeWidth="1.8" d="M3.5 10.2 8 5.7l4.5 4.5" />,
   min: <path {...S} strokeWidth="1.2" d="M2.5 8.5h11" />,

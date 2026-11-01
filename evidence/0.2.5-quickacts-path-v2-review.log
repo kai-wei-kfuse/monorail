@@ -1,0 +1,147 @@
+{
+  "totalCases": 42,
+  "failedCases": [],
+  "unsafeRejected": true,
+  "rootSample": [
+    {
+      "root": "C:\\",
+      "rel": "settings.yaml",
+      "full": "C:\\settings.yaml",
+      "parent": "C:\\",
+      "expectedParent": "C:\\",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "C:/",
+      "rel": "settings.yaml",
+      "full": "C:/settings.yaml",
+      "parent": "C:/",
+      "expectedParent": "C:\\",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "C:\\data",
+      "rel": "settings.yaml",
+      "full": "C:\\data\\settings.yaml",
+      "parent": "C:\\data",
+      "expectedParent": "C:\\data",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "C:\\data\\",
+      "rel": "settings.yaml",
+      "full": "C:\\data\\settings.yaml",
+      "parent": "C:\\data",
+      "expectedParent": "C:\\data",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "C:/用户 数据/",
+      "rel": "settings.yaml",
+      "full": "C:/用户 数据/settings.yaml",
+      "parent": "C:/用户 数据",
+      "expectedParent": "C:\\用户 数据",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "\\\\server\\share",
+      "rel": "settings.yaml",
+      "full": "\\\\server\\share\\settings.yaml",
+      "parent": "\\\\server\\share",
+      "expectedParent": "\\\\server\\share\\",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "\\\\server\\share\\",
+      "rel": "settings.yaml",
+      "full": "\\\\server\\share\\settings.yaml",
+      "parent": "\\\\server\\share",
+      "expectedParent": "\\\\server\\share\\",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "\\\\server\\share\\嵌套 目录\\",
+      "rel": "settings.yaml",
+      "full": "\\\\server\\share\\嵌套 目录\\settings.yaml",
+      "parent": "\\\\server\\share\\嵌套 目录",
+      "expectedParent": "\\\\server\\share\\嵌套 目录",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "\\\\?\\C:\\",
+      "rel": "settings.yaml",
+      "full": "\\\\?\\C:\\settings.yaml",
+      "parent": "\\\\?\\C:\\",
+      "expectedParent": "\\\\?\\C:\\",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "\\\\?\\C:\\Users\\kai_wei\\AppData\\Roaming\\",
+      "rel": "settings.yaml",
+      "full": "\\\\?\\C:\\Users\\kai_wei\\AppData\\Roaming\\settings.yaml",
+      "parent": "\\\\?\\C:\\Users\\kai_wei\\AppData\\Roaming",
+      "expectedParent": "\\\\?\\C:\\Users\\kai_wei\\AppData\\Roaming",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "\\\\?\\UNC\\server\\share\\",
+      "rel": "settings.yaml",
+      "full": "\\\\?\\UNC\\server\\share\\settings.yaml",
+      "parent": "\\\\?\\UNC\\server\\share",
+      "expectedParent": "\\\\?\\UNC\\server\\share",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "/var/data",
+      "rel": "settings.yaml",
+      "full": "/var/data/settings.yaml",
+      "parent": "/var/data",
+      "expectedParent": "/var/data",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "/var/data/",
+      "rel": "settings.yaml",
+      "full": "/var/data/settings.yaml",
+      "parent": "/var/data",
+      "expectedParent": "/var/data",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    },
+    {
+      "root": "/",
+      "rel": "settings.yaml",
+      "full": "/settings.yaml",
+      "parent": "/",
+      "expectedParent": "/",
+      "parentIsAbsolute": true,
+      "fullMatches": true,
+      "parentMatches": true
+    }
+  ]
+}

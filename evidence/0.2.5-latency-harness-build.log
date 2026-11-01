@@ -1,0 +1,51 @@
+{
+  "config": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\tauri.benchmark.json",
+  "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.latency.t125910739070",
+  "frontend": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\frontend",
+  "scenarios": [
+    {
+      "variant": "baseline",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\small-baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      }
+    },
+    {
+      "variant": "optimized",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\small-optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      }
+    },
+    {
+      "variant": "optimized",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\large-optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      }
+    },
+    {
+      "variant": "baseline",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\large-baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "baselineCapturedAt": "2026-11-01T20:43:14.6758142+08:00",
+  "id": "125910739070",
+  "baseline": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\baseline",
+  "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070",
+  "purpose": "native IPC benchmark on synthetic isolated data; no user window interaction",
+  "config": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\tauri.benchmark.json",
+  "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.latency.t125910739070",
+  "executable": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\Monorail-latency-benchmark.exe",
+  "scenarios": [
+    {
+      "variant": "baseline",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\small-baseline",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      }
+    },
+    {
+      "variant": "optimized",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\small-optimized",
+      "size": {
+        "name": "small",
+        "cards": 5,
+        "tasks": 2,
+        "records": 10,
+        "reviews": 1
+      }
+    },
+    {
+      "variant": "optimized",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\large-optimized",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      }
+    },
+    {
+      "variant": "baseline",
+      "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-latency-125910739070\\data\\large-baseline",
+      "size": {
+        "name": "large",
+        "cards": 60,
+        "tasks": 12,
+        "records": 100,
+        "reviews": 8
+      }
+    }
+  ],
+  "pid": 47848,
+  "launchedAt": "2026-11-01T21:14:11.6785963+08:00",
+  "stopped": true,
+  "resultFile": "evidence/0.2.5-latency-native-results.json"
+}

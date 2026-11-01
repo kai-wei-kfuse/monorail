@@ -38,7 +38,6 @@ import { StatusBlock } from './shell/StatusBlock';
 import { QuickActs } from './shell/QuickActs';
 import { MiniToggle } from './shell/MiniToggle';
 import type { QuickAct } from './shell/QuickActs';
-import { BaselineMarks } from './shell/BaselineMarks';
 import { NoticeHost } from './shell/NoticeHost';
 import { useHotkeys } from './shell/hotkeys';
 import { useUpdates } from './useUpdates';
@@ -204,7 +203,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
         <span className="chev"><Icon name="plus" /></span><span className="t-cn">快速记录</span>
       </button>
       <MiniToggle on={miniOpen} onClick={() => void toggleMini()} /></>}
-    right={<>{page === 'settings' && <SavedBadge saves={saves} />}<BaselineMarks main={home.baseline.main} side={home.baseline.side} /></>} />;
+    right={page === 'settings' ? <SavedBadge saves={saves} /> : undefined} />;
 
   return <>
     <Frame titleBar={titleBar} statusBar={statusBar}>

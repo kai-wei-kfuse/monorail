@@ -40,7 +40,9 @@ export class TimelogV2Repo {
     const groups = new Map<string, TimeEntry[]>();
     for (const entry of valid) {
       const day = activityDay(entry.started_at, boundaryHour);
-      groups.set(day, [...(groups.get(day) ?? []), entry]);
+      const group = groups.get(day);
+      if (group) group.push(entry);
+      else groups.set(day, [entry]);
     }
     const writes: Write[] = [];
     for (const day of new Set([...this.index.keys(), ...groups.keys()])) {

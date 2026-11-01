@@ -141,3 +141,105 @@ it('starting a backpack card switches from active/paused/rest/pending states, is
   // 6. 不在背包的卡片抛错拒绝
   await expect(startCard(f.ctx, 'cold-card', at(26))).rejects.toThrow('不在背包');
 });
+it('ADR 0006: projects resumeEntry across consecutive/paused inserts, recomputes partial/full readout overwrite, and preserves claim/pending rules', async () => {
+  const f = fixture();
+  await seed(f, [card('c1', { content: '写论文' })]);
+
+  // 1. 自由记录 -> 插入「上厕所」-> 连续插入「拿快递」：resumeEntry 始终保持为「学 408」及离开时刻 endedAt
+  await startFree(f.ctx, { description: '学 408', project: '学习', tags: ['408'] }, at(0));
+  const studyId = open(f).id;
+  f.clock(at(25));
+  await insert(f.ctx, '上厕所', at(25));
+  expect(f.home().entry).toMatchObject({ description: '上厕所', kind: '插入', startedAt: at(25) });
+  expect(f.home().resumeEntry).toMatchObject({ id: studyId, description: '学 408', project: '学习', tags: ['408'], startedAt: at(0), endedAt: at(25) });
+
+  f.clock(at(27));
+  await insert(f.ctx, '拿快递', at(27));
+  const parcelId = open(f).id;
+  expect(f.home().entry).toMatchObject({ id: parcelId, description: '拿快递', kind: '插入', startedAt: at(27) });
+  expect(f.home().resumeEntry).toMatchObject({ id: studyId, description: '学 408', startedAt: at(0), endedAt: at(25) });
+
+  // 2. 部分覆盖：将「拿快递」(27..30) 读数改为 15 分钟（起点前移至 at(15)），截短「学 408」为 0..15，resumeEntry 仍保留
+  f.clock(at(30));
+  const partialPreview = await commitReadout(f.ctx, { target: { mode: 'entry', id: parcelId }, at: at(30), milliseconds: 15 * 60000 }, null);
+  expect(partialPreview.kind).toBe('confirm');
+  if (partialPreview.kind === 'confirm') {
+    const partialDone = await commitReadout(f.ctx, { target: { mode: 'entry', id: parcelId }, at: at(30), milliseconds: 15 * 60000 }, partialPreview.plan);
+    expect(partialDone.kind).toBe('done');
+  }
+  expect(f.home().resumeEntry).toMatchObject({ id: studyId, description: '学 408', startedAt: at(0), endedAt: at(15) });
+  f.clock(at(32));
+  await resume(f.ctx, at(32));
+  expect(open(f)).toMatchObject({ description: '学 408', project: '学习', tags: ['408'], kind: '普通', started_at: at(32) });
+
+  // 3. 从暂停状态插入临时活动：保留暂停前的 resumeEntry
+  f.clock(at(40));
+  await pause(f.ctx, at(40));
+  const pausedTargetId = f.home().resumeEntry?.id;
+  expect(pausedTargetId).toBeTruthy();
+  f.clock(at(42));
+  await insert(f.ctx, '喝水', at(42));
+  expect(f.home().resumeEntry?.id).toBe(pausedTargetId);
+
+  // 4. 任务卡进行中插入临时活动 + 待确认并存 + 完全覆盖导致返回目标失效与卡释放（同时保留 pending）
+  f.clock(at(50));
+  await startCard(f.ctx, 'c1', at(50));
+  f.clock(at(60));
+  await insert(f.ctx, '上厕所', at(60));
+  const wcId = open(f).id;
+  expect(f.home().card?.status).toBe('进行中');
+  expect(f.home().resumeEntry).toMatchObject({ cardId: 'c1', startedAt: at(50), endedAt: at(60) });
+
+  // 在临时活动期间开启 pending（at(62)）并修改 pending 读数
+  f.clock(at(62));
+  await beginPending(f.ctx, at(62));
+  const pid = f.home().pending!.id;
+  await commitReadout(f.ctx, { target: { mode: 'pending', id: pid }, at: at(62), milliseconds: 60000 }, null);
+  expect(f.home().pending).toEqual({ id: pid, startedAt: at(61) });
+
+  // 完全覆盖：在 at(65) 将「上厕所」读数改为 20 分钟（起点前移至 at(45) <= at(50)），完全覆盖 c1 的运行段
+  f.clock(at(65));
+  const fullPreview = await commitReadout(f.ctx, { target: { mode: 'entry', id: wcId }, at: at(65), milliseconds: 20 * 60000 }, null);
+  expect(fullPreview.kind).toBe('confirm');
+  if (fullPreview.kind === 'confirm') {
+    await commitReadout(f.ctx, { target: { mode: 'entry', id: wcId }, at: at(65), milliseconds: 20 * 60000 }, fullPreview.plan);
+  }
+  expect((await f.ctx.repos.state.read()).resume_entry_id).toBeNull();
+  expect((await getCard(f, 'c1')).status).toBe('待做');
+  expect(f.home().resumeEntry).toBeNull();
+  expect(f.home().card).toBeNull();
+  // 完全覆盖返回目标后，原有的 pending ID 与起点仍然保留
+  expect(f.home().pending).toEqual({ id: pid, startedAt: at(61) });
+
+  // 取消 pending，临时活动保持运行；随后点「回来」因无返回目标转为待机
+  f.clock(at(66));
+  await cancelPending(f.ctx, pid, at(66));
+  expect(f.home().pending).toBeNull();
+  expect(open(f).id).toBe(wcId);
+  f.clock(at(67));
+  await resume(f.ctx, at(67));
+  expect(open(f)).toMatchObject({ project: '待机', kind: '普通', started_at: at(67) });
+
+  // 5. 验证两条 pending + 插入路径的 claim 时间语义：
+  // 路径 A：先 pending(at(70))、再插入(at(75))、后确认(at(80)) -> 插入段保留 75..80，新活动从 at(80) 开始
+  f.clock(at(70));
+  await beginPending(f.ctx, at(70));
+  f.clock(at(75));
+  await insert(f.ctx, '洗手', at(75));
+  const washId = open(f).id;
+  f.clock(at(80));
+  await startFree(f.ctx, { description: '路径A新活动', project: '工作', tags: [] }, at(80));
+  expect(entries(f).find(e => e.id === washId)).toMatchObject({ started_at: at(75), ended_at: at(80) });
+  expect(open(f)).toMatchObject({ description: '路径A新活动', started_at: at(80) });
+
+  // 路径 B：先插入(at(90))、再 pending(at(95))、后确认(at(100)) -> 插入段在 at(95) 截断，新活动从 at(95) 开始
+  f.clock(at(90));
+  await insert(f.ctx, '倒水', at(90));
+  const waterId = open(f).id;
+  f.clock(at(95));
+  await beginPending(f.ctx, at(95));
+  f.clock(at(100));
+  await startFree(f.ctx, { description: '路径B新活动', project: '工作', tags: [] }, at(100));
+  expect(entries(f).find(e => e.id === waterId)).toMatchObject({ started_at: at(90), ended_at: at(95) });
+  expect(open(f)).toMatchObject({ description: '路径B新活动', started_at: at(95) });
+});

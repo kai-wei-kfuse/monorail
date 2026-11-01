@@ -12,7 +12,7 @@ export function MiniPreview() {
   const bus = useMemo<MiniWindowBus>(() => {
     const iso = (t: number) => new Date(t).toISOString(), t0 = Date.now();
     let s: MiniSnapshot = {
-      accent: '#fffa00', miniMode: tiny ? 'tiny' : 'mini', revision: 1, entryId: 'e1', cardId: null, pending_id: null,
+      accent: '#00f5a0', miniMode: tiny ? 'tiny' : 'mini', revision: 1, entryId: 'e1', cardId: null, pending_id: null,
       entry: { id: 'e1', description: '写周报', project: '工作', tags: [], startedAt: iso(t0 - 25 * 60_000), cardId: null, kind: '普通' },
       pending: null, resumeDescription: null, card: null, closedEffectiveMs: 0, currentSegStartedAt: null, awayActivity: null,
       projects: [{ name: '未分类', color: '#888884' }, { name: '工作', color: '#7c5cff' }, { name: '学习', color: '#1aa3ff' }], knownTags: ['周报', '408'],

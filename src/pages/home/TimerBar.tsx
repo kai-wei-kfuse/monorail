@@ -13,14 +13,17 @@ import { formatReadout } from '../../shared/duration';
 import { TimeField } from './TimeField';
 import type { ReadoutOutcome, ReadoutRequest } from './TimeField';
 import { EntryLine, useEntry } from './useEntry';
+import { ActivityActions } from './ActivityActions';
 import './timer.css';
 
 /** 正在计的那一条（homeSlice.entry）。 */
 export interface TimerEntry {
-  id: string; description: string; project: string; tags: string[]; startedAt: string; cardId: string | null; kind: '普通' | '插入' | '暂停';
+  id: string; description: string; project: string; tags: string[]; startedAt: string; endedAt?: string | null; cardId: string | null; kind: '普通' | '插入' | '暂停';
 }
 export interface TimerView {
   entry: TimerEntry | null;
+  /** 正在计的临时活动（kind === '插入'）；存在时右上角弹出 AwayDrawer，底层 entry 保持为被中断的原活动（resumeEntry）。 */
+  away?: TimerEntry | null;
   /** 正在计的是待机。 */
   idle: boolean;
   /** 待确认：从 startedAt 起在计时，还没写盘；id 标识这一轮，放弃时带上。 */
@@ -61,7 +64,7 @@ export interface TimerActions {
 
 /** 正在计时时「＋」的位置换成它（融合大卡也用）；不在计时时那里还是「＋」。 */
 export function StopButton({ onClick }: { onClick: () => void }) {
-  return <button type="button" className="tbar-new" aria-label="停止" title="停止计时，转为待机" onClick={onClick}><Icon name="stop" /></button>;
+  return <button type="button" className="tbar-new stop" data-entry-keep="" aria-label="停止" title="停止计时，转为待机" onClick={onClick}><Icon name="stop" /></button>;
 }
 
 /**
@@ -73,10 +76,12 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
     onDraft?: (text: string | null) => void }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
-  const E = useEntry(view, actions), { entry, pending, paused } = view, { running, cardRun, deciding, locked, kind, focused, editing, draft } = E;
+  const E = useEntry(view, actions), { entry, pending, paused } = view, { running, cardRun, deciding, locked, isFrozen, kind, focused, editing, draft } = E;
   useEffect(() => { onDraft?.(draft); }, [draft, onDraft]);
 
-  const elapsed = Math.max(0, now - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
+  const endMs = pending ? now : entry?.endedAt ? Date.parse(entry.endedAt) : now;
+  const elapsed = Math.max(0, endMs - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
+  const canEditTime = !!pending || (!!running && !view.away);
   const readoutText = formatReadout(elapsed, 'mmss'), splitAt = readoutText.lastIndexOf(':');
   const headDigits = readoutText.slice(0, splitAt), tailSec = readoutText.slice(splitAt);
   const label = {
@@ -101,35 +106,38 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
               {running.kind !== '普通' && <span className="tbar-pill">{running.kind === '插入' ? '离开中' : '暂停中'}</span>}
               {cardRun && <span className="tbar-pill is-card">卡</span>}
             </span>}
-            {/* 设为收藏：收藏不关联卡，带卡的这条不给。按下时不抢焦点，免得进到「改这一条」 */}
-            {running && !cardRun && !focused && !deciding && <button type="button" className="tbar-fav" tabIndex={-1} aria-label="设为收藏"
+            {/* 设为收藏：收藏不关联卡，带卡或底层冻结的条目不给。按下时不抢焦点，免得进到「改这一条」 */}
+            {running && !cardRun && !view.away && !focused && !deciding && <button type="button" className="tbar-fav" tabIndex={-1} aria-label="设为收藏"
               title={`把「${running.description}」设为收藏（描述、项目、标签）`} onMouseDown={e => e.preventDefault()}
               onClick={() => actions.favorite(running.id)}><Icon name="pin" /></button>}
-            {focused && !editing && !locked && <Suggest query={E.inputProps.value} data={view.suggest}
+            {focused && !editing && !locked && !isFrozen && <Suggest query={E.inputProps.value} data={view.suggest}
               onFavorite={id => E.choose(() => actions.startFavorite(id))} onCard={id => E.choose(() => actions.startCard(id))}
               onRecent={id => E.choose(() => actions.continueEntry(id))} />}
           </div>
           <ProjectPicker id="tbar-project" value={E.projectValue} options={view.projects}
-            onChange={E.pickProject} onCreate={actions.createProject} disabled={locked} onKeyDown={E.keys} />
+            onChange={E.pickProject} onCreate={actions.createProject} disabled={locked || isFrozen} onKeyDown={E.keys} />
           <TagPicker id="tbar-tags" value={E.tagsValue} options={view.knownTags}
-            onChange={E.pickTags} onCreate={actions.createTag} disabled={locked} onKeyDown={E.keys} />
+            onChange={E.pickTags} onCreate={actions.createTag} disabled={locked || isFrozen} onKeyDown={E.keys} />
         </div>
         <div className="tbar-time">
           <div className={`tbar-clock${kind === 'idle' ? ' idle' : ''}`}><span className="k">{label[1]}<em>{label[2]}</em></span>
-            <b><TimeField id="elapsed" kind="mmss" shown={elapsed} disabled={kind === 'idle'} submit={actions.readout} onNote={E.setNote}
-              target={() => pending ? { mode: 'pending', id: pending.id } : running ? { mode: 'entry', id: running.id } : null}>
+            <b><TimeField id="elapsed" kind="mmss" shown={elapsed} disabled={!canEditTime} submit={actions.readout} onNote={E.setNote}
+              target={() => pending ? { mode: 'pending', id: pending.id } : running && !view.away ? { mode: 'entry', id: running.id } : null}>
               {headDigits}<small>{tailSec}</small></TimeField></b>
           </div>
         </div>
-        <div className="tbar-acts">
-          {pending ? <ActionButton compact cn="放弃" en="DISCARD" icon="x" title="放弃这次计时，这段时间照旧" onClick={() => actions.cancelPending(pending.id)} />
-            : running ? <ActionButton primary compact cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />
+        <ActivityActions className="tbar-acts" disabled={!!view.away}>
+          {pending ? <>
+            <ActionButton compact data-entry-discard="" cn="放弃" en="DISCARD" icon="x" title="放弃这次计时，这段时间照旧" onClick={() => actions.cancelPending(pending.id)} />
+            {view.away && <ActionButton compact data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />}
+          </>
+            : running || view.away ? <ActionButton primary compact data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />
             : paused ? <ActionButton primary compact cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.resume} />
-            : <ActionButton primary compact cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={() => E.input.current?.focus()} />}
-          {running && !deciding ? <StopButton onClick={actions.stop} />
-            : <button type="button" className="tbar-new" disabled={!!pending} aria-label="开始想下一件事" title="开始想下一件事" onClick={E.next}><Icon name="plus" /></button>}
+            : <ActionButton primary compact cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={E.next} />}
+          {((running && !deciding) || !!view.away) && <StopButton onClick={actions.stop} />}
+          {(!running || !!view.away) && !deciding && <button type="button" className="tbar-new" disabled={!!pending} aria-label="开始想下一件事" title="开始想下一件事" onClick={E.next}><Icon name="plus" /></button>}
           <ActionButton compact cn="抽卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />
-        </div>
+        </ActivityActions>
       </div>
       <div className="tbar-sub"><EntryLine view={view} note={E.note} /></div>
     </>}

@@ -17,6 +17,8 @@ const source = (home: Partial<HomeSlice>, entries: Entry[] = [], more: Partial<T
   ({ home: { ...initialHome, ...home }, entries, cards: [], tasks: [], settings, projects: [], ...more });
 const asEntry = (e: Entry): HomeSlice['entry'] => ({ id: e.id, description: e.description, project: e.project, tags: e.tags, startedAt: e.started_at,
   cardId: e.card_id, paused: e.kind === '暂停', kind: e.kind });
+const asResume = (e: Entry): HomeSlice['resumeEntry'] => ({ id: e.id, description: e.description, project: e.project, tags: e.tags, startedAt: e.started_at,
+  endedAt: e.ended_at, cardId: e.card_id, kind: e.kind });
 
 describe('timerView', () => {
   it('待机：idle，没有暂停目标；没卡时可以抽卡', () => {
@@ -40,5 +42,18 @@ describe('timerView', () => {
       { cards: [card], tasks: [{ id: 'm', name: '求职', slot: '主线', slotIndex: 1 } as TimerSource['tasks'][number]] }));
     expect([v.canDraw, v.waitingCard]).toEqual([false, true]);
     expect(v.suggest.cards).toEqual([{ id: 'k', content: '改 简历', track: '主线' }]);
+  });
+  it('ADR 0006：插入临时活动时 away 指向临时活动，底层 entry 保持为 resumeEntry（若无返回目标则为待机）', () => {
+    const study = entry('s1', '学 408', '学习', t(9), t(9, 25));
+    const wc = entry('w1', '上厕所', '生活', t(9, 25), null, '插入');
+    const v1 = timerView(source({ entry: asEntry(wc), resumeEntry: asResume(study), resumeDescription: '学 408' }, [study, wc]));
+    expect(v1.away).toMatchObject({ id: 'w1', description: '上厕所', kind: '插入' });
+    expect(v1.entry).toMatchObject({ id: 's1', description: '学 408', project: '学习', startedAt: t(9), endedAt: t(9, 25) });
+    expect([v1.idle, v1.paused]).toEqual([false, null]);
+
+    // 从待机插入或返回目标被完全覆盖清空后：away 仍在，底层 entry 为 null 且 idle 为 true
+    const v2 = timerView(source({ entry: asEntry(wc), resumeEntry: null, resumeDescription: null }, [wc]));
+    expect(v2.away).toMatchObject({ id: 'w1', description: '上厕所' });
+    expect([v2.entry, v2.idle, v2.paused]).toEqual([null, true, null]);
   });
 });

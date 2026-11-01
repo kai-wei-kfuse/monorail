@@ -1,0 +1,109 @@
+{
+  "checks": {
+    "idleAwayAndStartButton": {
+      "drawerExists": true,
+      "readOnlyBefore": true,
+      "readOnlyAfterStart": false,
+      "pendingCreatedByStartBtn": true,
+      "drawerClosedAfterResume": true,
+      "ordinaryFusedEditPersistedBeforePause": true,
+      "ordinaryFusedEditPersistedBeforeStop": true,
+      "stopBtnColor": "rgb(196, 43, 28)",
+      "stopSvgSize": {
+        "width": 22,
+        "height": 22
+      }
+    },
+    "fusedFreeAndAway": {
+      "underlyingValue": "学 408",
+      "underlyingReadOnly": true,
+      "fProjDisabled": true,
+      "fTagsDisabled": true,
+      "fElapsedDisabled": true,
+      "stateRow": "进行中（暂停）",
+      "drawerTitle": "上厕所",
+      "pendingAfterReadonlyFocus": false,
+      "canTypeAfterPlusFromReadonly": true,
+      "typedDraftValue": "临时草稿",
+      "restoredValueAfterEsc": "学 408",
+      "restoredReadOnlyAfterEsc": true
+    },
+    "geometry960": {
+      "viewport": "960x600",
+      "drawer": {
+        "width": 363,
+        "height": 148,
+        "bottom": 162
+      },
+      "meterTop": 310,
+      "footTop": 380,
+      "noOverlapWithMeterOrFoot": true
+    },
+    "geometry1440": {
+      "viewport": "1440x900",
+      "drawer": {
+        "width": 480,
+        "height": 208,
+        "bottom": 222
+      },
+      "meterTop": 533,
+      "footTop": 639,
+      "noOverlapWithMeterOrFoot": true
+    },
+    "drawerTagPopup": {
+      "popOpen": true,
+      "popOptions": [
+        "#408",
+        "#户外",
+        "#面试",
+        "#python"
+      ],
+      "popHeight": 138
+    },
+    "drawerCommitsAndReadout": {
+      "chipAdded": [
+        "#快件"
+      ],
+      "committedProjValue": "家务",
+      "renamedTitle": "下楼取件",
+      "persistedInStore": true,
+      "chipsAfterRemove": [],
+      "hitConfirmShown": true,
+      "hitClearedAfterCancel": true,
+      "readoutAfterCancel": "00:02",
+      "readoutAfterConfirm": "15:00",
+      "switchedDrawerTitle": "拿快递"
+    },
+    "fusedPendingAndAwayPause": {
+      "hasBothPauseAndStop": true,
+      "drawerClosed": true,
+      "pendingKept": true,
+      "draftKept": true,
+      "resumeEntryUntouched": true
+    },
+    "splitFreeAndAway": {
+      "ordinarySplitEditPersistedBeforePause": true,
+      "ordinarySplitEditPersistedBeforeStop": true,
+      "tbarValue": "学 408",
+      "tbarReadOnly": true,
+      "tbarElapsedDisabled": true,
+      "freeCardTitle": "学 408",
+      "freeProjValue": "学习",
+      "freeProjDisabled": true,
+      "freeStateRow": "进行中（暂停）",
+      "noOverlapWithMeter": true
+    },
+    "splitPendingAndAwayStop": {
+      "hasControls": true,
+      "drawerClosed": true,
+      "pendingKept": true,
+      "draftKept": true,
+      "resumeEntryUntouched": true
+    },
+    "calendarAndDockCleanup": {
+      "calendarDescRemoved": true,
+      "calendarBoardHeight": 435,
+      "dockBaselineRemoved": true
+    }
+  }
+}

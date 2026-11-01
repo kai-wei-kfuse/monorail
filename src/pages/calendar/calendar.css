@@ -1,5 +1,5 @@
 /* 日历（UI 规范 §11.6）。外框是 ui/layout 的 PageFrame */
-.pg.cal { display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; }
+.pg.cal { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
 .cal-nav { display: inline-flex; border: 1px solid var(--line-2); background: var(--paper-2); }
 .cal-nav button { width: 34px; height: 32px; display: grid; place-items: center; }
 .cal-nav button svg { width: 13px; height: 13px; }

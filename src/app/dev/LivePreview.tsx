@@ -27,9 +27,11 @@ export function LivePreview() {
   useEffect(() => { void (async () => {
     const settings = structuredClone(defaults);
     settings.lists.projects = PREVIEW_PROJECTS; settings.lists.tags = PREVIEW_TAGS;
-    if (layout === 'fused') settings.homeLayout = 'fused';
+    if (layout === 'split' || layout === 'fused') settings.homeLayout = layout;
     settings.lists.presets = [{ id: 'f1', name: '学 408', project: '学习', tags: ['408'], mode: '切换', place: '计时条' },
-      { id: 'f2', name: '回消息', project: '工作', tags: [], mode: '切换', place: '计时条' }];
+      { id: 'f2', name: '回消息', project: '工作', tags: [], mode: '切换', place: '计时条' },
+      { id: 'q1', name: '上厕所', project: '生活', tags: [], mode: '插入', place: '弹层' },
+      { id: 'q2', name: '拿快递', project: '生活', tags: [], mode: '插入', place: '弹层' }];
     const repos = createRepos(new MemoryFs()), at = new Date().toISOString();
     const ctx = createContext({ repos, settings, id: () => crypto.randomUUID(), now: () => new Date().toISOString(),
       publish: publishProjection, log: async () => {}, reminders: { update: async () => {} }, random: Math.random });
@@ -56,7 +58,10 @@ export function LivePreview() {
     <HomePage actions={actions} intro={null} completeAt={null} onCompleteConsumed={() => {}} shrinkFor={null} onShrinkConsumed={() => {}}
       look={{ titleScale: 1, topoMode: 'off', topoDepth: 0, shrinkMaxLevel: 3, timeboxDefault: 30 }} onGuide={() => {}} onOpenReview={() => {}} />
     <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)', maxHeight: 120, overflow: 'auto' }}>
-      <div>mode={home.mode} · 待确认：{home.pending ? hms(home.pending.startedAt) : '无'} · 卡：{home.card ? `${home.card.content}（${home.card.status}）` : '无'}{errors.length > 0 && ` · 出错：${errors.join(' / ')}`}</div>
+      <div>mode={home.mode} · 待确认：{home.pending ? hms(home.pending.startedAt) : '无'} · 卡：{home.card ? `${home.card.content}（${home.card.status}）` : '无'}{errors.length > 0 && ` · 出错：${errors.join(' / ')}`}
+        {' · '}<button type="button" id="dev-away-wc" onClick={() => void actions.startPreset('q1', new Date().toISOString())}>插入：上厕所</button>
+        {' '}<button type="button" id="dev-away-parcel" onClick={() => void actions.startPreset('q2', new Date().toISOString())}>插入：拿快递</button>
+      </div>
       <ol>{entries.map(e => <li key={e.id}>{e.description} [{e.project}{e.tags.map(t => ' #' + t).join('')}]{e.card_id ? ' 卡' : ''} {e.kind} {hms(e.started_at)} – {e.ended_at ? hms(e.ended_at) : '现在'}</li>)}</ol>
     </div>
   </div>;

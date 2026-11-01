@@ -1,0 +1,11 @@
+{
+  "productVersion": "0.2.5",
+  "productName": "单轨",
+  "builtAt": "2026-11-01T22:19:07.4805160+08:00",
+  "fileVersion": "0.2.5",
+  "executable": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-release-preparation\\Monorail-0.2.5-formal-debug.exe",
+  "launched": false,
+  "configuration": "formal default tauri.conf.json; debug; no-bundle; VITE_VERIFY=false; no verify feature",
+  "signedInstaller": false,
+  "sha256": "2ACD381AE67CFC5BD70DE9CD4558E206127F3ED05854E9FF530C75EF74C034F9"
+}

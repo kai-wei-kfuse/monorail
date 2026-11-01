@@ -1,0 +1,25 @@
+{
+  "note": "Canonical files outside app Git repository. Carry original files when moving workspaces; this is an inventory, not a replacement specification.",
+  "files": [
+    {
+      "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\架构设计.md",
+      "bytes": 40734,
+      "sha256": "9d1046fa7e6046d5c91f316374c1d3003f8d194ded43f3cd7f6992d2b398cda3"
+    },
+    {
+      "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\像素记录系统 设计文档 v0.3.md",
+      "bytes": 66230,
+      "sha256": "7ef6cf92c6f2e874ec1866653966d47a5b563a586ecfdbdd793ca0263be01c4f"
+    },
+    {
+      "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\UI风格规范.md",
+      "bytes": 46053,
+      "sha256": "ba28600820a6f034bb07cc845ed89988d3b5074daa4437ed8ef529dbade110a2"
+    },
+    {
+      "path": "C:\\Users\\kai_wei\\Documents\\1026(4)\\原型\\原型说明.md",
+      "bytes": 9145,
+      "sha256": "104018fe6c9def7dfa87f7838a7f01cf6eadc7d0f26f8486d52e3c58a5b3ebd8"
+    }
+  ]
+}

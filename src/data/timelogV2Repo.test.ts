@@ -27,3 +27,27 @@ it('does not publish a partial write, and recovery reconstructs the full timelin
   fs.beforeWrite = undefined; await journal.recover();
   expect(await new TimelogV2Repo(fs).scan(now, 4)).toEqual([entry()]);
 });
+
+it('groups days without changing input or committed index and writes only changed days', async () => {
+  const fs = new MemoryFs(), repo = new TimelogV2Repo(fs), journal = new Journal(fs), now = time(28, 8);
+  const rows = Object.freeze([
+    Object.freeze({ ...entry(), id: 'a', started_at: time(27, 9), ended_at: time(27, 10) }),
+    Object.freeze({ ...entry(), id: 'b', started_at: time(27, 11), ended_at: time(27, 12) }),
+    Object.freeze({ ...entry(), id: 'c', started_at: time(28, 5), ended_at: time(28, 6) }),
+  ]);
+  const before = structuredClone(rows);
+  const writes = await repo.writes(rows, now, 4);
+  expect(rows).toEqual(before);
+  expect(repo.snapshot()).toEqual([]);
+  expect(await fs.list('timelog')).toEqual([]);
+  await journal.run(crypto.randomUUID(), writes);
+  repo.acceptCommitted(writes);
+  expect(repo.snapshot()).toEqual(before);
+  const updated = rows.map(row => row.id === 'b' ? { ...row, description: 'changed' } : row);
+  const change = await repo.writes(updated, now, 4);
+  expect(change).toHaveLength(1);
+  expect(repo.snapshot()).toEqual(before);
+  await journal.run(crypto.randomUUID(), change);
+  repo.acceptCommitted(change);
+  expect(repo.snapshot()).toEqual(updated);
+});

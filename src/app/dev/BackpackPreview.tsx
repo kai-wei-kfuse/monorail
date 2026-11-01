@@ -8,7 +8,6 @@ import type { IdeaView, TaskView, QueueGroup } from '../../pages/backpack/types'
 import { NEW_CARD } from '../../widgets/CardEditor';
 import type { PoolView } from '../../pages/backpack/TaskPool';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
-import { BaselineMarks } from '../shell/BaselineMarks';
 
 const ago = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
 const TASKS: TaskView[] = [
@@ -60,7 +59,7 @@ export function BackpackPreview({ tab: initial, overlay }: { tab: string; overla
   const title = <TitleBar name="单轨" tabs={TABS} active="backpack" onTab={() => {}}>
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
-  return <Frame titleBar={title} statusBar={<StatusBar right={<BaselineMarks main side={false} />} />}>
+  return <Frame titleBar={title} statusBar={<StatusBar />}>
     <BackpackPage tab={tab} onTab={setTab} pool={pool(FULL)} tasks={TASKS} queue={QUEUE} ideas={IDEAS} knownTags={PREVIEW_TAGS}
       ideaLimit={10} defaultTimebox={60} actions={noop} />
   </Frame>;

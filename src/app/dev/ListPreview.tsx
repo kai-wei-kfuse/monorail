@@ -29,7 +29,7 @@ export function ListPreview() {
     <StatusTag kind="focus" label="写周报" time="40:12" />
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
-  return <Frame titleBar={title} statusBar={<StatusBar left={<span>快捷活动</span>} right={<><span>主线 ✓</span><span>支线 ·</span></>} />}>
+  return <Frame titleBar={title} statusBar={<StatusBar left={<span>快捷活动</span>} />}>
     <ListPage entries={entries} projects={projects} knownTags={tags} boundaryHour={4} isIdle={e => e.project === '待机'} showIdle={showIdle} onShowIdle={setShowIdle} actions={{
       patch: (id, patch) => edit(id, e => ({ ...e, ...patch })),
       setStart: (id, text) => edit(id, e => { const t = atClock(Date.parse(e.started_at), text); return Number.isFinite(t) ? { ...e, started_at: iso(t) } : e; }),

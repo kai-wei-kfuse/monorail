@@ -25,4 +25,11 @@ describe('cardArea', () => {
     expect(cardArea(null, { ...idle, entry: e({ project: '待机', kind: '暂停' }), paused: '写周报' }, null)).toBe('free');
   });
   it('抽了卡、正在待确认、没写字：显示卡（点卡上的开始）', () => expect(cardArea(null, { ...idle, pending }, '待做')).toBe('card'));
+  it('ADR 0006：插入临时活动时，自由记录保持 free、任务卡保持 card、从待机插入保持 none', () => {
+    const away = e({ id: 'w', description: '上厕所', project: '生活', kind: '插入' });
+    const resumeFree = e({ id: 'f', description: '学 408', project: '学习', endedAt: '2026-10-28T08:25:00Z' });
+    expect(cardArea(null, { entry: resumeFree, away, idle: false, pending: null, paused: null }, null)).toBe('free');
+    expect(cardArea(null, { entry: e({ cardId: 'k', endedAt: '2026-10-28T08:25:00Z' }), away, idle: false, pending: null, paused: null }, '进行中')).toBe('card');
+    expect(cardArea(null, { entry: null, away, idle: true, pending: null, paused: null }, null)).toBe('none');
+  });
 });

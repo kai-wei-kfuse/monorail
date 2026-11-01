@@ -1,0 +1,8 @@
+
+> pixel-record@0.2.5 tauri
+> tauri build --debug --no-bundle --config C:\Users\kai_wei\AppData\Local\Temp\monorail-025-latency-125910739070\tauri.benchmark.json
+
+        Info Looking up installed tauri packages to check mismatched versions...
+   Compiling pixel-record v0.2.5 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.59s
+       Built application at: C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\debug\pixel-record.exe
