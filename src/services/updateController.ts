@@ -1,5 +1,5 @@
 import type { UpdatesPort } from '../platform/updater';
-import type { UpdateState } from '../shared/updates';
+import type { UpdateChannel, UpdateState } from '../shared/updates';
 import type { Ctx } from './commit';
 import { installUpdate } from './updateService';
 
@@ -36,10 +36,30 @@ export function createUpdateController({ ctx, updater, publish, connectionError 
       } catch (syncError) { connectionError(`${message(error)}；读取后台状态也失败：${message(syncError)}`); }
     }
   }
+  const setChannel = (channel: UpdateChannel) => execute(async () => {
+    if (!updater.setChannel) throw new Error('当前更新服务不支持切换渠道');
+    return updater.setChannel(channel);
+  });
   return {
     connect,
     dispose() { generation++; off?.(); off = undefined; },
     check: () => execute(() => updater.check()),
+    setChannel,
+    joinBeta: () => execute(async () => {
+      if (!updater.setChannel) throw new Error('当前更新服务不支持切换渠道');
+      const switched = await updater.setChannel('beta');
+      receive(switched);
+      return updater.check();
+    }),
+    leaveBeta: () => setChannel('stable'),
+    checkStableTarget: () => execute(async () => {
+      if (!updater.checkStableTarget) throw new Error('当前更新服务不支持显式选择稳定版本');
+      return updater.checkStableTarget();
+    }),
+    dismissTarget: () => execute(async () => {
+      if (!updater.dismissTarget) throw new Error('当前更新服务不支持取消候选版本');
+      return updater.dismissTarget();
+    }),
     download: () => execute(() => updater.download()),
     install: () => execute(async () => { await installUpdate(ctx, updater); return updater.snapshot(); }),
   };

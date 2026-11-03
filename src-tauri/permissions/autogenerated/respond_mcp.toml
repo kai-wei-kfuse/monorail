@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-respond-mcp"
+description = "Enables the respond_mcp command without any pre-configured scope."
+commands.allow = ["respond_mcp"]
+
+[[permission]]
+identifier = "deny-respond-mcp"
+description = "Denies the respond_mcp command without any pre-configured scope."
+commands.deny = ["respond_mcp"]

@@ -4,11 +4,14 @@ mod reminders;
 mod private_release;
 mod quick_save;
 mod tray;
+mod update_backup;
+mod update_channel;
 mod updates;
 mod update_state;
 mod windows;
 mod mini_window;
 mod mini_visibility;
+mod mcp_bridge;
 
 use std::{fs, path::PathBuf};
 use tauri::Manager;
@@ -25,11 +28,13 @@ macro_rules! handlers {
             power::read_lifecycle, reminders::set_reminders, windows::show_quickbar,
             windows::dialog_active, windows::set_shortcut,
             mini_window::toggle_mini, mini_window::show_main, mini_visibility::read_mini_visibility,
-            updates::check_update, updates::download_update, updates::install_update,
+            updates::check_update, updates::check_stable_update, updates::set_update_channel,
+            updates::dismiss_update_target, updates::download_update, updates::install_update,
             updates::read_update_state, updates::prepare_update_install, updates::cancel_update_install,
             quick_save::quickbar_update_ready, quick_save::ack_quickbar_update,
             quick_save::begin_quick_save, quick_save::end_quick_save,
-            quick_save::begin_data_migration, quick_save::finish_data_migration, $($extra),*]
+            quick_save::begin_data_migration, quick_save::finish_data_migration,
+            mcp_bridge::start_mcp_bridge, mcp_bridge::respond_mcp, $($extra),*]
     };
 }
 
@@ -43,6 +48,7 @@ pub fn config_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 fn read_config(app: tauri::AppHandle) -> Result<Option<String>, String> {
     let path = config_dir(&app)?.join("config.json");
     if !path.exists() {
+        mcp_bridge::set_setup_required(&app);
         return Ok(None);
     }
     fs::read_to_string(path)
@@ -60,7 +66,10 @@ fn save_config(app: tauri::AppHandle, root: String) -> Result<(), String> {
         config_dir(&app)?.join("config.json"),
         serde_json::json!({"root":root}).to_string(),
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| e.to_string())?;
+    let _ = mcp_bridge::write_host_metadata(&app);
+    mcp_bridge::set_recovering(&app);
+    Ok(())
 }
 
 // A narrow command enforces the quickbar's records-only writes. Dynamic dialog
@@ -118,6 +127,7 @@ pub fn run() {
     let builder = tauri::Builder::default()
         .manage(update_state::Updates::default())
         .manage(quick_save::QuickSaves::default())
+        .manage(mcp_bridge::McpBridge::default())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _| {
             #[cfg(feature = "verify")]
@@ -130,7 +140,11 @@ pub fn run() {
                 if let Err(e) = app.emit("verification-journal", ()) { eprintln!("verify journal trigger: {e}"); }
                 return;
             }
+            if _args.iter().any(|a| a == "--background") {
+                return;
+            }
             if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
                 let _ = w.show();
                 let _ = w.set_focus();
             }
@@ -142,16 +156,26 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
-            windows::setup(app.handle())?;
-            tray::setup(app.handle())?;
+            update_state::initialize(app.handle());
             power::setup(app.handle().clone())?;
             reminders::setup(app.handle().clone());
+            mcp_bridge::setup(app.handle())?;
+            windows::setup(app.handle())?;
+            tray::setup(app.handle())?;
             Ok(())
         });
     #[cfg(feature = "verify")]
     let builder = builder.invoke_handler(handlers![power::simulate_power, verification_enabled]);
     #[cfg(not(feature = "verify"))]
     let builder = builder.invoke_handler(handlers![]);
-    builder.run(tauri::generate_context!())
+    let mut context = tauri::generate_context!();
+    if std::env::args().any(|arg| arg == "--background") {
+        for window in &mut context.config_mut().app.windows {
+            if window.label == "main" {
+                window.visible = false;
+            }
+        }
+    }
+    builder.run(context)
         .expect("Tauri failed to start");
 }

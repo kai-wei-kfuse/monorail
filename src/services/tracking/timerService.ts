@@ -27,10 +27,10 @@ export function pauseInTx(tx: TrackingTransaction): void {
   if (entry.kind === '普通') tx.state.resume_entry_id = entry.id;
   startSystemInTx(tx, '待机', '暂停');
 }
-// 停止：截断正在计的这一条，转为待机，不留回到目标（和暂停不同，之后没有〔继续〕）
+// 停止：截断正在计的这一条（或清除已暂停会话），转为待机，不留回到目标（和暂停不同，之后没有〔继续〕）
 export function stopInTx(tx: TrackingTransaction): void {
   const entry = openInTx(tx);
-  if (!entry || isIdle(entry)) return;
+  if (!entry || (isIdle(entry) && entry.kind === '普通' && tx.state.resume_entry_id === null)) return;
   tx.state.resume_entry_id = null;
   startSystemInTx(tx, '待机');
 }

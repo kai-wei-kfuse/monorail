@@ -13,6 +13,16 @@ export function useUpdates(ctx: Ctx, updater: UpdatesPort = nativeUpdates) {
     void controller.connect().catch(error => setConnectionError(String(error)));
     return () => controller.dispose();
   }, [controller]);
-  return { state, connectionError, check: controller.check, download: controller.download, install: controller.install,
-    reconnect: () => controller.connect().catch(error => setConnectionError(String(error))) };
+  return {
+    state,
+    connectionError,
+    check: controller.check,
+    joinBeta: controller.joinBeta,
+    leaveBeta: controller.leaveBeta,
+    checkStableTarget: controller.checkStableTarget,
+    dismissTarget: controller.dismissTarget,
+    download: controller.download,
+    install: controller.install,
+    reconnect: () => controller.connect().catch(error => setConnectionError(String(error))),
+  };
 }

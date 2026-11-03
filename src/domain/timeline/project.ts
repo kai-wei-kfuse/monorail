@@ -18,3 +18,26 @@ export function newProject(projects: readonly Project[], input: string): Project
   }
   throw new Error('所有 RGB 颜色均已使用');
 }
+
+export function validateUserProject(projects: readonly Project[], input?: string): string {
+  const name = input?.trim() || '未分类';
+  if (SYSTEM_PROJECTS.some(item => item === name)) {
+    throw new Error(`RESERVED_PROJECT：不能直接使用系统保留项目「${name}」`);
+  }
+  if (name !== '未分类' && !projects.some(item => item.name === name)) {
+    const allowed = ['未分类', ...projects.map(item => item.name)].join('、');
+    throw new Error(`UNKNOWN_PROJECT：未知项目「${name}」；可选项目：${allowed}`);
+  }
+  return name;
+}
+
+export function validateUserTags(tags?: readonly string[]): string[] {
+  if (!tags) return [];
+  const result: string[] = [];
+  for (const raw of tags) {
+    const tag = raw.trim();
+    if (!tag || /[\s#@]/.test(tag)) throw new Error('INVALID_TAG：标签不能为空，也不能包含空白、# 或 @');
+    if (!result.includes(tag)) result.push(tag);
+  }
+  return result;
+}

@@ -17,6 +17,9 @@ fn main() {
             "set_shortcut",
             "verification_enabled",
             "check_update",
+            "check_stable_update",
+            "set_update_channel",
+            "dismiss_update_target",
             "download_update",
             "install_update",
             "read_update_state",
@@ -28,6 +31,8 @@ fn main() {
             "end_quick_save",
             "begin_data_migration",
             "finish_data_migration",
+            "start_mcp_bridge",
+            "respond_mcp",
         ]),
     ))
     .expect("Tauri build configuration failed");

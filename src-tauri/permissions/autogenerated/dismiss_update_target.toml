@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-dismiss-update-target"
+description = "Enables the dismiss_update_target command without any pre-configured scope."
+commands.allow = ["dismiss_update_target"]
+
+[[permission]]
+identifier = "deny-dismiss-update-target"
+description = "Denies the dismiss_update_target command without any pre-configured scope."
+commands.deny = ["dismiss_update_target"]

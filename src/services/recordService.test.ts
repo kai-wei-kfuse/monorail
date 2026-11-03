@@ -1,7 +1,9 @@
 import { expect, it, vi } from 'vitest';
 import { at, card, fixture, getCard, task, seed } from './serviceFixture';
-import { saveRecord, reconcile } from './recordService';
+import { captureTodoInTx, saveRecord, reconcile } from './recordService';
+import { createTask } from './backpackService';
 import { run } from './commit';
+import { createContext } from './commit';
 import type { RecordInput } from '../domain/record/record';
 
 function record(): RecordInput {
@@ -38,4 +40,42 @@ it('repairs a missing record backlink without duplicating or overwriting the exi
   expect(await f.ctx.repos.cards.list()).toHaveLength(1);
   expect((await f.ctx.repos.records.get(entry.id))!.value.card_id).toBe(id);
   expect((await getCard(f, id)).content).toBe('执行中的编辑');
+});
+
+it('R1: captureTodoInTx reuses an unsourced placeholder once, keeps card_id stable across reconcile, and never overwrites a sourced single-item card', async () => {
+  const f = fixture();
+  await seed(f, []);
+  const taskId = await createTask(f.ctx, { name: 'review-parent', slot: '支线', makeRoom: null, items: [] }, at());
+  const initialCards = (await f.ctx.repos.cards.list()).map(e => e.value);
+  expect(initialCards).toHaveLength(1);
+  expect(initialCards[0].source_record_id).toBeNull();
+
+  const first = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '第一条待办 #标签', task_id: taskId }), at(1));
+  expect(first.card.id).toBe(initialCards[0].id);
+  expect(first.card.source_record_id).toBe(first.record.id);
+  expect(first.record.card_id).toBe(initialCards[0].id);
+
+  // Repeated reconcile must not create a duplicate card-<recordId> or alter record.card_id.
+  expect(await reconcile(f.ctx)).toBe(0);
+  expect(await reconcile(f.ctx)).toBe(0);
+  const afterFirstReconcile = (await f.ctx.repos.cards.list()).map(e => e.value);
+  expect(afterFirstReconcile).toHaveLength(1);
+  expect(afterFirstReconcile[0]).toMatchObject({
+    id: initialCards[0].id,
+    content: '第一条待办 #标签',
+    source_record_id: first.record.id,
+  });
+  expect((await f.ctx.repos.records.get(first.record.id))!.value.card_id).toBe(initialCards[0].id);
+  const restarted = createContext(f.ctx);
+  expect(await reconcile(restarted)).toBe(0);
+  expect((await restarted.repos.records.get(first.record.id))!.value.card_id).toBe(first.card.id);
+
+  // A second capture into the same task (whose single card now has source_record_id !== null AND even if content matches task.name) must add a new card instead of overwriting the first!
+  const sameNameTaskId = await createTask(f.ctx, { name: '同名任务', slot: '支线', makeRoom: null, items: [] }, at(2));
+  const sameNameFirst = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '同名任务', task_id: sameNameTaskId }), at(3));
+  const sameNameSecond = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '第二条具体事项', task_id: sameNameTaskId }), at(4));
+  expect(sameNameSecond.card.id).not.toBe(sameNameFirst.card.id);
+  expect(await reconcile(f.ctx)).toBe(0);
+  const taskCards = (await f.ctx.repos.cards.list()).map(e => e.value).filter(c => c.task_id === sameNameTaskId);
+  expect(taskCards.sort((a, b) => a.order - b.order).map(c => c.content)).toEqual(['同名任务', '第二条具体事项']);
 });

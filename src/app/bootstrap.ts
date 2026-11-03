@@ -19,6 +19,7 @@ import { reconcile } from '../services/recordService';
 import { startScheduler } from '../services/scheduler';
 import { appStore, publishProjection } from '../store/appStore';
 import { appendNotices } from '../store/noticeSlice';
+import { connectApplicationBridge } from './applicationBridge';
 
 export async function restoreRepositories(repos: Repositories, id: () => string, now: () => string) {
   const recovered = await repos.recover();
@@ -54,6 +55,7 @@ export async function bootstrap(root: string) {
   });
   const ctx = createContext({
     repos, settings: restored.settings, reminders: nativeReminders, settingsPlatform: nativeSettingsPlatform, id, now,
+    notices: () => appStore.getState().notices,
     publish: value => { publishProjection(value); void quickbarContext().catch(report); },
     log: message => invoke('evidence', { message }),
   });
@@ -82,6 +84,7 @@ export async function bootstrap(root: string) {
     // Hotkeys and autostart follow settings.yaml; per-key failures are shown on the settings page.
     const platformErrors = await applyPlatform(ctx);
     await invoke('finish_data_migration');
+    offs.push(await connectApplicationBridge(ctx, report));
     return { ctx, fs, dispose, platformErrors };
   } catch (error) { dispose(); throw error; }
 }

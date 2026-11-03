@@ -1,5 +1,26 @@
 # 更新与发版
 
+## Beta 渠道与保数据覆盖（2026-11-03）
+
+在「设置 → 关于 → 软件更新」区域支持同产品稳定版（`stable`）与 Beta 体验渠道（`beta`）切换，详见 [Beta执行方案](updates/beta-execution-plan.md)、[ADR 0016](adr/0016-beta-channel-and-compatible-stable-return.md) 和 [Current Plan](stages/0.3.0.md)：
+
+1. **加入与退出 Beta**：
+   - 渠道偏好独立持久化在应用配置目录 `update-channel.json`（原子写入，不写入业务 `settings.yaml`）；缺省为 `stable`，损坏会显式报错而不静默重置。手动安装 Beta 包不会自动修改该渠道偏好。
+   - 点击「加入 Beta 体验」并确认后，切换为 `beta` 渠道并检查候选（不自动下载或安装）。`beta` 渠道按严格 SemVer 选择已发布的正式版（`vX.Y.Z`）或产品 Beta（`vX.Y.Z-beta.N`，`prerelease=true`）中较新的版本；同基础号正式版高于 Beta（如 `0.3.0 > 0.3.0-beta.10`），排除 draft、`update-test-*`、alpha/rc 及矛盾标签。
+   - 点击「退出 Beta」立即将偏好持久化为 `stable` 并清除未安装的 Beta 候选，不会自动降级。退出后可选择**留在当前版本等待后续稳定更新**（日常「检查更新」仅接收高于当前版本的正式稳定版），或点击**「安装稳定版」**显式检查兼容的稳定版本（包含低于当前 Beta 的 `v0.2.5`），查看目标版本、是否属于回退、数据兼容结论与备份说明后再确认下载和安装。
+2. **安装前备份与数据保留**：
+   - 应用内安装在完成主提交队列排空、快速记录/MCP 写入排空、草稿检查与生命周期 checkpoint 后，于冻结状态下验证 `.journal` 已排空，并在应用配置目录 `backups/<timestamp>-<from>-to-<to>/` 建立包含业务数据、附件、`receipts` 及配置/目录授权的完整备份，写入 `backup-manifest.json` 并逐文件校验大小与 SHA-256。备份失败不会启动安装器，并准确解除保存封口。
+   - 覆盖安装直接使用原数据目录并保留 Beta 期间新增的记录、待办、计时与附件，绝不自动把数据还原到加入 Beta 前的旧备份。
+   - 清单 `latest.json` 在独立命名空间声明兼容信息：`monorail: { channel, dataSchemaVersion, readableDataSchemaVersions }`。缺少该字段的历史稳定版绝不默认兼容，仅通过源码审计与实测建立的显式兼容表承认 `v0.2.5`（`schemaVersion: 2`）。
+3. **旧版本无入口或 GitHub 手动覆盖安装**：
+   - 尚未提供「加入 Beta 体验」入口的旧版本，可前往项目 GitHub Releases 下载同产品官方安装包（`单轨_*_x64-setup.exe` / `monorail_*_windows-x86_64_setup.exe`），先退出当前运行的「单轨」，直接运行安装包覆盖原安装路径（向导中选择「请勿卸载」直接覆盖，切勿勾选「删除应用程序数据」）。
+   - 覆盖安装仅替换应用可执行文件与资源，原数据目录、业务设置和目录授权保持不变；启动新版后即可在「设置 → 关于」选择加入或退出 Beta。手动覆盖前也可自行复制数据目录留存额外备份。
+4. **发布脚本与渠道语义隔离**：
+   - `scripts/publish-release.mjs` 显式区分三种发布语义：
+     - **正式稳定版（`stable`）**：标签 `vX.Y.Z`，资产 `monorail_X.Y.Z_windows-x86_64_setup.exe`，`prerelease=false`、`--latest=true`，`monorail.channel="stable"`。
+     - **产品 Beta（`beta`）**：标签 `vX.Y.Z-beta.N`，资产 `monorail_X.Y.Z-beta.N_windows-x86_64_setup.exe`（不带 `update-test` 前缀），`--prerelease`、`--latest=false`，`monorail.channel="beta"`，不会污染稳定渠道或正式 `latest`。
+     - **更新验收（`update-test`）**：标签 `update-test-vX.Y.Z`，资产 `monorail-update-test_X.Y.Z_windows-x86_64_setup.exe`，仅用于 `src-tauri/tauri.update-test.conf.json` 隔离验收配置。
+
 ## 使用
 
 仓库与 Release 自 2026-10-28（0.2.1 之后）公开：https://github.com/kai-wei-kfuse/monorail 。之前一直是 private，下文按当时的私有仓库写成，检查更新的实现没有改：仍然经本机 gh 登录读取 Release。首次手动安装带更新功能的版本；当前旧版没有检查更新功能。

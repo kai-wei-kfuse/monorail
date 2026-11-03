@@ -44,5 +44,7 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
   return <SettingsPage section={section} onSection={setSection} settings={settings} onChange={onChange}
     onListsChange={onListsChange} projects={projects} knownTags={knownTags} onCreateProject={onCreateProject} onCreateTag={onCreateTag} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}
     aboutExtras={<UpdatePanel state={updates.state} connectionError={updates.connectionError} onCheck={() => void updates.check()}
+      onJoinBeta={() => void updates.joinBeta()} onLeaveBeta={() => void updates.leaveBeta()}
+      onCheckStableTarget={() => void updates.checkStableTarget()} onDismissTarget={() => void updates.dismissTarget()}
       onDownload={() => void updates.download()} onInstall={() => void updates.install()} onReconnect={() => void updates.reconnect()} />} />;
 }

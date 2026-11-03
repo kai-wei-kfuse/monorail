@@ -38,15 +38,22 @@ fn prune(fired: &mut HashSet<String>, plans: &[Reminder]) {
     fired.retain(|id| plans.iter().any(|p| &p.id == id));
 }
 
-fn save(app: &tauri::AppHandle, fired: &HashSet<String>) -> Result<(), String> {
+fn save(app: &tauri::AppHandle, fired: &HashSet<String>) -> Result<Vec<u8>, String> {
     let path = super::config_dir(app)?.join(FILE);
     let temp = path.with_extension("tmp");
-    fs::write(
-        &temp,
-        serde_json::to_vec(fired).map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
-    fs::rename(temp, path).map_err(|e| e.to_string())
+    let bytes = serde_json::to_vec(fired).map_err(|e| e.to_string())?;
+    fs::write(&temp, &bytes).map_err(|e| e.to_string())?;
+    fs::rename(temp, path).map_err(|e| e.to_string())?;
+    Ok(bytes)
+}
+
+pub fn snapshot_bytes(app: &tauri::AppHandle) -> Result<Option<Vec<u8>>, String> {
+    let dir = super::config_dir(app)?;
+    let state = ensure_state(app).lock().map_err(|e| e.to_string())?;
+    if !dir.join(FILE).exists() && state.fired.is_empty() {
+        return Ok(None);
+    }
+    save(app, &state.fired).map(Some)
 }
 fn load(app: &tauri::AppHandle) -> Result<HashSet<String>, String> {
     let path = super::config_dir(app)?.join(FILE);
@@ -55,6 +62,20 @@ fn load(app: &tauri::AppHandle) -> Result<HashSet<String>, String> {
     }
     let bytes = fs::read(&path).map_err(|e| e.to_string())?;
     serde_json::from_slice(&bytes).map_err(|e| format!("{FILE}: {e}"))
+}
+
+fn ensure_state(app: &tauri::AppHandle) -> &'static Mutex<Scheduler> {
+    STATE.get_or_init(|| {
+        let fired = load(app).unwrap_or_else(|error| {
+            eprintln!("reminders: {error}");
+            let _ = app.emit("native-error", error);
+            HashSet::new()
+        });
+        Mutex::new(Scheduler {
+            plans: Vec::new(),
+            fired,
+        })
+    })
 }
 
 #[tauri::command]
@@ -66,14 +87,12 @@ pub fn set_reminders(app: tauri::AppHandle, plans: Vec<Reminder>) -> Result<(), 
             serde_json::to_string(&plans).map_err(|e| e.to_string())?
         ),
     )?;
-    let mut state = STATE
-        .get()
-        .ok_or("Reminder scheduler unavailable")?
+    let mut state = ensure_state(&app)
         .lock()
         .map_err(|e| e.to_string())?;
     prune(&mut state.fired, &plans);
     state.plans = plans;
-    save(&app, &state.fired)
+    save(&app, &state.fired).map(|_| ())
 }
 
 fn deliver(app: &tauri::AppHandle, plan: &Reminder) -> Result<(), String> {
@@ -83,7 +102,7 @@ fn deliver(app: &tauri::AppHandle, plan: &Reminder) -> Result<(), String> {
         .body(&plan.body)
         .show()
         .map_err(|e| e.to_string())?;
-    let mut state = STATE.get().unwrap().lock().map_err(|e| e.to_string())?;
+    let mut state = ensure_state(app).lock().map_err(|e| e.to_string())?;
     state.fired.insert(plan.id.clone());
     save(app, &state.fired)?;
     let _ = super::evidence(
@@ -95,25 +114,12 @@ fn deliver(app: &tauri::AppHandle, plan: &Reminder) -> Result<(), String> {
 }
 
 pub fn setup(app: tauri::AppHandle) {
-    let fired = load(&app).unwrap_or_else(|error| {
-        eprintln!("reminders: {error}");
-        let _ = app.emit("native-error", error);
-        HashSet::new()
-    });
-    if STATE
-        .set(Mutex::new(Scheduler {
-            plans: Vec::new(),
-            fired,
-        }))
-        .is_err()
-    {
-        panic!("Reminder scheduler initialized twice");
-    }
+    let _ = ensure_state(&app);
     thread::spawn(move || loop {
         // Native polling resolution; reminders do not depend on WebView timers.
         thread::sleep(Duration::from_millis(200));
         let pending = {
-            let state = STATE.get().unwrap().lock().expect("Reminder mutex poisoned");
+            let state = ensure_state(&app).lock().expect("Reminder mutex poisoned");
             due(&state.plans, &state.fired, super::power::now_ms())
         };
         for plan in pending {

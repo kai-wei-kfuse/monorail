@@ -67,12 +67,19 @@ export function MainApp() {
       if (failed.length) report(`有 ${failed.length} 项设置没有生效，详见设置页：${failed.join('；')}`);
       await invoke('evidence', { message: `connected:${root}:cards=${appStore.getState().cards.length}` });
       if (import.meta.env.VITE_VERIFY === 'true') await (await import('../verification/main')).install(result.ctx, result.fs);
-    } catch (error) { setPhase({ kind: 'first', error: `打不开这个数据目录：${error instanceof Error ? error.message : String(error)}` }); }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      void invoke('start_mcp_bridge', { error: message }).catch(() => {});
+      setPhase({ kind: 'first', error: `打不开这个数据目录：${message}` });
+    }
   }
   useEffect(() => {
     void invoke<string | null>('read_config')
       .then(value => (value ? connect((JSON.parse(value) as { root: string }).root) : setPhase({ kind: 'first', error: null })))
-      .catch(error => setPhase({ kind: 'first', error: String(error) }));
+      .catch(error => {
+        void invoke('start_mcp_bridge', { error: String(error) }).catch(() => {});
+        setPhase({ kind: 'first', error: String(error) });
+      });
     const off = listen<string>('native-error', event => report(event.payload));
     return () => { void off.then(fn => fn()); };
   }, []);

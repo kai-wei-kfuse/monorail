@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-mcp/
+dist-cli/
 src-tauri/target/
 src-tauri/gen/
 .verification-data/

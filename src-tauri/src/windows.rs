@@ -235,6 +235,9 @@ pub fn setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                     eprintln!("emit: {e}");
                 }
             }
+            WindowEvent::Destroyed if target.label() == "main" => {
+                crate::mcp_bridge::on_host_lost(target.app_handle(), "主窗口已销毁");
+            }
             _ => {}
         });
     }

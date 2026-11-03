@@ -16,7 +16,17 @@
 .saved.ok { background: var(--ink); border-color: var(--ink); color: #f6f6f3; }
 .st-err { font: 330 12px/1.4 var(--f-cn); color: var(--red); }
 .st-update { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
-.st-update-head { display: flex; align-items: center; gap: 24px; justify-content: space-between; }
+.st-update-head { display: flex; align-items: flex-start; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
+.st-update-meta { margin-top: 6px; font: 350 12px/1.5 var(--f-cn); color: var(--ink-3); }
+.st-update-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.st-update-head .st-update-actions { margin-top: 0; }
+.st-update-head .st-update-actions .sbtn, .st-update-dialog .st-update-actions .sbtn { margin-top: 0; }
+.st-update-busy-note { margin-top: 10px; font: 350 12px/1.5 var(--f-cn); color: var(--mute); }
+.st-update-dialog { margin-top: 14px; padding: 12px; border: 1px solid var(--line); background: var(--paper-2); }
+.st-update-dialog > strong { display: block; font: 600 13px/1.5 var(--f-cn); color: var(--ink); }
+.st-update-backup-meta { margin-top: 10px; font: 400 11px/1.5 var(--f-mono); color: var(--mute); word-break: break-all; }
+.st-update-help { margin-top: 14px; font: 350 12px/1.7 var(--f-cn); color: var(--ink-3); }
+.st-update-help summary { cursor: pointer; color: var(--ink); }
 .st-update .st-update-notes { white-space: pre-wrap; user-select: text; }
 .st-update progress { width: 100%; margin-top: 14px; accent-color: var(--ink); }
 .st-update .sbtn { margin-top: 10px; }

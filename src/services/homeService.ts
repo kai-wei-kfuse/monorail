@@ -1,10 +1,26 @@
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import * as tracking from './tracking/api';
-import type { ReadoutRequest, ReadoutPlan, EntryTemplate } from './tracking/api';
+import type { ReadoutRequest, ReadoutPlan, EntryTemplate, TimeEntry } from './tracking/api';
 import { alignInTx, startCardInTx, editContentInTx, editMetaInTx } from './cardService';
 import { drawInTx } from './dealService';
 import type { MiniCommand, MiniOutcome } from '../platform/windowBus';
+import { validateUserProject, validateUserTags } from '../domain/timeline/project';
+import type { AppState } from '../data/repos';
+import type { Card } from '../domain/card/card';
+
+export function timerStateToken(state: AppState, openEntry: TimeEntry | null, currentCard: Pick<Card, 'id' | 'status'> | null): string {
+  return `ts1:${[
+    openEntry?.id ?? '-', openEntry?.started_at ?? '-', openEntry?.kind ?? '-', openEntry?.project ?? '-',
+    openEntry?.card_id ?? '-', state.current_card ?? '-', currentCard?.status ?? '-',
+    state.pending_id ?? '-', state.pending_at ?? '-', state.resume_entry_id ?? '-', state.rest?.started_at ?? '-',
+  ].join('|')}`;
+}
+export function timerStateTokenInTx(tx: Pick<Transaction, 'state' | 'entries' | 'cards'>): string {
+  const open = tx.entries.find(entry => entry.id === tx.state.open_entry) ?? null;
+  const card = tx.cards.find(item => item.id === tx.state.current_card) ?? null;
+  return timerStateToken(tx.state, open, card);
+}
 
 export interface Range { start: string; end: string }
 export const manual = (ctx: Ctx, value: Omit<EntryTemplate, 'card_id'>, start: string, end: string, at: string) =>
@@ -173,3 +189,98 @@ export const dispatchMiniCommand = (ctx: Ctx, command: MiniCommand): Promise<Min
   }
   return { kind: 'done' };
 });
+
+function checkExpectedState(tx: Transaction, expectedState: string): void {
+  const actual = timerStateTokenInTx(tx);
+  if (actual !== expectedState) throw new Error(`STATE_CHANGED：当前计时状态已改变（expected=${expectedState}, actual=${actual}），请先查看最新状态`);
+}
+function checkNormalPreconditions(tx: Transaction, allowBreak = false): TimeEntry | null {
+  if (tx.state.rest !== null) throw new Error('IN_DEGRADE_REST：当前处于降级休息状态，请先在单轨界面完成休息返回');
+  const open = tracking.openInTx(tx);
+  if (!allowBreak && open?.kind === '插入') throw new Error('IN_AWAY_ACTIVITY：当前正在进行临时离开活动，请先调用 return_from_break 结束临时活动');
+  if (tx.state.pending_id !== null) throw new Error('PENDING_CONFIRMATION：单轨界面存在未确认的计时起点，请先在界面确认或放弃后再操作');
+  return open;
+}
+
+export function startTimerCheckedInTx(tx: Transaction, input: { expected_state: string; description: string; project?: string; tags?: string[] }): { noop: boolean } {
+  checkExpectedState(tx, input.expected_state);
+  checkNormalPreconditions(tx);
+  const description = input.description.trim();
+  if (!description) throw new Error('INVALID_DESCRIPTION：活动描述不能为空');
+  const project = validateUserProject(tx.settings.lists.projects, input.project);
+  const tags = validateUserTags(input.tags);
+  startFreeInTx(tx, { description, project, tags });
+  alignInTx(tx);
+  return { noop: false };
+}
+
+export async function startTaskItemCheckedInTx(tx: Transaction, input: { expected_state: string; card_id: string }): Promise<{ noop: boolean }> {
+  checkExpectedState(tx, input.expected_state);
+  const open = checkNormalPreconditions(tx);
+  const card = tx.cards.find(item => item.id === input.card_id);
+  if (!card) throw new Error('CARD_NOT_FOUND：找不到指定的待办事项卡片');
+  if (card.status !== '待做' && card.status !== '进行中') throw new Error(`CARD_NOT_ACTIVE：该事项当前状态为「${card.status}」，不能开始计时`);
+  if (card.status === '进行中' && open?.card_id === card.id && open.kind === '普通') return { noop: true };
+  await startCardInTx(tx, card.id, tx.at);
+  return { noop: false };
+}
+
+export function pauseTimerCheckedInTx(tx: Transaction, input: { expected_state: string }): { noop: boolean; reason: 'already_paused' | 'already_idle' | null } {
+  checkExpectedState(tx, input.expected_state);
+  const open = checkNormalPreconditions(tx);
+  if (!open || open.kind === '暂停') return { noop: true, reason: 'already_paused' };
+  if (open.project === '待机') return { noop: true, reason: 'already_idle' };
+  tracking.pauseInTx(tx); alignInTx(tx);
+  return { noop: false, reason: null };
+}
+
+export async function resumeTimerCheckedInTx(tx: Transaction, input: { expected_state: string }): Promise<{ noop: boolean; reason: 'already_running' | null }> {
+  checkExpectedState(tx, input.expected_state);
+  const open = checkNormalPreconditions(tx);
+  if (open && open.project !== '待机') return { noop: true, reason: 'already_running' };
+  const target = tx.state.resume_entry_id ? tx.entries.find(entry => entry.id === tx.state.resume_entry_id) : undefined;
+  if (!target) throw new Error('NO_RESUME_TARGET：当前没有可继续的暂停活动，请使用 start_timer 或 start_task_item 开始新计时');
+  await resumeInTx(tx); alignInTx(tx);
+  return { noop: false, reason: null };
+}
+
+export function stopTimerCheckedInTx(tx: Transaction, input: { expected_state: string }): { noop: boolean; reason: 'already_idle' | null } {
+  checkExpectedState(tx, input.expected_state);
+  const open = checkNormalPreconditions(tx);
+  if (!open || (open.project === '待机' && open.kind === '普通' && tx.state.resume_entry_id === null)) return { noop: true, reason: 'already_idle' };
+  tracking.stopInTx(tx); alignInTx(tx);
+  return { noop: false, reason: null };
+}
+
+export function startBreakCheckedInTx(tx: Transaction, input: { expected_state: string; activity: string }): { noop: boolean } {
+  checkExpectedState(tx, input.expected_state);
+  checkNormalPreconditions(tx, true);
+  const raw = input.activity.trim();
+  if (!raw) throw new Error('INVALID_DESCRIPTION：临时活动名称不能为空');
+  const preset = tx.settings.lists.presets.find(item => item.mode === '插入' && (item.id === raw || item.name === raw));
+  const value: EntryTemplate = preset
+    ? { description: preset.name, project: preset.project, tags: preset.tags, card_id: null }
+    : { description: raw, project: '生活', tags: [], card_id: null };
+  tracking.insertInTx(tx, value); alignInTx(tx);
+  return { noop: false };
+}
+
+export async function returnFromBreakCheckedInTx(tx: Transaction, input: { expected_state: string }): Promise<{ noop: boolean }> {
+  checkExpectedState(tx, input.expected_state);
+  if (tx.state.rest !== null) throw new Error('IN_DEGRADE_REST：当前处于降级休息状态，请先在单轨界面完成休息返回');
+  const open = tracking.openInTx(tx);
+  if (!open || open.kind !== '插入') throw new Error('NOT_IN_BREAK：当前不在临时离开活动中，无需执行回来操作');
+  await resumeInTx(tx); alignInTx(tx);
+  return { noop: false };
+}
+
+export function addTimeEntryCheckedInTx(tx: Transaction, input: { description: string; start: string; end: string; project?: string; tags?: string[] }) {
+  const description = input.description.trim();
+  if (!description) throw new Error('INVALID_DESCRIPTION：补录活动描述不能为空');
+  const project = validateUserProject(tx.settings.lists.projects, input.project);
+  const tags = validateUserTags(input.tags);
+  const overlaps = tracking.overlaps(tx.entries, input.start, input.end, tx.at);
+  const entry = tracking.manualInTx(tx, { description, project, tags, card_id: null }, input.start, input.end, '手动');
+  alignInTx(tx);
+  return { entry, overlaps };
+}

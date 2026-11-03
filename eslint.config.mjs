@@ -28,11 +28,23 @@ for (const name of ['card', 'task', 'picker', 'degrade', 'baseline', 'review', '
 for (const name of readdirSync('./src/services').filter(name => /\.ts$/.test(name) && !/\.test\.ts$/.test(name))) {
   zones.push({ target: `./src/services/${name}`, from: './src/services/tracking', except: ['./api.ts'] });
 }
+zones.push(
+  { target: './src', from: './client' },
+  { target: './src', from: './cli' },
+  { target: './src', from: './mcp' },
+  { target: './client', from: './src', except: ['./shared'] },
+  { target: './client', from: './cli' },
+  { target: './client', from: './mcp' },
+  { target: './cli', from: './src', except: ['./shared'] },
+  { target: './cli', from: './mcp' },
+  { target: './mcp', from: './src', except: ['./shared'] },
+  { target: ['./mcp/main.ts', './mcp/server.ts', './mcp/http.ts'], from: './cli' },
+);
 
 export default tseslint.config(js.configs.recommended, ...tseslint.configs.recommended, {
-  files: ['src/**/*.{ts,tsx}'],
+  files: ['src/**/*.{ts,tsx}', 'client/**/*.ts', 'cli/**/*.ts', 'mcp/**/*.ts'],
   plugins: { import: imports },
-  settings: { 'import/resolver': { typescript: { project: './tsconfig.json' } } },
+  settings: { 'import/resolver': { typescript: { project: ['./tsconfig.json', './mcp/tsconfig.json'], noWarnOnMultipleProjects: true } } },
   rules: {
     'import/no-restricted-paths': ['error', { zones }],
     'import/no-cycle': ['error', { ignoreExternal: true }],

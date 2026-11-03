@@ -60,6 +60,10 @@
     "createUpdaterArtifacts": true,
     "active": true,
     "targets": ["nsis"],
+    "resources": {
+      "../dist-mcp/monorail-mcp.mjs": "monorail-mcp.mjs",
+      "../dist-cli/monorail-cli.mjs": "monorail-cli.mjs"
+    },
     "icon": ["icons/icon.png", "icons/icon.ico"],
     "shortDescription": "记录、任务卡与时间回顾",
     "windows": {

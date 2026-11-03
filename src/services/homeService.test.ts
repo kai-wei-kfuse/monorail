@@ -243,3 +243,22 @@ it('ADR 0006: projects resumeEntry across consecutive/paused inserts, recomputes
   expect(entries(f).find(e => e.id === waterId)).toMatchObject({ started_at: at(90), ended_at: at(95) });
   expect(open(f)).toMatchObject({ description: '路径B新活动', started_at: at(95) });
 });
+
+it('stopping while paused clears resume_entry_id and releases an in-progress card back to todo', async () => {
+  const f = fixture();
+  await seed(f, [card('c1', { content: '写测试' })]);
+  await startCard(f.ctx, 'c1', at(0));
+  f.clock(at(10));
+  await pause(f.ctx, at(10));
+  expect(open(f)).toMatchObject({ project: '待机', kind: '暂停' });
+  expect((await f.ctx.repos.state.read()).resume_entry_id).not.toBeNull();
+  expect((await getCard(f, 'c1')).status).toBe('进行中');
+
+  f.clock(at(15));
+  await stop(f.ctx, at(15));
+  expect(open(f)).toMatchObject({ project: '待机', kind: '普通', started_at: at(15) });
+  expect((await f.ctx.repos.state.read()).resume_entry_id).toBeNull();
+  expect((await getCard(f, 'c1')).status).toBe('待做');
+  expect((await f.ctx.repos.state.read()).current_card).toBeNull();
+  expect(f.home().resumeEntry).toBeNull();
+});

@@ -27,13 +27,30 @@ impl Gate {
 }
 
 #[tauri::command]
-pub fn begin_data_migration(state: State<QuickSaves>) -> Result<(), String> {
-    state.0.lock().map_err(|error| error.to_string())?.begin_migration()
+pub fn begin_data_migration(app: tauri::AppHandle, state: State<QuickSaves>) -> Result<(), String> {
+    state.0.lock().map_err(|error| error.to_string())?.begin_migration()?;
+    crate::mcp_bridge::set_recovering(&app);
+    Ok(())
 }
 
 #[tauri::command]
 pub fn finish_data_migration(state: State<QuickSaves>) -> Result<(), String> {
     state.0.lock().map_err(|error| error.to_string())?.migrating = false;
+    Ok(())
+}
+
+pub fn check_ready(state: State<QuickSaves>) -> Result<(), String> {
+    let gate = state.0.lock().map_err(|error| error.to_string())?;
+    if gate.migrating { return Err("MIGRATING：正在升级数据，稍后再试".into()); }
+    if gate.installing { return Err("UPDATING：正在安装更新，请在更新完成后重试".into()); }
+    Ok(())
+}
+
+pub fn begin_prepare_install(app: &tauri::AppHandle) -> Result<(), String> {
+    let state = app.state::<QuickSaves>();
+    let mut gate = state.0.lock().map_err(|error| error.to_string())?;
+    if gate.migrating { return Err("正在升级数据，请完成后重试安装更新".into()); }
+    gate.installing = true;
     Ok(())
 }
 
@@ -72,10 +89,23 @@ pub fn ensure_active(app: &tauri::AppHandle, id: &str) -> Result<(), String> {
 
 pub async fn prepare_install(app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<QuickSaves>();
+    for _ in 0..200 {
+        let has_mcp_active = {
+            let gate = state.0.lock().map_err(|error| error.to_string())?;
+            gate.active.iter().any(|id| id.starts_with("mcp-"))
+        };
+        if !has_mcp_active {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
     let receiver = {
         let mut gate = state.0.lock().map_err(|error| error.to_string())?;
         if gate.migrating { return Err("正在升级数据，请完成后重试安装更新".into()); }
         // Admission and the check are atomic: an accepted multi-attachment save is never interrupted.
+        if gate.active.iter().any(|id| id.starts_with("mcp-")) {
+            return Err("外部应用请求正在保存，请完成后重试安装更新".into());
+        }
         if !gate.active.is_empty() { return Err("快速记录条正在保存，请完成后重试安装更新".into()); }
         if !gate.guard_ready { return Err("快速记录条尚未就绪，无法安全检查草稿，请稍后重试".into()); }
         gate.installing = true;
