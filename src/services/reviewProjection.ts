@@ -7,12 +7,10 @@ import { progress } from '../domain/review/flow';
 import type { ReviewStep } from '../domain/review/flow';
 import { activeIdeas, coldOffer } from '../domain/idea/pool';
 import { pair } from '../domain/idea/arena';
-import { activityDayTotals, cardMilliseconds } from '../domain/timeline/stats';
 import type { TimeEntry } from '../domain/timeline/entry';
 import type { Settings } from '../shared/settings';
-import { LOOSE } from '../shared/backpack';
 import type { AppState } from '../data/repos';
-import type { RecapData, ReviewSlice } from '../store/reviewSlice';
+import type { ReviewSlice } from '../store/reviewSlice';
 
 export const currentReview = (reviews: Review[]) => [...reviews]
   .filter(review => review.status === '未开始' || review.status === '进行中')
@@ -26,29 +24,6 @@ export function recapStart(reviews: Review[], firstDay: string, boundary: number
 }
 
 interface Input { cards: Card[]; tasks: Task[]; records: RecordEntry[]; reviews: Review[]; entries: TimeEntry[]; state: AppState; settings: Settings; at: string }
-function recap(input: Input, from: string): RecapData {
-  const { cards, tasks, entries, settings, at } = input;
-  const start = Date.parse(from), end = Date.parse(at);
-  const timeline = entries.map(entry => ({ ...entry, ended_at: entry.ended_at ?? at })).filter(row => Date.parse(row.started_at) < end && Date.parse(row.ended_at!) > start)
-    .map(row => ({ ...row, started_at: new Date(Math.max(start, Date.parse(row.started_at))).toISOString(),
-      ended_at: new Date(Math.min(end, Date.parse(row.ended_at!))).toISOString() }));
-  const totals: Record<string, number> = {};
-  for (const day of Object.values(activityDayTotals(timeline, at, settings.dayBoundaryHour))) {
-    for (const [project, ms] of Object.entries(day)) totals[project] = (totals[project] ?? 0) + ms;
-  }
-  const completed = cards.filter(card => card.completed_at && Date.parse(card.completed_at) > start && Date.parse(card.completed_at) <= end)
-    .sort((a, b) => Date.parse(a.completed_at!) - Date.parse(b.completed_at!) || a.id.localeCompare(b.id));
-  return {
-    completed: completed.map(card => ({ id: card.id, content: card.content, task: tasks.find(task => task.id === card.task_id)?.name ?? LOOSE.name,
-      day: card.completed_day!, minutes: cardMilliseconds(timeline, card.id, at) / 60_000 })),
-    totals: Object.entries(totals).map(([project, ms]) => ({ project, minutes: ms / 60_000 })).sort((a, b) => b.minutes - a.minutes || a.project.localeCompare(b.project)),
-    notes: cards.filter(card => {
-      const noted = card.progress_noted_at ?? card.completed_at;
-      return card.progress_note.trim() && noted && Date.parse(noted) > start && Date.parse(noted) <= end;
-    }).map(card => ({ id: card.id, content: card.content, note: card.progress_note })),
-  };
-}
-
 export function projectReview(input: Input): ReviewSlice {
   const { reviews, records, tasks, settings, state, at } = input;
   const row = currentReview(reviews);
@@ -62,7 +37,6 @@ export function projectReview(input: Input): ReviewSlice {
   const ideaView = (idea: RecordEntry) => ({ id: idea.id, text: idea.text, needs: idea.needs, lastTouchedAt: idea.last_touched_at, isNew: review.added_idea_ids.includes(idea.id) });
   return {
     period: review.period, step: review.step as ReviewStep, done: review.done, betDue: due.length > 0,
-    recap: recap(input, recapStart(reviews, state.first_used_day, settings.dayBoundaryHour, at)),
     addedIdeas: review.added_idea_ids.flatMap(id => { const idea = records.find(r => r.id === id); return idea ? [idea.text] : []; }),
     duel: duel?.left && duel.right ? { left: ideaView(duel.left), right: ideaView(duel.right), over: Math.max(review.cold_duel ? 1 : 0, activeIdeas(records).length - settings.ideaPoolLimit) } : null,
     cold: { offered: coldOffer(records).map(idea => ({ id: idea.id, text: idea.text, needs: idea.needs, coldSince: idea.cold_since! })), poolFree: Math.max(0, settings.ideaPoolLimit - activeIdeas(records).length) },

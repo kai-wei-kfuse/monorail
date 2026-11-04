@@ -166,7 +166,8 @@ export function computeRecap(input: RecapInput): RecapResult {
   const goneKeys = previousByKey && !bucket ? [...previousByKey.keys()].filter(k => !all.some(g => g.key === k)).sort() : [];
 
   return {
-    range: r, effectiveMs, activeDays, entryCount: new Set(shares.map(s => s.entry.id)).size,
+    range: r, today: activityDay(asOf, boundaryHour), earliestDay: earliest, lastReviewAt: input.lastReviewAt,
+    effectiveMs, activeDays, entryCount: new Set(shares.map(s => s.entry.id)).size,
     mainline: { permille: mainPermille(src, effectiveMs), bySource: src },
     previous, unit, buckets, totalMs, series, groups, goneKeys,
     done: doneCards(input, r, byCard), notes: notesOf(input, r),

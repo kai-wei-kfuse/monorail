@@ -13,6 +13,8 @@
     "allow-toggle-mini",
     "allow-read-mini-visibility",
     "allow-begin-main-session",
+    "allow-read-recap-view",
+    "allow-write-recap-view",
     "allow-show-main",
     "allow-dialog-active",
     "allow-set-shortcut",

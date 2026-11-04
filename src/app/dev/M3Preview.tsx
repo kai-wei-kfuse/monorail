@@ -1,10 +1,17 @@
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { RecapBoard } from '../../pages/review/recap/RecapBoard';
+import type { RecapBoardProps } from '../../pages/review/recap/RecapBoard';
+import { computeRecap } from '../../domain/review/recap';
+import { recapViewStore } from '../../platform/recapView';
+import { DEFAULT_RECAP_VIEW } from '../../shared/recap';
+import type { RecapViewState } from '../../shared/recap';
+import { recapDemo } from './recapDemo';
 import { Frame, StatusBar } from '../../ui/frame/StatusBar';
 import { TitleBar } from '../../ui/frame/TitleBar';
 import { WindowButtons } from '../../ui/frame/WindowButtons';
 import type { ReviewActions, ReviewData, ReviewStep } from '../../pages/review/ReviewPage';
-import { ReviewPage } from '../../pages/review/ReviewPage';
+import { ReviewDonePage, ReviewPage } from '../../pages/review/ReviewPage';
 import { SavedBadge, SettingsPage } from '../../pages/settings/SettingsPage';
 import type { Settings } from '../../shared/settings';
 import { defaults } from '../../shared/settings';
@@ -22,14 +29,6 @@ function reviewData(step: ReviewStep): ReviewData {
   const order: ReviewStep[] = ['recap', 'newIdeas', 'arena', 'coldPick', 'bet'];
   return {
     period: '2026-W44', step, done: order.slice(0, order.indexOf(step)), betDue: true,
-    recap: {
-      completed: [
-        { id: 'c1', content: '找 3 个 JD', task: '找工作', day: '10-27', minutes: 35 },
-        { id: 'c2', content: '沿 [Python] 往下学 1 小时', task: '找工作', day: '10-28', minutes: 64 },
-        { id: 'c3', content: '查一下几台服务器有没有被攻击', task: '支线', day: '10-29', minutes: 22 }],
-      totals: [{ project: '主线', minutes: 412 }, { project: '支线', minutes: 180 }, { project: '生活', minutes: 95 }, { project: '休息', minutes: 40 }],
-      notes: [{ id: 'n1', content: '沿 [Python] 往下学 1 小时', note: '看完装饰器，下一步写小练习' }],
-    },
     addedIdeas: ['周末把书架整理成按主题分类'],
     duel: { left: { id: 'i9', text: '周末把书架整理成按主题分类', needs: null, lastTouchedAt: ago(0), isNew: true },
       right: { id: 'i2', text: '把读过的 Agent 文章整理成一份对比表', needs: '大量 token', lastTouchedAt: ago(48), isNew: false }, over: 2 },
@@ -40,11 +39,25 @@ function reviewData(step: ReviewStep): ReviewData {
   };
 }
 
-/** 回顾页预览（只在开发时用）：?step=recap|newIdeas|arena|coldPick|bet。 */
+/** 回看看板的预览接线：用演示数据直接算（不经 Ctx），选择也照真接线记在 localStorage 里。 */
+function useDemoRecap(): RecapBoardProps {
+  const demo = useMemo(() => recapDemo(), []);
+  const [view, setView] = useState<RecapViewState>(DEFAULT_RECAP_VIEW), [bucket, setBucket] = useState<string | null>(null);
+  useEffect(() => { void recapViewStore.read().then(r => setView(r.view)); }, []);
+  const result = useMemo(() => computeRecap({ entries: demo.entries, cards: demo.cards, tasks: demo.tasks, lastReviewAt: new Date(Date.now() - 6 * 86_400_000).toISOString(),
+    firstUsedDay: demo.firstUsedDay, projectColors: Object.fromEntries(PREVIEW_PROJECTS.map(p => [p.name, p.color])), boundaryHour: 4, asOf: new Date().toISOString(),
+    query: { period: view.period, from: view.from ?? undefined, to: view.to ?? undefined, dim: view.dim, includeIdle: view.includeIdle, bucket } }), [demo, view, bucket]);
+  return { result, view, onView: v => { setView(v); void recapViewStore.write(v); }, bucket, onBucket: setBucket, today: result.today, minDay: result.earliestDay,
+    projectColors: Object.fromEntries(PREVIEW_PROJECTS.map(p => [p.name, p.color])) };
+}
+
+/** 回顾页预览（只在开发时用）：?step=recap|newIdeas|arena|coldPick|bet；?step=done 看本期回顾已完成时的回看。 */
 export function ReviewPreview({ step: initial }: { step: string }) {
   const [step, setStep] = useState<ReviewStep>((['recap', 'newIdeas', 'arena', 'coldPick', 'bet'].includes(initial) ? initial : 'recap') as ReviewStep);
   const actions: ReviewActions = { goto: s => setStep(s), addIdea() {}, duel() {}, takeCold() {}, skipCold() {}, continueBet() {}, switchMain() {}, finish() {} };
-  return shell('review', <ReviewPage data={reviewData(step)} actions={actions} />);
+  const board = <RecapBoard {...useDemoRecap()} />;
+  if (initial === 'done') return shell('review', <ReviewDonePage completedAt={new Date(Date.now() - 6 * 86_400_000).toISOString()} recap={board} />);
+  return shell('review', <ReviewPage data={reviewData(step)} actions={actions} recap={board} />);
 }
 
 /** 设置页预览（只在开发时用）：?sec=deal|degrade|ideas|timer|lists|look|keys|window|automation|about。 */

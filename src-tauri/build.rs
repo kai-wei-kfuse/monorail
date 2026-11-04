@@ -13,6 +13,8 @@ fn main() {
             "toggle_mini",
             "read_mini_visibility",
             "begin_main_session",
+            "read_recap_view",
+            "write_recap_view",
             "show_main",
             "dialog_active",
             "set_shortcut",

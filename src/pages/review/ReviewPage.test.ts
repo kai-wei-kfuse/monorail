@@ -14,11 +14,11 @@ it('switching main selects the reviewed task by id when two mains have the same 
     .map(key => [key, vi.fn()])) as unknown as ReviewActions;
   const data: ReviewData = {
     period: '2026-W44', step: 'bet', done: ['recap', 'newIdeas', 'arena', 'coldPick'], betDue: true,
-    recap: { completed: [], totals: [], notes: [] }, addedIdeas: [], duel: null, cold: { offered: [], poolFree: 10 },
+    addedIdeas: [], duel: null, cold: { offered: [], poolFree: 10 },
     bet: { taskId: 'second', task: '同名主线', betEndsAt: '2026-10-27T00:00:00Z', betWeeks: 4 },
     backpack: { inBackpack: [{ id: 'first', name: '同名主线', slot: '主线' }, { id: 'second', name: '同名主线', slot: '主线' }], sideFree: true },
   };
-  const page = ReviewPage({ data, actions });
+  const page = ReviewPage({ data, actions, recap: null });
   const dialog = Children.toArray(page.props.children).find(child => isValidElement(child) && child.type === SwitchMain) as ReactElement<{ current: { id: string } }>;
   expect(dialog.props.current.id).toBe('second');
 });

@@ -7,6 +7,7 @@ import { enter, goto, addIdea, duel, takeCold, skipCold, continueBet, switchMain
 import { refresh } from './dealService';
 import { start, redraw } from './cardService';
 import { insert } from './homeService';
+import { query } from './recapService';
 import { createRecord } from '../domain/record/record';
 import type { TimeEntry } from '../domain/timeline/entry';
 
@@ -189,10 +190,13 @@ it('recap spans superseded periods since the last completion, clips overlays, an
     const overlay: TimeEntry = { ...entry, id: tx.id(), started_at: date(10, 11), ended_at: date(10, 12), project: '生活', card_id: null, source: '手动' };
     tx.entries.push(entry, overlay);
   }, date(26));
-  await enter(f.ctx, at()); const recap = view(f).recap;
-  expect(recap.completed.map(card => card.id)).toEqual(['done']);
-  expect(recap.totals).toEqual(expect.arrayContaining([{ project: '主线', minutes: 120 }, { project: '生活', minutes: 60 }]));
-  expect(recap.completed[0].minutes).toBe(120);
+  await enter(f.ctx, at());
+  // 0.3.0-beta.3 起回看由 recapService 按需查询；「本次回顾周期」从上次完成回顾那一刻起，并行的时段按条数平分
+  const recap = query(f.ctx, { period: 'cycle', dim: 'project', includeIdle: false }, at());
+  expect(recap.range.after).toBe(date(10));
+  expect(recap.done.map(card => card.id)).toEqual(['done']);
+  expect(Object.fromEntries(recap.groups.map(g => [g.key, g.ms]))).toMatchObject({ 主线: 90 * 60_000, 生活: 30 * 60_000 });
+  expect(recap.done[0].ms).toBe(120 * 60_000);
   expect(recap.notes.map(note => note.id).sort()).toEqual(['done', 'pending']);
   expect((await saved(f)).some(row => row.period === '2026-W43')).toBe(true);
 });
@@ -200,7 +204,8 @@ it('recap spans superseded periods since the last completion, clips overlays, an
 it('progress noted by redraw is dated and visible even though the card is unfinished', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at()); f.clock(at(1)); await redraw(f.ctx, 'a', at(1), '继续这里');
   f.clock(at(2)); await enter(f.ctx, at(2));
-  expect(view(f).recap.notes).toEqual([{ id: 'a', content: 'a', note: '继续这里' }]);
+  expect(query(f.ctx, { period: 'week', dim: 'project', includeIdle: false }, at(2)).notes)
+    .toEqual([expect.objectContaining({ id: 'a', content: 'a', note: '继续这里', at: at(1) })]);
   expect((await getCard(f, 'a')).progress_noted_at).toBe(at(1));
 });
 

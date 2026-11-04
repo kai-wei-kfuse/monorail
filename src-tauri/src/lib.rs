@@ -13,6 +13,7 @@ mod mini_window;
 mod mini_visibility;
 mod main_session;
 mod mcp_bridge;
+mod recap_view;
 
 use std::{fs, path::PathBuf};
 use tauri::Manager;
@@ -30,6 +31,7 @@ macro_rules! handlers {
             windows::dialog_active, windows::set_shortcut,
             mini_window::toggle_mini, mini_window::show_main, mini_visibility::read_mini_visibility,
             main_session::begin_main_session,
+            recap_view::read_recap_view, recap_view::write_recap_view,
             updates::check_update, updates::check_stable_update, updates::set_update_channel,
             updates::dismiss_update_target, updates::download_update, updates::install_update,
             updates::read_update_state, updates::prepare_update_install, updates::cancel_update_install,

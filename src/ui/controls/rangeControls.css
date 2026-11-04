@@ -1,0 +1,61 @@
+/* 带英文小字的下拉、双月起止日期选择（UI 风格规范 §11.12；取自原型 recap-prototype.html 的 rv-sel / rv-dp） */
+.msel { position: relative; display: inline-block; }
+.msel-btn { display: inline-flex; align-items: center; justify-content: space-between; gap: 14px; min-width: 176px; height: 34px; padding: 0 0 0 12px; border: 1px solid var(--line-2); background: var(--paper); font: 520 13px/1 var(--f-cn); letter-spacing: .04em; color: var(--ink); cursor: pointer; transition: border-color .15s; }
+.msel-btn:hover, .msel-btn[aria-expanded="true"] { border-color: var(--ink); }
+.msel-lbl { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.msel-lbl b { font-weight: inherit; }
+.msel-lbl i { font: 500 8px/1 var(--f-en); letter-spacing: .16em; font-style: normal; color: var(--mute); }
+.msel-btn .chev { width: 32px; height: 32px; display: grid; place-items: center; background: var(--ink); color: #f2f2ef; flex: none; }
+.msel-btn .chev svg { width: 12px; height: 12px; transform: rotate(180deg); transition: transform .18s var(--ease); }
+.msel-btn[aria-expanded="true"] .chev { background: var(--yellow); color: var(--ink); }
+.msel-btn[aria-expanded="true"] .chev svg { transform: none; }
+.msel-pop { position: absolute; left: 0; top: calc(100% + 4px); z-index: 40; min-width: 100%; margin: 0; padding: 4px; list-style: none; background: var(--paper); border: 1px solid var(--ink); box-shadow: 0 16px 36px rgb(0 0 0 / .22); }
+.msel-pop li { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 32px; padding: 0 10px; font: 400 13px/1 var(--f-cn); color: var(--ink); white-space: nowrap; cursor: pointer; }
+.msel-pop li span { display: inline-flex; align-items: center; gap: 8px; }
+.msel-pop li span::before { content: ""; width: 6px; height: 6px; background: transparent; flex: none; }
+.msel-pop li[aria-selected="true"] { font-weight: 560; }
+.msel-pop li[aria-selected="true"] span::before { background: var(--ink); }
+.msel-pop li i { font: 500 8px/1 var(--f-en); letter-spacing: .16em; font-style: normal; color: var(--mute); }
+.msel-pop li:hover, .msel-pop li.act { background: var(--yellow); color: var(--ink); }
+.msel-pop li:hover i, .msel-pop li.act i { color: var(--ink); }
+
+/* 自定义时间：触发按钮沿用下拉造型，右端黑块换成日历图标 */
+.drp-btn { min-width: 0; gap: 12px; }
+.drp-v { display: inline-flex; align-items: baseline; gap: 8px; font: 500 13px/1 var(--f-en); letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.drp-v b { font-weight: inherit; }
+.drp-v i { font-style: normal; color: var(--mute); }
+.drp-btn .chev svg, .drp-btn[aria-expanded="true"] .chev svg { width: 13px; height: 13px; transform: none; }
+.drp-pop { position: absolute; left: 0; top: calc(100% + 4px); z-index: 40; width: max-content; background: var(--paper); border: 1px solid var(--ink); box-shadow: 0 16px 36px rgb(0 0 0 / .22); }
+.drp-pop.end { left: auto; right: 0; }
+.drp-pop::before { content: ""; position: absolute; left: 0; top: 0; width: 64px; height: 7px; background: var(--ink); }
+.drp-pop::after { content: ""; position: absolute; left: 64px; top: 0; width: 18px; height: 7px; background: var(--yellow); }
+.drp-head { display: flex; align-items: stretch; gap: 8px; padding: 20px 14px 12px; border-bottom: 1px solid var(--line); }
+.drp-end { display: grid; align-content: center; gap: 7px; min-width: 128px; padding: 8px 10px; border: 1px solid var(--line-2); background: var(--paper-2); }
+.drp-end b { font: 600 17px/1 var(--f-en); font-stretch: 125%; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.drp-end b.wait { font: 330 13px/17px var(--f-cn); font-stretch: normal; color: var(--mute-2); }
+.drp-end.on { border-color: var(--ink); box-shadow: inset 0 -3px 0 var(--yellow); }
+.drp-arr { align-self: center; width: 14px; height: 1px; background: var(--ink); }
+.drp-count { margin-left: auto; align-self: end; font: 330 12px/1 var(--f-cn); color: var(--mute); white-space: nowrap; }
+.drp-count b { margin: 0 3px; font: 600 20px/1 var(--f-en); font-stretch: 125%; color: var(--ink); font-variant-numeric: tabular-nums; }
+.drp-body { display: flex; gap: 22px; padding: 12px 14px 8px; }
+.drp-mh { display: flex; align-items: center; gap: 8px; height: 30px; margin-bottom: 4px; }
+.drp-mh b { font: 600 15px/1 var(--f-en); font-stretch: 125%; font-variant-numeric: tabular-nums; }
+.drp-mh b span { color: var(--mute); }
+.drp-mh i { font: 500 8px/1 var(--f-en); letter-spacing: .22em; font-style: normal; color: var(--mute); }
+.drp-nav { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--paper-2); cursor: pointer; }
+.drp-nav svg { width: 10px; height: 10px; }
+.drp-nav.prev svg { transform: rotate(180deg); }
+.drp-nav.next { margin-left: auto; }
+.drp-nav:hover:not(:disabled) { border-color: var(--ink); background: var(--yellow); }
+.drp-nav:disabled { color: var(--mute-2); cursor: not-allowed; }
+.drp-grid { display: grid; grid-template-columns: repeat(7, 34px); grid-auto-rows: 30px; }
+.drp-w { display: grid; place-items: center; font: 520 11px/1 var(--f-cn); color: var(--mute); border-bottom: 1px solid var(--line); }
+.drp-w.we { color: var(--mute-2); }
+.drp-d { position: relative; display: grid; place-items: center; font: 500 13px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink); cursor: pointer; }
+.drp-d.today { box-shadow: inset 0 0 0 1px var(--ink); }
+.drp-d.in, .drp-d.pv { background: color-mix(in srgb, var(--yellow) 22%, transparent); }
+.drp-d:hover:not(:disabled), .drp-d.pe { background: var(--yellow); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.drp-d.s, .drp-d.e, .drp-d:is(.s, .e):hover:not(:disabled) { background: var(--ink); color: var(--yellow); font-weight: 600; box-shadow: inset 0 -3px 0 var(--yellow); }
+.drp-d:disabled { color: var(--mute-2); cursor: not-allowed; }
+.drp-foot { display: flex; align-items: center; gap: 8px; padding: 10px 14px 12px; border-top: 1px solid var(--line); }
+.drp-foot p { margin: 0 auto 0 0; font: 330 11px/1.4 var(--f-cn); color: var(--mute); }

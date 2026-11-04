@@ -4,8 +4,10 @@ import './layout.css';
 export interface NavItem { id: string; no: string; cn: string; en: string; count?: number }
 
 /** 左侧导航：顶部英文 + 中文，每行「编号 中文 英文」，选中的黑底并伸出一个小三角。 */
-export function SideNav({ en, cn, items, active, onSelect, foot }:
-  { en: string; cn: string; items: NavItem[]; active: string; onSelect: (id: string) => void; foot?: ReactNode }) {
+export function SideNav({ en, cn, items, active, onSelect, foot, extra }:
+  { en: string; cn: string; items: NavItem[]; active: string; onSelect: (id: string) => void; foot?: ReactNode;
+    /** 列表最后追加的一项（例如回顾已完成时的说明框） */
+    extra?: ReactNode }) {
   return <nav className="s-nav">
     <div className="s-nav-head"><span className="k">{en}</span><b>{cn}</b></div>
     <ul className="s-list">
@@ -14,6 +16,7 @@ export function SideNav({ en, cn, items, active, onSelect, foot }:
           <span className="no">{it.no}</span><b>{it.cn}</b>{it.count !== undefined ? <i className="cnt">{it.count}</i> : <i>{it.en}</i>}
         </button>
       </li>)}
+      {extra && <li>{extra}</li>}
     </ul>
     {foot && <div className="s-nav-foot">{foot}</div>}
   </nav>;

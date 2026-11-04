@@ -100,6 +100,8 @@ export interface RecapPrevious {
 
 export interface RecapResult {
   range: RecapRange;
+  /** asOf 所在的活动日；最早一条记录所在的活动日（首次使用日与最早条目里更早的，自定义日期的可选下限）；上次完成回顾的时刻 */
+  today: string; earliestDay: string | null; lastReviewAt: string | null;
   /** 有效投入：去掉待机 / 睡眠后的实际占用时长，并行只算一次（不随「含待机/睡眠」开关变） */
   effectiveMs: number;
   /** 有效天：有有效投入的活动日数 */

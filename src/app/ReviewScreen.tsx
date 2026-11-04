@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import { appStore } from '../store/appStore';
-import { ReviewPage } from '../pages/review/ReviewPage';
+import { ReviewDonePage, ReviewPage } from '../pages/review/ReviewPage';
 import type { ReviewActions } from '../pages/review/ReviewPage';
+import { RecapBoard } from '../pages/review/recap/RecapBoard';
 import type { Ctx } from '../services/commit';
 import * as review from '../services/reviewService';
-import { Emblem } from '../ui/marks/Emblem';
+import { useRecap } from './useRecap';
 
 /**
  * Wires the weekly review page to store.review and reviewService. Errors surface through `report`.
@@ -17,6 +18,10 @@ export function ReviewScreen({ ctx, report }: { ctx: Ctx; report: (error: unknow
   const tasks = useStore(appStore, state => state.backpack.tasks);
   const [entered, setEntered] = useState(false);
   const call = (work: () => Promise<unknown>) => { void work().catch(report); };
+  const board = <RecapBoard {...useRecap(ctx, report)} />;
+  // 最近一次完成回顾的时刻（没有完成过就是 null）；不用 recapStart，它在没完成过时会退回首次使用日
+  const completedAt = (ctx.snapshot()?.reviews ?? []).filter(r => r.status === '已完成' && r.completed_at)
+    .map(r => r.completed_at!).sort().at(-1) ?? null;
 
   useEffect(() => {
     void review.enter(ctx, new Date().toISOString()).catch(report).finally(() => setEntered(true));
@@ -36,12 +41,8 @@ export function ReviewScreen({ ctx, report }: { ctx: Ctx; report: (error: unknow
   };
 
   if (!entered) return <div className="rv-empty"><p>正在打开回顾…</p></div>;
-  if (!data) return <div className="rv-empty">
-    <Emblem />
-    <span className="k">REVIEW COMPLETE</span>
-    <h3>本期回顾已完成</h3>
-    <p>下一期到期时，首页会出回顾卡。</p>
-  </div>;
+  // 本期回顾已完成（或没有进行中的回顾）：回看照样能看（0.3.0-beta.3 D7）
+  if (!data) return <ReviewDonePage completedAt={completedAt} recap={board} />;
   const parked = tasks.filter(p => p.status === '冷藏' || (p.status === '进行中' && p.slot === '不在背包')).map(p => ({ id: p.id, name: p.name }));
-  return <ReviewPage data={data} actions={actions} parked={parked} />;
+  return <ReviewPage data={data} actions={actions} parked={parked} recap={board} />;
 }
