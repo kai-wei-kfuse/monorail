@@ -33,6 +33,7 @@ fn main() {
             "finish_data_migration",
             "start_mcp_bridge",
             "respond_mcp",
+            "read_mcp_host",
         ]),
     ))
     .expect("Tauri build configuration failed");

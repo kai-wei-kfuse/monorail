@@ -1,0 +1,7 @@
+{
+  "src/pages/settings/AutomationGuide.tsx": "645cb64a8798f4f1dbc5aa9f93c49f3b8ec622761d68054b7eaec5ed1e6037cd",
+  "src/pages/settings/automationData.ts": "ef458ecf816610c8a41d6e456c8e22361d7bf2f3ec2182b76dfda45215edca6b",
+  "src/platform/automation.ts": "36adc614aec8268e290dfbe966efce241c1bccbbfbf5c5196c0daa6cc005f28c",
+  "src-tauri/src/mcp_bridge.rs": "6fd007633a873792b906a2a5ddbc1714c3b5430022b2739a2bffa29e8fd65756",
+  "evidence/beta2-automation-guide/verify-beta2-guide.mjs": "888dc8ee59b63c6618bc349b6e23b061a941e882567bca23657507bf5f22ae2c"
+}

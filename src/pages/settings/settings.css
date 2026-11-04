@@ -45,3 +45,43 @@
 .pe-row .seg button { min-width: 48px; height: 28px; font-size: 12px; }
 .pe-acts { display: flex; gap: 8px; margin-left: auto; white-space: nowrap; }
 .pe-acts .sbtn:first-child { min-width: 104px; }
+/* AI 与自动化说明页（09） */
+.st-auto { display: grid; gap: 6px; }
+.st-auto-card { display: grid; gap: 12px; padding: 8px 0 4px; font: 350 12.5px/1.7 var(--f-cn); color: var(--ink-3); }
+.st-auto-lead, .st-auto-desc { margin: 0; max-width: 64em; }
+.st-auto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.st-auto-item { padding: 10px 12px; border: 1px solid var(--line); background: var(--paper-2); display: grid; gap: 4px; align-content: start; }
+.st-auto-item > strong { font: 600 12.5px/1.4 var(--f-cn); color: var(--ink); }
+.st-auto-item > code { font: 400 11px/1.5 var(--f-mono); color: var(--mute); word-break: break-word; }
+.st-auto-item > p { margin: 2px 0 0; font-size: 12px; line-height: 1.6; }
+.st-auto-notes { padding: 10px 12px; border-left: 3px solid var(--ink); background: var(--paper-2); display: grid; gap: 6px; }
+.st-auto-notes p { margin: 0; font-size: 12px; line-height: 1.65; }
+.st-auto-path-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.st-auto-path-row > span:first-child { font: 500 12px/1.4 var(--f-cn); color: var(--ink); }
+.st-auto-path-row > .st-path { flex: 1 1 280px; word-break: break-all; }
+.st-auto-alert { padding: 10px 12px; border: 1px solid var(--red); background: var(--paper-2); color: var(--red); }
+.st-auto-alert > strong { display: block; font: 600 12.5px/1.5 var(--f-cn); }
+.st-auto-alert > p { margin: 4px 0 0; font-size: 12px; line-height: 1.6; color: var(--ink-3); }
+.st-auto-code { margin: 0; padding: 10px 12px; border: 1px solid var(--line); background: var(--paper-2); font: 400 11.5px/1.6 var(--f-mono); color: var(--ink); overflow-x: auto; white-space: pre-wrap; word-break: break-all; user-select: text; }
+.st-auto-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.st-auto-feedback.ok { font: 500 12px/1.4 var(--f-cn); color: var(--ink); }
+.st-auto-sub { margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line); }
+.st-auto-sub summary { cursor: pointer; font: 500 12px/1.6 var(--f-cn); color: var(--ink); }
+.st-auto-sub > p { margin: 6px 0 8px; font-size: 12px; }
+.st-auto-cmd-row { display: flex; align-items: center; gap: 8px; }
+.st-auto-cmd { flex: 1 1 0; min-width: 0; padding: 7px 10px; border: 1px solid var(--line); background: var(--paper-2); font: 400 11.5px/1.5 var(--f-mono); color: var(--ink); word-break: break-all; user-select: text; }
+.st-auto-cli-list { display: grid; gap: 10px; }
+.st-auto-cli-item { padding-bottom: 10px; border-bottom: 1px solid var(--line); display: grid; gap: 6px; }
+.st-auto-cli-item:last-child { border-bottom: none; padding-bottom: 0; }
+.st-auto-cli-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.st-auto-cli-head > strong { font: 600 12.5px/1.4 var(--f-cn); color: var(--ink); }
+.st-auto-cli-head > span { font-size: 12px; color: var(--mute); }
+.st-auto-prereq { padding: 10px 12px; border: 1px solid var(--line); background: var(--paper-2); }
+.st-auto-prereq > strong { display: block; font: 600 12.5px/1.5 var(--f-cn); color: var(--ink); }
+.st-auto-prereq > p { margin: 4px 0 0; font-size: 12px; line-height: 1.65; }
+.st-auto-errors { display: grid; gap: 8px; }
+.st-auto-err-item { padding: 8px 12px; border: 1px solid var(--line); background: var(--paper-2); display: grid; gap: 4px; }
+.st-auto-err-item > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.st-auto-err-item code { font: 600 11px/1.4 var(--f-mono); color: var(--ink); padding: 2px 6px; border: 1px solid var(--line-2); }
+.st-auto-err-item strong { font: 600 12px/1.4 var(--f-cn); color: var(--ink); }
+.st-auto-err-item > p { margin: 0; font-size: 12px; line-height: 1.6; }

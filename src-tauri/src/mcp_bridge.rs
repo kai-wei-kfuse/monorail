@@ -205,34 +205,85 @@ pub fn on_host_lost(app: &tauri::AppHandle, reason: &str) {
     update_phase(&state, next);
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct HostMetadata {
+    pub executable: String,
+    pub mcp_entry: Option<String>,
+    pub cli_entry: Option<String>,
+    pub identifier: String,
+    pub pipe: String,
+}
+
+fn strip_verbatim_prefix(path: &std::path::Path) -> String {
+    let text = path.to_string_lossy().into_owned();
+    text.strip_prefix(r"\\?\").map(str::to_owned).unwrap_or(text)
+}
+
+fn resolve_bundle_entry_path(
+    resource_dir: Option<&std::path::Path>,
+    exe: &std::path::Path,
+    filename: &str,
+) -> Option<String> {
+    resource_dir
+        .map(|res| res.join(filename))
+        .filter(|path| path.is_file())
+        .or_else(|| {
+            exe.parent()
+                .map(|parent| parent.join(filename))
+                .filter(|path| path.is_file())
+        })
+        .map(|path| strip_verbatim_prefix(&path))
+}
+
+fn verify_existing_entry(entry: Option<String>) -> Option<String> {
+    entry.and_then(|raw| {
+        let trimmed = raw.strip_prefix(r"\\?\").unwrap_or(&raw);
+        let path = std::path::Path::new(trimmed);
+        if path.is_absolute() && path.is_file() {
+            Some(trimmed.to_owned())
+        } else {
+            None
+        }
+    })
+}
+
+pub fn read_host_metadata_from_dir(dir: &std::path::Path) -> Result<HostMetadata, String> {
+    let target = dir.join("mcp-host.json");
+    let text = fs::read_to_string(&target).map_err(|_| {
+        "无法读取本机自动化入口元信息（mcp-host.json 不存在），请重新打开单轨主窗口或重新安装应用".to_string()
+    })?;
+    let mut meta: HostMetadata = serde_json::from_str(&text).map_err(|_| {
+        "本机自动化入口元信息（mcp-host.json）格式损坏，请重新打开单轨主窗口以刷新配置".to_string()
+    })?;
+    meta.executable = strip_verbatim_prefix(std::path::Path::new(&meta.executable));
+    meta.mcp_entry = verify_existing_entry(meta.mcp_entry);
+    meta.cli_entry = verify_existing_entry(meta.cli_entry);
+    Ok(meta)
+}
+
+#[tauri::command]
+pub fn read_mcp_host(app: tauri::AppHandle) -> Result<HostMetadata, String> {
+    let dir = super::config_dir(&app)?;
+    read_host_metadata_from_dir(&dir)
+}
+
 pub fn write_host_metadata(app: &tauri::AppHandle) -> Result<(), String> {
     let dir = super::config_dir(app)?;
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-    let resolve_bundle_entry = |filename: &str| {
-        app.path()
-            .resource_dir()
-            .ok()
-            .map(|res| res.join(filename))
-            .filter(|path| path.exists())
-            .or_else(|| exe.parent().map(|parent| parent.join(filename)))
-            .map(|path| {
-                let text = path.to_string_lossy().into_owned();
-                text.strip_prefix(r"\\?\").map(str::to_owned).unwrap_or(text)
-            })
-    };
-    let mcp_entry = resolve_bundle_entry("monorail-mcp.mjs");
-    let cli_entry = resolve_bundle_entry("monorail-cli.mjs");
+    let resource_dir = app.path().resource_dir().ok();
+    let mcp_entry = resolve_bundle_entry_path(resource_dir.as_deref(), &exe, "monorail-mcp.mjs");
+    let cli_entry = resolve_bundle_entry_path(resource_dir.as_deref(), &exe, "monorail-cli.mjs");
     let identifier = &app.config().identifier;
     let pipe = format!(r"\\.\pipe\{identifier}.mcp");
     let temp = dir.join("mcp-host.tmp");
     let target = dir.join("mcp-host.json");
-    let payload = serde_json::json!({
-        "executable": exe,
-        "mcp_entry": mcp_entry,
-        "cli_entry": cli_entry,
-        "identifier": identifier,
-        "pipe": pipe,
-    });
+    let payload = HostMetadata {
+        executable: strip_verbatim_prefix(&exe),
+        mcp_entry,
+        cli_entry,
+        identifier: identifier.clone(),
+        pipe,
+    };
     fs::write(&temp, serde_json::to_vec_pretty(&payload).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     fs::rename(temp, target).map_err(|e| e.to_string())
 }
@@ -475,7 +526,11 @@ async fn serve(app: tauri::AppHandle, name: String, mut listener: NamedPipeServe
 
 #[cfg(test)]
 mod tests {
-    use super::{is_write_method, update_phase, BridgeCore, McpBridge, Phase};
+    use super::{
+        is_write_method, read_host_metadata_from_dir, resolve_bundle_entry_path, update_phase,
+        BridgeCore, HostMetadata, McpBridge, Phase,
+    };
+    use std::fs;
     use tokio::sync::oneshot;
 
     #[test]
@@ -534,5 +589,69 @@ mod tests {
         // Active write count stays non-zero so QuickSaves is never prematurely unlocked on an interrupted host.
         assert_eq!(core.active_writes, 1);
         assert!(core.activate_ready().is_err());
+    }
+
+    #[test]
+    fn resolve_and_read_host_metadata_verify_existing_files_without_guessing() {
+        let base = std::env::temp_dir().join(format!(
+            "monorail-host-meta-test-{}-单轨 空格",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&base);
+        let res_dir = base.join("resources");
+        let exe_dir = base.join("bin");
+        let cfg_dir = base.join("config");
+        fs::create_dir_all(&res_dir).unwrap();
+        fs::create_dir_all(&exe_dir).unwrap();
+        fs::create_dir_all(&cfg_dir).unwrap();
+
+        let exe_path = exe_dir.join("单轨.exe");
+        fs::write(&exe_path, b"exe").unwrap();
+
+        // Missing in both resource_dir and exe_dir -> returns None instead of guessing a path
+        assert_eq!(
+            resolve_bundle_entry_path(Some(&res_dir), &exe_path, "monorail-mcp.mjs"),
+            None
+        );
+
+        // Present in exe_dir -> resolves from exe_dir
+        let exe_cli = exe_dir.join("monorail-cli.mjs");
+        fs::write(&exe_cli, b"// cli").unwrap();
+        assert_eq!(
+            resolve_bundle_entry_path(Some(&res_dir), &exe_path, "monorail-cli.mjs"),
+            Some(exe_cli.to_string_lossy().into_owned())
+        );
+
+        // Present in resource_dir -> prefers resource_dir
+        let res_mcp = res_dir.join("monorail-mcp.mjs");
+        fs::write(&res_mcp, b"// mcp").unwrap();
+        assert_eq!(
+            resolve_bundle_entry_path(Some(&res_dir), &exe_path, "monorail-mcp.mjs"),
+            Some(res_mcp.to_string_lossy().into_owned())
+        );
+
+        // Missing mcp-host.json -> explicit error
+        assert!(read_host_metadata_from_dir(&cfg_dir).is_err());
+
+        // Write valid mcp-host.json with existing mcp_entry and missing cli_entry
+        let raw_meta = HostMetadata {
+            executable: format!(r"\\?\{}", exe_path.to_string_lossy()),
+            mcp_entry: Some(format!(r"\\?\{}", res_mcp.to_string_lossy())),
+            cli_entry: Some(exe_dir.join("deleted-cli.mjs").to_string_lossy().into_owned()),
+            identifier: "local.pixelrecord.app".into(),
+            pipe: r"\\.\pipe\local.pixelrecord.app.mcp".into(),
+        };
+        fs::write(
+            cfg_dir.join("mcp-host.json"),
+            serde_json::to_vec_pretty(&raw_meta).unwrap(),
+        )
+        .unwrap();
+
+        let loaded = read_host_metadata_from_dir(&cfg_dir).unwrap();
+        assert_eq!(loaded.executable, exe_path.to_string_lossy().into_owned());
+        assert_eq!(loaded.mcp_entry, Some(res_mcp.to_string_lossy().into_owned()));
+        assert_eq!(loaded.cli_entry, None);
+
+        let _ = fs::remove_dir_all(&base);
     }
 }

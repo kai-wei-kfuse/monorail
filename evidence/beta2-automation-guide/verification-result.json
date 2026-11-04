@@ -1,0 +1,73 @@
+{
+  "version": "0.3.0-beta.2",
+  "customInstallDir": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)",
+  "isolatedDataDir": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离数据 目录 (Beta 2)",
+  "isolatedExePath": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\pixel-record.exe",
+  "isolatedMcpPath": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-mcp.mjs",
+  "isolatedCliPath": "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-cli.mjs",
+  "copiedMcpConfig": {
+    "mcpServers": {
+      "monorail": {
+        "command": "node",
+        "args": [
+          "C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-mcp.mjs"
+        ]
+      }
+    }
+  },
+  "copiedHttpCommand": "node 'C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-mcp.mjs' --http --port 8765",
+  "copiedCliCommands": [
+    "node 'C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-cli.mjs' context --json",
+    "node 'C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-cli.mjs' idea add '整理季度复盘提纲 #规划' --json",
+    "node 'C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-cli.mjs' time summary --day today --json",
+    "node 'C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-cli.mjs' timer start '撰写技术方案' --json",
+    "node 'C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-cli.mjs' timer stop --json",
+    "node 'C:\\Users\\kai_wei\\Documents\\1026(4)\\app\\evidence\\beta2-automation-guide\\隔离安装 目录 (Beta 2)\\monorail-cli.mjs' --help"
+  ],
+  "clipboardVerification": {
+    "source": "Windows Get-Clipboard -Raw (unpatched navigator.clipboard.writeText with CDP userGesture)",
+    "verifiedButtonsCount": 8
+  },
+  "mcpVerification": {
+    "getContextOperationId": "b94a121c-880e-46af-8b29-87d733765ce1",
+    "savedIdeaId": "adfc2521-2907-444b-9b02-cd20b1caefc9",
+    "savedIdeaText": "Beta2 设置页复制 MCP 配置实测想法 #验收",
+    "findIdeasCount": 1
+  },
+  "cliVerification": {
+    "contextStatus": "ok",
+    "timeSummaryStatus": "ok",
+    "ideaAddOperationId": "bb41ceba-d366-4b76-8628-84e65e640470",
+    "ideaAddText": "整理季度复盘提纲 #规划",
+    "timerStartActivity": "撰写技术方案",
+    "timerStopActivity": "待机",
+    "helpContainsSubcommands": true
+  },
+  "diskPersistence": {
+    "recordFiles": [
+      "97aa91a6-bafc-49b4-be2a-68b631123f6a.md",
+      "adfc2521-2907-444b-9b02-cd20b1caefc9.md"
+    ],
+    "receiptFiles": [
+      "1bff5895-6706-4dc4-8b72-251c34e0e42d.json",
+      "b94a121c-880e-46af-8b29-87d733765ce1.json",
+      "bb41ceba-d366-4b76-8628-84e65e640470.json",
+      "c6a6c0b3-93f3-4539-b67f-95bfdc5f9240.json"
+    ],
+    "timelogFiles": [
+      "2026-11-04.md"
+    ]
+  },
+  "missingPathVerification": {
+    "errorAlertDisplayed": true,
+    "allEightCopyButtonsDisabled": true
+  },
+  "screenshots": [
+    "ui-01-automation-overview.png",
+    "ui-02-automation-mcp-config.png",
+    "ui-03-automation-cli-examples.png",
+    "ui-04-automation-troubleshooting.png",
+    "ui-05-automation-missing-path-error.png",
+    "ui-06-about-section-10.png"
+  ]
+}

@@ -34,7 +34,7 @@ macro_rules! handlers {
             quick_save::quickbar_update_ready, quick_save::ack_quickbar_update,
             quick_save::begin_quick_save, quick_save::end_quick_save,
             quick_save::begin_data_migration, quick_save::finish_data_migration,
-            mcp_bridge::start_mcp_bridge, mcp_bridge::respond_mcp, $($extra),*]
+            mcp_bridge::start_mcp_bridge, mcp_bridge::respond_mcp, mcp_bridge::read_mcp_host, $($extra),*]
     };
 }
 

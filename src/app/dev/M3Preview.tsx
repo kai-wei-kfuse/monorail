@@ -47,14 +47,21 @@ export function ReviewPreview({ step: initial }: { step: string }) {
   return shell('review', <ReviewPage data={reviewData(step)} actions={actions} />);
 }
 
-/** 设置页预览（只在开发时用）：?sec=deal|degrade|ideas|timer|lists|look|keys|window|about。 */
+/** 设置页预览（只在开发时用）：?sec=deal|degrade|ideas|timer|lists|look|keys|window|automation|about。 */
 export function SettingsPreview({ sec: initial }: { sec: string }) {
   const [sec, setSec] = useState(initial), [saves, setSaves] = useState(0);
   const [s, setS] = useState<Settings>({ ...defaults, lists: { projects: [...PREVIEW_PROJECTS], tags: [...PREVIEW_TAGS], idleName: '待机',
     presets: [{ id: 'q1', name: '厕所', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q2', name: '拿快递', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q3', name: '刷视频', project: '休息', tags: [], mode: '插入', place: '弹层' },
       { id: 'f1', name: '学 408', project: '学习', tags: ['408'], mode: '切换', place: '计时条' }, { id: 'f2', name: '回消息', project: '工作', tags: [], mode: '切换', place: '计时条' }],
     restPool: [{ id: 'r1', name: '眺望窗外' }, { id: 'r2', name: '走走' }] } });
-  return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.2.5" dataDir="D:\\Notes\\monorail"
+  return shell('settings', <SettingsPage section={sec} onSection={setSec} settings={s} version="0.3.0-beta.2" dataDir="D:\\Notes\\monorail"
+    automationHost={{ loading: false, error: null, info: {
+      executable: 'C:\\Users\\demo\\AppData\\Local\\Programs\\单轨\\单轨.exe',
+      mcp_entry: 'C:\\Users\\demo\\AppData\\Local\\Programs\\单轨\\monorail-mcp.mjs',
+      cli_entry: 'C:\\Users\\demo\\AppData\\Local\\Programs\\单轨\\monorail-cli.mjs',
+      identifier: 'local.pixelrecord.app',
+      pipe: '\\\\.\\pipe\\local.pixelrecord.app.mcp',
+    } }}
     projects={s.lists.projects} knownTags={s.lists.tags}
     onCreateProject={name => { setS(x => ({ ...x, lists: { ...x.lists, projects: [...x.lists.projects, { name, color: '#00f5a0' }] } })); setSaves(n => n + 1); }}
     onCreateTag={tag => { setS(x => ({ ...x, lists: { ...x.lists, tags: [...x.lists.tags, tag] } })); setSaves(n => n + 1); }}

@@ -1,11 +1,11 @@
-// 设置页的 9 个分类（架构 §6）。数字的默认值、范围、步长都来自 shared/settings.ts，这里只放中文文案和用哪种控件。
+// 设置页的 10 个分类（架构 §6 扩展 09 AI 与自动化）。数字的默认值、范围、步长都来自 shared/settings.ts，这里只放中文文案和用哪种控件。
 // 「选卡规则自定义」放第二期，不在这里。
 import type { SettingKey } from '../../shared/settings';
 
-/** 一行设置：引用一个设置项；或者是自定义组件（列表编辑器、数据目录、关于）。 */
+/** 一行设置：引用一个设置项；或者是自定义组件（列表编辑器、数据目录、AI 与自动化、关于）。 */
 export type SettingRow =
   | { key: SettingKey; cn: string; desc?: string; control?: 'slider' | 'dropdown'; labels?: Record<string, string> }
-  | { custom: 'idleName' | 'favorites' | 'presets' | 'restPool' | 'dataDir' | 'about'; cn: string; desc?: string };
+  | { custom: 'idleName' | 'favorites' | 'presets' | 'restPool' | 'dataDir' | 'automation' | 'about'; cn: string; desc?: string };
 
 export interface SettingGroup { cn: string; en: string; rows: SettingRow[] }
 export interface SettingSection { id: string; no: string; cn: string; en: string; desc: string; groups: SettingGroup[] }
@@ -71,7 +71,9 @@ export const SECTIONS: SettingSection[] = [
       { key: 'alwaysOnTop', cn: '主窗口置顶' },
       { key: 'miniMode', cn: '小窗口样式', desc: '小窗口显示项目、名称与进度格；mini窗口只保留单行名称、计时与按钮', labels: { mini: '小窗口', tiny: 'mini窗口' } } ] },
     { cn: '数据', en: 'DATA', rows: [{ custom: 'dataDir', cn: '数据目录', desc: 'Markdown + YAML，Obsidian、VS Code 都能直接打开' }] } ] },
-  { id: 'about', no: '09', cn: '关于', en: 'ABOUT', desc: '', groups: [{ cn: '关于', en: 'ABOUT', rows: [{ custom: 'about', cn: '关于' }] }] },
+  { id: 'automation', no: '09', cn: 'AI 与自动化', en: 'AUTOMATION', desc: '通过 MCP 协议或 CLI 命令行接入单轨，供 AI 客户端、自动化脚本与终端直接读写本机数据。',
+    groups: [{ cn: 'AI 与自动化', en: 'AUTOMATION', rows: [{ custom: 'automation', cn: 'AI 与自动化' }] }] },
+  { id: 'about', no: '10', cn: '关于', en: 'ABOUT', desc: '', groups: [{ cn: '关于', en: 'ABOUT', rows: [{ custom: 'about', cn: '关于' }] }] },
 ];
 
 /** 英文单位小字。 */

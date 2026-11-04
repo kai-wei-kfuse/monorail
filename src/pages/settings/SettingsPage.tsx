@@ -19,22 +19,25 @@ import type { SettingRow } from './sections';
 import { SECTIONS, UNIT_EN } from './sections';
 import { ListEditor } from './ListEditor';
 import { PresetEditor } from './PresetEditor';
+import { AutomationGuide } from './AutomationGuide';
+import type { AutomationHostState } from './automationData';
 import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import './settings.css';
 
 type Change = <K extends SettingKey>(key: K, value: Settings[K]) => void;
 
 /**
- * 设置页：左侧 9 个分类，右侧面板。改动即时生效：每次改动都直接交给 onChange，由调用方保存，并在底栏闪一下「已保存 ✓」（见 SavedBadge）。
+ * 设置页：左侧 10 个分类，右侧面板。改动即时生效：每次改动都直接交给 onChange，由调用方保存，并在底栏闪一下「已保存 ✓」（见 SavedBadge）。
  * 列表只交出改了的那一段（onListsChange），免得连着两次改动时后一次把前一次盖掉。
  * 快捷键冲突等保存失败的原因，通过 errors 按 key 显示在对应那一行。
  * projects、knownTags 给预设编辑器选项目和标签；onCreateProject、onCreateTag 在选择器里就地新建。
  */
-export function SettingsPage({ section, onSection, settings, onChange, onListsChange, projects, knownTags, onCreateProject, onCreateTag, dataDir, onChangeDir, errors = {}, version, aboutExtras }:
+export function SettingsPage({ section, onSection, settings, onChange, onListsChange, projects, knownTags, onCreateProject, onCreateTag, dataDir, onChangeDir, errors = {}, version, aboutExtras, automationHost, onRefreshAutomationHost, onCopyText }:
   { section: string; onSection: (id: string) => void; settings: Settings; onChange: Change;
     onListsChange: (lists: Partial<Settings['lists']>) => void; projects: ProjectOption[]; knownTags: string[];
     onCreateProject?: (name: string) => void; onCreateTag?: (tag: string) => void; dataDir: string; onChangeDir: () => void;
-    errors?: Partial<Record<SettingKey, string>>; version: string; aboutExtras?: ReactNode }) {
+    errors?: Partial<Record<SettingKey, string>>; version: string; aboutExtras?: ReactNode;
+    automationHost?: AutomationHostState; onRefreshAutomationHost?: () => void; onCopyText?: (text: string) => Promise<void> }) {
   const sec = SECTIONS.find(s => s.id === section) ?? SECTIONS[0];
   const lists = settings.lists;
   const presets = (place: '计时条' | '弹层', placeholder: string) => <PresetEditor presets={lists.presets} place={place} placeholder={placeholder}
@@ -48,6 +51,7 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
         case 'restPool': return <ListEditor items={lists.restPool} placeholder="例如：眺望窗外、走走、洗脸、收拾桌面"
           onChange={items => onListsChange({ restPool: items.map(i => ({ id: i.id, name: i.name })) })} />;
         case 'dataDir': return <><code className="st-path">{dataDir}</code><Button onClick={onChangeDir}>更换</Button></>;
+        case 'automation':
         case 'about': return null;
       }
     }
@@ -77,6 +81,7 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
       <small>v{version} · 数据是一个文件夹里的 Markdown 文件</small>
       {aboutExtras}
     </div></div>
+      : sec.id === 'automation' ? <AutomationGuide hostState={automationHost} onRefreshHost={onRefreshAutomationHost} onCopyText={onCopyText} />
       : sec.groups.map(g => <Group key={g.cn} cn={g.cn} en={g.en}>
         {g.rows.map(r => {
           const id = 'custom' in r ? r.custom : r.key;

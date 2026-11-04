@@ -28,6 +28,7 @@
     "allow-finish-data-migration",
     "allow-start-mcp-bridge",
     "allow-respond-mcp",
+    "allow-read-mcp-host",
     "core:default",
     "dialog:allow-open",
     "fs:allow-read-text-file",

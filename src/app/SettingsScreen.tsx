@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import { appStore } from '../store/appStore';
 import { SettingsPage } from '../pages/settings/SettingsPage';
+import type { AutomationHostState } from '../pages/settings/automationData';
 import type { Ctx } from '../services/commit';
 import { change, changeDataDirectory, changeLists } from '../services/settingsService';
 import * as preset from '../services/presetService';
 import type { SettingsErrors } from '../services/settingsService';
 import { chooseRoot } from '../platform/dialog';
+import { readAutomationHost } from '../platform/automation';
 import type { SettingKey, Settings } from '../shared/settings';
 import { UpdatePanel } from '../widgets/UpdatePanel';
 import type { useUpdates } from './useUpdates';
@@ -24,6 +26,30 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
   const projects = useStore(appStore, s => s.backpack.pool.projects), knownTags = useStore(appStore, s => s.home.knownTags);
   const [section, setSection] = useState('deal');
   const [errors, setErrors] = useState<SettingsErrors>(initialErrors);
+  const [automationHost, setAutomationHost] = useState<AutomationHostState>({ loading: true, info: null, error: null });
+
+  const refreshAutomationHost = useCallback(() => {
+    setAutomationHost(prev => ({ ...prev, loading: true, error: null }));
+    void readAutomationHost().then(
+      info => setAutomationHost({ loading: false, info, error: null }),
+      err => {
+        const message = err instanceof Error ? err.message : String(err);
+        setAutomationHost({ loading: false, info: null, error: message });
+      },
+    );
+  }, []);
+
+  useEffect(() => {
+    refreshAutomationHost();
+  }, [refreshAutomationHost]);
+
+  const onSelectSection = (nextSection: string) => {
+    setSection(nextSection);
+    if (nextSection === 'automation') {
+      refreshAutomationHost();
+    }
+  };
+
   const onChange = <K extends SettingKey>(key: K, value: Settings[K]) => {
     void change(ctx, key, value, now()).then(result => {
       setErrors(previous => {
@@ -41,8 +67,9 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
   const onChangeDir = () => {
     void changeDataDirectory({ async changeDataDirectory() { if (await chooseRoot()) window.location.reload(); } }).catch(report);
   };
-  return <SettingsPage section={section} onSection={setSection} settings={settings} onChange={onChange}
+  return <SettingsPage section={section} onSection={onSelectSection} settings={settings} onChange={onChange}
     onListsChange={onListsChange} projects={projects} knownTags={knownTags} onCreateProject={onCreateProject} onCreateTag={onCreateTag} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}
+    automationHost={automationHost} onRefreshAutomationHost={refreshAutomationHost}
     aboutExtras={<UpdatePanel state={updates.state} connectionError={updates.connectionError} onCheck={() => void updates.check()}
       onJoinBeta={() => void updates.joinBeta()} onLeaveBeta={() => void updates.leaveBeta()}
       onCheckStableTarget={() => void updates.checkStableTarget()} onDismissTarget={() => void updates.dismissTarget()}

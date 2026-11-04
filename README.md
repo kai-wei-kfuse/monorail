@@ -37,7 +37,7 @@
 
 ## 安装与开发
 
-开发中的 MCP「保存想法」入口与客户端配置见 [mcp/README.md](mcp/README.md)。需要包含该入口的新构建，旧版安装包不支持。
+安装后可在「设置 → 09 AI 与自动化」直接查看能力说明并复制当前安装路径对应的 MCP 配置与 CLI 命令；完整接口与客户端说明见 [docs/application/README.md](docs/application/README.md) 与 [mcp/README.md](mcp/README.md)。运行 MCP 与 CLI 需要本机安装 Node.js 24。
 
 - 安装：从 [Releases](https://github.com/kai-wei-kfuse/monorail/releases) 下载 `monorail_<版本>_windows-x86_64_setup.exe`。应用内更新经本机 GitHub CLI 读取 Release，需要先 `gh auth login`，见 [docs/updates.md](docs/updates.md)。
 - 开发：Node 24 + Rust 1.95.0（MSVC）+ WebView2。

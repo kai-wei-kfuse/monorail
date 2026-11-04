@@ -1,5 +1,9 @@
 # 后续阶段事项
 
+## 0.3.0-beta.2
+
+- [x] 补齐设置内「AI 与自动化」的 MCP/CLI 说明、实际入口路径与可复制配置/命令、前提和排错；依据 [beta.2 当前计划](stages/0.3.0-beta.2.md) 与 ADR 0017，验证报告见 [evidence/beta2-automation-guide/report.md](../evidence/beta2-automation-guide/report.md)。
+
 ## Unassigned
 
 - [ ] 在后续启动诊断阶段补充无控制台原生进程的 panic 日志采集。原因：M9 强制停止/连续重置测试中曾出现一次退出码101，模型明确报告失败；直接/WMI诊断重启及最终四轮均未复现，不阻塞已完成的M9。保留证据见 evidence/0.3.0-m9-final-report.md。
