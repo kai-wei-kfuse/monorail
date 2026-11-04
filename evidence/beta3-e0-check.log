@@ -1,0 +1,4 @@
+
+> pixel-record@0.3.0-beta.3 check
+> tsc --noEmit && npm run mcp:check && eslint src client cli mcp && npm test && npm run mcp:build && npm run mcp:smoke && npm run cli:smoke
+
