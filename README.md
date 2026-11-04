@@ -33,11 +33,11 @@
 
 ![小窗](docs/assets/mini.png)
 
-另外还有：快速记录条（全局快捷键，主窗口隐藏时也能存一条待办）、到期提醒、休息池、每周回顾、睡眠和离线时段追问、开机自启、应用内更新。
+**AI 与自动化（MCP / CLI）。** 安装包内置本机 MCP 服务（`monorail-mcp.mjs`）与命令行工具（`monorail-cli.mjs`），供支持 MCP 的客户端、具备终端能力的 AI Agent 或脚本直接调用（需 Node.js 24+）：支持读取当前状态、保存想法、捕获待办、检索想法与任务卡、开始/暂停/恢复/停止计时、插入临时离开与恢复、查询时间统计及补录记录。完成首次初始化后，即使关闭窗口或退出应用，调用时也会按需自动拉起本机后台。在「设置 → 09 AI 与自动化」可直接复制当前安装路径对应的 MCP 配置与 PowerShell 命令，详见 [docs/application/README.md](docs/application/README.md) 与 [mcp/README.md](mcp/README.md)。
+
+另外还有：快速记录条（全局快捷键，主窗口隐藏时也能存一条待办）、到期提醒、休息池、每周回顾、睡眠和离线时段追问、开机自启、应用内更新（支持稳定版与 Beta 渠道切换）。
 
 ## 安装与开发
-
-安装后可在「设置 → 09 AI 与自动化」直接查看能力说明并复制当前安装路径对应的 MCP 配置与 CLI 命令；完整接口与客户端说明见 [docs/application/README.md](docs/application/README.md) 与 [mcp/README.md](mcp/README.md)。运行 MCP 与 CLI 需要本机安装 Node.js 24。
 
 - 安装：从 [Releases](https://github.com/kai-wei-kfuse/monorail/releases) 下载 `monorail_<版本>_windows-x86_64_setup.exe`。应用内更新经本机 GitHub CLI 读取 Release，需要先 `gh auth login`，见 [docs/updates.md](docs/updates.md)。
 - 开发：Node 24 + Rust 1.95.0（MSVC）+ WebView2。
