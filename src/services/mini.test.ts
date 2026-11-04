@@ -10,14 +10,14 @@ import type { MainWindowBus, MiniCommand, MiniMessage, MiniReply } from '../plat
 
 const value = { description: 'A', project: '学习', tags: [] };
 function seen(f: ReturnType<typeof fixture>) {
-  const snapshot = projectMini(f.ctx.snapshot()!);
-  return { requestId: crypto.randomUUID(), at: f.ctx.now(), entryId: snapshot.entryId, cardId: snapshot.cardId };
+  const snapshot = projectMini(f.ctx.snapshot()!, f.ctx.mainEpoch);
+  return { requestId: crypto.randomUUID(), at: f.ctx.now(), entryId: snapshot.entryId, cardId: snapshot.cardId, epoch: snapshot.epoch };
 }
 function editSeen(f: ReturnType<typeof fixture>) { return { ...seen(f), revision: f.home().dataVersion }; }
 it('schema validates timestamps, action-specific identities and full readout plans before dispatch', () => {
-  const base = { requestId: 'r', at: at(), entryId: 'e', cardId: null };
+  const base = { requestId: 'r', at: at(), entryId: 'e', cardId: null, epoch: 0 };
   expect(miniCommandSchema.safeParse({ ...base, type: 'pause' }).success).toBe(true);
-  for (const command of [{ ...base, type: 'complete' }, { ...base, type: 'beginPending' },
+  for (const command of [{ ...base, type: 'complete' }, { ...base, type: 'beginPending' }, { ...base, epoch: undefined, type: 'pause' },
     { ...base, type: 'editOpen', patch: {} }, { ...base, at: 'tomorrow', type: 'pause' }, { ...base, type: 'pause', other: true }])
     expect(decodeMiniCommand(command)).toMatchObject({ requestId: 'r', error: expect.any(String) });
 });
@@ -138,9 +138,9 @@ it('native effect failures return an error reply instead of leaving the mini com
 });
 it('projects miniMode from settings onto MiniSnapshot', async () => {
   const f = fixture(); await startFree(f.ctx, value, at());
-  expect(projectMini(f.ctx.snapshot()!).miniMode).toBe('mini');
+  expect(projectMini(f.ctx.snapshot()!, 0).miniMode).toBe('mini');
   await change(f.ctx, 'miniMode', 'tiny', at(5));
-  expect(projectMini(f.ctx.snapshot()!).miniMode).toBe('tiny');
+  expect(projectMini(f.ctx.snapshot()!, 0).miniMode).toBe('tiny');
 });
 it('idle and pending setReadout preview overlapping entries before committing and reject if idle state changed', async () => {
   const f = fixture(); await seed(f, []);
@@ -169,4 +169,25 @@ it('idle and pending setReadout preview overlapping entries before committing an
   const confirmed = await dispatchMiniCommand(f.ctx, { ...overlapReq, revision: f.home().dataVersion, seen: preview.plan });
   expect(confirmed.kind).toBe('done');
   expect(f.home().pending).toMatchObject({ startedAt: at(30) });
+});
+it('a command from an older main-window session is rejected with a fresh snapshot and writes nothing (D4)', async () => {
+  const f = fixture(); await startFree(f.ctx, value, at());
+  // 主窗口重载后的新 Ctx：世代 5；小窗手里还是世代 4 那份快照发起的命令
+  const reloaded = { ...f, ctx: (await import('./commit')).createContext({ ...f.ctx, mainEpoch: 5 }) };
+  await run(reloaded.ctx, async () => {});
+  let receive!: (message: MiniMessage) => void;
+  let replied!: (value: MiniReply) => void; const done = new Promise<MiniReply>(resolve => { replied = resolve; });
+  const push = vi.fn(async () => {});
+  const bus: MainWindowBus = { onCommand: async fn => { receive = fn; return () => {}; }, onReady: async () => () => {},
+    push, reply: async value => { replied(value); } };
+  const stop = await connectMini(reloaded.ctx, bus, { openMain: async () => {}, complete: async () => {}, report: error => { throw error; } }, MINI_HEARTBEAT_MS);
+  try {
+    const before = entries(reloaded), transact = vi.spyOn(reloaded.ctx.repos, 'transact');
+    const stale = { ...seen(reloaded), epoch: 4 };
+    receive({ command: { ...stale, type: 'pause' } });
+    expect((await done).outcome).toEqual({ kind: 'error', message: '主窗口已重新载入，请再操作一次' });
+    await Promise.resolve();
+    expect(push.mock.calls.at(-1)).toEqual([expect.objectContaining({ epoch: 5 })]);
+    expect(transact).not.toHaveBeenCalled(); expect(entries(reloaded)).toEqual(before);
+  } finally { stop(); }
 });

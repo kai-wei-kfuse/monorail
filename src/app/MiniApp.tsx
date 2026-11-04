@@ -11,6 +11,7 @@ import { cardProgress } from '../widgets/cardProgress';
 import { HitNote, TimeField } from '../pages/home/TimeField';
 import type { ReadoutNote, ReadoutOutcome, ReadoutRequest } from '../pages/home/TimeField';
 import { MiniWindow } from './shell/MiniWindow';
+import { RELOADED_MESSAGE, epochGuard, isNewSession } from './miniSession';
 
 type Send = (command: Record<string, unknown> & { type: MiniCommand['type'] }, at?: string) => Promise<MiniOutcome>;
 const REPLY_TIMEOUT_MS = 5000;
@@ -27,12 +28,24 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const [edit, setEdit] = useState<{ startedHere: boolean; snap: MiniSnapshot; draft: string } | null>(null);
   const [note, setNote] = useState<ReadoutNote | null>(null), [error, setError] = useState<string | null>(null);
   const waiting = useRef(new Map<string, (outcome: MiniOutcome) => void>()), root = useRef<HTMLDivElement>(null);
+  // 主窗口会话世代（D4）：更大的世代到了就清掉旧会话的编辑、提示、报错和等待中的回复；异步回调回来时核对世代
+  const epoch = useRef<number | null>(null), guard = useRef(epochGuard(() => epoch.current ?? -1)).current;
 
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   useEffect(() => {
     let alive = true;
+    const onSnapshot = (s: MiniSnapshot) => {
+      const previous = epoch.current;
+      epoch.current = s.epoch;
+      if (isNewSession(previous, s.epoch)) {
+        setEdit(null); setNote(null); setError(null);
+        const pending = [...waiting.current.values()]; waiting.current.clear();
+        pending.forEach(resolve => resolve({ kind: 'error', message: RELOADED_MESSAGE }));
+      }
+      latest.current = s; setSnap(s); setLastAt(Date.now()); document.documentElement.style.setProperty('--yellow', s.accent);
+    };
     const offs = Promise.all([
-      bus.onSnapshot(s => { latest.current = s; setSnap(s); setLastAt(Date.now()); document.documentElement.style.setProperty('--yellow', s.accent); }),
+      bus.onSnapshot(onSnapshot),
       bus.onReply(r => { waiting.current.get(r.requestId)?.(r.outcome); waiting.current.delete(r.requestId); }),
     ]).then(async fns => { if (alive) await bus.ready(); return fns; });
     return () => { alive = false; void offs.then(fns => fns.forEach(f => f())); };
@@ -83,10 +96,14 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     const requestId = crypto.randomUUID();
     const timer = setTimeout(() => { waiting.current.delete(requestId); resolve({ kind: 'error', message: '主窗口未响应' }); }, REPLY_TIMEOUT_MS);
     waiting.current.set(requestId, outcome => { clearTimeout(timer); resolve(outcome); });
-    void bus.send({ requestId, at, entryId: base?.entryId ?? null, cardId: base?.cardId ?? null, ...command } as MiniCommand)
+    // epoch 取编辑开始时那份快照的，不取最新的：旧编辑不会被盖上新会话的世代变成合法命令
+    void bus.send({ requestId, at, entryId: base?.entryId ?? null, cardId: base?.cardId ?? null, epoch: base?.epoch ?? 0, ...command } as MiniCommand)
       .catch(e => { waiting.current.delete(requestId); clearTimeout(timer); resolve({ kind: 'error', message: String(e) }); });
   });
-  const act = (command: Parameters<Send>[0]) => void send(command).then(o => setError(o.kind === 'error' ? o.message : null));
+  const act = (command: Parameters<Send>[0]) => {
+    const started = epoch.current ?? -1;
+    void send(command).then(guard.bind(started, (o: MiniOutcome) => setError(o.kind === 'error' ? o.message : null)));
+  };
 
   if (!snap) return <div ref={root} className="mini-stack"><span className="mini-cap">{miniUnresponsive(lastAt, mountedAt.current, now) ? '主窗口未响应' : '等主窗口发来当前状态…'}</span></div>;
 
@@ -163,7 +180,8 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
         placeholder="I am working on…" value={edit.draft}
         onChange={draft => setEdit({ ...edit, draft })}
         onDone={closeEdit} />}
-      digits={<TimeField id="mini-elapsed" kind="mmss" shown={total} disabled={!canEditTime} target={target} submit={submit} onNote={setNote}>{formatReadout(total, 'mmss')}</TimeField>}
+      digits={<TimeField key={snap.epoch} id="mini-elapsed" kind="mmss" shown={total} disabled={!canEditTime} target={target} submit={submit}
+        onNote={guard.bind(snap.epoch, setNote)}>{formatReadout(total, 'mmss')}</TimeField>}
       caption={stale ? '主窗口未响应' : error ? error : note ? <HitNote note={note} /> : null} />
   </div>;
 }

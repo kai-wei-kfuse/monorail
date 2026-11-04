@@ -12,7 +12,7 @@ export function MiniPreview() {
   const bus = useMemo<MiniWindowBus>(() => {
     const iso = (t: number) => new Date(t).toISOString(), t0 = Date.now();
     let s: MiniSnapshot = {
-      accent: '#00f5a0', miniMode: tiny ? 'tiny' : 'mini', revision: 1, entryId: 'e1', cardId: null, pending_id: null,
+      accent: '#00f5a0', miniMode: tiny ? 'tiny' : 'mini', epoch: 1, revision: 1, entryId: 'e1', cardId: null, pending_id: null,
       entry: { id: 'e1', description: '写周报', project: '工作', tags: [], startedAt: iso(t0 - 25 * 60_000), cardId: null, kind: '普通' },
       pending: null, resumeDescription: null, card: null, closedEffectiveMs: 0, currentSegStartedAt: null, awayActivity: null,
       projects: [{ name: '未分类', color: '#888884' }, { name: '工作', color: '#7c5cff' }, { name: '学习', color: '#1aa3ff' }], knownTags: ['周报', '408'],
@@ -44,7 +44,13 @@ export function MiniPreview() {
     return {
       onSnapshot: async h => { onSnap = h; return () => { onSnap = null; }; },
       onReply: async h => { onReply = h; return () => { onReply = null; }; },
-      ready: async () => { if (!stale) { onSnap?.(s); setInterval(() => onSnap?.(s), 1000); } },
+      ready: async () => {
+        if (stale) return;
+        onSnap?.(s); setInterval(() => onSnap?.(s), 1000);
+        // ?reload=毫秒：模拟主窗口 F5，到时换成下一个世代、修订号从头计数（D4）
+        const reload = Number(params.get('reload'));
+        if (reload > 0) setTimeout(() => { s = { ...s, epoch: s.epoch + 1, revision: 0 }; onSnap?.(s); }, reload);
+      },
       send: async c => { setTimeout(() => onReply?.({ requestId: c.requestId, outcome: handle(c) }), 30); },
     };
   }, [stale, tiny]);

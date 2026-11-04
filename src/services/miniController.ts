@@ -10,11 +10,16 @@ export interface MiniEffects {
 }
 /** Main-window only. Every event error is reported; rejected commands receive the latest snapshot. */
 export async function connectMini(ctx: Ctx, bus: MainWindowBus, effects: MiniEffects, heartbeatMs: number): Promise<() => void> {
-  const push = async () => { const snapshot = ctx.snapshot(); if (snapshot) await bus.push(projectMini(snapshot)); };
+  const push = async () => { const snapshot = ctx.snapshot(); if (snapshot) await bus.push(projectMini(snapshot, ctx.mainEpoch)); };
   async function receive(message: MiniMessage): Promise<void> {
     if ('error' in message) {
       if (message.requestId !== null) await bus.reply({ requestId: message.requestId, outcome: { kind: 'error', message: message.error } });
       effects.report(new Error(message.error)); await push(); return;
+    }
+    // 旧会话（主窗口 F5 或更换数据目录之前）发起的命令不写入：它的 revision 和当前会话不可比（0.3.0-beta.3 D4）
+    if (message.command.epoch !== ctx.mainEpoch) {
+      await bus.reply({ requestId: message.command.requestId, outcome: { kind: 'error', message: '主窗口已重新载入，请再操作一次' } });
+      await push(); return;
     }
     let outcome: MiniOutcome;
     try {

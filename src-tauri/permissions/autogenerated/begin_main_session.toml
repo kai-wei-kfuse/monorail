@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-begin-main-session"
+description = "Enables the begin_main_session command without any pre-configured scope."
+commands.allow = ["begin_main_session"]
+
+[[permission]]
+identifier = "deny-begin-main-session"
+description = "Denies the begin_main_session command without any pre-configured scope."
+commands.deny = ["begin_main_session"]

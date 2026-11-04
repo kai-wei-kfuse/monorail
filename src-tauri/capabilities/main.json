@@ -12,6 +12,7 @@
     "allow-show-quickbar",
     "allow-toggle-mini",
     "allow-read-mini-visibility",
+    "allow-begin-main-session",
     "allow-show-main",
     "allow-dialog-active",
     "allow-set-shortcut",

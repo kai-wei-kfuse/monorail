@@ -53,8 +53,10 @@ export async function bootstrap(root: string) {
     tasks: (await repos.tasks.list()).map(e => e.value).filter(inBackpack).map(p => ({ id: p.id, name: p.name })),
     accent: ctx.settings.accent,
   });
+  // 每次主窗口载入（含 F5、更换数据目录后的重载）取一个新的会话世代，小窗据此认出新会话（0.3.0-beta.3 D4）
+  const mainEpoch = await invoke<number>('begin_main_session');
   const ctx = createContext({
-    repos, settings: restored.settings, reminders: nativeReminders, settingsPlatform: nativeSettingsPlatform, id, now,
+    repos, settings: restored.settings, reminders: nativeReminders, settingsPlatform: nativeSettingsPlatform, id, now, mainEpoch,
     notices: () => appStore.getState().notices,
     publish: value => { publishProjection(value); void quickbarContext().catch(report); },
     log: message => invoke('evidence', { message }),

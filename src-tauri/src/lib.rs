@@ -11,6 +11,7 @@ mod update_state;
 mod windows;
 mod mini_window;
 mod mini_visibility;
+mod main_session;
 mod mcp_bridge;
 
 use std::{fs, path::PathBuf};
@@ -28,6 +29,7 @@ macro_rules! handlers {
             power::read_lifecycle, reminders::set_reminders, windows::show_quickbar,
             windows::dialog_active, windows::set_shortcut,
             mini_window::toggle_mini, mini_window::show_main, mini_visibility::read_mini_visibility,
+            main_session::begin_main_session,
             updates::check_update, updates::check_stable_update, updates::set_update_channel,
             updates::dismiss_update_target, updates::download_update, updates::install_update,
             updates::read_update_state, updates::prepare_update_install, updates::cancel_update_install,
