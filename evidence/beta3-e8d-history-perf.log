@@ -1,0 +1,14 @@
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+stdout | src/services/history.perf.test.ts > 180 days of history and a burst of quick-bar records stay within a generous bound; prints the measured times
+HISTORY_PERF {"times":{"absorb50":157,"list7":6,"list180":48,"recent5":5},"counts":{"absorb50.reads":4558,"absorb50.heapMB":4,"queueWaitMs":157,"list7.reads":261,"list7.heapMB":5,"list180.reads":5451,"list180.heapMB":17,"recent5.reads":81,"recent5.heapMB":2}}
+
+ ✓ src/services/history.perf.test.ts > 180 days of history and a burst of quick-bar records stay within a generous bound; prints the measured times 905ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  03:16:55
+   Duration  1.44s (tests 75%, import 15%, transform 9%)
+
+TEST 0

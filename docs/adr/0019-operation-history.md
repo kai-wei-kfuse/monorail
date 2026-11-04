@@ -131,6 +131,10 @@
   4. v0.2.5 读取并改写带 `created_via` / `history_logged_at` 的记录；
   5. 快速记录吸收在不同中断点（卡片已写 / 历史已写 / 标记已写）的未完成 journal，v0.2.5 恢复后再升级回 beta.3，核对不重记、不丢记录；
   6. 新版 MCP 客户端进程连旧版桌面（beta.2）：报错可见、不伪成功；重启客户端后恢复。
+- E8d 结果（2026-11-05）：
+  - **源码审计（已复核）**：对 `git show v0.2.5:src/data/{journal,repos,mdRepo,schemas}.ts` 重新核对，结论同上——`Journal.recover` 按路径重放，不认识 `history/` 也照写；`MdRepo.list` 只列自己目录的 `.md`；`recordSchema` 为 `.passthrough()`，`MdRepo.write` 先合并原文字段；`migrateV2` 只在 `schemaVersion !== 2` 时扫全部路径。对矩阵第 1、2、4 条在源码层面成立；第 3 条（`before` 非空的设置历史改写）`apply` 按 `before` 逐字节核对，与业务文件同一规则；第 5 条退回期间 v0.2.5 的 `reconcile` 会照常生成卡片，回到 beta.3 后吸收时 `materializeTodoRecordInTx` 先找已关联的卡，不会重复生成，历史只写一条。
+  - **隔离安装实测矩阵 1–6：未测**。没有在隔离身份下装 v0.2.5 实际打开、恢复和改写；第 6 条新版客户端连旧版桌面也没测。不能据源码审计写成兼容。
+  - 备份：源码确认应用内更新备份递归复制整个数据目录（只跳过已排空的 `.journal`），包含 `history/`；更新冻结期间清理不接纳（E8a1 测试）。真机备份未测。
 - 退回旧版期间的操作没有历史；退回期间用快速记录条存的记录没有 `created_via`，回到新版后不补记。空缺保持空缺。
 - 应用内更新备份包含 `history/`（180 天上限约束了体积）。迁移 v2 只在 `schemaVersion !== 2` 时扫描全部路径，不受影响。
 

@@ -16,6 +16,7 @@ import { refreshInTx } from '../services/dealService';
 import { expireInTx } from '../services/ideaService';
 import type { Ctx } from '../services/commit';
 import { reconcile } from '../services/recordService';
+import { cleanup as historyCleanup } from '../services/historyService';
 import { startScheduler } from '../services/scheduler';
 import { appStore, publishProjection } from '../store/appStore';
 import { appendNotices } from '../store/noticeSlice';
@@ -82,8 +83,12 @@ export async function bootstrap(root: string) {
     // A new activity day archives stale ideas and re-deals the home card in one transaction; also once at startup.
     const newDay = () => run(ctx, async tx => { expireInTx(tx); refreshInTx(tx); }, ctx.now(),
       { action: 'system.dayChange', source: { kind: 'system', trigger: 'dayChange' } });
+    // 操作历史保留 180 天（E8d）：启动完成 journal 恢复后、每次换日之后各清理一次；失败只记日志，不打扰提交
+    const cleanHistory = () => void historyCleanup(ctx).then(r => ctx.log(`history-cleanup:${JSON.stringify(r)}`),
+      error => ctx.log(`history-cleanup-failed:${error instanceof Error ? error.message : String(error)}`)).catch(() => {});
     await newDay();
-    offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: newDay, report }));
+    cleanHistory();
+    offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: async () => { await newDay(); cleanHistory(); }, report }));
     // Hotkeys and autostart follow settings.yaml; per-key failures are shown on the settings page.
     const platformErrors = await applyPlatform(ctx);
     await invoke('finish_data_migration');

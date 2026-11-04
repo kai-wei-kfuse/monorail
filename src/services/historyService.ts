@@ -1,8 +1,9 @@
 // 操作历史的查询（ADR 0019 第 8 条，执行方案 E8c）：不进每次提交都算的投影，按需读；
 // 经 readSerial 排在提交队列上，读不到写了一半的 journal，读取期间也不会被清理删文件。
-import { readSerial } from './commit';
+import { historyMergePath, maintain, readSerial, whenCommitsOpen } from './commit';
 import type { Ctx } from './commit';
 import type { HistoryRecord } from '../shared/history';
+import { HISTORY_RETENTION_DAYS } from '../shared/history';
 import { activityDay } from '../domain/timeline/day';
 
 export interface HistoryPage { records: HistoryRecord[]; bad: number; older: boolean; fromDay: string; toDay: string }
@@ -20,6 +21,18 @@ export function list(ctx: Ctx, days: number, at = ctx.now()): Promise<HistoryPag
   if (!Number.isSafeInteger(days) || days <= 0) throw new Error('天数必须为正整数');
   const toDay = today(ctx, at), fromDay = shiftDay(toDay, 1 - days);
   return readSerial(ctx, async () => ({ ...await ctx.repos.history.readDays(fromDay, toDay), fromDay, toDay }));
+}
+
+/**
+ * 保留清理（ADR 0019 第 7 条，执行方案 E8d 第 1 条）：保留包含今天在内的最近 180 个活动日，删掉 day < 今天 − 179 天的。
+ * 排在提交队列上（maintain），与提交、读取互斥；安装更新冻结期间先等解冻。跳过设置合并指针所指的文件。
+ * 删一个失败不影响其余，也不封锁队列；不经 journal（逐文件删除，可重复）。
+ */
+export function cleanup(ctx: Ctx): Promise<{ removed: number; failed: number; cutoff: string }> {
+  return whenCommitsOpen(ctx, () => maintain(ctx, async () => {
+    const cutoff = shiftDay(today(ctx), -(HISTORY_RETENTION_DAYS - 1)), skip = historyMergePath(ctx);
+    return { ...await ctx.repos.history.removeBefore(cutoff, new Set(skip ? [skip] : [])), cutoff };
+  }));
 }
 
 export const isAutomation = (r: HistoryRecord) => r.source.kind === 'mcp' || r.source.kind === 'cli' || r.source.kind === 'automation';

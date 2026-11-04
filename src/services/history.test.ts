@@ -5,10 +5,10 @@ import { createRepos } from '../data/repos';
 import { HistoryRepo } from '../data/historyRepo';
 import { defaults } from '../shared/settings';
 import type { HistoryIntent, HistoryRecord } from '../shared/history';
-import { createContext, historyMergePath, run, runOperation } from './commit';
+import { createContext, historyMergePath, pauseCommits, run, runOperation } from './commit';
 import type { Ctx } from './commit';
 import { mergeChanges } from './historyCapture';
-import { list, recentAutomation, shiftDay } from './historyService';
+import { cleanup, list, recentAutomation, shiftDay } from './historyService';
 
 function fixture() {
   const fs = new MemoryFs();
@@ -145,6 +145,42 @@ describe('historyService（E8c）', () => {
     expect(recent.map(r => r.day)).toEqual(['2026-11-04', '2026-10-25']);
     expect(recent.every(r => r.source.kind === 'mcp')).toBe(true);
     expect(await recentAutomation(f.ctx, 1)).toHaveLength(1);
+  });
+  it('cleanup：保留含今天的 180 个活动日，截止日前一天删、截止日当天保留；跳过设置合并指针；冻结时等解冻；删除失败不影响提交', async () => {
+    const f = fixture(), repo = f.ctx.repos.history;
+    const put = async (day: string, id: string) => { const w = repo.write({ version: 1, id, at: new Date(`${day}T10:00:00`).toISOString(), day, action: 'test.direct',
+      label: 't', source: { kind: 'manual', via: 'main' }, subject: null, changes: [], effects: [] }); await f.fs.atomicWrite(w.path, w.text); };
+    const cutoff = shiftDay('2026-11-04', -179);
+    expect(cutoff).toBe('2026-05-09');
+    await put(shiftDay(cutoff, -1), 'old'); await put(cutoff, 'edge'); await put('2026-11-04', 'today');
+    expect(await cleanup(f.ctx)).toEqual({ removed: 1, failed: 0, cutoff });
+    expect((await repo.listAll()).map(p => p.split('-').at(-1))).toEqual(['edge.json', 'today.json']);
+
+    // 半年前改的设置还是合并指针所指的那一条：跳过；之后有别的提交清掉指针，下次清理再删
+    const g = fixture();
+    g.tick(-200 * 86_400_000); await warm(g); await setSetting(g, 'titleScale', 70); g.tick(200 * 86_400_000);
+    expect(historyMergePath(g.ctx)).not.toBeNull();
+    expect(await cleanup(g.ctx)).toMatchObject({ removed: 0 });
+    await run(g.ctx, async tx => { tx.state.home_mode = 'guide'; }, g.at(), manual);
+    expect(historyMergePath(g.ctx)).toBeNull();
+    expect(await cleanup(g.ctx)).toMatchObject({ removed: 1 });
+
+    // 安装更新冻结期间：等解冻后再执行
+    const pause = pauseCommits(f.ctx); await pause.ready;
+    await put(shiftDay(cutoff, -3), 'frozen');
+    let done = false; const pending = cleanup(f.ctx).then(r => { done = true; return r; });
+    await new Promise(r => setTimeout(r, 20));
+    expect(done).toBe(false);
+    pause.resume();
+    expect(await pending).toMatchObject({ removed: 1 });
+
+    // 删除失败：只计数，不封锁队列
+    await put(shiftDay(cutoff, -5), 'stuck');
+    const remove = f.fs.remove.bind(f.fs);
+    f.fs.remove = async () => { throw new Error('locked'); };
+    expect(await cleanup(f.ctx)).toMatchObject({ removed: 0, failed: 1 });
+    f.fs.remove = remove;
+    await run(f.ctx, async tx => { tx.state.home_mode = 'guide'; }, f.at(), manual);
   });
   it('shiftDay 按日历日推进（跨月、跨年）', () => {
     expect(shiftDay('2026-03-01', -1)).toBe('2026-02-28');
