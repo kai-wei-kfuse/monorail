@@ -35,6 +35,8 @@
   position: relative; width: 520px; height: 88px;
   display: grid; grid-template-columns: 24px minmax(0, 1fr) auto;
   background: var(--paper); color: var(--ink);
+  /* 0.3.0-beta.3 D5 方案 A：上下边线画在整个窗口上，黑块左上斜切露出的那一小块浅色区也有顶边 */
+  box-shadow: inset 0 1px 0 var(--line-2), inset 0 -1px 0 var(--line-2);
 }
 .mini-l { position: relative; min-width: 0; display: grid; align-content: center; gap: 7px; padding: 0 18px 12px 16px; overflow: hidden; box-shadow: inset 0 1px 0 var(--line-2), inset 0 -1px 0 var(--line-2); }
 .mini-l:has(.combo-pop) { overflow: visible; z-index: 10; }
@@ -50,7 +52,7 @@
 .mini-l b .hl { padding: 0 .14em; }
 .mini-l .mbars { position: absolute; left: 16px; right: 18px; bottom: 10px; }
 .mini-r { display: flex; align-items: center; gap: 8px; padding: 0 20px 0 22px; background: var(--ink);
-  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 16px); }
+  clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px); }
 .mini-read { display: grid; gap: 7px; margin-right: 8px; }
 .mini-read .k { font-size: 8px; color: #8a8a86; }
 .mini-time { font: 600 expanded 26px/1 var(--f-en); color: var(--yellow); font-variant-numeric: tabular-nums; }
@@ -78,7 +80,7 @@
 .miniwin.tiny .mini-title, .miniwin.tiny .mini-title b, .miniwin.tiny .mini-title-in { font: 630 14px/1.25 var(--f-cn); }
 .miniwin.tiny .mini-title-in::placeholder { font: 500 12px/1.25 var(--f-en); }
 .miniwin.tiny .mini-r { gap: 6px; padding: 0 10px 0 16px;
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px); }
 .miniwin.tiny .mini-read { gap: 0; margin-right: 4px; }
 .miniwin.tiny .mini-time { font-size: 20px; }
 .miniwin.tiny .mini-btn { width: 26px; height: 26px; }
