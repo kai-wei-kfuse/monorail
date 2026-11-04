@@ -40,7 +40,7 @@
 .blk.dim { opacity: .3; }
 .blk.ghost { z-index: 5; background: color-mix(in srgb, var(--yellow) 60%, transparent); border: 1.5px dashed var(--ink); box-shadow: none; pointer-events: none; }
 .blk.ghost .blk-s { color: var(--ink); }
-.blk > i { position: absolute; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.blk > i { position: absolute; left: 0; right: 0; height: min(6px, 25%); cursor: ns-resize; }
 .blk > i[data-edge="top"] { top: 0; }
 .blk > i[data-edge="bottom"] { bottom: 0; }
 .cal-now { position: absolute; left: -1px; right: 0; z-index: 4; height: 2px; background: var(--ink); pointer-events: none; }

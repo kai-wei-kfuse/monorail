@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
+import { defaults } from '../shared/settings';
 import { appStore } from '../store/appStore';
 import { CalendarPage } from '../pages/calendar/CalendarPage';
 import type { CalendarActions } from '../pages/calendar/CalendarPage';
@@ -49,7 +50,8 @@ export function CalendarScreen({ ctx, report }: { ctx: Ctx; report: (error: unkn
     copy: (id, start) => void edit.copy(ctx, id, now(), start).catch(report),
     setShowIdle: on => void edit.setShowIdle(ctx, on, now()).catch(report),
   };
-  return <CalendarPage entries={entries} projects={projects} knownTags={knownTags} boundaryHour={boundaryHour} snapMinutes={5}
+  // 日历吸附最小间隔统一取 shared/settings.ts 的 defaults.calendarSnapMinutes（1 分钟），不改写用户既有 settings.yaml。
+  return <CalendarPage entries={entries} projects={projects} knownTags={knownTags} boundaryHour={boundaryHour} snapMinutes={defaults.calendarSnapMinutes}
     showIdle={showIdle} isIdle={isIdle} actions={actions} onRange={onRange} />;
 }
 

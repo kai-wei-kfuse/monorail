@@ -1,8 +1,38 @@
-import { createElement } from 'react';
+import { createElement, isValidElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { defaults } from '../../shared/settings';
+import { CalendarBoard } from './CalendarBoard';
 import { CalendarPage } from './CalendarPage';
-import { dayHeight, dayTotal, dragTo, HOUR_PX, isoWeek, layoutDay, piece, snap, stepZoom, timeAt, viewDays, zoomScrollTop } from './grid';
+import {
+  beginBoardDrag,
+  CAL_ZOOMS,
+  dayHeight,
+  dayTotal,
+  dragTo,
+  endBoardDrag,
+  HOUR_PX,
+  isoWeek,
+  layoutDay,
+  moveBoardDrag,
+  NEW_BLOCK_MS,
+  piece,
+  snap,
+  stepZoom,
+  timeAt,
+  viewDays,
+  zoomScrollTop,
+} from './grid';
+
+vi.mock('react', async importOriginal => ({
+  ...await importOriginal<typeof React>(),
+  useState: vi.fn((init: unknown) => [typeof init === 'function' ? (init as () => unknown)() : init, vi.fn()]),
+  useRef: vi.fn((init = null) => ({ current: init })),
+  useEffect: vi.fn(),
+  useLayoutEffect: vi.fn(),
+}));
 
 const MIN = 60_000, HOUR = 60 * MIN, STEP = 5 * MIN;
 const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).getTime();   // 2026 年 10 月，本地时间
@@ -84,6 +114,156 @@ describe('dragTo', () => {
     expect(dragTo(d, at(28, 18), now, STEP)).toEqual({ start: at(28, 10), end: now });
   });
   it('正在计时的条目不能移动', () => expect(() => dragTo({ kind: 'move', t0: at(28, 14), start: at(28, 14), end: null }, at(28, 14, 30), now, STEP)).toThrow());
+  it('defaults.calendarSnapMinutes 为唯一默认来源（1 分钟），CalendarBoard 真实 pointer down/move/up 在 1×~4× 比例下均可直接拖出 1 分钟并保留单击新建 30 分钟', () => {
+    expect(defaults.calendarSnapMinutes).toBe(1);
+    const step1 = defaults.calendarSnapMinutes * MIN;
+
+    for (const zoom of CAL_ZOOMS) {
+      const hourPx = HOUR_PX * zoom;
+      const oneMinPx = hourPx / 60; // 1× 下仅 0.7667px (< 4px)
+      const y1000 = 6 * hourPx; // 10:00 对应像素纵坐标
+      const y1001 = y1000 + oneMinPx; // 10:01 对应像素纵坐标
+
+      // 1) 通过 CalendarBoard 真实 DOM pointer 事件链路：在 1×~4× 下直接垂直拖动 1 分钟（dy < 4px）可新建 1 分钟条目
+      const onCreate = vi.fn();
+      const onChange = vi.fn();
+      const onCopy = vi.fn();
+      const onOpen = vi.fn();
+      const boardTree = CalendarBoard({
+        days: [DAY],
+        today: DAY,
+        now,
+        entries: [
+          {
+            id: 'e1',
+            started_at: iso(at(28, 10, 0)),
+            ended_at: iso(at(28, 10, 2)),
+            description: '短块',
+            project: '工作',
+            card_id: null,
+          },
+        ],
+        isIdle: () => false,
+        showIdle: true,
+        colorOf: () => '#00f5a0',
+        step: step1,
+        boundaryHour: 4,
+        zoom,
+        onCreate,
+        onChange,
+        onCopy,
+        onOpen,
+      });
+
+      let gridEl: ReactElement<Record<string, unknown>> | null = null;
+      const walk = (node: ReactNode): void => {
+        if (!node) return;
+        if (Array.isArray(node)) {
+          node.forEach(walk);
+          return;
+        }
+        if (!isValidElement(node)) return;
+        const el = node as ReactElement<Record<string, unknown>>;
+        if (el.props.className === 'cal-grid') gridEl = el;
+        if (typeof el.props.ref === 'function' && String(el.props.className ?? '').startsWith('cal-col')) {
+          (el.props.ref as (dom: unknown) => void)({
+            getBoundingClientRect: () => ({ top: 0, right: 500 }),
+          });
+        }
+        walk(el.props.children as ReactNode);
+      };
+      walk(boardTree);
+      expect(gridEl).not.toBeNull();
+
+      const onPointerDown = gridEl!.props.onPointerDown as (e: unknown) => void;
+      const onPointerMove = gridEl!.props.onPointerMove as (e: unknown) => void;
+      const onPointerUp = gridEl!.props.onPointerUp as (e: unknown) => void;
+
+      const emptyTarget = { closest: () => null, dataset: {} };
+      onPointerDown({
+        button: 0,
+        pointerId: 1,
+        clientX: 100,
+        clientY: y1000,
+        target: emptyTarget,
+        currentTarget: { setPointerCapture: vi.fn() },
+      });
+      onPointerMove({ clientX: 100, clientY: y1001 });
+      onPointerUp({ clientX: 100, clientY: y1001 });
+
+      expect(onCreate).toHaveBeenCalledTimes(1);
+      expect(onCreate).toHaveBeenCalledWith(at(28, 10, 0), at(28, 10, 1), 110, y1001 + 10);
+
+      // 2) 原地单击空白处（含极小手抖 < 0.5 分钟）：保持新建 30 分钟默认块语义
+      onCreate.mockClear();
+      onPointerDown({
+        button: 0,
+        pointerId: 2,
+        clientX: 100,
+        clientY: y1000,
+        target: emptyTarget,
+        currentTarget: { setPointerCapture: vi.fn() },
+      });
+      onPointerMove({ clientX: 100, clientY: y1000 + oneMinPx * 0.2 });
+      onPointerUp({ clientX: 100, clientY: y1000 + oneMinPx * 0.2 });
+      expect(onCreate).toHaveBeenCalledTimes(1);
+      expect(onCreate).toHaveBeenCalledWith(
+        at(28, 10, 0),
+        at(28, 10, 0) + NEW_BLOCK_MS,
+        110,
+        y1000 + oneMinPx * 0.2 + 10,
+      );
+
+      // 3) 单击已有短块打开弹窗；拖动上下边或整块 1 分钟（dy < 4px）可按 1 分钟调整或移动
+      const blockEl = { dataset: { id: 'e1' } };
+      onPointerDown({
+        button: 0,
+        pointerId: 3,
+        clientX: 100,
+        clientY: y1000,
+        target: { closest: () => blockEl, dataset: {} },
+        currentTarget: { setPointerCapture: vi.fn() },
+      });
+      onPointerUp({ clientX: 100, clientY: y1000 });
+      expect(onOpen).toHaveBeenCalledWith('e1', 110, y1000 + 10);
+
+      // 拖动 bottom 手柄缩短为 1 分钟（10:02 -> 10:01）
+      onPointerDown({
+        button: 0,
+        pointerId: 4,
+        clientX: 100,
+        clientY: y1000 + 2 * oneMinPx,
+        target: { closest: () => blockEl, dataset: { edge: 'bottom' } },
+        currentTarget: { setPointerCapture: vi.fn() },
+      });
+      onPointerMove({ clientX: 100, clientY: y1001 });
+      onPointerUp({ clientX: 100, clientY: y1001 });
+      expect(onChange).toHaveBeenCalledWith('e1', at(28, 10, 0), at(28, 10, 1));
+
+      // 拖动整块平移 1 分钟（10:00–10:02 -> 10:01–10:03）
+      onChange.mockClear();
+      onPointerDown({
+        button: 0,
+        pointerId: 5,
+        clientX: 100,
+        clientY: y1000 + oneMinPx,
+        ctrlKey: false,
+        altKey: false,
+        target: { closest: () => blockEl, dataset: {} },
+        currentTarget: { setPointerCapture: vi.fn() },
+      });
+      onPointerMove({ clientX: 100, clientY: y1000 + 2 * oneMinPx });
+      onPointerUp({ clientX: 100, clientY: y1000 + 2 * oneMinPx });
+      expect(onChange).toHaveBeenCalledWith('e1', at(28, 10, 1), at(28, 10, 3));
+    }
+
+    // 4) 纯函数状态机同时验证拖出后再拖回起点（区间为 0 < step）时松手取消，不误建 30 分钟块
+    const d0 = beginBoardDrag(null, at(28, 10, 0), 100, 200, step1);
+    const d1 = moveBoardDrag(d0, at(28, 10, 2), 100, 201.5, now, step1);
+    expect(d1.state.moved).toBe(true);
+    const d2 = moveBoardDrag(d1.state, at(28, 10, 0), 100, 200, now, step1);
+    expect(endBoardDrag(d2.state, 100, 200, now, step1)).toEqual({ type: 'none' });
+  });
 });
 
 describe('layoutDay', () => {
@@ -111,7 +291,7 @@ describe('dayTotal 与 isoWeek', () => {
   it('2026-10-28 是第 44 周', () => expect(isoWeek(at(28, 10))).toBe(44));
   it('CalendarPage 不再渲染顶部操作提示说明行（.s-desc）', () => {
     const html = renderToStaticMarkup(createElement(CalendarPage, {
-      entries: [], projects: [], knownTags: [], boundaryHour: 4, snapMinutes: 5, showIdle: true,
+      entries: [], projects: [], knownTags: [], boundaryHour: 4, snapMinutes: 1, showIdle: true,
       isIdle: () => false,
       actions: {
         create: vi.fn(), update: vi.fn(), copy: vi.fn(), patch: vi.fn(), continueEntry: vi.fn(),

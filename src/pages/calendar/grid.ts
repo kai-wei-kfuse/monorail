@@ -27,7 +27,7 @@ export function viewDays(now: number, boundaryHour: number, view: 'day' | 'week'
   return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
 }
 
-/** 按吸附步长取整。step 是毫秒（设置里的日历吸附，初始 5 分钟）。 */
+/** 按吸附步长取整。step 是毫秒（日历默认 1 分钟）。 */
 export const snap = (t: number, step: number) => Math.round(t / step) * step;
 
 /** 一天那一列有多高。有夏令时的那天不是 24 小时。 */
@@ -65,6 +65,118 @@ export function dragTo(d: Drag, t: number, now: number, step: number): { start: 
   let start = d.start + k, end = d.end + k;
   if (end > now) { start -= end - now; end = now; }
   return { start, end };
+}
+
+export const NEW_BLOCK_MS = 30 * 60_000;
+
+export interface BoardDragState {
+  kind: DragKind | 'click';
+  id?: string;
+  t0: number;
+  rawT0: number;
+  start?: number;
+  end?: number | null;
+  x: number;
+  y: number;
+  moved: boolean;
+  result?: { start: number; end: number | null };
+}
+
+export interface BoardGhost {
+  start: number;
+  end: number;
+  id: string | null;
+}
+
+export type BoardUpAction =
+  | { type: 'none' }
+  | { type: 'open'; id: string; x: number; y: number }
+  | { type: 'create'; start: number; end: number; x: number; y: number }
+  | { type: 'copy'; id: string; start: number }
+  | { type: 'change'; id: string; start: number; end: number | null };
+
+/**
+ * 按下指针时建立拖动会话：
+ * - 命中条目块时按 data-edge（top/bottom）或修饰键（copy/move）决定操作类型；
+ * - 空白处记录吸附起点 t0 与原始时刻 rawT0。
+ */
+export function beginBoardDrag(
+  hit: { entry: Span; edge?: string; copyKey?: boolean } | null,
+  t: number,
+  x: number,
+  y: number,
+  step: number,
+): BoardDragState {
+  if (hit) {
+    const start = Date.parse(hit.entry.started_at);
+    const end = hit.entry.ended_at === null ? null : Date.parse(hit.entry.ended_at);
+    const kind =
+      hit.edge === 'top'
+        ? 'top'
+        : hit.edge === 'bottom' && end !== null
+          ? 'bottom'
+          : end === null
+            ? 'click'
+            : hit.copyKey
+              ? 'copy'
+              : 'move';
+    return { kind, id: hit.entry.id, t0: t, rawT0: t, start, end, x, y, moved: false };
+  }
+  return { kind: 'create', t0: snap(t, step), rawT0: t, x, y, moved: false };
+}
+
+/**
+ * 指针移动时更新拖动状态与预览块（ghost）：
+ * 在 1×~4× 比例下，1 分钟高度约为 0.77px~3.07px（均小于 4px）。
+ * 因此只要指针实际跨过至少半个步长（|t - rawT0| >= 0.5 * step）且吸附后的时间范围产生至少 1 个 step 的有效变化，
+ * 或物理位移超过 4px，即进入拖动状态。
+ */
+export function moveBoardDrag(
+  d: BoardDragState,
+  t: number,
+  x: number,
+  y: number,
+  now: number,
+  step: number,
+): { state: BoardDragState; ghost: BoardGhost | null } {
+  if (d.kind === 'click') return { state: d, ghost: null };
+  const next = dragTo({ kind: d.kind, t0: d.t0, start: d.start, end: d.end }, t, now, step);
+  const rangeChanged =
+    Math.abs(t - d.rawT0) >= step * 0.5 &&
+    (d.kind === 'create'
+      ? (next.end ?? now) - next.start >= step
+      : next.start !== d.start || next.end !== d.end);
+  const moved = d.moved || rangeChanged || Math.abs(y - d.y) + Math.abs(x - d.x) > 4;
+  if (!moved) return { state: d, ghost: null };
+  const state: BoardDragState = { ...d, moved: true, result: next };
+  return {
+    state,
+    ghost: { start: next.start, end: next.end ?? now, id: d.kind === 'copy' || d.kind === 'create' ? null : d.id! },
+  };
+}
+
+/**
+ * 松开指针时结算动作：
+ * - 未进入拖动状态（原地单击）：空白处新建 30 分钟块（不晚于 now），条目块打开编辑弹窗；
+ * - 已进入拖动状态：若区间不足 1 个 step 则取消，否则触发对应 create / copy / change。
+ */
+export function endBoardDrag(
+  d: BoardDragState,
+  x: number,
+  y: number,
+  now: number,
+  step: number,
+): BoardUpAction {
+  if (!d.moved || d.kind === 'click' || !d.result) {
+    if (d.id) return { type: 'open', id: d.id, x: x + 10, y: y + 10 };
+    const start = Math.min(d.t0, now - NEW_BLOCK_MS);
+    return { type: 'create', start, end: start + NEW_BLOCK_MS, x: x + 10, y: y + 10 };
+  }
+  const { start, end } = d.result;
+  if (end !== null && end - start < step) return { type: 'none' };
+  if (d.kind === 'create') return { type: 'create', start, end: end!, x: x + 10, y: y + 10 };
+  if (d.kind === 'copy') return { type: 'copy', id: d.id!, start };
+  return { type: 'change', id: d.id!, start, end };
 }
 
 export interface Placed<T> { entry: T; top: number; height: number; col: number; cols: number }

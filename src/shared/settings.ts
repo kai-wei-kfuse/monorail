@@ -6,7 +6,7 @@ export const settingDefinitions = {
   mainItems: { type: 'number', default: 5, min: 1, max: 10, step: 1, unit: 'items' },
   homeLayout: { type: 'enum', default: 'fused', options: ['split', 'fused'], unit: 'layout' },
   // Exact minute arithmetic uses JavaScript safe integers; no product-specific upper cap is imposed.
-  calendarSnapMinutes: { type: 'number', default: 5, min: 1, max: Number.MAX_SAFE_INTEGER, step: 1, unit: 'minutes' },
+  calendarSnapMinutes: { type: 'number', default: 1, min: 1, max: Number.MAX_SAFE_INTEGER, step: 1, unit: 'minutes' },
   calendarShowIdle: { type: 'boolean', default: true, unit: 'boolean' },
   betWeeks: { type: 'number', default: 4, min: 1, max: 12, step: 1, unit: 'weeks' },
   dueSoonHours: { type: 'number', default: 24, min: 1, max: 168, step: 1, unit: 'hours' },

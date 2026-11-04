@@ -1,18 +1,16 @@
 import type { CSSProperties, PointerEvent } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { dayHeight, dayTotal, dragTo, HOUR_PX, layoutDay, piece, snap, stepZoom, timeAt, zoomScrollTop } from './grid';
-import type { CalZoom, DragKind, Span } from './grid';
+import { beginBoardDrag, dayHeight, dayTotal, endBoardDrag, HOUR_PX, layoutDay, moveBoardDrag, piece, stepZoom, timeAt, zoomScrollTop } from './grid';
+import type { BoardDragState, BoardGhost, CalZoom, Span } from './grid';
 import './calendar.css';
 
 export interface CalEntry extends Span { description: string; project: string; card_id: string | null }
 
-const MIN = 60_000, NEW_BLOCK = 30 * MIN;
+const MIN = 60_000;
 const CN = ['日', '一', '二', '三', '四', '五', '六'], EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const pad = (n: number) => String(n).padStart(2, '0');
 const clock = (t: number) => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const hm = (ms: number) => { const m = Math.round(ms / MIN); return `${Math.floor(m / 60)}h${pad(m % 60)}`; };
-
-interface DragState { kind: DragKind | 'click'; id?: string; t0: number; start?: number; end?: number | null; x: number; y: number; moved: boolean; result?: { start: number; end: number | null } }
 
 /**
  * 日历的看板：表头（日期和当天合计）、时刻列、每天一列（日边界画到次日日边界）、条目块、现在线、拖动时的影子。
@@ -27,8 +25,8 @@ export function CalendarBoard({ days, today, now, entries, isIdle, showIdle, col
     onCreate: (start: number, end: number, x: number, y: number) => void; onChange: (id: string, start: number, end: number | null) => void;
     onCopy: (id: string, start: number) => void; onOpen: (id: string, x: number, y: number) => void }) {
   const hourPx = HOUR_PX * zoom, prevHourPx = useRef(hourPx), lastScrollTop = useRef(0);
-  const cols = useRef<(HTMLDivElement | null)[]>([]), scroller = useRef<HTMLDivElement>(null), drag = useRef<DragState | null>(null);
-  const [ghost, setGhost] = useState<{ start: number; end: number; id: string | null } | null>(null);
+  const cols = useRef<(HTMLDivElement | null)[]>([]), scroller = useRef<HTMLDivElement>(null), drag = useRef<BoardDragState | null>(null);
+  const [ghost, setGhost] = useState<BoardGhost | null>(null);
   const real = entries.filter(e => !isIdle(e)), idle = entries.filter(isIdle);
   // 打开时滚到「现在」往上 4 小时的位置；切换缩放比例时保持视口中心时刻不变
   useEffect(() => {
@@ -75,34 +73,26 @@ export function CalendarBoard({ days, today, now, entries, isIdle, showIdle, col
     if (block) {
       const it = entries.find(x => x.id === block.dataset.id);
       if (!it) return;
-      const start = Date.parse(it.started_at), end = it.ended_at === null ? null : Date.parse(it.ended_at), edge = target.dataset.edge;
-      const kind = edge === 'top' ? 'top' : edge === 'bottom' && end !== null ? 'bottom' : end === null ? 'click' : e.ctrlKey || e.altKey ? 'copy' : 'move';
-      drag.current = { kind, id: it.id, t0: t, start, end, x: e.clientX, y: e.clientY, moved: false };
-    } else drag.current = { kind: 'create', t0: snap(t, step), x: e.clientX, y: e.clientY, moved: false };
+      drag.current = beginBoardDrag({ entry: it, edge: target.dataset.edge, copyKey: e.ctrlKey || e.altKey }, t, e.clientX, e.clientY, step);
+    } else drag.current = beginBoardDrag(null, t, e.clientX, e.clientY, step);
     e.currentTarget.setPointerCapture(e.pointerId);
   }
   function move(e: PointerEvent<HTMLDivElement>) {
     const d = drag.current;
     if (!d) return;
-    if (Math.abs(e.clientY - d.y) + Math.abs(e.clientX - d.x) > 4) d.moved = true;
-    if (!d.moved || d.kind === 'click') return;
-    d.result = dragTo({ kind: d.kind, t0: d.t0, start: d.start, end: d.end }, timeAtPointer(e), now, step);
-    setGhost({ start: d.result.start, end: d.result.end ?? now, id: d.kind === 'copy' || d.kind === 'create' ? null : d.id! });
+    const next = moveBoardDrag(d, timeAtPointer(e), e.clientX, e.clientY, now, step);
+    drag.current = next.state;
+    if (next.ghost) setGhost(next.ghost);
   }
   function up(e: PointerEvent<HTMLDivElement>) {
     const d = drag.current;
     drag.current = null; setGhost(null);
     if (!d) return;
-    if (!d.moved || d.kind === 'click' || !d.result) {
-      if (d.id) onOpen(d.id, e.clientX + 10, e.clientY + 10);
-      else { const start = Math.min(d.t0, now - NEW_BLOCK); onCreate(start, start + NEW_BLOCK, e.clientX + 10, e.clientY + 10); }
-      return;
-    }
-    const { start, end } = d.result;
-    if (end !== null && end - start < step) return;
-    if (d.kind === 'create') onCreate(start, end!, e.clientX + 10, e.clientY + 10);
-    else if (d.kind === 'copy') onCopy(d.id!, start);
-    else onChange(d.id!, start, end);
+    const act = endBoardDrag(d, e.clientX, e.clientY, now, step);
+    if (act.type === 'open') onOpen(act.id, act.x, act.y);
+    else if (act.type === 'create') onCreate(act.start, act.end, act.x, act.y);
+    else if (act.type === 'copy') onCopy(act.id, act.start);
+    else if (act.type === 'change') onChange(act.id, act.start, act.end);
   }
 
   const grid = { gridTemplateColumns: `56px repeat(${days.length}, minmax(0, 1fr))` };

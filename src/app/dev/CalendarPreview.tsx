@@ -3,6 +3,7 @@ import { Frame, StatusBar } from '../../ui/frame/StatusBar';
 import { TitleBar } from '../../ui/frame/TitleBar';
 import { WindowButtons } from '../../ui/frame/WindowButtons';
 import { StatusTag } from '../../ui/marks/StatusLed';
+import { defaults } from '../../shared/settings';
 import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import { CalendarPage } from '../../pages/calendar/CalendarPage';
 import type { CalendarEntry } from '../../pages/calendar/CalendarPage';
@@ -42,7 +43,7 @@ export function CalendarPreview() {
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
   return <Frame titleBar={title} statusBar={<StatusBar left={<span>快捷活动</span>} />}>
-    <CalendarPage entries={entries} projects={projects} knownTags={tags} boundaryHour={4} snapMinutes={5} showIdle={showIdle}
+    <CalendarPage entries={entries} projects={projects} knownTags={tags} boundaryHour={4} snapMinutes={defaults.calendarSnapMinutes} showIdle={showIdle}
       isIdle={e => e.project === '待机'} actions={{
         create: async (start, end) => {
           const id = crypto.randomUUID();
