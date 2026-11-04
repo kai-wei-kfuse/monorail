@@ -5,12 +5,14 @@ import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import { TagPicker } from '../../ui/controls/TagPicker';
 import { Icon } from '../../ui/icons/Icon';
 import { popupPlacement } from '../../ui/controls/picker';
-import { formatReadout } from '../../shared/duration';
+import { InlineCell as Cell } from '../../ui/controls/InlineCell';
+import { formatClock as clock, formatEntryDuration } from '../../shared/duration';
+import type { EntryPatch } from '../../shared/duration';
 import type { EntryGroup, ListEntry } from './listGroups';
 import '../../ui/overlay/overlay.css';
 import './list.css';
 
-export interface EntryPatch { description?: string; project?: string; tags?: string[] }
+export type { EntryPatch };
 /** 列表页要的动作。改起止和时长交的是输入的原文（9:30、1h 30m），由接线层解析；解析不了就什么都不改，这一格回到原来的值。 */
 export interface ListActions {
   patch(id: string, patch: EntryPatch): void;
@@ -27,27 +29,8 @@ export interface ListActions {
 }
 export interface RowContext { now: number; projects: ProjectOption[]; knownTags: string[]; isIdle: (e: ListEntry) => boolean; overlaps: Set<string>; actions: ListActions }
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const clock = (t: number) => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-export const duration = (ms: number) => formatReadout(ms, 'mmss');
+export const duration = formatEntryDuration;
 const colorOf = (ctx: RowContext, name: string) => ctx.projects.find(p => p.name === name)?.color ?? 'var(--mute-2)';
-
-/** 点别处或回车才提交的输入格。平时显示 value；改了以后交给 onCommit；Esc 放弃。 */
-function Cell({ className, label, value, readOnly, title, onCommit }:
-  { className: string; label: string; value: string; readOnly?: boolean; title?: string; onCommit: (text: string) => void }) {
-  const [text, setText] = useState<string | null>(null), skip = useRef(false);
-  const commit = () => {
-    if (!skip.current && text !== null && text.trim() !== value) onCommit(text.trim());
-    skip.current = false; setText(null);
-  };
-  return <input className={className} aria-label={label} title={title} value={text ?? value} readOnly={readOnly} spellCheck={false}
-    onChange={e => setText(e.target.value)} onBlur={commit}
-    onKeyDown={e => {
-      if (e.nativeEvent.isComposing) return;
-      if (e.key === 'Escape') skip.current = true;
-      if (e.key === 'Enter' || e.key === 'Escape') (e.target as HTMLInputElement).blur();
-    }} />;
-}
 
 /** 每行的「⋯」：复制、设为收藏、存为卡、删除。正在计时的不能复制、删除；来自卡的不能存为卡。靠近窗口底部时向上开。 */
 function Menu({ e, ctx }: { e: ListEntry; ctx: RowContext }) {

@@ -19,6 +19,10 @@ function useEntryActions(ctx: Ctx, report: (error: unknown) => void) {
   const call = (work: () => Promise<unknown>) => { void work().catch(report); };
   return {
     patch: (id: string, patch: Parameters<typeof edit.patch>[2]) => call(() => edit.patch(ctx, id, patch, now())),
+    // 改起止和时长交原文，由计时系统解析；日历弹窗和列表行共用（0.3.0-beta.3 D3）
+    setStart: (id: string, text: string) => call(() => edit.setStart(ctx, id, text, now())),
+    setEnd: (id: string, text: string) => call(() => edit.setEnd(ctx, id, text, now())),
+    setDuration: (id: string, text: string) => call(() => edit.setDuration(ctx, id, text, now())),
     continueEntry: (id: string) => call(() => continueEntry(ctx, id, now())),
     favorite: (id: string) => call(() => preset.favorite(ctx, id, now())),
     saveAsCard: (id: string) => call(() => edit.saveAsCard(ctx, id, now())),
@@ -63,9 +67,6 @@ export function ListScreen({ ctx, report }: { ctx: Ctx; report: (error: unknown)
   const shared = useEntryActions(ctx, report);
   const actions: ListActions = {
     ...shared,
-    setStart: (id, text) => void edit.setStart(ctx, id, text, now()).catch(report),
-    setEnd: (id, text) => void edit.setEnd(ctx, id, text, now()).catch(report),
-    setDuration: (id, text) => void edit.setDuration(ctx, id, text, now()).catch(report),
     copy: id => void edit.copy(ctx, id, now()).catch(report),
   };
   return <ListPage entries={entries} projects={projects} knownTags={knownTags} boundaryHour={boundaryHour} isIdle={isIdle} actions={actions}

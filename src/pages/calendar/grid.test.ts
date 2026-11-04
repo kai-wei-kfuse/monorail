@@ -295,6 +295,7 @@ describe('dayTotal 与 isoWeek', () => {
       isIdle: () => false,
       actions: {
         create: vi.fn(), update: vi.fn(), copy: vi.fn(), patch: vi.fn(), continueEntry: vi.fn(),
+        setStart: vi.fn(), setEnd: vi.fn(), setDuration: vi.fn(),
         favorite: vi.fn(), saveAsCard: vi.fn(), remove: vi.fn(), createProject: vi.fn(), createTag: vi.fn(), setShowIdle: vi.fn(),
       },
     }));

@@ -22,6 +22,10 @@ export interface CalendarActions {
   update(id: string, start: number, end: number | null): void;
   copy(id: string, start: number): void;
   patch(id: string, patch: EntryPatch): void;
+  /** 弹窗里改开始、结束、时长：交输入的原文，和列表一样由计时系统解析（0.3.0-beta.3 D3） */
+  setStart(id: string, text: string): void;
+  setEnd(id: string, text: string): void;
+  setDuration(id: string, text: string): void;
   continueEntry(id: string): void;
   favorite(id: string): void;
   saveAsCard(id: string): void;
@@ -86,6 +90,7 @@ export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapM
     {open && <EntryPopover entry={open} x={pop.x} y={pop.y} now={now} projects={projects} knownTags={knownTags} onClose={() => setPop(null)}
       onPatch={patch => actions.patch(open.id, patch)} onContinue={() => actions.continueEntry(open.id)} onCopy={() => copyNext(open)}
       onFavorite={() => actions.favorite(open.id)} onSaveAsCard={() => actions.saveAsCard(open.id)} onDelete={() => actions.remove(open.id)}
-      onCreateProject={actions.createProject} onCreateTag={actions.createTag} />}
+      onCreateProject={actions.createProject} onCreateTag={actions.createTag}
+      onSetStart={text => actions.setStart(open.id, text)} onSetEnd={text => actions.setEnd(open.id, text)} onSetDuration={text => actions.setDuration(open.id, text)} />}
   </PageFrame>;
 }

@@ -7,6 +7,7 @@ import { defaults } from '../../shared/settings';
 import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import { CalendarPage } from '../../pages/calendar/CalendarPage';
 import type { CalendarEntry } from '../../pages/calendar/CalendarPage';
+import { parseReadout } from '../../shared/duration';
 
 const MIN = 60_000, HOUR = 60 * MIN;
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'calendar', cn: '日历', en: 'CALENDAR' }, { id: 'list', cn: '列表', en: 'LIST' },
@@ -14,6 +15,18 @@ const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'calendar', cn: '�
 export const PREVIEW_PROJECTS: ProjectOption[] = [{ name: '待机', color: '#a3a39e' }, { name: '未分类', color: '#888884' }, { name: '求职', color: '#ff5a3c' },
   { name: '学习', color: '#00b4ff' }, { name: '生活', color: '#d9a400' }, { name: '运动', color: '#00c389' }, { name: '工作', color: '#8f6bff' }];
 export const PREVIEW_TAGS = ['408', 'python', '面试', '户外'];
+// 预览里认时刻 9:30，时长复用 parseReadout('mmss')（支持 90、45:01、01:15:01、1h 30m）；列表预览也用这两个
+export const atClock = (base: number, text: string) => { const m = /^(\d{1,2}):?(\d{2})$/.exec(text); if (!m) return NaN; const d = new Date(base); d.setHours(+m[1], +m[2], 0, 0); return d.getTime(); };
+export const minutes = (text: string, shown = 0) => parseReadout(text, 'mmss', shown) ?? NaN;
+/** 预览里改起止和时长：解析不了或不合理就不改，和真接线一样格子回到原值（真接线还会报错）。 */
+export function previewTimeEdits<E extends CalendarEntry>(edit: (id: string, f: (e: E) => E) => void) {
+  const iso = (t: number) => new Date(t).toISOString();
+  return {
+    setStart: (id: string, text: string) => edit(id, e => { const t = atClock(Date.parse(e.started_at), text); return Number.isFinite(t) && (e.ended_at === null || t < Date.parse(e.ended_at)) ? { ...e, started_at: iso(t) } : e; }),
+    setEnd: (id: string, text: string) => edit(id, e => { const t = atClock(Date.parse(e.started_at), text); return e.ended_at !== null && Number.isFinite(t) && t > Date.parse(e.started_at) ? { ...e, ended_at: iso(t) } : e; }),
+    setDuration: (id: string, text: string) => edit(id, e => { if (e.ended_at === null) return e; const ms = minutes(text, Date.parse(e.ended_at) - Date.parse(e.started_at)); return ms > 0 ? { ...e, ended_at: iso(Math.min(Date.now(), Date.parse(e.started_at) + ms)) } : e; }),
+  };
+}
 
 /** 以「现在」为准往前倒推的示例条目：两条互相重叠，一条来自卡，一段待机，一条正在计时，前一天还有两条。 */
 export function previewEntries(now = Date.now()): CalendarEntry[] {
@@ -54,6 +67,7 @@ export function CalendarPreview() {
         copy: (id, start) => setEntries(list => { const e = list.find(x => x.id === id)!, len = Date.parse(e.ended_at!) - Date.parse(e.started_at);
           return [...list, { ...e, id: crypto.randomUUID(), started_at: iso(start), ended_at: iso(start + len) }]; }),
         patch: (id, patch) => edit(id, e => ({ ...e, ...patch })),
+        ...previewTimeEdits(edit),
         continueEntry: () => {}, favorite: () => {}, saveAsCard: () => {},
         remove: id => setEntries(list => list.filter(e => e.id !== id)),
         createProject: name => setProjects(list => [...list, { name, color: '#16a085' }]),

@@ -54,7 +54,14 @@
 .cal-pop-x { width: 24px; height: 24px; display: grid; place-items: center; color: var(--mute); }
 .cal-pop-x:hover { background: #ececE8; color: var(--ink); }
 .cal-pop-x svg { width: 11px; height: 11px; }
-.cal-pop-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.cal-pop-row .tagpick { flex: 1 1 140px; }
+/* 项目、标签用 flat 样式（0.3.0-beta.3 D3，同列表行和预设编辑器）：一行排开，放不下换行 */
+.cal-pop-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+/* 时间三格：样子同列表行的 .lv-tin / .lv-dur（UI 风格规范 §11.6、§11.7） */
+.cal-pop-time { display: flex; align-items: center; gap: 2px; margin-top: -4px; color: var(--mute); }
+.cal-pop-time i { font-style: normal; }
+.cal-tin { width: 54px; height: 30px; border: 1px solid transparent; background: transparent; text-align: center; font: 500 13px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink-3); user-select: text; }
+.cal-dur { width: 92px; height: 30px; margin-left: auto; padding: 0 6px; border: 1px solid transparent; background: transparent; text-align: right; font: 600 17px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink); user-select: text; }
+.cal-tin:not([readonly]):hover, .cal-dur:not([readonly]):hover { border-color: var(--line-2); background: var(--paper-2); }
+.cal-tin:focus, .cal-dur:focus { outline: none; border-color: var(--ink); background: var(--paper-2); box-shadow: inset 3px 0 0 var(--yellow); }
 .cal-pop-acts { display: flex; flex-wrap: wrap; gap: 6px; }
 .cal-note { margin: 0; font: 330 11px/1.4 var(--f-cn); color: var(--mute); }

@@ -57,3 +57,15 @@ export function formatReadout(ms: number, kind: ReadoutKind = 'mmss'): string {
   const mmss = `${pad(Math.floor(sec / 60) % 60)}:${pad(sec % 60)}`;
   return kind === 'hms' || h > 0 ? `${pad(h)}:${mmss}` : mmss;
 }
+
+/** 本地时刻 HH:MM（列表行、日历弹窗的开始 / 结束格）。 */
+export function formatClock(ms: number): string {
+  const d = new Date(ms);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** 条目时长的显示（列表行、日历弹窗）：同 formatReadout 的 mmss。 */
+export const formatEntryDuration = (ms: number): string => formatReadout(ms, 'mmss');
+
+/** 日历弹窗和列表行共用的条目改动：描述、项目、标签。起止和时长交原文，另走 setStart / setEnd / setDuration。 */
+export interface EntryPatch { description?: string; project?: string; tags?: string[] }
