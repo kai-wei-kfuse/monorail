@@ -149,7 +149,7 @@ function PartsMock() {
         <button className="g-mbtn go" type="button"><Icon name="check" /></button><button className="g-mbtn" type="button"><Icon name="expand" /></button></div>
     </div>
     <div className="g-tray">
-      <ActTile icon="sleep" name="睡觉" en="SLEEP" keys="1" onClick={() => {}} />
+      <ActTile icon="meal" name="吃饭" en="MEAL" keys="1" onClick={() => {}} />
       <ActTile icon="wc" name="厕所" en="RESTROOM" keys="2" pressed onClick={() => {}} />
       <AddTile onClick={() => setDlg(true)} />
     </div>

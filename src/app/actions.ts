@@ -67,7 +67,6 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     backfill: guard(async (r: BackfillResult): Promise<void> => { await (r.mode === 'since'
       ? timer.backfillSwitch(ctx, r.minutesAgo, r.activity, r.at)
       : timer.backfillRange(ctx, { start: r.from, end: r.to }, r.activity, r.at)); }),
-    sleep: guard((at: string) => timer.sleep(ctx, at)),
     wake: guard((at: string) => timer.wake(ctx, at)),
     answerOffline: guard((from: string, to: string, activity: string, at: string) => timer.answerOffline(ctx, { start: from, end: to }, activity, at)),
     // 降级（degradeService）

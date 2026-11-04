@@ -111,24 +111,21 @@ describe('QuickActs immediate tray close (UI Option A)', () => {
   function renderTree(props: {
     current?: string | null;
     onPick?: (id: string, at: string) => void;
-    onSleep?: (at: string) => void;
     onTemp?: (name: string, keep: boolean, at: string) => void;
   } = {}) {
     const onPick = props.onPick ?? vi.fn();
-    const onSleep = props.onSleep ?? vi.fn();
     const onTemp = props.onTemp ?? vi.fn();
     const elements: Array<ReactElement<Record<string, unknown>>> = [];
     const tree = runWithHooks(() => QuickActs({
       acts,
       current: props.current ?? null,
       onPick,
-      onSleep,
       onTemp,
     }));
     walk(tree, el => elements.push(el));
     const toggle = elements.find(el => el.type === 'button' && String(el.props.className ?? '').includes('dock-toggle'))!;
     const tray = elements.find(el => el.type === 'div' && el.props.className === 'tray') ?? null;
-    return { elements, toggle, tray, onPick, onSleep, onTemp };
+    return { elements, toggle, tray, onPick, onTemp };
   }
 
   it('closes tray immediately on activity tile click without 650ms delay and does not auto-close after rapid reopen', () => {
@@ -165,26 +162,19 @@ describe('QuickActs immediate tray close (UI Option A)', () => {
     expect(view.tray).not.toBeNull();
   });
 
-  it('closes tray immediately on sleep tile click and digit 1-9 keydown', () => {
+  it('shows only the configured activities (no built-in sleep tile) and digit 1-9 keydown starts them', () => {
     const onPick = vi.fn();
-    const onSleep = vi.fn();
-    let view = renderTree({ onPick, onSleep });
+    let view = renderTree({ onPick });
 
-    // 打开弹层并点「睡觉」
+    // 打开弹层：磁贴只有设置里配置的那几项，没有写死的「睡觉」（0.3.0-beta.3 D6）
     (view.toggle.props.onClick as () => void)();
-    view = renderTree({ onPick, onSleep });
-    const sleepBtn = view.elements.find(el => el.type === 'button' && el.props.className === 'qa' && JSON.stringify(el.props.children).includes('睡觉'))!;
-    (sleepBtn.props.onClick as () => void)();
-    expect(onSleep).toHaveBeenCalledWith('2026-11-01T12:00:00.000Z');
-
-    view = renderTree({ onPick, onSleep });
-    expect(view.toggle.props['aria-expanded']).toBe(false);
-    expect(view.tray).toBeNull();
-
-    // 再次打开弹层并按数字键 2 启动第 2 项快捷活动
-    (view.toggle.props.onClick as () => void)();
-    view = renderTree({ onPick, onSleep });
+    view = renderTree({ onPick });
     expect(view.toggle.props['aria-expanded']).toBe(true);
+    const tiles = view.elements.filter(el => el.type === 'button' && el.props.className === 'qa');
+    expect(tiles).toHaveLength(acts.length);
+    expect(tiles.some(el => JSON.stringify(el.props.children).includes('睡觉'))).toBe(false);
+
+    // 按数字键 2 启动第 2 项快捷活动（编号仍从第一项用户预设开始）
 
     const preventDefault = vi.fn();
     const stopPropagation = vi.fn();
@@ -195,7 +185,7 @@ describe('QuickActs immediate tray close (UI Option A)', () => {
     expect(stopPropagation).toHaveBeenCalledTimes(1);
     expect(onPick).toHaveBeenCalledWith('act-wc', '2026-11-01T12:00:00.000Z');
 
-    view = renderTree({ onPick, onSleep });
+    view = renderTree({ onPick });
     expect(view.toggle.props['aria-expanded']).toBe(false);
     expect(view.tray).toBeNull();
   });

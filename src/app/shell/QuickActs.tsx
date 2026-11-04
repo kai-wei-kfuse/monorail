@@ -14,12 +14,12 @@ const EN: Partial<Record<IconName, string>> = { wc: 'RESTROOM', parcel: 'PARCEL'
 
 /**
  * 底栏的快捷活动：默认折叠，点开从底栏向上弹出，点外面就收起。
- * 固定首项是「睡觉」；其余按使用频率排好序传进来；快捷活动不预置。
+ * 只显示用户在设置里配置的快捷活动，按使用频率排好序传进来；软件不预置任何一项（0.3.0-beta.3 D6 去掉了写死的「睡觉」）。
  * 选中一项会插入这项活动（结束后回到原来的卡），由 onPick 交给 timerService。
  * 最后一行是临时活动（给了 onTemp 才显示）：写名字回车就插入，打开「存为快捷活动」才写进列表。
  */
-export function QuickActs({ acts, current, onPick, onSleep, onTemp }:
-  { acts: QuickAct[]; current: string | null; onPick: (id: string, at: string) => void; onSleep: (at: string) => void;
+export function QuickActs({ acts, current, onPick, onTemp }:
+  { acts: QuickAct[]; current: string | null; onPick: (id: string, at: string) => void;
     onTemp?: (name: string, keep: boolean, at: string) => void }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -45,7 +45,6 @@ export function QuickActs({ acts, current, onPick, onSleep, onTemp }:
     {open && <div className="tray" role="dialog" aria-label="快捷活动">
       <div className="tray-head"><b>插入一项活动</b><span className="k">QUICK ACTIVITY</span><span>结束后自动回到原来的卡</span></div>
       <div className="tray-row">
-        <ActTile icon="sleep" name="睡觉" en="SLEEP" onClick={() => pick(() => onSleep(new Date().toISOString()))} />
         {acts.map((a, i) => <ActTile key={a.id} icon={a.icon} name={a.name} en={EN[a.icon]} keys={i < 9 ? String(i + 1) : undefined} pressed={a.id === current}
           onClick={() => { const at = new Date().toISOString(); pick(() => onPick(a.id, at)); }} />)}
       </div>
