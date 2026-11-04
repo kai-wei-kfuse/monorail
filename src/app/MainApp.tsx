@@ -102,7 +102,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const [page, setPage] = useState<Route['id']>('home');
   const [miniOpen, setMiniOpen] = useState<boolean | null>(null), [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
   const [backfill, setBackfill] = useState(false);
-  const [completeAt, setCompleteAt] = useState<string | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
+  const [completeAt, setCompleteAt] = useState<{ cardId: string; at: string } | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
   const wasHidden = useRef(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -151,7 +151,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   useEffect(() => {
     const off = connectMini(ctx, mainWindowBus, {
       openMain: () => miniWindow.showMain(),
-      complete: async (_cardId, at) => { setPage('home'); setCompleteAt(at); },
+      // 两段式：保存卡片和时刻，主窗口的完成对话框确认时把来源记成小窗（ADR 0019 第 5 条）
+      complete: async (cardId, at) => { setPage('home'); setCompleteAt({ cardId, at }); },
       report,
     }, MINI_HEARTBEAT_MS);
     return () => { void off.then(fn => fn()); };

@@ -39,7 +39,7 @@ export function LivePreview() {
     const cards = ['改 [简历] 第二版', '投 5 家公司'].map((text, i) => ({ ...convert({ id: crypto.randomUUID(), text, kind: '待办', created_at: at, due_at: null,
       blocking: false, task_id: 'job', card_id: null, tags: [], attachments: [] }, i + 1), id: 'card' + i }));
     await repos.transact(crypto.randomUUID(), await Promise.all([repos.tasks.write(task, null), ...cards.map(c => repos.cards.write(c, null))]));
-    await run(ctx, async tx => { tx.state.home_mode = 'blank'; });
+    await run(ctx, async tx => { tx.state.home_mode = 'blank'; }, undefined, { action: 'dev.seed' });
     const morning = (h: number) => { const d = new Date(); d.setHours(h, 0, 0, 0); return d.getTime(); };
     await edit.create(ctx, morning(9), morning(10), at, { description: '学 408', project: '学习', tags: ['408'] });
     await edit.create(ctx, morning(10), morning(11) - 30 * 60_000, at, { description: '回消息', project: '工作', tags: [] });

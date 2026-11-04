@@ -45,28 +45,30 @@ function convertIdeaInTx(tx: Transaction, id: string, input: IdeaTaskInput): str
   refreshInTx(tx);
   return cards.map(card => card.id);
 }
-export const convertIdeaToTask = (ctx: Ctx, id: string, input: IdeaTaskInput, at: string) => run(ctx, async tx => convertIdeaInTx(tx, id, input), at);
+export const convertIdeaToTask = (ctx: Ctx, id: string, input: IdeaTaskInput, at: string) => run(ctx, async tx => convertIdeaInTx(tx, id, input), at, { action: 'idea.convertToTask' });
 export const convertIdea = (ctx: Ctx, id: string, input: { content: string; taskId: string | null }, at: string) => run(ctx, async tx => {
   const target = input.taskId === null ? { name: input.content, slot: '支线' as const, defaultProject: null } : { taskId: input.taskId };
   return convertIdeaInTx(tx, id, { ...target, items: [input.content] })[0];
-}, at);
+}, at, { action: 'idea.convert' });
 
 export const deleteIdea = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {
   findIdea(tx, id); tx.removeRecord(id);
-}, at);
+}, at, { action: 'idea.delete' });
 
 export const editIdea = (ctx: Ctx, id: string, input: { text: string; needs: string | null }, at: string) => run(ctx, async tx => {
   const idea = findIdea(tx, id);
   if (!input.text.trim() && idea.attachments.length === 0) throw new Error('想法内容或附件不能为空');
   tx.saveRecord({ ...idea, text: input.text, tags: extractTags(input.text), needs: input.needs?.trim() || null, last_touched_at: at });
-}, at);
+}, at, { action: 'idea.edit' });
 
 export function expireInTx(tx: Transaction): number {
   const expired = expiredIdeas(tx.records, tx.at, tx.settings.ideaExpireDays);
   expired.forEach(idea => tx.saveRecord(idea));
   return expired.length;
 }
-export const expire = (ctx: Ctx, at: string) => run(ctx, async tx => expireInTx(tx), at);
+// 后台：到期进冷库是按规则自己做的（平时由 newDay 一并处理），来源记「系统 · 活动日切换」
+export const expire = (ctx: Ctx, at: string) =>
+  run(ctx, async tx => expireInTx(tx), at, { action: 'idea.expire', source: { kind: 'system', trigger: 'dayChange' } });
 
 export type ReviveResult = { kind: 'restored' } | ({ kind: 'duel' } & Duel);
 export function reviveInTx(tx: Transaction, ids: string[], confirmed = false): ReviveResult {
@@ -87,7 +89,7 @@ export function reviveInTx(tx: Transaction, ids: string[], confirmed = false): R
   // Keep it cold until a winner is explicitly chosen; a cancelled dialog changes nothing.
   return { kind: 'duel', left: ideas[0], right: opponent };
 }
-export const revive = (ctx: Ctx, ids: string[], at: string, confirmed = false): Promise<ReviveResult> => run(ctx, async tx => reviveInTx(tx, ids, confirmed), at);
+export const revive = (ctx: Ctx, ids: string[], at: string, confirmed = false): Promise<ReviveResult> => run(ctx, async tx => reviveInTx(tx, ids, confirmed), at, { action: 'idea.revive' });
 
 export function resolveDuelInTx(tx: Transaction, winnerId: string, loserId: string): void {
   const at = tx.at;
@@ -106,4 +108,4 @@ export function resolveDuelInTx(tx: Transaction, winnerId: string, loserId: stri
   if (!duel || ![duel.left.id, duel.right.id].every(id => id === winnerId || id === loserId)) throw new Error('对决配对已改变');
   decide(winner, loser, at).forEach(idea => tx.saveRecord(idea));
 }
-export const resolveDuel = (ctx: Ctx, winnerId: string, loserId: string, at: string) => run(ctx, async tx => resolveDuelInTx(tx, winnerId, loserId), at);
+export const resolveDuel = (ctx: Ctx, winnerId: string, loserId: string, at: string) => run(ctx, async tx => resolveDuelInTx(tx, winnerId, loserId), at, { action: 'idea.resolveDuel' });

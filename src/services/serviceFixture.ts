@@ -35,7 +35,7 @@ export async function seed(f: Fixture, cards: Card[], tasks: Task[] = []) {
     ...cards.map(value => f.ctx.repos.cards.write(value, null)),
     ...tasks.map(value => f.ctx.repos.tasks.write(value, null)),
   ]));
-  await run(f.ctx, async tx => { tx.state.current_card = cards[0]?.id ?? null; tx.state.home_mode = cards.length ? 'task' : 'guide'; });
+  await runTx(f.ctx, async tx => { tx.state.current_card = cards[0]?.id ?? null; tx.state.home_mode = cards.length ? 'task' : 'guide'; });
 }
 /** 测试里直接提交一个事务：动作固定为 `test.direct`（ADR 0019 第 5 条；E8a3 起 run 的 intent 必填）。 */
 export const runTx = <T>(ctx: Ctx, work: (tx: Transaction) => Promise<T>, at?: string) =>

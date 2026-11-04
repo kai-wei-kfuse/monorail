@@ -41,4 +41,4 @@ export const returnFromRest = (ctx: Ctx, answer: string, at: string) => run(ctx,
   tx.state.last_rest_ended_at = ended.last_rest_ended_at;
   tx.state.rest = null;
   tx.state.home_mode = tx.state.current_card ? 'task' : tx.state.review_period ? 'review' : 'guide';
-}, at);
+}, at, { action: 'degrade.returnFromRest' });

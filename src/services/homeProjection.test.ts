@@ -31,7 +31,7 @@ it('cross-day time remains cumulative while completion baselines use only the cu
 it('all main slots count toward review due status, with correct slot numbers and baseline', async () => {
   const f = fixture(); f.ctx.settings.mainTasks = 2; f.ctx.settings.reviewWeekday = 2;
   await seed(f, [card('a', { task_id: 'm2' })], [task('m1'), { ...task('m2', '主线', 2), bet_ends_at: at(-1) }]);
-  await run(f.ctx, async tx => { tx.state.first_used_day = '2026-10-12'; });
+  await run(f.ctx, async tx => { tx.state.first_used_day = '2026-10-12'; }, undefined, { action: 'test.direct' });
   await refresh(f.ctx, at());
   expect(f.home()).toMatchObject({ review: { betDue: true } });
   await start(f.ctx, 'a', at());

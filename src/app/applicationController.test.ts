@@ -315,7 +315,7 @@ it('M6 & M7: executes full timer lifecycle, break/return, manual backfill, time 
     tx.state.pending_at = null;
     tx.state.rest = { suggestion: '散步', started_at: at(50) };
     tx.state.home_mode = 'rest';
-  });
+  }, undefined, { action: 'test.direct' });
   ctx = contextResult.parse(await handleApplicationRequest(f.ctx, { method: 'get_context', arguments: {} }));
   expect(ctx.timer?.mode).toBe('rest');
   await expect(handleApplicationRequest(f.ctx, {
@@ -431,7 +431,7 @@ it('R2: refuses stale context when committed projection generation fails, while 
     status: 'committed', data: result.data,
   });
   f.ctx.now = originalNow;
-  await run(f.ctx, async () => {});
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
   const found = findItemsResult.parse(await handleApplicationRequest(f.ctx, { method: 'find_items', arguments: { kind: 'idea', query: '已落盘，快照生成失败' } }));
   expect(found.ideas).toHaveLength(1);
 });

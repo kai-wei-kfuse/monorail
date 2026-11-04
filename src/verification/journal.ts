@@ -15,7 +15,7 @@ export async function prepareInterruptedJournal(ctx: Ctx, fs: FileSystem) {
       for (const path of ['verification-first.txt', 'verification-second.txt']) {
         tx.writes.push(createWrite(path, token, (await fs.read(path))?.text ?? null));
       }
-    });
+    }, undefined, { action: 'verification.interruptedJournal' });
     throw new Error('Fault injection did not execute');
   } catch (error) {
     if (!(error instanceof Error) || error.message !== 'EXPECTED_NATIVE_JOURNAL_WRITE_FAILURE') throw error;

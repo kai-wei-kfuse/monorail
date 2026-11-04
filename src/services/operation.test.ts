@@ -25,7 +25,7 @@ function fixture(fs = new MemoryFs()) {
 it('concurrent retries commit business and receipt once, then replay with zero writes or effects', async () => {
   const f = fixture(), transact = vi.spyOn(f.ctx.repos, 'transact');
   const [first, replay] = await Promise.all([
-    runOperation(f.ctx, f.operation, f.work), runOperation(f.ctx, f.operation, f.work),
+    runOperation(f.ctx, f.operation, f.work, undefined, undefined, { action: 'test.direct' }), runOperation(f.ctx, f.operation, f.work, undefined, undefined, { action: 'test.direct' }),
   ]);
   expect(first.replayed).toBe(false); expect(replay.replayed).toBe(true);
   expect(replay.data).toEqual(first.data);
@@ -36,17 +36,17 @@ it('concurrent retries commit business and receipt once, then replay with zero w
   expect(paths).toContain(`receipts/${f.id}.json`);
   const writes = vi.spyOn(f.fs, 'atomicWrite');
   expect((await readOperation(f.ctx, f.id))!.data).toEqual(first.data);
-  await expect(runOperation(f.ctx, { ...f.operation, input: { text: 'different' } }, f.work)).rejects.toThrow('OPERATION_CONFLICT');
-  await expect(runOperation(f.ctx, { ...f.operation, command: 'different' }, f.work)).rejects.toThrow('OPERATION_CONFLICT');
+  await expect(runOperation(f.ctx, { ...f.operation, input: { text: 'different' } }, f.work, undefined, undefined, { action: 'test.direct' })).rejects.toThrow('OPERATION_CONFLICT');
+  await expect(runOperation(f.ctx, { ...f.operation, command: 'different' }, f.work, undefined, undefined, { action: 'test.direct' })).rejects.toThrow('OPERATION_CONFLICT');
   expect(writes).not.toHaveBeenCalled();
 });
 
 it('replays a durable result after restarting the context and normalizes JSON key order', async () => {
   const f = fixture();
   const operation = { ...f.operation, input: { a: 1, b: [2, 3] } };
-  const first = await runOperation(f.ctx, operation, f.work);
+  const first = await runOperation(f.ctx, operation, f.work, undefined, undefined, { action: 'test.direct' });
   const restarted = fixture(f.fs);
-  const result = await runOperation(restarted.ctx, { ...operation, input: { b: [2, 3], a: 1 } }, restarted.work);
+  const result = await runOperation(restarted.ctx, { ...operation, input: { b: [2, 3], a: 1 } }, restarted.work, undefined, undefined, { action: 'test.direct' });
   expect(result.data).toEqual(first.data); expect(result.replayed).toBe(true);
   expect(restarted.work).not.toHaveBeenCalled(); expect(restarted.publish).not.toHaveBeenCalled();
 });
@@ -54,13 +54,13 @@ it('replays a durable result after restarting the context and normalizes JSON ke
 it('partial journal failure is unknown until recovery restores both record and receipt', async () => {
   const f = fixture();
   f.fs.beforeWrite = path => { if (path.startsWith('receipts/')) throw new Error('receipt disk failure'); };
-  await expect(runOperation(f.ctx, f.operation, f.work)).rejects.toThrow('receipt disk failure');
+  await expect(runOperation(f.ctx, f.operation, f.work, undefined, undefined, { action: 'test.direct' })).rejects.toThrow('receipt disk failure');
   await expect(readOperation(f.ctx, f.id)).rejects.toThrow('提交已阻塞');
   expect(await f.fs.list('.journal')).toHaveLength(1);
   f.fs.beforeWrite = undefined;
   const restarted = fixture(f.fs);
   expect(await restarted.ctx.repos.recover()).toBe(1);
-  const result = await runOperation(restarted.ctx, f.operation, restarted.work);
+  const result = await runOperation(restarted.ctx, f.operation, restarted.work, undefined, undefined, { action: 'test.direct' });
   expect(result.replayed).toBe(true); expect(restarted.work).not.toHaveBeenCalled();
   expect((await restarted.ctx.repos.records.list()).map(e => e.value.id)).toEqual([result.data.record_id]);
   expect(await f.fs.list('.journal')).toEqual([]);
@@ -71,7 +71,7 @@ it('post-commit publication, reminder and logging failures remain committed and 
   f.publish.mockImplementationOnce(() => { throw new Error('publish failed'); });
   f.update.mockRejectedValueOnce(new Error('reminder failed'));
   f.log.mockRejectedValueOnce(new Error('log failed'));
-  const result = await runOperation(f.ctx, f.operation, f.work);
+  const result = await runOperation(f.ctx, f.operation, f.work, undefined, undefined, { action: 'test.direct' });
   expect(result.status).toBe('committed');
   expect(result.warnings).toEqual([
     { phase: 'projection', message: 'publish failed' },
@@ -79,7 +79,7 @@ it('post-commit publication, reminder and logging failures remain committed and 
     { phase: 'logging', message: 'log failed' },
   ]);
   expect((await readOperation(f.ctx, f.id.toUpperCase()))!.data).toEqual(result.data);
-  const replay = await runOperation(f.ctx, { ...f.operation, id: f.id.toUpperCase() }, f.work);
+  const replay = await runOperation(f.ctx, { ...f.operation, id: f.id.toUpperCase() }, f.work, undefined, undefined, { action: 'test.direct' });
   expect(replay.replayed).toBe(true);
   expect(replay.operation_id).toBe(f.id.toLowerCase());
   expect(replay.warnings).toEqual([]);
@@ -89,9 +89,9 @@ it('post-commit publication, reminder and logging failures remain committed and 
 it('UI root calls preserve the value type and explicitly report data already committed on side effect failure', async () => {
   const f = fixture();
   f.update.mockRejectedValueOnce(new Error('reminder failed'));
-  await expect(run(f.ctx, f.work)).rejects.toThrow('数据已提交');
+  await expect(run(f.ctx, f.work, undefined, { action: 'test.direct' })).rejects.toThrow('数据已提交');
   expect(await f.ctx.repos.records.list()).toHaveLength(1);
-  expect(await run(f.ctx, async () => 42)).toBe(42);
+  expect(await run(f.ctx, async () => 42, undefined, { action: 'test.direct' })).toBe(42);
 });
 
 it('bad receipt data and unsafe IDs are errors, never not_found', async () => {
@@ -104,21 +104,21 @@ it('bad receipt data and unsafe IDs are errors, never not_found', async () => {
 
 it('does not serve an old snapshot after a committed projection cannot be generated', async () => {
   const f = fixture();
-  await run(f.ctx, async () => {});
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
   const previous = f.ctx.snapshot();
   const clockError = new Error('projection clock unavailable');
   let calls = 0;
   const originalNow = f.ctx.now;
   // execute reads command time, validation time, committed time, then projection time.
   f.ctx.now = () => { calls++; if (calls === 4) throw clockError; return originalNow(); };
-  const result = await runOperation(f.ctx, f.operation, f.work);
+  const result = await runOperation(f.ctx, f.operation, f.work, undefined, undefined, { action: 'test.direct' });
   expect(result.status).toBe('committed');
   expect(result.warnings).toContainEqual({ phase: 'projection', message: clockError.message });
   expect(f.ctx.snapshot()).toBe(previous);
   expect(() => assertQueueHealthy(f.ctx)).toThrow('SNAPSHOT_UNAVAILABLE');
   expect((await readOperation(f.ctx, f.id))!.data).toEqual(result.data);
   f.ctx.now = originalNow;
-  await run(f.ctx, async () => {});
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
   expect(() => assertQueueHealthy(f.ctx)).not.toThrow();
 });
 
@@ -136,12 +136,12 @@ it('cancels queued operations before execution starts, but completes operations 
   const firstPromise = runOperation(f.ctx, firstOp, async tx => {
     await blocker;
     return f.work(tx);
-  });
-  const queuedPromise = runOperation(f.ctx, queuedOp, queuedWork, undefined, queuedAbort.signal);
+  }, undefined, undefined, { action: 'test.direct' });
+  const queuedPromise = runOperation(f.ctx, queuedOp, queuedWork, undefined, queuedAbort.signal, { action: 'test.direct' });
   const inFlightPromise = runOperation(f.ctx, inFlightOp, async tx => {
     inFlightAbort.abort();
     return f.work(tx);
-  }, undefined, inFlightAbort.signal);
+  }, undefined, inFlightAbort.signal, { action: 'test.direct' });
 
   queuedAbort.abort();
   releaseFirst();

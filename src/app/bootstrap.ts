@@ -80,7 +80,8 @@ export async function bootstrap(root: string) {
     booting = false;
     if (dirty) await reconcile(ctx);
     // A new activity day archives stale ideas and re-deals the home card in one transaction; also once at startup.
-    const newDay = () => run(ctx, async tx => { expireInTx(tx); refreshInTx(tx); }, ctx.now());
+    const newDay = () => run(ctx, async tx => { expireInTx(tx); refreshInTx(tx); }, ctx.now(),
+      { action: 'system.dayChange', source: { kind: 'system', trigger: 'dayChange' } });
     await newDay();
     offs.push(await startScheduler(ctx, { lifecycle: nativeLifecycle, onDayChanged: newDay, report }));
     // Hotkeys and autostart follow settings.yaml; per-key failures are shown on the settings page.

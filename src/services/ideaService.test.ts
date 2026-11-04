@@ -14,7 +14,7 @@ function idea(fields: Partial<RecordEntry> = {}): RecordEntry {
     blocking: false, task_id: null, card_id: null, tags: [], attachments: [], needs: '服务器' }), ...fields };
 }
 const records = async (f: Fixture) => (await f.ctx.repos.records.list()).map(entity => entity.value);
-async function ideas(f: Fixture, entries: RecordEntry[]) { await run(f.ctx, async tx => { entries.forEach(entry => tx.saveRecord(entry)); }); }
+async function ideas(f: Fixture, entries: RecordEntry[]) { await run(f.ctx, async tx => { entries.forEach(entry => tx.saveRecord(entry)); }, undefined, { action: 'test.direct' }); }
 
 it('A4 converts once in one transaction, retains the original idea and excludes it from pool limits', async () => {
   const f = fixture(), source = idea({ attachments: ['attachments/note.txt'] }); await seed(f, [], [task('p')]); await ideas(f, [source]);
@@ -98,7 +98,7 @@ it('metadata-only lifecycle edits preserve extended Markdown bodies and repeated
   await run(f.ctx, async tx => {
     tx.saveRecord({ ...tx.records[0], needs: '更多资料' });
     tx.saveRecord({ ...tx.records[0], last_touched_at: at(1) });
-  });
+  }, undefined, { action: 'test.direct' });
   expect(write).toHaveBeenCalledTimes(1);
   expect((await f.ctx.repos.records.get(a.id))!.body).toBe('完整长正文\n附加资料');
   await editIdea(f.ctx, a.id, { text: '新的全文', needs: null }, at(2));

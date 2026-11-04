@@ -9,7 +9,7 @@ import { activityDay } from '../domain/timeline/day';
 import { compareAll, splitSubject } from '../domain/history/compare';
 import type { Captured } from '../domain/history/compare';
 import type { DayChange, HistoryWrite, Repositories } from '../data/repos';
-import { HISTORY_PARAMS_LIMIT, historyActions } from '../shared/history';
+import { HISTORY_PARAMS_LIMIT, HISTORY_RETENTION_DAYS, PAGE_OF_PREFIX, SYSTEM_WHY, historyActions } from '../shared/history';
 import type { HistoryChange, HistoryIntent, HistoryObjectType, HistoryRecord, HistorySource, HistoryActionSpec } from '../shared/history';
 import type { Settings } from '../shared/settings';
 
@@ -69,7 +69,8 @@ export function captureHistory(repos: Pick<Repositories, 'history'>, input: Capt
     entries: { before: dayBefore, after: dayAfter }, state: { before: input.before.state, after: input.after.state },
     settings: { before: input.before.settings as unknown as Record<string, unknown>, after: input.after.settings as unknown as Record<string, unknown> }, names });
   if (!all.length) return null;
-  const source = input.intent.source ?? (input.operation ? DEFAULT_AUTOMATION : DEFAULT_MANUAL);
+  const page = PAGE_OF_PREFIX[input.intent.action.split('.')[0]];
+  const source = input.intent.source ?? (input.operation ? DEFAULT_AUTOMATION : page ? { ...DEFAULT_MANUAL, page } : DEFAULT_MANUAL);
   const entryMap = new Map([...dayBefore, ...input.after.entries].map(e => [e.id, e]));
   const cardMap = new Map([...input.changed.cards.flatMap(c => [c.before, c.after]).filter((c): c is Card => !!c), ...input.after.cards].map(c => [c.id, c]));
   const { subject, changes, effects } = splitSubject(all, subjectRef(input, all), { entries: entryMap, cards: cardMap, taskNames: names.tasks });
@@ -81,7 +82,7 @@ export function captureHistory(repos: Pick<Repositories, 'history'>, input: Capt
     truncated: input.operation.input.length > HISTORY_PARAMS_LIMIT,
   } : undefined;
   const record: HistoryRecord = { version: 1, id: input.id(), at: input.at, day, action: input.intent.action, label: spec?.label ?? input.intent.action,
-    source, subject, changes, effects, ...(call ? { call } : {}) };
+    source, ...(source.kind === 'system' ? { why: SYSTEM_WHY[source.trigger] } : {}), subject, changes, effects, ...(call ? { call } : {}) };
 
   // 设置合并：同一设置项、同一来源、活动日未变、改的不是日界、距上一条 ≤ 60 秒（ADR 0019 第 3 条）
   const settingKeys = [...new Set(all.filter(c => c.type === 'settings').map(c => c.id))];
@@ -98,4 +99,54 @@ export function captureHistory(repos: Pick<Repositories, 'history'>, input: Capt
   }
   const write = repos.history.write(record);
   return { write, record, pointer: settingKey ? { path: write.path, rawText: write.text, record, committedAtMs: nowMs, settingKey, sourceKey, day } : null };
+}
+
+/* ---------- 快速记录条：先补记、再消费（ADR 0019 第 5 条，执行方案 E8a3 第 3 条） ---------- */
+
+interface Tracker<T> { changed(): Captured<T>[]; rebase(): void }
+export interface Trackers { cards: Tracker<Card>; tasks: Tracker<Task>; reviews: Tracker<Review>; records: Tracker<RecordEntry> }
+/** 吸收时要用到的事务能力（Transaction 的子集，避免这里依赖 commit.ts）。 */
+export interface AbsorbTx {
+  readonly at: string; readonly settings: Settings; readonly records: RecordEntry[]; readonly cards: Card[]; readonly tasks: Task[];
+  saveRecord(record: RecordEntry): void;
+}
+const retentionCutoff = (today: string) => {
+  const [y, m, d] = today.split('-').map(Number), t = new Date(y, m - 1, d - (HISTORY_RETENTION_DAYS - 1));
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * 在 work(tx) 之前调用：本事务载入的记录里，快速记录条存的、还没写过历史的，逐条
+ * 1) 待办先生成卡片和任务（materialize，传进来的函数）；2) 直接生成一条「快速记录条」历史（at、活动日取 created_at，主体是这条记录、
+ * 改动「新记录」，生成的卡片和任务作连带）；3) 写上 history_logged_at。创建时刻已在保留期外的只写标记，不写历史。
+ * 不调用 refreshInTx，不改 timerStateToken 依赖的字段。结束时 rebase，吸收的改动不算进用户动作。
+ */
+export function absorbQuickbarInTx(tx: AbsorbTx, trackers: Trackers, repos: Pick<Repositories, 'history'>, id: () => string,
+  materialize: (record: RecordEntry) => void): HistoryWrite[] {
+  const pending = tx.records.filter(r => r.created_via === 'quickbar' && !r.history_logged_at)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+  if (!pending.length) return [];
+  const boundary = tx.settings.dayBoundaryHour, cutoff = retentionCutoff(activityDay(tx.at, boundary)), writes: HistoryWrite[] = [];
+  const rebaseAll = () => { trackers.cards.rebase(); trackers.tasks.rebase(); trackers.reviews.rebase(); trackers.records.rebase(); };
+  rebaseAll();
+  for (const original of pending) {
+    if (original.kind === '待办') materialize(original);
+    const current = tx.records.find(r => r.id === original.id) ?? original;
+    tx.saveRecord({ ...current, history_logged_at: tx.at });
+    const day = activityDay(original.created_at, boundary);
+    if (day >= cutoff) {
+      const names = { tasks: new Map(tx.tasks.map(t => [t.id, t.name])), cards: new Map(tx.cards.map(c => [c.id, c.content])), entries: new Map<string, string>() };
+      const effects = compareAll({ cards: trackers.cards.changed(), tasks: trackers.tasks.changed(), reviews: [], records: [],
+        entries: { before: [], after: [] }, state: { before: {}, after: {} }, settings: { before: {}, after: {} }, names });
+      const changes = compareAll({ cards: [], tasks: [], reviews: [], records: [{ id: original.id, before: null, after: original }],
+        entries: { before: [], after: [] }, state: { before: {}, after: {} }, settings: { before: {}, after: {} }, names });
+      const action = original.kind === '待办' ? 'quickbar.capture' : 'quickbar.idea';
+      const record: HistoryRecord = { version: 1, id: id(), at: original.created_at, day, action, label: specOf(action)!.label,
+        source: { kind: 'manual', via: 'quickbar' }, subject: { type: 'record', id: original.id, text: changes[0]?.after ?? original.text, meta: original.kind },
+        changes, effects };
+      writes.push(repos.history.write(record));
+    }
+    rebaseAll();
+  }
+  return writes;
 }

@@ -79,10 +79,10 @@ it('closing a cross-day entry cannot overwrite an earlier backfill', async () =>
 it('rejects transaction scope reentry before and after await without deadlocking', async () => {
   const ctx = fixture();
   await run(ctx, async tx => {
-    expect(() => run(tx, async () => undefined)).toThrow('事务重入');
+    expect(() => run(tx, async () => undefined, undefined, { action: 'test.direct' })).toThrow('事务重入');
     await Promise.resolve();
-    expect(() => run(tx, async () => undefined)).toThrow('事务重入');
-  });
+    expect(() => run(tx, async () => undefined, undefined, { action: 'test.direct' })).toThrow('事务重入');
+  }, undefined, { action: 'test.direct' });
   await saveRecord(ctx, record('queue still usable'));
   expect(await reconcile(ctx)).toBe(1);
 });
@@ -93,9 +93,9 @@ it('independent root actions still queue while another transaction is awaiting I
   const pending = new Promise<void>(resolve => { release = resolve; });
   const started = new Promise<void>(resolve => { entered = resolve; });
   const order: string[] = [];
-  const first = run(ctx, async () => { order.push('first-start'); entered(); await pending; order.push('first-end'); });
+  const first = run(ctx, async () => { order.push('first-start'); entered(); await pending; order.push('first-end'); }, undefined, { action: 'test.direct' });
   await started;
-  const second = run(ctx, async () => { order.push('second'); });
+  const second = run(ctx, async () => { order.push('second'); }, undefined, { action: 'test.direct' });
   release(); await Promise.all([first, second]);
   expect(order).toEqual(['first-start', 'first-end', 'second']);
 });
@@ -113,7 +113,7 @@ it('a routine action only reads today and the open entry date, never scans histo
   await fs.atomicWrite('timelog/2025-01-01.md', 'not valid history');
   const read = vi.spyOn(fs, 'read'), scan = vi.spyOn(repos.times, 'scan'), list = vi.spyOn(fs, 'list');
   const ctx = createContext({ repos, settings: structuredClone(defaults), now: () => todayAt, id: () => crypto.randomUUID(), publish: () => {}, log: async () => {}, reminders: { update: async () => {} } });
-  await run(ctx, async tx => { expect(tx.entries).toEqual([open]); });
+  await run(ctx, async tx => { expect(tx.entries).toEqual([open]); }, undefined, { action: 'test.direct' });
   const days = new Set(read.mock.calls.map(([p]) => p).filter(p => p.startsWith('timelog/')));
   expect([...days]).toEqual([]);
   expect(scan).not.toHaveBeenCalled();

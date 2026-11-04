@@ -25,7 +25,7 @@ it('A4 reconciles a blocker, its record link, selection and deadline plan in one
 it('A4 later record edits never overwrite execution fields owned by the card', async () => {
   const f = fixture(); await seed(f, [], [task('main')]);
   const entry = record(), id = `card-${entry.id}`; await saveRecord(f.ctx, entry); await reconcile(f.ctx);
-  await run(f.ctx, async tx => { tx.saveCard({ ...tx.cards[0], blocking: false, due_at: null, task_id: 'main', type: '时间盒卡', timebox_minutes: 25 }); });
+  await run(f.ctx, async tx => { tx.saveCard({ ...tx.cards[0], blocking: false, due_at: null, task_id: 'main', type: '时间盒卡', timebox_minutes: 25 }); }, undefined, { action: 'test.direct' });
   const entity = (await f.ctx.repos.records.get(entry.id))!;
   await f.ctx.repos.transact(crypto.randomUUID(), [await f.ctx.repos.records.write({ ...entity.value, text: '改原文', due_at: at(120), blocking: true, task_id: null }, entity)]);
   expect(await reconcile(f.ctx)).toBe(0);
@@ -50,7 +50,7 @@ it('R1: captureTodoInTx reuses an unsourced placeholder once, keeps card_id stab
   expect(initialCards).toHaveLength(1);
   expect(initialCards[0].source_record_id).toBeNull();
 
-  const first = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '第一条待办 #标签', task_id: taskId }), at(1));
+  const first = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '第一条待办 #标签', task_id: taskId }), at(1), { action: 'test.direct' });
   expect(first.card.id).toBe(initialCards[0].id);
   expect(first.card.source_record_id).toBe(first.record.id);
   expect(first.record.card_id).toBe(initialCards[0].id);
@@ -72,8 +72,8 @@ it('R1: captureTodoInTx reuses an unsourced placeholder once, keeps card_id stab
 
   // A second capture into the same task (whose single card now has source_record_id !== null AND even if content matches task.name) must add a new card instead of overwriting the first!
   const sameNameTaskId = await createTask(f.ctx, { name: '同名任务', slot: '支线', makeRoom: null, items: [] }, at(2));
-  const sameNameFirst = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '同名任务', task_id: sameNameTaskId }), at(3));
-  const sameNameSecond = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '第二条具体事项', task_id: sameNameTaskId }), at(4));
+  const sameNameFirst = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '同名任务', task_id: sameNameTaskId }), at(3), { action: 'test.direct' });
+  const sameNameSecond = await run(f.ctx, async tx => captureTodoInTx(tx, { text: '第二条具体事项', task_id: sameNameTaskId }), at(4), { action: 'test.direct' });
   expect(sameNameSecond.card.id).not.toBe(sameNameFirst.card.id);
   expect(await reconcile(f.ctx)).toBe(0);
   const taskCards = (await f.ctx.repos.cards.list()).map(e => e.value).filter(c => c.task_id === sameNameTaskId);

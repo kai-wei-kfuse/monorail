@@ -80,7 +80,7 @@ it('legacy timer_entry_id remains readable but cannot control timing on reentry 
     tx.saveReview({ id: '2026-W44', period: '2026-W44', status: '进行中', step: 'coldPick',
       done: ['recap', 'newIdeas', 'arena'], started_at: at(1), completed_at: null,
       added_idea_ids: [], bet_task_ids: [], bet_done_ids: [], cold_duel: null, timer_entry_id: entry.id });
-  }, at(1));
+  }, at(1), { action: 'test.direct' });
   const entries = structuredClone(f.ctx.repos.times.snapshot());
   f.clock(at(2)); await enter(f.ctx, at(2));
   expect(f.ctx.repos.times.snapshot()).toEqual(entries);

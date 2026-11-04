@@ -41,10 +41,10 @@ it('target validation runs inside the queue, not before the previous command com
 it('editing requires revision, but unrelated commits do not invalidate same-session cancellation', async () => {
   const f = fixture(); await startFree(f.ctx, value, at());
   const old: MiniCommand = { ...editSeen(f), type: 'editOpen', pending_id: null, patch: { description: '过时' } };
-  await run(f.ctx, async () => {});
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
   await expect(dispatchMiniCommand(f.ctx, old)).rejects.toThrow('已经换成');
   await beginPending(f.ctx, at()); const pending = f.home().pending!.id, target = seen(f);
-  await run(f.ctx, async () => {});
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
   await dispatchMiniCommand(f.ctx, { ...target, type: 'cancelPending', pending_id: pending });
   expect(f.home().pending).toBeNull();
 });
@@ -174,7 +174,7 @@ it('a command from an older main-window session is rejected with a fresh snapsho
   const f = fixture(); await startFree(f.ctx, value, at());
   // 主窗口重载后的新 Ctx：世代 5；小窗手里还是世代 4 那份快照发起的命令
   const reloaded = { ...f, ctx: (await import('./commit')).createContext({ ...f.ctx, mainEpoch: 5 }) };
-  await run(reloaded.ctx, async () => {});
+  await run(reloaded.ctx, async () => {}, undefined, { action: 'test.direct' });
   let receive!: (message: MiniMessage) => void;
   let replied!: (value: MiniReply) => void; const done = new Promise<MiniReply>(resolve => { replied = resolve; });
   const push = vi.fn(async () => {});

@@ -49,7 +49,7 @@ it('settles offline once and releases the running card in the same publish; answ
   await answerOffline(f.ctx, gap, '睡觉', at(60));
   expect(entries(f).find(entry => entry.id === offline!.id)).toMatchObject({ project: '睡眠', description: '睡觉' });
   expect(entries(f).filter(entry => entry.source === '离线追问')).toHaveLength(1);
-  await run(f.ctx, async tx => { expect(activeRefInTx(tx)).toBeNull(); });
+  await run(f.ctx, async tx => { expect(activeRefInTx(tx)).toBeNull(); }, undefined, { action: 'test.direct' });
 });
 it('short offline gaps do not change activity', async () => {
   const f = fixture(); await seed(f, [card('c')]); await start(f.ctx, 'c', at());

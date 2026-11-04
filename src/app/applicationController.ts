@@ -460,7 +460,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [],
           });
           return ideaResult.parse({ id: record.id, text: record.text, created_at: record.created_at, tags: record.tags, pool: record.pool });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.save_idea' });
         return saveIdeaResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -486,7 +486,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             blocking: card.blocking,
             created_at: record.created_at,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.capture_todo' });
         return captureTodoResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -508,7 +508,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.start_timer' });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -525,7 +525,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.start_task_item' });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -542,7 +542,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.pause_timer' });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -559,7 +559,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.resume_timer' });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -576,7 +576,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.stop_timer' });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -593,7 +593,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.start_break' });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -610,7 +610,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.return_from_break' });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -630,7 +630,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             overlaps,
             expected_state: timerStateTokenInTx(tx),
           });
-        }, undefined, signal);
+        }, undefined, signal, { action: 'auto.add_time_entry' });
         return addTimeEntryResult.parse({ ...result, next_operation_id: ctx.id() });
       }
     }

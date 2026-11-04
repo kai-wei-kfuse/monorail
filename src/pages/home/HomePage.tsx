@@ -37,7 +37,8 @@ import { TagPicker } from '../../ui/controls/TagPicker';
 export interface HomeActions {
   start(cardId: string, at: string): Promise<unknown>;
   checkComplete(cardId: string, at: string): Promise<{ remainingMinutes: number; at: string } | undefined>;
-  complete(cardId: string, at: string, note: string, keepGoing: boolean): Promise<unknown>;
+  /** fromMini：小窗点的完成（两段式），操作历史的来源记小窗 */
+  complete(cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean): Promise<unknown>;
   shrink(cardId: string, input: { content: string; type: '结果卡' | '时间盒卡'; minutes: number | null }, at: string): Promise<unknown>;
   redraw(cardId: string | null, at: string): Promise<unknown>;
   editContent(cardId: string, content: string, at: string): Promise<unknown>;
@@ -84,7 +85,8 @@ export function useNow(): number {
   return now;
 }
 
-type DialogState = { kind: 'short'; cardId: string; remaining: number; at: string } | { kind: 'complete'; cardId: string; at: string } | { kind: 'shrink'; cardId: string }
+type DialogState = { kind: 'short'; cardId: string; remaining: number; at: string; fromMini?: boolean }
+  | { kind: 'complete'; cardId: string; at: string; fromMini?: boolean } | { kind: 'shrink'; cardId: string }
   | { kind: 'manual' } | null;
 
 /**
@@ -93,7 +95,7 @@ type DialogState = { kind: 'short'; cardId: string; remaining: number; at: strin
  * shrinkFor：跳过信号里选了「拆小」，由外壳传进来卡 id，打开缩小对话框。
  */
 export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview, onAddRest }:
-  { actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: string | null; onCompleteConsumed: () => void;
+  { actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: { cardId: string; at: string } | null; onCompleteConsumed: () => void;
     shrinkFor: string | null; onShrinkConsumed: () => void;
     onGuide: (kind: GuideKind) => void; onOpenReview: () => void; onAddRest?: () => void }) {
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
@@ -119,19 +121,20 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   }, [intro]);
 
   async function act(work: () => Promise<unknown>) { setBusy(true); try { await work(); } finally { setBusy(false); } }
-  async function beginComplete(cardId: string, at: string) {
+  async function beginComplete(cardId: string, at: string, fromMini = false) {
     const card = cards.find(c => c.id === cardId);
     if (card?.type === '时间盒卡') {
       const check = await actions.checkComplete(cardId, at);
       if (!check) return;
-      if (check.remainingMinutes > 0) { setDialog({ kind: 'short', cardId, remaining: Math.ceil(check.remainingMinutes), at }); return; }
+      if (check.remainingMinutes > 0) { setDialog({ kind: 'short', cardId, remaining: Math.ceil(check.remainingMinutes), at, fromMini }); return; }
     }
-    setDialog({ kind: 'complete', cardId, at });
+    setDialog({ kind: 'complete', cardId, at, fromMini });
   }
+  // completeAt 只由小窗的「完成」传进来；当前卡已经换了就按主窗口操作记
   useEffect(() => {
     if (!completeAt || !home.card) return;
     onCompleteConsumed();
-    void beginComplete(home.card.id, completeAt);
+    void beginComplete(home.card.id, completeAt.at, home.card.id === completeAt.cardId);
   }, [completeAt]);
   useEffect(() => {
     if (!shrinkFor) return;
@@ -234,9 +237,9 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {tv.away && home.mode !== 'rest' && <AwayDrawer away={tv.away} now={now} look={cardLook} projects={projects} knownTags={home.knownTags} actions={timerActions} />}
     {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}
-      resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at } : null)} />}
+      resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at, fromMini: dialog.fromMini } : null)} />}
     {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} isShrinkCard={!!full?.shrunk_from} onCancel={() => setDialog(null)}
-      onConfirm={r => { setDialog(null); void act(() => actions.complete(dialog.cardId, r.at, r.note, r.continueCard)); }} />}
+      onConfirm={r => { setDialog(null); void act(() => actions.complete(dialog.cardId, r.at, r.note, r.continueCard, dialog.fromMini)); }} />}
     {dialog?.kind === 'shrink' && full && <ShrinkDialog original={full.content} type={full.type} timeboxMinutes={full.timebox_minutes}
       level={full.shrink_level} maxLevel={look.shrinkMaxLevel} defaultTimebox={look.timeboxDefault} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.shrink(dialog.cardId, { content: r.content, type: r.type, minutes: r.timeboxMinutes }, r.at)); }} />}

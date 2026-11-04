@@ -22,7 +22,8 @@ import { appendNotices } from '../store/noticeSlice';
 import { canonicalJson, jsonValue, operationId } from '../shared/operation';
 import type { CommitWarning, JsonValue, Operation, OperationReceipt, OperationResult } from '../shared/operation';
 import type { HistoryIntent } from '../shared/history';
-import { captureHistory } from './historyCapture';
+import { absorbQuickbarInTx, captureHistory } from './historyCapture';
+import { materializeTodoRecordInTx } from './recordMaterialize';
 import type { MergePointer, PendingHistory } from './historyCapture';
 
 export interface Snapshot {
@@ -119,8 +120,8 @@ export async function whenCommitsOpen<T>(ctx: Ctx, work: () => Promise<T>): Prom
 
 interface Execution<T> { data: T; committed_at: string; replayed: boolean; warnings: CommitWarning[] }
 /**
- * intent（ADR 0019 第 5 条）：0.3.0-beta.3 E0.5 只定类型并穿到这里，暂为可选、不使用；
- * E8a2 起用于生成操作历史，E8a3 把 run / runOperation 的 intent 改为必填并逐个入口标注。
+ * intent（ADR 0019 第 5 条）：run / runOperation 必填（E8a3）；execute 内部仍按可选处理，
+ * 以便 runTx 之类的测试夹具绕开历史。
  */
 interface ExecuteOptions { operation?: Operation; signal?: AbortSignal; intent?: HistoryIntent }
 
@@ -132,7 +133,7 @@ const queueOf = (ctx: Ctx): Queue => {
 const blocked = (failure: unknown) => new Error('提交已阻塞；请重启以恢复 journal', { cause: failure });
 
 /** UI callers keep their result type and receive an explicit post-commit error. */
-export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at?: string, intent?: HistoryIntent): Promise<T> {
+export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at: string | undefined, intent: HistoryIntent): Promise<T> {
   return execute(ctx, work, at, { intent }).then(result => {
     if (result.warnings.length) throw new Error(`数据已提交，后续处理失败：${result.warnings.map(w => `${w.phase}: ${w.message}`).join('；')}`);
     return result.data;
@@ -140,7 +141,7 @@ export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promis
 }
 
 /** Durable commands use exactly the same queue and transaction as UI actions. */
-export function runOperation<T extends JsonValue>(ctx: Ctx, operation: Operation, work: (tx: Transaction) => Promise<T>, at?: string, signal?: AbortSignal, intent?: HistoryIntent): Promise<OperationResult<T>> {
+export function runOperation<T extends JsonValue>(ctx: Ctx, operation: Operation, work: (tx: Transaction) => Promise<T>, at: string | undefined, signal: AbortSignal | undefined, intent: HistoryIntent): Promise<OperationResult<T>> {
   const id = operationId.parse(operation.id).toLowerCase();
   return execute(ctx, work, at, { operation: { ...operation, id }, signal, intent }).then(result => ({ status: 'committed', operation_id: id, ...result }));
 }
@@ -252,8 +253,13 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       saveTask: task => tasks.save(task), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
       async saveSettings(value) { settingsWrite = await ctx.repos.settings.write(value); settings = structuredClone(value); },
     };
-    // 改动前的数据（ADR 0019 第 4、5 条）：state、settings 先拷一份；实体与条目的改前值由 entityChanges / changedDays 从载入时的原文取。
-    // 没有进行中条目时自动开始待机放在这之后，所以它在用户动作里作为连带出现。
+    // 先补记、再消费（ADR 0019 第 5 条）：快速记录条存的、还没写过历史的记录，在执行动作之前先吸收
+    const absorbed = absorbQuickbarInTx(tx, { cards, tasks, reviews, records }, ctx.repos, ctx.id, record => {
+      let order = Math.max(0, ...tx.cards.map(card => card.order));
+      materializeTodoRecordInTx(tx, record, () => ++order);
+    });
+    // 改动前的数据（ADR 0019 第 4、5 条）：state、settings 先拷一份；实体与条目的改前值由 entityChanges / changedDays 从载入时的原文取
+    // （吸收过的对象从吸收之后算）。没有进行中条目时自动开始待机放在这之后，所以它在用户动作里作为连带出现。
     const beforeState = structuredClone(tx.state), beforeSettings = structuredClone(ctx.settings);
     if (!tx.state.open_entry) startSystemInTx(tx, '待机');
     const value = await work(tx);
@@ -269,7 +275,8 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       version: 1, operation_id: operation.id, command: operation.command, input: input!,
       data: jsonValue.parse(value), committed_at: committedAt,
     }));
-    // 操作历史：有实质改动就把历史 write 追加进同一份 journal（receipt 之后、transact 之前）
+    // 操作历史：有实质改动就把历史 write 追加进同一份 journal（receipt 之后、transact 之前）；吸收的快速记录条历史也在这里
+    tx.writes.push(...absorbed.map(w => w.write));
     let history: PendingHistory | null = null;
     if (options.intent) {
       history = captureHistory(ctx.repos, {

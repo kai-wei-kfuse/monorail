@@ -9,10 +9,13 @@ import * as preset from '../services/presetService';
 import { returnFromRest } from '../services/degradeService';
 import { changeLists } from '../services/settingsService';
 import type { BackfillResult } from '../shared/notices';
+import type { HistorySource } from '../shared/history';
 import type { EntryValue } from '../pages/home/TimerBar';
 import type { ReadoutOutcome, ReadoutRequest } from '../pages/home/TimeField';
 
 export type Actions = ReturnType<typeof createActions>;
+/** 首页发起的列表设置改动（ADR 0019 第 5 条：缺省会按前缀记成设置页）。 */
+const HOME: HistorySource = { kind: 'manual', via: 'main', page: 'home' };
 
 export function createActions(ctx: Ctx, report: (error: unknown) => void) {
   const guard = <A extends unknown[], R>(fn: (...args: A) => Promise<R>) => async (...args: A): Promise<R | undefined> => {
@@ -22,7 +25,9 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     // 卡片（cardService）
     start: guard((cardId: string, at: string) => timer.startCard(ctx, cardId, at)),
     checkComplete: guard((cardId: string, at: string) => card.checkComplete(ctx, cardId, at)),
-    complete: guard((cardId: string, at: string, note: string, keepGoing: boolean) => card.complete(ctx, cardId, at, note, keepGoing)),
+    // fromMini：小窗点的完成、主窗口弹的对话框（两段式），历史来源记小窗
+    complete: guard((cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean) =>
+      card.complete(ctx, cardId, at, note, keepGoing, fromMini ? { kind: 'manual', via: 'mini' } : undefined)),
     shrink: guard((cardId: string, input: ShrinkCommand, at: string) => card.shrink(ctx, cardId, input, at)),
     redraw: guard((cardId: string | null, at: string) => card.redraw(ctx, cardId, at)),
     pass: guard((cardId: string, at: string) => card.pass(ctx, cardId, at)),
@@ -53,15 +58,16 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     createProject: guard((name: string, at: string) => preset.createProject(ctx, name, at)),
     createTag: guard((tag: string, at: string) => {
       const tags = ctx.settings.lists.tags;
-      return tags.includes(tag) ? Promise.resolve() : changeLists(ctx, { tags: [...tags, tag] }, at);
+      return tags.includes(tag) ? Promise.resolve() : changeLists(ctx, { tags: [...tags, tag] }, at, HOME);
     }),
     // 计时（timerService）。activity 是快捷活动的 id，或者手写的活动名
     insert: guard((activity: string, at: string) => timer.insert(ctx, activity, at)),
     resume: guard((at: string) => timer.resume(ctx, at)),
     // 临时活动：手写的名字直接插入（项目默认「生活」）。和已有快捷活动同名就用那一项；勾了「存为快捷活动」先写进列表
+    // 两次提交各记一条历史：改列表设置（来源首页）、插入临时活动
     tempActivity: guard(async (name: string, keep: boolean, at: string) => {
       const list = ctx.settings.lists.presets, same = list.find(a => a.name === name);
-      if (keep && !same) await changeLists(ctx, { presets: [...list, { id: crypto.randomUUID(), name, project: '生活', tags: [], mode: '插入', place: '弹层' }] }, at);
+      if (keep && !same) await changeLists(ctx, { presets: [...list, { id: crypto.randomUUID(), name, project: '生活', tags: [], mode: '插入', place: '弹层' }] }, at, HOME);
       await timer.insert(ctx, same?.id ?? name, at);
     }),
     backfill: guard(async (r: BackfillResult): Promise<void> => { await (r.mode === 'since'

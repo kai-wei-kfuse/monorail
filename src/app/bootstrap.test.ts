@@ -21,7 +21,7 @@ it('migrates before v2 parsing, scans once, and preserves stored settings', asyn
   expect(await repos.state.read()).toMatchObject({ schemaVersion: 2, open_entry_day: '2026-10-26' });
   expect(restored.settings.deadlineLeadMinutes).toBe(17);
   const ctx = createContext({ repos, settings: restored.settings, id, now, publish: () => {}, log: async () => {}, reminders: { update: async () => {} } });
-  await run(ctx, async tx => { expect(tx.settings.deadlineLeadMinutes).toBe(17); });
+  await run(ctx, async tx => { expect(tx.settings.deadlineLeadMinutes).toBe(17); }, undefined, { action: 'test.direct' });
   expect(scan).toHaveBeenCalledTimes(1);
 });
 it('rejects corrupt v1 max_seq before migration', async () => {

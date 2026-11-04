@@ -17,7 +17,7 @@ const iso = (ms: number) => new Date(ms).toISOString();
 const settle = (ctx: Ctx, gap: Range) => run(ctx, async tx => {
   const entry = await settleOfflineInTx(tx, gap);
   return entry;
-}, gap.end);
+}, gap.end, { action: 'system.resume', source: { kind: 'system', trigger: 'resume' } });
 
 /** Milliseconds from `now` until the next local day boundary. */
 export function untilBoundary(now: string, boundaryHour: number): number {

@@ -4,6 +4,8 @@ import type { Entity, EntityRepo, Write } from '../data/repos';
 export function entityChanges<T extends { id: string }>(repo: EntityRepo<T>, entities: Entity<T>[], body?: (value: T, original: Entity<T> | null) => string | undefined) {
   const originals = new Map(entities.map(entity => [entity.value.id, entity]));
   const changed = new Map<string, T | null>();
+  /** rebase 之后这些对象的「改前」改用当时的值（快速记录条吸收的改动不算进用户动作；ADR 0019 第 5 条） */
+  const baseline = new Map<string, T | null>();
   return {
     values: entities.map(entity => entity.value),
     save(value: T) { changed.set(value.id, value); this.values = [...this.values.filter(item => item.id !== value.id), value]; },
@@ -19,11 +21,13 @@ export function entityChanges<T extends { id: string }>(repo: EntityRepo<T>, ent
       const list: { id: string; before: T | null; after: T | null }[] = [];
       for (const [id, after] of changed) {
         const original = originals.get(id);
-        const before = original ? repo.decode(original) : null;
+        const before = baseline.has(id) ? baseline.get(id)! : original ? repo.decode(original) : null;
         if (before || after) list.push({ id, before, after: after ? structuredClone(after) : null });
       }
       return list;
     },
+    /** 把目前已改动的对象的当前值记为之后 changed() 的改前值。 */
+    rebase() { for (const [id, value] of changed) baseline.set(id, value ? structuredClone(value) : null); },
     async writes(): Promise<Write[]> {
       const writes: Write[] = [];
       for (const [id, value] of changed) {

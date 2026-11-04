@@ -189,7 +189,7 @@ it('recap spans superseded periods since the last completion, clips overlays, an
     const entry: TimeEntry = { id: tx.id(), started_at: date(10, 9), ended_at: date(10, 12), description: 'task', project: '主线', card_id: 'done', kind: '普通', source: '手动', tags: [], updated_at: date(10, 12) };
     const overlay: TimeEntry = { ...entry, id: tx.id(), started_at: date(10, 11), ended_at: date(10, 12), project: '生活', card_id: null, source: '手动' };
     tx.entries.push(entry, overlay);
-  }, date(26));
+  }, date(26), { action: 'test.direct' });
   await enter(f.ctx, at());
   // 0.3.0-beta.3 起回看由 recapService 按需查询；「本次回顾周期」从上次完成回顾那一刻起，并行的时段按条数平分
   const recap = query(f.ctx, { period: 'cycle', dim: 'project', includeIdle: false }, at());
@@ -211,6 +211,6 @@ it('progress noted by redraw is dated and visible even though the card is unfini
 
 it('a repeated save cannot overwrite a progress timestamp assigned earlier in the same transaction', async () => {
   const f = fixture(); await seed(f, [card('a')]);
-  await run(f.ctx, async tx => { const changed = { ...tx.cards[0], progress_note: 'new note' }; tx.saveCard(changed); tx.saveCard({ ...changed, skip_count: 1 }); }, at(1));
+  await run(f.ctx, async tx => { const changed = { ...tx.cards[0], progress_note: 'new note' }; tx.saveCard(changed); tx.saveCard({ ...changed, skip_count: 1 }); }, at(1), { action: 'test.direct' });
   expect((await getCard(f, 'a')).progress_noted_at).toBe(at(1));
 });

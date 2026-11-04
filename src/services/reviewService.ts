@@ -50,25 +50,25 @@ export const enter = (ctx: Ctx, at: string) => run(ctx, async tx => {
     await finishInTx(tx, review); return;
   }
   refreshInTx(tx);
-}, at);
+}, at, { action: 'review.enter' });
 
 export const goto = (ctx: Ctx, step: ReviewStep, at: string) => run(ctx, async tx => {
   tx.saveReview(navigate(active(tx), step, overLimit(tx)));
-}, at);
+}, at, { action: 'review.goto' });
 export const addIdea = (ctx: Ctx, text: string, at: string) => run(ctx, async tx => {
   const review = active(tx, 'newIdeas'), id = tx.id();
   tx.saveRecord(createRecord({ id, text: text.trim(), kind: '想法', created_at: at, due_at: null,
     blocking: false, task_id: null, card_id: null, tags: [], attachments: [] }));
   tx.saveReview({ ...review, added_idea_ids: [...review.added_idea_ids, id], done: review.done.filter(step => step !== 'arena' && step !== 'coldPick' && step !== 'bet') });
   return id;
-}, at);
+}, at, { action: 'review.addIdea' });
 export const duel = (ctx: Ctx, winnerId: string, loserId: string, at: string) => run(ctx, async tx => {
   const review = active(tx);
   if (review.step !== 'arena' && review.step !== 'coldPick') throw new Error('当前不在想法对决步骤');
   if (review.step === 'coldPick' && (!review.cold_duel || ![review.cold_duel.left, review.cold_duel.right].every(id => id === winnerId || id === loserId))) throw new Error('冷库对决配对已改变');
   resolveDuelInTx(tx, winnerId, loserId);
   if (review.cold_duel) await coldDoneInTx(tx, review);
-}, at);
+}, at, { action: 'review.duel' });
 export const takeCold = (ctx: Ctx, ids: string[], at: string, confirmed = false) => run(ctx, async tx => {
   const review = active(tx, 'coldPick');
   if (review.cold_duel) throw new Error('请先完成冷库对决');
@@ -78,8 +78,8 @@ export const takeCold = (ctx: Ctx, ids: string[], at: string, confirmed = false)
   if (result.kind === 'duel') tx.saveReview({ ...review, cold_duel: { left: result.left.id, right: result.right.id } });
   else await coldDoneInTx(tx, review);
   return result;
-}, at);
-export const skipCold = (ctx: Ctx, at: string) => run(ctx, tx => coldDoneInTx(tx, active(tx, 'coldPick')), at);
+}, at, { action: 'review.takeCold' });
+export const skipCold = (ctx: Ctx, at: string) => run(ctx, tx => coldDoneInTx(tx, active(tx, 'coldPick')), at, { action: 'review.skipCold' });
 
 function betTask(tx: Transaction, review: ActiveReview) {
   const id = review.bet_task_ids.find(id => !review.bet_done_ids.includes(id));
@@ -97,7 +97,7 @@ export const continueBet = (ctx: Ctx, at: string) => run(ctx, async tx => {
   end.setDate(end.getDate() + tx.settings.betWeeks * 7);
   tx.saveTask({ ...task, bet_ends_at: end.toISOString() });
   await betDoneInTx(tx, review, task.id);
-}, at);
+}, at, { action: 'review.continueBet' });
 export const switchMain = (ctx: Ctx, draft: TaskDraft | { restoreId: string; makeRoom: MakeRoom }, at: string) => run(ctx, async tx => {
   const review = active(tx, 'bet'), task = betTask(tx, review);
   if (draft.makeRoom?.id !== task.id) throw new Error('换主线必须冷藏或放弃当前复盘主线');
@@ -107,5 +107,5 @@ export const switchMain = (ctx: Ctx, draft: TaskDraft | { restoreId: string; mak
     await createTaskInTx(tx, draft);
   }
   await betDoneInTx(tx, review, task.id);
-}, at);
-export const finish = (ctx: Ctx, at: string) => run(ctx, tx => finishInTx(tx, active(tx)), at);
+}, at, { action: 'review.switchMain' });
+export const finish = (ctx: Ctx, at: string) => run(ctx, tx => finishInTx(tx, active(tx)), at, { action: 'review.finish' });

@@ -19,22 +19,22 @@ it('the install barrier drains queued work and rejects new foreground writes', a
   const ctx = fixture(), order: string[] = [];
   let release!: () => void;
   const pending = new Promise<void>(resolve => { release = resolve; });
-  const first = run(ctx, async () => { await pending; order.push('first'); });
-  const second = run(ctx, async () => { order.push('second'); });
+  const first = run(ctx, async () => { await pending; order.push('first'); }, undefined, { action: 'test.direct' });
+  const second = run(ctx, async () => { order.push('second'); }, undefined, { action: 'test.direct' });
   const barrier = pauseCommits(ctx);
   let drained = false;
   void barrier.ready.then(() => { drained = true; });
-  await expect(run(ctx, async () => { order.push('rejected'); })).rejects.toThrow('安装更新');
+  await expect(run(ctx, async () => { order.push('rejected'); }, undefined, { action: 'test.direct' })).rejects.toThrow('安装更新');
   expect(drained).toBe(false);
   release(); await Promise.all([first, second, barrier.ready]);
   expect(order).toEqual(['first', 'second']);
   barrier.resume();
-  await run(ctx, async () => { order.push('resumed'); });
+  await run(ctx, async () => { order.push('resumed'); }, undefined, { action: 'test.direct' });
   expect(order).toEqual(['first', 'second', 'resumed']);
 });
 
 it('background producers wait through an installation failure and keep their work', async () => {
-  const ctx = fixture(), work = vi.fn(() => run(ctx, async () => undefined));
+  const ctx = fixture(), work = vi.fn(() => run(ctx, async () => undefined, undefined, { action: 'test.direct' }));
   const barrier = pauseCommits(ctx);
   const pending = whenCommitsOpen(ctx, work);
   await Promise.resolve(); expect(work).not.toHaveBeenCalled();
@@ -45,13 +45,13 @@ it('background producers wait through an installation failure and keep their wor
 it('an installer failure restores normal admission and exposes the original error', async () => {
   const ctx = fixture();
   await expect(installUpdate(ctx, { ...installPort(), install: async () => { throw new Error('installer refused'); } })).rejects.toThrow('installer refused');
-  await expect(run(ctx, async () => 'usable')).resolves.toBe('usable');
+  await expect(run(ctx, async () => 'usable', undefined, { action: 'test.direct' })).resolves.toBe('usable');
 });
 
 it('a partial commit failure blocks installation instead of reporting a safe drain', async () => {
   const ctx = fixture(), install = vi.fn(async () => prepared);
   vi.spyOn(ctx.repos, 'transact').mockRejectedValueOnce(new Error('partial write'));
-  await expect(run(ctx, async () => undefined)).rejects.toThrow('partial write');
+  await expect(run(ctx, async () => undefined, undefined, { action: 'test.direct' })).rejects.toThrow('partial write');
   await expect(installUpdate(ctx, { ...installPort(), install })).rejects.toThrow('恢复 journal');
   expect(install).not.toHaveBeenCalled();
 });
@@ -61,5 +61,5 @@ it('an unknown native install state cannot reopen the write queue', async () => 
   const updater = { ...installPort(), install: async () => { throw new Error('IPC disconnected'); },
     cancelInstall: async () => { throw new Error('native state unknown'); } };
   await expect(installUpdate(ctx, updater)).rejects.toThrow('native state unknown');
-  await expect(run(ctx, async () => undefined)).rejects.toThrow('安装更新');
+  await expect(run(ctx, async () => undefined, undefined, { action: 'test.direct' })).rejects.toThrow('安装更新');
 });

@@ -42,14 +42,14 @@ export async function createTaskInTx(tx: Transaction, draft: TaskDraft): Promise
   refreshInTx(tx);
   return task.id;
 }
-export const createTask = (ctx: Ctx, draft: TaskDraft, at: string) => run(ctx, tx => createTaskInTx(tx, draft), at);
+export const createTask = (ctx: Ctx, draft: TaskDraft, at: string) => run(ctx, tx => createTaskInTx(tx, draft), at, { action: 'backpack.createTask' });
 
 export const freezeTask = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {
   await removeTaskInTx(tx, id, '冷藏'); refreshInTx(tx);
-}, at);
+}, at, { action: 'backpack.freezeTask' });
 export const abandonTask = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {
   await removeTaskInTx(tx, id, '已放弃'); refreshInTx(tx);
-}, at);
+}, at, { action: 'backpack.abandonTask' });
 export async function restoreTaskInTx(tx: Transaction, id: string, slot: BackpackSlot, makeRoom?: MakeRoom): Promise<void> {
   const at = tx.at;
   const task = findTask(tx, id);
@@ -57,7 +57,7 @@ export async function restoreTaskInTx(tx: Transaction, id: string, slot: Backpac
   await makeRoomInTx(tx, slot, makeRoom);
   tx.saveTask(putInBackpack(task, slot, tx.tasks, tx.settings, at)); refreshInTx(tx);
 }
-export const restoreTask = (ctx: Ctx, id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => run(ctx, tx => restoreTaskInTx(tx, id, slot, makeRoom), at);
+export const restoreTask = (ctx: Ctx, id: string, slot: BackpackSlot, at: string, makeRoom?: MakeRoom) => run(ctx, tx => restoreTaskInTx(tx, id, slot, makeRoom), at, { action: 'backpack.restoreTask' });
 
 export function addItemInTx(tx: Transaction, taskId: string, content: string): string {
   const task = findTask(tx, taskId);
@@ -74,12 +74,12 @@ export function addItemInTx(tx: Transaction, taskId: string, content: string): s
 }
 export const addItem = (ctx: Ctx, taskId: string, content: string, at: string) => run(ctx, async tx => {
   const id = addItemInTx(tx, taskId, content); refreshInTx(tx); return id;
-}, at);
+}, at, { action: 'backpack.addItem' });
 export const setDefaultProject = (ctx: Ctx, taskId: string, project: string | null, at: string) => run(ctx, async tx => {
   const task = findTask(tx, taskId), value = project?.trim() || null;
   tx.saveTask({ ...task, default_project: value });
   for (const card of tx.cards.filter(item => item.task_id === taskId && item.project === null)) retagRefInTx(tx, card.id, value ?? '未分类', card.tags);
-}, at);
+}, at, { action: 'backpack.setDefaultProject' });
 
 export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at: string) => run(ctx, async tx => {
   if (fields.taskId !== null) findTask(tx, fields.taskId);
@@ -110,7 +110,7 @@ export const saveCard = (ctx: Ctx, cardId: string | null, fields: CardFields, at
   }
   refreshInTx(tx);
   return card.id;
-}, at);
+}, at, { action: 'backpack.saveCard' });
 
 export const reorderQueue = (ctx: Ctx, taskId: string | null, cardIds: string[], at: string) => run(ctx, async tx => {
   if (taskId !== null) findTask(tx, taskId);
@@ -124,4 +124,4 @@ export const reorderQueue = (ctx: Ctx, taskId: string | null, cardIds: string[],
   ordered.map(card => cardIds.includes(card.id) ? replacements[index++] : card)
     .forEach((card, rank) => { if (card.order !== rank + 1) tx.saveCard({ ...card, order: rank + 1 }); });
   refreshInTx(tx);
-}, at);
+}, at, { action: 'backpack.reorderQueue' });

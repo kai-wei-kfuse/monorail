@@ -24,7 +24,7 @@ function gate() {
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 async function block(f: ReturnType<typeof fixture>) {
   f.fs.beforeWrite = path => { if (path === 'state.yaml') throw new Error('power loss'); };
-  await expect(run(f.ctx, async () => {})).rejects.toThrow('power loss');
+  await expect(run(f.ctx, async () => {}, undefined, { action: 'test.direct' })).rejects.toThrow('power loss');
   f.fs.beforeWrite = undefined;
 }
 
@@ -36,7 +36,7 @@ it('mainEpoch defaults to 0 and keeps the value given by bootstrap', () => {
 it('the published snapshot carries reviews as an independent copy', async () => {
   const f = fixture();
   const review: Review = { id: 'r1', period: '2026-W45', status: '已完成', step: 'done', completed_at: '2026-11-04T09:00:00.000Z' };
-  await run(f.ctx, async tx => { tx.saveReview(review); });
+  await run(f.ctx, async tx => { tx.saveReview(review); }, undefined, { action: 'test.direct' });
   const snapshot = f.publish.mock.calls.at(-1)![0];
   expect(snapshot.reviews).toEqual([review]);
   snapshot.reviews[0].status = '已被取代';
@@ -55,7 +55,7 @@ it('intent is accepted by run, runOperation and runTx without changing the commi
 
 it('readSerial waits for an in-flight commit, then reads without writing or publishing', async () => {
   const f = fixture(), hold = gate(), order: string[] = [];
-  const commit = run(f.ctx, async tx => { order.push('commit:start'); await hold.opened; tx.state.home_mode = 'guide'; order.push('commit:end'); });
+  const commit = run(f.ctx, async tx => { order.push('commit:start'); await hold.opened; tx.state.home_mode = 'guide'; order.push('commit:end'); }, undefined, { action: 'test.direct' });
   const read = readSerial(f.ctx, async () => { order.push('read'); return (await f.ctx.repos.state.read()).home_mode; });
   await flush(); expect(order).toEqual(['commit:start']);
   hold.open();
@@ -73,14 +73,14 @@ it('readSerial and maintain are refused once the journal is blocked', async () =
 
 it('maintain runs serially between commits and its failure does not block later commits', async () => {
   const f = fixture(), order: string[] = [];
-  const first = run(f.ctx, async () => { order.push('commit:1'); });
+  const first = run(f.ctx, async () => { order.push('commit:1'); }, undefined, { action: 'test.direct' });
   const task = maintain(f.ctx, async () => { order.push('maintain'); throw new Error('cleanup failed'); });
-  const second = run(f.ctx, async () => { order.push('commit:2'); });
+  const second = run(f.ctx, async () => { order.push('commit:2'); }, undefined, { action: 'test.direct' });
   await first;
   await expect(task).rejects.toThrow('cleanup failed');
   await second;
   expect(order).toEqual(['commit:1', 'maintain', 'commit:2']);
-  await expect(run(f.ctx, async () => {})).resolves.toBeUndefined();
+  await expect(run(f.ctx, async () => {}, undefined, { action: 'test.direct' })).resolves.toBeUndefined();
 });
 
 it('closeMaintenance lets the running task finish, cancels queued ones and refuses new ones (E8a1.3)', async () => {
@@ -94,7 +94,7 @@ it('closeMaintenance lets the running task finish, cancels queued ones and refus
   await running; await expect(queued).rejects.toThrow('CANCELLED'); await closed;
   expect(order).toEqual(['running:start', 'running:end']);
   // 提交不受影响
-  await expect(run(f.ctx, async () => 'ok')).resolves.toBe('ok');
+  await expect(run(f.ctx, async () => 'ok', undefined, { action: 'test.direct' })).resolves.toBe('ok');
 });
 
 it('pauseCommits waits for a running maintenance task and refuses new ones until resumed', async () => {

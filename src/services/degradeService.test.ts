@@ -22,7 +22,7 @@ it('A7 fourth redraw executes first and preserves the new card behind rest', asy
 });
 it('A7 fourth running shrink leaves a pending child and no positive child time before rest', async () => {
   const f = fixture(); await seed(f, [card('a', { skip_count: 2 })]); await start(f.ctx, 'a', at());
-  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(1), at(2)]; });
+  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(1), at(2)]; }, undefined, { action: 'test.direct' });
   f.clock(at(3)); const child = await shrink(f.ctx, 'a', { content: '小任务', type: '结果卡', minutes: null }, at(3));
   expect(await getCard(f, child)).toMatchObject({ status: '待做', skip_count: 0 });
   expect(await getCard(f, 'a')).toMatchObject({ status: '已缩小', skip_count: 0 });
@@ -34,16 +34,16 @@ it('A7 fourth running shrink leaves a pending child and no positive child time b
 });
 it('A7 input hint resets refusals without switching the timer or entering rest', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
-  await run(f.ctx, async tx => { tx.state.last_rest_ended_at = at(); tx.state.refusals = [at(1), at(2), at(3)]; });
+  await run(f.ctx, async tx => { tx.state.last_rest_ended_at = at(); tx.state.refusals = [at(1), at(2), at(3)]; }, undefined, { action: 'test.direct' });
   const before = open(f);
-  f.clock(at(4)); await run(f.ctx, registerRefusalInTx, at(4));
+  f.clock(at(4)); await run(f.ctx, registerRefusalInTx, at(4), { action: 'test.direct' });
   expect(open(f)).toEqual(before);
   expect(await f.ctx.repos.state.read()).toMatchObject({ rest: null, refusals: [], home_mode: 'task' });
   expect(f.publish.mock.calls.at(-1)![0].notices).toEqual([expect.objectContaining({ kind: 'inputHint' })]);
 });
 it.each(['', '   ', '画画'])('rest answer %j at zero duration does not write an overlay', async answer => {
   const f = fixture(); await seed(f, [card('a')]);
-  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(), at()]; await registerRefusalInTx(tx); });
+  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(), at()]; await registerRefusalInTx(tx); }, undefined, { action: 'test.direct' });
   await returnFromRest(f.ctx, answer, at());
   expect(entries(f)).toHaveLength(1);
   expect(open(f).project).toBe('待机');
@@ -54,7 +54,7 @@ it('repeated trimmed rest answers signal on the third occurrence only, including
   for (let i = 0; i < 4; i++) {
     const begin = new Date(2026, 9, 27 + i, 3, 55).toISOString(), end = new Date(2026, 9, 27 + i, 4, 5).toISOString();
     f.clock(begin);
-    await run(f.ctx, async tx => { tx.state.last_rest_ended_at = null; tx.state.refusals = [begin, begin, begin]; await registerRefusalInTx(tx); });
+    await run(f.ctx, async tx => { tx.state.last_rest_ended_at = null; tx.state.refusals = [begin, begin, begin]; await registerRefusalInTx(tx); }, undefined, { action: 'test.direct' });
     f.clock(end); await returnFromRest(f.ctx, ' 画画 ', end);
     const notices = f.publish.mock.calls.at(-1)![0].notices;
     expect(notices.filter((n: { kind: string }) => n.kind === 'subconscious')).toHaveLength(i === 2 ? 1 : 0);
@@ -67,7 +67,7 @@ it('repeated trimmed rest answers signal on the third occurrence only, including
 });
 it('blank positive-duration answers retain automatic rest history and reject time travel', async () => {
   const f = fixture(); await seed(f, [card('a')]);
-  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(), at()]; await registerRefusalInTx(tx); });
+  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(), at()]; await registerRefusalInTx(tx); }, undefined, { action: 'test.direct' });
   await expect(returnFromRest(f.ctx, '画画', at(-1))).rejects.toThrow('早于');
   f.clock(at(10)); await returnFromRest(f.ctx, '  ', at(10));
   expect(entries(f).filter(entry => entry.ended_at !== null)).toEqual([expect.objectContaining({ description: '休息', started_at: at(), ended_at: at(10) })]);

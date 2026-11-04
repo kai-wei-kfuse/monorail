@@ -66,7 +66,7 @@ it('settings immediately re-evaluate reminders, review due date and idea expiry 
     tx.state.first_used_day = '2026-10-01';
     tx.saveRecord(createRecord({ id: tx.id(), text: 'old', kind: '想法', created_at: new Date(2026, 9, 1, 10).toISOString(),
       due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [] }));
-  });
+  }, undefined, { action: 'test.direct' });
   f.clock(now); await change(f.ctx, 'ideaExpireDays', 7, now); await change(f.ctx, 'deadlineLeadMinutes', 30, now);
   expect((await f.ctx.repos.records.list())[0].value.pool).toBe('冷库');
   expect(f.update).toHaveBeenLastCalledWith(expect.arrayContaining([expect.objectContaining({ at: Date.parse(now) - 30 * 60_000 })]));

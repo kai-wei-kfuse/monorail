@@ -36,5 +36,5 @@ export function refreshInTx(tx: Transaction): void {
   if (!tx.state.current_card && tx.state.home_mode === 'task') tx.state.home_mode = 'blank';
 }
 
-export const refresh = (ctx: Ctx, at: string) => run(ctx, async tx => refreshInTx(tx), at);
-export const draw = (ctx: Ctx, at: string) => run(ctx, async tx => drawInTx(tx), at);
+export const refresh = (ctx: Ctx, at: string) => run(ctx, async tx => refreshInTx(tx), at, { action: 'deal.refresh' });
+export const draw = (ctx: Ctx, at: string) => run(ctx, async tx => drawInTx(tx), at, { action: 'deal.draw' });

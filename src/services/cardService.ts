@@ -7,6 +7,7 @@ import { inBackpack, trackOf } from '../domain/task/task';
 import { activityDay } from '../domain/timeline/day';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
+import type { HistorySource } from '../shared/history';
 import { openInTx, startRefInTx, stopRefInTx, startSystemInTx, renameRefInTx, retagRefInTx, activeRefInTx, refElapsedInTx, startInTx as startEntryInTx } from './tracking/api';
 import { drawInTx } from './dealService';
 import { afterItem } from '../domain/task/pool';
@@ -48,7 +49,7 @@ export function editContentInTx(tx: Transaction, cardId: string, content: string
   const card = editCardContent(getCard(tx, cardId), content);
   tx.saveCard(card); renameRefInTx(tx, cardId, target(tx, card).description);
 }
-export const editContent = (ctx: Ctx, cardId: string, content: string, at: string) => run(ctx, async tx => editContentInTx(tx, cardId, content), at);
+export const editContent = (ctx: Ctx, cardId: string, content: string, at: string) => run(ctx, async tx => editContentInTx(tx, cardId, content), at, { action: 'card.editContent' });
 export function editMetaInTx(tx: Transaction, cardId: string, project: string | null, tags: string[]): void {
   const next = { ...getCard(tx, cardId), project, tags: [...tags] }; tx.saveCard(next);
   const value = target(tx, next); retagRefInTx(tx, cardId, value.project, value.tags);
@@ -66,7 +67,7 @@ export async function startCardInTx(tx: Transaction, cardId: string, from = tx.a
   tx.state.rest = null;
   alignInTx(tx);
 }
-export const start = (ctx: Ctx, cardId: string, at: string) => run(ctx, tx => startCardInTx(tx, cardId), at);
+export const start = (ctx: Ctx, cardId: string, at: string) => run(ctx, tx => startCardInTx(tx, cardId), at, { action: 'card.start' });
 
 /** Read-only prompt calculation, using the original click time and effective history. */
 export async function checkComplete(ctx: Ctx, cardId: string, at: string): Promise<{ remainingMinutes: number; at: string }> {
@@ -77,7 +78,8 @@ export async function checkComplete(ctx: Ctx, cardId: string, at: string): Promi
   return { remainingMinutes: card.type === '时间盒卡' ? Math.max(0, (card.timebox_minutes ?? 0) - elapsed / 60000) : 0, at };
 }
 
-export const complete = (ctx: Ctx, cardId: string, at: string, note: string, keepGoing = false) => run(ctx, async tx => {
+/** 小窗点完成、主窗口弹完成对话框（两段式）：调用方传 source 把来源记成小窗（执行方案 E8a3）。 */
+export const complete = (ctx: Ctx, cardId: string, at: string, note: string, keepGoing = false, source?: HistorySource) => run(ctx, async tx => {
   const card = getCard(tx, cardId);
   if (card.status === '已完成') return;
   requireCurrent(tx, card);
@@ -88,7 +90,7 @@ export const complete = (ctx: Ctx, cardId: string, at: string, note: string, kee
   stopRefInTx(tx, cardId);
   tx.state.current_card = null;
   finishItemInTx(tx, done); drawInTx(tx); alignInTx(tx);
-}, at);
+}, at, { action: 'card.complete', subject: { type: 'card', id: cardId }, ...(source ? { source } : {}) });
 
 export interface ShrinkCommand { content: string; type: Card['type']; minutes: number | null }
 export const shrink = (ctx: Ctx, cardId: string, input: ShrinkCommand, at: string) => run(ctx, async tx => {
@@ -103,7 +105,7 @@ export const shrink = (ctx: Ctx, cardId: string, input: ShrinkCommand, at: strin
   await registerRefusalInTx(tx);
   alignInTx(tx);
   return result.child.id;
-}, at);
+}, at, { action: 'card.shrink' });
 
 export const redraw = (ctx: Ctx, cardId: string | null, at: string, note?: string) => run(ctx, async tx => {
   let excluded: string;
@@ -122,7 +124,7 @@ export const redraw = (ctx: Ctx, cardId: string | null, at: string, note?: strin
   drawInTx(tx);
   await registerRefusalInTx(tx);
   alignInTx(tx);
-}, at);
+}, at, { action: 'card.redraw' });
 
 export const pass = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx => {
   const card = getCard(tx, cardId);
@@ -133,7 +135,7 @@ export const pass = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx 
     stopRefInTx(tx, cardId);
   }
   finishItemInTx(tx, card); drawInTx(tx); alignInTx(tx);
-}, at);
+}, at, { action: 'card.pass' });
 
 export const leaveTo = (ctx: Ctx, activityId: string, at: string) => run(ctx, async tx => {
   const activity = tx.settings.lists.presets.find(item => item.id === activityId);
@@ -142,4 +144,4 @@ export const leaveTo = (ctx: Ctx, activityId: string, at: string) => run(ctx, as
   if (card) tx.saveCard(releaseCard(card));
   startEntryInTx(tx, { description: activity.name, project: activity.project, card_id: null, tags: activity.tags });
   alignInTx(tx);
-}, at);
+}, at, { action: 'card.leaveTo' });

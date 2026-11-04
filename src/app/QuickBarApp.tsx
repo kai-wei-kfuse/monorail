@@ -38,8 +38,9 @@ async function save(draft: Draft) {
 /** 记录条的草稿 → 记录。阻塞、期限只对待办有意义；tags 和想法的生命周期字段由 createRecord 统一生成。 */
 function toRecord(d: Draft, id: string, attachments: string[]): RecordEntry {
   const todo = d.kind === '待办';
+  // created_via：主窗口任何下一个事务都会先为它补写「快速记录条」历史，再执行自己的动作（ADR 0019 第 5 条）
   return createRecord({ id, text: d.text, kind: d.kind, created_at: d.at, due_at: todo ? d.dueAt : null, blocking: todo && d.blocking,
-    task_id: d.taskId, card_id: null, tags: [], attachments, needs: d.kind === '想法' ? d.needs : null });
+    task_id: d.taskId, card_id: null, tags: [], attachments, needs: d.kind === '想法' ? d.needs : null, created_via: 'quickbar' });
 }
 
 export function QuickBarApp() {

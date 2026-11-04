@@ -18,6 +18,11 @@ function fixture() {
 }
 const manual: HistoryIntent = { action: 'test.direct', source: { kind: 'manual', via: 'main', page: 'settings' } };
 const all = async (ctx: Ctx) => (await ctx.repos.history.readDays('2000-01-01', '2999-12-31')).records;
+/** 先把待机开出来，再清掉这一条历史，免得它混进后面要数的记录 */
+async function warm(f: ReturnType<typeof fixture>) {
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
+  await f.ctx.repos.history.removeBefore('2999-12-31', new Set());
+}
 async function setSetting(f: ReturnType<typeof fixture>, key: keyof typeof defaults, value: unknown, intent = manual) {
   await run(f.ctx, async tx => { await tx.saveSettings({ ...tx.settings, [key]: value }); }, f.at(), intent);
 }
@@ -30,9 +35,9 @@ describe('execute() 写历史', () => {
     expect(r).toMatchObject({ version: 1, action: 'test.direct', label: '测试直接提交', day: '2026-11-04', source: manual.source });
     expect(r.changes.map(c => [c.type, c.field])).toEqual(expect.arrayContaining([['entry', '描述'], ['state', '首页']]));
   });
-  it('没有 intent（过渡期的旧入口）、没有实质改动、命中回执的重放：都不写历史', async () => {
+  it('没有实质改动、只写回执、命中回执的重放：都不写历史', async () => {
     const f = fixture();
-    await run(f.ctx, async () => {});                 // 没有 intent
+    await warm(f);
     const before = (await f.ctx.repos.history.listAll()).length;
     await run(f.ctx, async () => {}, f.at(), manual);  // 第二次：待机已经在了，没有改动
     const op = { id: crypto.randomUUID(), command: 'save_idea', input: { text: 'x' } };
@@ -54,7 +59,7 @@ describe('execute() 写历史', () => {
 describe('设置合并（ADR 0019 第 3 条）', () => {
   it('60 秒内同一项同一来源合并成一条：保留首次改前、末次改后，×N', async () => {
     const f = fixture();
-    await run(f.ctx, async () => {});   // 先把待机开出来，免得它混进设置那一条
+    await warm(f);
     await setSetting(f, 'titleScale', 70); f.tick(10_000);
     await setSetting(f, 'titleScale', 80); f.tick(10_000);
     await setSetting(f, 'titleScale', 90);
@@ -65,7 +70,7 @@ describe('设置合并（ADR 0019 第 3 条）', () => {
   });
   it('全部改回原值：保留这一条，标 reverted；超过 60 秒、换了项目、改日界都另起一条', async () => {
     const f = fixture();
-    await run(f.ctx, async () => {});
+    await warm(f);
     await setSetting(f, 'titleScale', 70); f.tick(5_000);
     await setSetting(f, 'titleScale', defaults.titleScale);
     expect((await all(f.ctx))[0]).toMatchObject({ merged: 2, reverted: true, changes: [] });
@@ -83,7 +88,7 @@ describe('设置合并（ADR 0019 第 3 条）', () => {
 describe('journal 写到一半失败', () => {
   it('队列封锁；recover() 后业务和历史一起补完', async () => {
     const f = fixture();
-    await run(f.ctx, async () => {});
+    await warm(f);
     f.fs.beforeWrite = path => { if (path.startsWith('history/')) throw new Error('power loss'); };
     await expect(run(f.ctx, async tx => { tx.state.home_mode = 'guide'; }, f.at(), manual)).rejects.toThrow('power loss');
     await expect(run(f.ctx, async () => {}, f.at(), manual)).rejects.toThrow('提交已阻塞');
