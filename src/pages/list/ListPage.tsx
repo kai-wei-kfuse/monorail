@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { PageFrame } from '../../ui/layout/PageFrame';
 import { TextInput } from '../../ui/controls/TextInput';
 import { Switch } from '../../ui/controls/Switch';
@@ -26,9 +27,13 @@ function useNow(): number {
  * 列表页（设计文档「计时 · 列表」，参照 Toggl Track 的 List view）：和日历看的是同一份条目，按时间倒序。
  * 默认最近 7 天、不显示待机；顶部按描述、项目、#标签筛选；底部「再往前 7 天」。
  */
-export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, actions, showIdle, onShowIdle, onDays }:
+export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, actions, showIdle, onShowIdle, onDays, toggle, focusDay }:
   { entries: readonly ListEntry[]; projects: ProjectOption[]; knownTags: string[]; boundaryHour: number; isIdle: (e: ListEntry) => boolean; actions: ListActions;
-    showIdle: boolean; onShowIdle: (on: boolean) => void; onDays?: (days: number) => void }) {
+    showIdle: boolean; onShowIdle: (on: boolean) => void; onDays?: (days: number) => void;
+    /** 右上〔计时记录 | 操作历史〕 */
+    toggle?: ReactNode;
+    /** 从操作历史 ◎ 定位过来：看的天数放宽到包含这一天（活动日开始时刻），并滚到那一天 */
+    focusDay?: { day: number; seq: number } | null }) {
   const now = useNow();
   const [days, setDays] = useState(7), [query, setQuery] = useState(''), [open, setOpen] = useState<ReadonlySet<string>>(new Set());
   // 看最近几天交给接线层，它按这个查条目；显示待机和日历共用一个设置
@@ -37,8 +42,17 @@ export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, a
   const ctx: RowContext = { now, projects, knownTags, isIdle, overlaps: overlapping(entries, now, isIdle), actions };
   const today = activityDayStart(now, boundaryHour);
   const count = list.reduce((n, d) => n + d.groups.reduce((m, g) => m + g.entries.filter(e => !isIdle(e)).length, 0), 0);
-  const toggle = (key: string) => setOpen(prev => { const next = new Set(prev); if (!next.delete(key)) next.add(key); return next; });
+  const toggleGroup = (key: string) => setOpen(prev => { const next = new Set(prev); if (!next.delete(key)) next.add(key); return next; });
+  useEffect(() => {
+    if (!focusDay) return;
+    const back = Math.round((today - focusDay.day) / 86_400_000) + 1;
+    if (back > days) setDays(Math.ceil(back / 7) * 7);
+  }, [focusDay?.seq]);
+  useEffect(() => {
+    if (focusDay) document.querySelector(`.lv-day[data-day="${focusDay.day}"]`)?.scrollIntoView({ block: 'start' });
+  }, [focusDay?.seq, days, list.length > 0]);
   const tools = <>
+    {toggle}
     <TextInput className="lv-q" type="search" aria-label="筛选" placeholder="筛选：描述、项目、#标签" value={query} onChange={e => setQuery(e.target.value)} />
     <span className="pg-switch"><Switch checked={showIdle} onChange={onShowIdle} label="显示待机" /><span>显示待机</span></span>
   </>;
@@ -47,9 +61,9 @@ export function ListPage({ entries, projects, knownTags, boundaryHour, isIdle, a
     {!list.length && <p className="ls-empty">最近 {days} 天没有{query.trim() ? '符合筛选的' : ''}记录。</p>}
     {list.map(d => {
       const x = new Date(d.day);
-      return <section key={d.day} className="lv-day">
+      return <section key={d.day} className="lv-day" data-day={d.day}>
         <h3 className="lv-dayhead"><b>{dayLabel(d.day, today)}</b><span>{EN[x.getDay()]} · {x.getMonth() + 1}/{x.getDate()}</span><i /><em>合计 <strong>{hm(d.total)}</strong></em></h3>
-        {d.groups.map(g => { const key = `${d.day}|${g.key}`; return <EntryGroupRows key={key} g={g} ctx={ctx} expanded={open.has(key)} onToggle={() => toggle(key)} />; })}
+        {d.groups.map(g => { const key = `${d.day}|${g.key}`; return <EntryGroupRows key={key} g={g} ctx={ctx} expanded={open.has(key)} onToggle={() => toggleGroup(key)} />; })}
       </section>;
     })}
     <Button className="lv-more" onClick={() => setDays(days + 7)}>再往前 7 天</Button>

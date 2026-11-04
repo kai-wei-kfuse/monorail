@@ -12,20 +12,29 @@ import { chooseRoot } from '../platform/dialog';
 import { readAutomationHost } from '../platform/automation';
 import type { SettingKey, Settings } from '../shared/settings';
 import { UpdatePanel } from '../widgets/UpdatePanel';
+import { RecentCalls } from '../widgets/history/RecentCalls';
+import { today as historyToday } from '../services/historyService';
+import type { HistoryRecord } from '../shared/history';
+import { useRecentAutomation } from './useHistory';
 import type { useUpdates } from './useUpdates';
 
 const now = () => new Date().toISOString();
+/** 设置 09 显示最近几条自动化调用（原型 CFG.recentLimit） */
+const RECENT_LIMIT = 5;
 
 /**
  * Binds the settings page to settingsService. Changes apply immediately; a platform failure (e.g. a
  * hotkey taken by another app) shows on its own row and is not saved. Changing the data folder reloads the app.
  */
-export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, updates }:
+export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, updates, section: initialSection, onOpenHistory }:
   { ctx: Ctx; root: string; initialErrors: SettingsErrors; onSaved: () => void; report: (error: unknown) => void;
-    updates: ReturnType<typeof useUpdates> }) {
+    updates: ReturnType<typeof useUpdates>; section?: string;
+    /** 设置 09「最近调用」：点一条（或「查看全部」传 null）去列表 · 操作历史 */
+    onOpenHistory?: (record: HistoryRecord | null) => void }) {
   const settings = useStore(appStore, s => (s.ready ? s.settings : ctx.settings));
   const projects = useStore(appStore, s => s.backpack.pool.projects), knownTags = useStore(appStore, s => s.home.knownTags);
-  const [section, setSection] = useState('deal');
+  const [section, setSection] = useState(initialSection ?? 'deal');
+  const recent = useRecentAutomation(ctx, RECENT_LIMIT, section === 'automation');
   const [errors, setErrors] = useState<SettingsErrors>(initialErrors);
   const [automationHost, setAutomationHost] = useState<AutomationHostState>({ loading: true, info: null, error: null });
 
@@ -72,6 +81,9 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
   return <SettingsPage section={section} onSection={onSelectSection} settings={settings} onChange={onChange}
     onListsChange={onListsChange} projects={projects} knownTags={knownTags} onCreateProject={onCreateProject} onCreateTag={onCreateTag} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}
     automationHost={automationHost} onRefreshAutomationHost={refreshAutomationHost}
+    automationRecent={<RecentCalls records={recent.records} error={recent.error} today={historyToday(ctx)}
+      onOpen={r => onOpenHistory?.(r)} onAll={() => onOpenHistory?.(null)} />}
+    automationRecentRight={recent.records?.length ? `最近 ${recent.records.length} 条` : undefined}
     aboutExtras={<UpdatePanel state={updates.state} connectionError={updates.connectionError} onCheck={() => void updates.check()}
       onJoinBeta={() => void updates.joinBeta()} onLeaveBeta={() => void updates.leaveBeta()}
       onCheckStableTarget={() => void updates.checkStableTarget()} onDismissTarget={() => void updates.dismissTarget()}

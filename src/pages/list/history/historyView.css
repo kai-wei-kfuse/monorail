@@ -1,0 +1,18 @@
+/* 列表页 · 操作历史的工具行与分组（UI 规范 §11.13，照 history-prototype.html）；行与详情在 widgets/history/history.css */
+.seg.oh-seg button { min-width: 0; height: 30px; padding: 0 14px; font-size: 12px; }
+.seg.oh-seg button i { margin-left: 6px; font: 500 8px/1 var(--f-en); letter-spacing: .16em; font-style: normal; color: var(--mute-2); }
+.seg.oh-seg button[aria-checked="true"] i { color: #85857f; }
+.seg.oh-seg button b { margin-left: 6px; font: 600 11px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--mute); }
+.seg.oh-seg button[aria-checked="true"] b { color: var(--yellow); }
+
+.oh-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 18px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.oh-bar .inp { flex: 1 1 200px; width: auto; max-width: 320px; min-height: 30px; padding: 4px 10px; font-size: 13px; }
+.oh-bar .oh-cnt { margin-left: auto; font: 330 12px/1 var(--f-cn); color: var(--mute); white-space: nowrap; }
+.oh-bar .oh-cnt b { margin-right: 2px; font: 600 16px/1 var(--f-en); color: var(--ink); font-variant-numeric: tabular-nums; }
+.oh-day { margin-top: 24px; }
+.oh-foot { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+.oh-foot p { margin: 0; font: 330 12px/1.6 var(--f-cn); color: var(--mute); }
+
+@media (max-width: 1000px) {
+  .seg.oh-seg button i { display: none; }
+}

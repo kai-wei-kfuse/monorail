@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
 import { defaults } from '../shared/settings';
 import { appStore } from '../store/appStore';
@@ -7,7 +7,15 @@ import type { CalendarActions } from '../pages/calendar/CalendarPage';
 import { ListPage } from '../pages/list/ListPage';
 import type { ListActions } from '../pages/list/EntryRow';
 import type { Ctx } from '../services/commit';
-import type { HistorySource } from '../shared/history';
+import type { HistoryRecord, HistorySource } from '../shared/history';
+import { ViewToggle } from '../pages/list/ViewToggle';
+import type { ListView } from '../pages/list/ViewToggle';
+import { HistoryView } from '../pages/list/history/HistoryView';
+import { today as historyToday } from '../services/historyService';
+import { useHistoryPage } from './useHistory';
+
+/** 设置 09 跳过来要打开的一条（day 用来放宽已载入的天数）。 */
+export interface HistoryFocus { id: string; day: string; seq: number }
 import * as edit from '../services/timeEditService';
 import * as preset from '../services/presetService';
 import { continueEntry } from '../services/homeService';
@@ -43,8 +51,8 @@ function useShared() {
   return { projects, knownTags, version, boundaryHour: settings.dayBoundaryHour, showIdle: settings.calendarShowIdle };
 }
 
-/** 日历页的接线：按页面在看的那几天查条目。 */
-export function CalendarScreen({ ctx, report }: { ctx: Ctx; report: (error: unknown) => void }) {
+/** 日历页的接线：按页面在看的那几天查条目。focusDay：从操作历史 ◎ 定位过来要看的那一天。 */
+export function CalendarScreen({ ctx, report, focusDay }: { ctx: Ctx; report: (error: unknown) => void; focusDay?: DayFocus | null }) {
   const { projects, knownTags, version, boundaryHour, showIdle } = useShared();
   const [range, setRange] = useState<[number, number] | null>(null);
   const onRange = useCallback((start: number, end: number) => setRange(r => r && r[0] === start && r[1] === end ? r : [start, end]), []);
@@ -60,19 +68,41 @@ export function CalendarScreen({ ctx, report }: { ctx: Ctx; report: (error: unkn
   };
   // 日历吸附最小间隔统一取 shared/settings.ts 的 defaults.calendarSnapMinutes（1 分钟），不改写用户既有 settings.yaml。
   return <CalendarPage entries={entries} projects={projects} knownTags={knownTags} boundaryHour={boundaryHour} snapMinutes={defaults.calendarSnapMinutes}
-    showIdle={showIdle} isIdle={isIdle} actions={actions} onRange={onRange} />;
+    showIdle={showIdle} isIdle={isIdle} actions={actions} onRange={onRange} focusDay={focusDay} />;
 }
 
-/** 列表页的接线：按页面在看的最近几天查条目；改起止和时长交原文，由计时系统解析。 */
-export function ListScreen({ ctx, report }: { ctx: Ctx; report: (error: unknown) => void }) {
+export interface DayFocus { day: number; seq: number }
+
+/**
+ * 列表页的接线：〔计时记录 | 操作历史〕。计时记录按最近几天查条目，改起止和时长交原文，由计时系统解析；
+ * 操作历史按需经 historyService 查（E8c）。view、focus 由外壳持有，设置 09 跳过来时能直接打开某一条。
+ */
+export function ListScreen({ ctx, report, view, onView, historyFocus, focusDay, onLocate, onCopied }:
+  { ctx: Ctx; report: (error: unknown) => void; view: ListView; onView: (v: ListView) => void; historyFocus?: HistoryFocus | null;
+    focusDay?: DayFocus | null; onLocate: (r: HistoryRecord) => void; onCopied?: (text: string) => void }) {
   const { projects, knownTags, version, boundaryHour, showIdle } = useShared();
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(7), [historyDays, setHistoryDays] = useState(7);
   const entries = useMemo(() => edit.recentEntries(ctx, days), [ctx, days, version]);   // version：数据变了以后重新查
+  // 跳过来的那一条早于已载入的天数时放宽到包含它
+  const today = historyToday(ctx);
+  useEffect(() => {
+    const day = historyFocus && historyFocus.day;
+    if (!day) return;
+    const back = Math.round((Date.parse(`${today}T12:00:00`) - Date.parse(`${day}T12:00:00`)) / 86_400_000) + 1;
+    setHistoryDays(d => back > d ? Math.ceil(back / 7) * 7 : d);
+  }, [historyFocus?.seq]);
+  const page = useHistoryPage(ctx, historyDays, view === 'history');
   const source = pageSource('list'), shared = useEntryActions(ctx, report, source);
   const actions: ListActions = {
     ...shared,
     copy: id => void edit.copy(ctx, id, now(), undefined, source).catch(report),
   };
+  const toggle = <ViewToggle value={view} onChange={onView} />;
+  if (view === 'history') {
+    const onCopy = (text: string) => { void navigator.clipboard.writeText(text).then(() => onCopied?.(text), report); };
+    return <HistoryView data={page.data} error={page.error} days={historyDays} today={today} toggle={toggle} focus={historyFocus}
+      onMore={() => setHistoryDays(d => d + 7)} onLocate={onLocate} onCopy={onCopy} />;
+  }
   return <ListPage entries={entries} projects={projects} knownTags={knownTags} boundaryHour={boundaryHour} isIdle={isIdle} actions={actions}
-    showIdle={showIdle} onShowIdle={on => void edit.setShowIdle(ctx, on, now(), source).catch(report)} onDays={setDays} />;
+    showIdle={showIdle} onShowIdle={on => void edit.setShowIdle(ctx, on, now(), source).catch(report)} onDays={setDays} toggle={toggle} focusDay={focusDay} />;
 }

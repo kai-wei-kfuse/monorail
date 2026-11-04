@@ -8,6 +8,7 @@ import { BackpackPreview } from './BackpackPreview';
 import { ReviewPreview, SettingsPreview } from './M3Preview';
 import { CalendarPreview } from './CalendarPreview';
 import { ListPreview } from './ListPreview';
+import { HistoryPreview } from './HistoryPreview';
 import { TimerBarPreview, TimerPreview } from './TimerPreview';
 import { TaskPoolPreview } from './TaskPoolPreview';
 import { LivePreview } from './LivePreview';
@@ -20,6 +21,7 @@ const root = page === 'review' ? <ReviewPreview step={q.get('step') ?? 'recap'} 
   : page === 'backpack' ? <BackpackPreview tab={q.get('tab') ?? 'tasks'} overlay={q.get('o')} />
   : page === 'calendar' ? <CalendarPreview />
   : page === 'list' ? <ListPreview />
+  : page === 'history' ? <HistoryPreview empty={q.has('empty')} />
   : page === 'timer' ? <TimerPreview />
   : page === 'timerbar' ? <TimerBarPreview />
   : page === 'pool' ? <TaskPoolPreview />

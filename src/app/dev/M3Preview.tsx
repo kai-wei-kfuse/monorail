@@ -16,6 +16,9 @@ import { SavedBadge, SettingsPage } from '../../pages/settings/SettingsPage';
 import type { Settings } from '../../shared/settings';
 import { defaults } from '../../shared/settings';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
+import { RecentCalls } from '../../widgets/history/RecentCalls';
+import { activityDay } from '../../domain/timeline/day';
+import { historyDemo } from './HistoryPreview';
 
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
 const ago = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
@@ -63,6 +66,8 @@ export function ReviewPreview({ step: initial }: { step: string }) {
 /** 设置页预览（只在开发时用）：?sec=deal|degrade|ideas|timer|lists|look|keys|window|automation|about。 */
 export function SettingsPreview({ sec: initial }: { sec: string }) {
   const [sec, setSec] = useState(initial), [saves, setSaves] = useState(0);
+  // 09 最近调用：演示数据里的自动化改动（&empty 看从未调用过）
+  const recent = useMemo(() => new URLSearchParams(location.search).has('empty') ? [] : historyDemo().filter(r => r.source.kind === 'mcp' || r.source.kind === 'cli').slice(0, 5), []);
   const [s, setS] = useState<Settings>({ ...defaults, lists: { projects: [...PREVIEW_PROJECTS], tags: [...PREVIEW_TAGS], idleName: '待机',
     presets: [{ id: 'q1', name: '厕所', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q2', name: '拿快递', project: '生活', tags: [], mode: '插入', place: '弹层' }, { id: 'q3', name: '刷视频', project: '休息', tags: [], mode: '插入', place: '弹层' },
       { id: 'f1', name: '学 408', project: '学习', tags: ['408'], mode: '切换', place: '计时条' }, { id: 'f2', name: '回消息', project: '工作', tags: [], mode: '切换', place: '计时条' }],
@@ -79,5 +84,7 @@ export function SettingsPreview({ sec: initial }: { sec: string }) {
     onCreateProject={name => { setS(x => ({ ...x, lists: { ...x.lists, projects: [...x.lists.projects, { name, color: '#00f5a0' }] } })); setSaves(n => n + 1); }}
     onCreateTag={tag => { setS(x => ({ ...x, lists: { ...x.lists, tags: [...x.lists.tags, tag] } })); setSaves(n => n + 1); }}
     onChange={(k, v) => { setS({ ...s, [k]: v }); setSaves(n => n + 1); }} onListsChange={lists => { setS(x => ({ ...x, lists: { ...x.lists, ...lists } })); setSaves(n => n + 1); }}
-    onChangeDir={() => {}} errors={sec === 'keys' ? { mainHotkey: 'Ctrl+Alt+Shift+M 已被其他软件占用，没有生效' } : {}} />, <SavedBadge saves={saves} />);
+    onChangeDir={() => {}} errors={sec === 'keys' ? { mainHotkey: 'Ctrl+Alt+Shift+M 已被其他软件占用，没有生效' } : {}}
+    automationRecent={<RecentCalls records={recent} today={activityDay(new Date().toISOString(), 4)} onOpen={() => {}} onAll={() => {}} />}
+    automationRecentRight={recent.length ? `最近 ${recent.length} 条` : undefined} />, <SavedBadge saves={saves} />);
 }

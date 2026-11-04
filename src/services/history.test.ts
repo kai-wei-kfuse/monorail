@@ -8,6 +8,7 @@ import type { HistoryIntent, HistoryRecord } from '../shared/history';
 import { createContext, historyMergePath, run, runOperation } from './commit';
 import type { Ctx } from './commit';
 import { mergeChanges } from './historyCapture';
+import { list, recentAutomation, shiftDay } from './historyService';
 
 function fixture() {
   const fs = new MemoryFs();
@@ -123,6 +124,31 @@ describe('HistoryRepo', () => {
     }
     expect(await repo.removeBefore('2026-05-08', new Set([paths[1]]))).toEqual({ removed: 1, failed: 0 });
     expect((await repo.listAll()).map(p => p.split('-').at(-1))).toEqual(['keep.json', 'edge.json', 'new.json']);
+  });
+});
+
+describe('historyService（E8c）', () => {
+  it('list：最近 N 个活动日，older 说明更早还有；recentAutomation：只取自动化，从新到旧，经队列串行', async () => {
+    const f = fixture();
+    const auto: HistoryIntent = { action: 'test.direct', source: { kind: 'mcp', agent: { name: null, raw: 'x', detected_by: 'mcp_handshake' } } };
+    f.tick(-10 * 86_400_000);
+    await run(f.ctx, async tx => { tx.state.home_mode = 'blank'; }, f.at(), auto);                // 2026-10-25
+    f.tick(10 * 86_400_000);
+    await run(f.ctx, async tx => { tx.state.home_mode = 'guide'; }, f.at(), manual);              // 2026-11-04
+    f.tick(60_000);
+    await run(f.ctx, async tx => { tx.state.home_mode = 'task'; }, f.at(), auto);                 // 2026-11-04 稍后
+    const week = await list(f.ctx, 7, f.at());
+    expect(week).toMatchObject({ fromDay: '2026-10-29', toDay: '2026-11-04', bad: 0, older: true });
+    expect(week.records).toHaveLength(2);
+    expect((await list(f.ctx, 14, f.at())).older).toBe(false);
+    const recent = await recentAutomation(f.ctx, 5);
+    expect(recent.map(r => r.day)).toEqual(['2026-11-04', '2026-10-25']);
+    expect(recent.every(r => r.source.kind === 'mcp')).toBe(true);
+    expect(await recentAutomation(f.ctx, 1)).toHaveLength(1);
+  });
+  it('shiftDay 按日历日推进（跨月、跨年）', () => {
+    expect(shiftDay('2026-03-01', -1)).toBe('2026-02-28');
+    expect(shiftDay('2026-12-31', 1)).toBe('2027-01-01');
   });
 });
 

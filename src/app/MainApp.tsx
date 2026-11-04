@@ -28,6 +28,11 @@ import type { Actions } from './actions';
 import { readyRoutes } from './routes';
 import { BackpackScreen } from './BackpackScreen';
 import { CalendarScreen, ListScreen } from './TimeScreens';
+import type { DayFocus, HistoryFocus } from './TimeScreens';
+import type { ListView } from '../pages/list/ViewToggle';
+import { locateOf } from '../widgets/history/model';
+import type { HistoryRecord } from '../shared/history';
+import { activityDayStart } from '../shared/time';
 import { SettingsScreen } from './SettingsScreen';
 import { ReviewScreen } from './ReviewScreen';
 import { SavedBadge } from '../pages/settings/SettingsPage';
@@ -104,6 +109,11 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const [backfill, setBackfill] = useState(false);
   const [completeAt, setCompleteAt] = useState<{ cardId: string; at: string } | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
+  // 操作历史的跳转与定位（执行方案 E8c 第 4 条）：列表看的是哪一种、从设置 09 要打开哪一条、◎ 要看哪一天
+  const [listView, setListView] = useState<ListView>('entries');
+  const [historyFocus, setHistoryFocus] = useState<HistoryFocus | null>(null);
+  const [dayFocus, setDayFocus] = useState<DayFocus | null>(null);
+  const [settingsSection, setSettingsSection] = useState<string | undefined>(undefined);
   const wasHidden = useRef(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const stage = useRef<HTMLDivElement>(null);
@@ -167,6 +177,22 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     if (kind === 'allDone') { void actions.showQuickbar(); return; }
     setPage('backpack');
   }
+  // 设置 09 → 列表 · 操作历史 · 仅自动化，展开那一条（null 是「查看全部」）
+  function openHistory(record: HistoryRecord | null) {
+    setListView('history'); setPage('list');
+    setHistoryFocus(prev => record ? { id: record.id, day: record.day, seq: (prev?.seq ?? 0) + 1 } : null);
+  }
+  // ◎：条目去日历 / 列表那一天（条目还在就按它的开始时刻算活动日，删了就用历史记录的活动日），其余去对应的页
+  function locate(record: HistoryRecord) {
+    const target = locateOf(record);
+    if (!('day' in target)) { setPage(target.page); return; }
+    const entry = target.entryId ? ctx.repos.times.snapshot().find(e => e.id === target.entryId) : undefined;
+    const [y, m, d] = target.day.split('-').map(Number);
+    const day = activityDayStart(entry ? Date.parse(entry.started_at) : new Date(y, m - 1, d, 12).getTime(), settings.dayBoundaryHour);
+    setDayFocus(prev => ({ day, seq: (prev?.seq ?? 0) + 1 }));
+    if (target.page === 'list') setListView('entries');
+    setPage(target.page);
+  }
   function onResolve(n: Notice, r: NoticeResult[keyof NoticeResult]) {
     const at = (r as { at: string }).at;
     switch (n.kind) {
@@ -220,10 +246,12 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
           onGuide={onGuide} onOpenReview={() => setPage('review')} />}
-        {page === 'calendar' && <CalendarScreen ctx={ctx} report={report} />}
-        {page === 'list' && <ListScreen ctx={ctx} report={report} />}
+        {page === 'calendar' && <CalendarScreen ctx={ctx} report={report} focusDay={dayFocus} />}
+        {page === 'list' && <ListScreen ctx={ctx} report={report} view={listView} onView={setListView} historyFocus={historyFocus}
+          focusDay={dayFocus} onLocate={locate} onCopied={id => info('已复制 operation_id', id)} />}
         {page === 'review' && <ReviewScreen ctx={ctx} report={report} />}
-        {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} updates={updates} />}
+        {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} updates={updates}
+          section={settingsSection} onOpenHistory={record => { setSettingsSection('automation'); openHistory(record); }} />}
         {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} />}
       </div>
     </Frame>

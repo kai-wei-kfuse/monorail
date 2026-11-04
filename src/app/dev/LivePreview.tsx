@@ -10,6 +10,7 @@ import { appStore, publishProjection } from '../../store/appStore';
 import { HomePage } from '../../pages/home/HomePage';
 import { createActions } from '../actions';
 import { CalendarScreen, ListScreen } from '../TimeScreens';
+import type { ListView } from '../../pages/list/ViewToggle';
 import * as edit from '../../services/timeEditService';
 import type { Ctx } from '../../services/commit';
 import type { Actions } from '../actions';
@@ -24,6 +25,8 @@ export function LivePreview() {
   const [actions, setActions] = useState<Actions | null>(null), [ctx, setCtx] = useState<Ctx | null>(null), [errors, setErrors] = useState<string[]>([]);
   const query = new URLSearchParams(location.search), view = query.get('view'), layout = query.get('layout');
   const entries = useStore(appStore, s => s.entries), home = useStore(appStore, s => s.home);
+  // &lv=history：列表页先显示操作历史（真的 historyService，数据是上面这些操作写下的）
+  const [listView, setListView] = useState<ListView>(query.get('lv') === 'history' ? 'history' : 'entries');
   useEffect(() => { void (async () => {
     const settings = structuredClone(defaults);
     settings.lists.projects = PREVIEW_PROJECTS; settings.lists.tags = PREVIEW_TAGS;
@@ -40,7 +43,9 @@ export function LivePreview() {
       blocking: false, task_id: 'job', card_id: null, tags: [], attachments: [] }, i + 1), id: 'card' + i }));
     await repos.transact(crypto.randomUUID(), await Promise.all([repos.tasks.write(task, null), ...cards.map(c => repos.cards.write(c, null))]));
     await run(ctx, async tx => { tx.state.home_mode = 'blank'; }, undefined, { action: 'dev.seed' });
-    const morning = (h: number) => { const d = new Date(); d.setHours(h, 0, 0, 0); return d.getTime(); };
+    // 上午这两条：还没到上午（例如凌晨打开）时放到前一天，免得结束时间晚于现在
+    const early = new Date().getHours() < 12;
+    const morning = (h: number) => { const d = new Date(); if (early) d.setDate(d.getDate() - 1); d.setHours(h, 0, 0, 0); return d.getTime(); };
     await edit.create(ctx, morning(9), morning(10), at, { description: '学 408', project: '学习', tags: ['408'] });
     await edit.create(ctx, morning(10), morning(11) - 30 * 60_000, at, { description: '回消息', project: '工作', tags: [] });
     setCtx(ctx);
@@ -49,7 +54,8 @@ export function LivePreview() {
   if (!actions || !ctx) return <p style={{ padding: 32 }}>准备数据…</p>;
   const report = (e: unknown) => setErrors(l => [...l, e instanceof Error ? e.message : String(e)]);
   if (view === 'calendar' || view === 'list') return <div style={{ height: '100vh', display: 'grid', gridTemplateRows: 'minmax(0, 1fr) auto', padding: '14px 16px' }}>
-    <div style={{ minHeight: 0, display: 'grid' }}>{view === 'calendar' ? <CalendarScreen ctx={ctx} report={report} /> : <ListScreen ctx={ctx} report={report} />}</div>
+    <div style={{ minHeight: 0, display: 'grid' }}>{view === 'calendar' ? <CalendarScreen ctx={ctx} report={report} />
+      : <ListScreen ctx={ctx} report={report} view={listView} onView={setListView} onLocate={() => {}} />}</div>
     <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)' }}>{errors.length > 0 && `出错：${errors.join(' / ')}`}
       <ol>{entries.map(e => <li key={e.id}>{e.description} [{e.project}{e.tags.map(t => ' #' + t).join('')}] {new Date(e.started_at).toTimeString().slice(0, 5)}–{e.ended_at ? new Date(e.ended_at).toTimeString().slice(0, 5) : '现在'}</li>)}</ol></div>
   </div>;

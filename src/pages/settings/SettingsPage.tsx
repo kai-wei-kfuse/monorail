@@ -32,12 +32,13 @@ type Change = <K extends SettingKey>(key: K, value: Settings[K]) => void;
  * 快捷键冲突等保存失败的原因，通过 errors 按 key 显示在对应那一行。
  * projects、knownTags 给预设编辑器选项目和标签；onCreateProject、onCreateTag 在选择器里就地新建。
  */
-export function SettingsPage({ section, onSection, settings, onChange, onListsChange, projects, knownTags, onCreateProject, onCreateTag, dataDir, onChangeDir, errors = {}, version, aboutExtras, automationHost, onRefreshAutomationHost, onCopyText }:
+export function SettingsPage({ section, onSection, settings, onChange, onListsChange, projects, knownTags, onCreateProject, onCreateTag, dataDir, onChangeDir, errors = {}, version, aboutExtras, automationHost, onRefreshAutomationHost, onCopyText, automationRecent, automationRecentRight }:
   { section: string; onSection: (id: string) => void; settings: Settings; onChange: Change;
     onListsChange: (lists: Partial<Settings['lists']>) => void; projects: ProjectOption[]; knownTags: string[];
     onCreateProject?: (name: string) => void; onCreateTag?: (tag: string) => void; dataDir: string; onChangeDir: () => void;
     errors?: Partial<Record<SettingKey, string>>; version: string; aboutExtras?: ReactNode;
-    automationHost?: AutomationHostState; onRefreshAutomationHost?: () => void; onCopyText?: (text: string) => Promise<void> }) {
+    automationHost?: AutomationHostState; onRefreshAutomationHost?: () => void; onCopyText?: (text: string) => Promise<void>;
+    automationRecent?: ReactNode; automationRecentRight?: ReactNode }) {
   const sec = SECTIONS.find(s => s.id === section) ?? SECTIONS[0];
   const lists = settings.lists;
   const presets = (place: '计时条' | '弹层', placeholder: string) => <PresetEditor presets={lists.presets} place={place} placeholder={placeholder}
@@ -81,7 +82,8 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
       <small>v{version} · 数据是一个文件夹里的 Markdown 文件</small>
       {aboutExtras}
     </div></div>
-      : sec.id === 'automation' ? <AutomationGuide hostState={automationHost} onRefreshHost={onRefreshAutomationHost} onCopyText={onCopyText} />
+      : sec.id === 'automation' ? <AutomationGuide hostState={automationHost} onRefreshHost={onRefreshAutomationHost} onCopyText={onCopyText}
+        recent={automationRecent} recentRight={automationRecentRight} />
       : sec.groups.map(g => <Group key={g.cn} cn={g.cn} en={g.en}>
         {g.rows.map(r => {
           const id = 'custom' in r ? r.custom : r.key;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Group } from '../../ui/layout/GroupTitle';
 import { Button } from '../../ui/controls/Button';
 import type { AutomationHostState } from './automationData';
@@ -11,6 +12,9 @@ import {
 } from './automationData';
 
 export interface AutomationGuideProps {
+  /** 「最近调用」组的内容与细线右端的小字（0.3.0-beta.3 E8c 第 3 条，由接线层给 widgets/history 的 RecentCalls） */
+  recent?: ReactNode;
+  recentRight?: ReactNode;
   hostState?: AutomationHostState;
   onRefreshHost?: () => void;
   onCopyText?: (text: string) => Promise<void>;
@@ -23,7 +27,7 @@ const defaultCopyText = async (text: string): Promise<void> => {
   await navigator.clipboard.writeText(text);
 };
 
-export function AutomationGuide({ hostState, onRefreshHost, onCopyText = defaultCopyText }: AutomationGuideProps) {
+export function AutomationGuide({ recent, recentRight, hostState, onRefreshHost, onCopyText = defaultCopyText }: AutomationGuideProps) {
   const [copyStatus, setCopyStatus] = useState<{ targetId: string; ok: boolean; message: string } | null>(null);
   const loading = hostState?.loading ?? false;
   const info = hostState?.info ?? null;
@@ -76,6 +80,8 @@ export function AutomationGuide({ hostState, onRefreshHost, onCopyText = default
           </div>
         </div>
       </Group>
+
+      {recent !== undefined && <Group cn="最近调用" en="RECENT CALLS" right={recentRight}>{recent}</Group>}
 
       <Group cn="MCP 配置" en="MCP CONFIG">
         <div className="st-auto-card">

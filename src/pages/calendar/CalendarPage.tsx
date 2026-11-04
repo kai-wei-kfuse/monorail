@@ -50,9 +50,11 @@ function useNow(period = 30_000): number {
  * 日历页（设计文档「计时 · 日历」）：日 / 周视图，周一开始；每天从日边界画到次日日边界。
  * 条目按项目上色，待机可以隐藏。点一条打开弹窗；新建以后也直接打开弹窗，好填描述。
  */
-export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapMinutes, showIdle, isIdle, actions, onRange }:
+export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapMinutes, showIdle, isIdle, actions, onRange, focusDay }:
   { entries: readonly CalendarEntry[]; projects: ProjectOption[]; knownTags: string[]; boundaryHour: number; snapMinutes: number;
-    showIdle: boolean; isIdle: (e: CalEntry) => boolean; actions: CalendarActions; onRange?: (start: number, end: number) => void }) {
+    showIdle: boolean; isIdle: (e: CalEntry) => boolean; actions: CalendarActions; onRange?: (start: number, end: number) => void;
+    /** 从操作历史 ◎ 定位过来：切到日视图看这一天（活动日开始时刻）；seq 变了就再跳一次 */
+    focusDay?: { day: number; seq: number } | null }) {
   const now = useNow();
   const [view, setView] = useState<'day' | 'week'>('week'), [shift, setShift] = useState(0), [zoom, setZoom] = useState<CalZoom>(() => lastZoom);
   const pickZoom = (next: CalZoom) => { lastZoom = next; setZoom(next); };
@@ -61,6 +63,8 @@ export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapM
   // 看的是哪几天交给接线层，它按这个范围查条目
   const first = days[0], end = addDays(days[days.length - 1], 1);
   useEffect(() => { onRange?.(first, end); }, [first, end, onRange]);
+  // 夏令时那天是 23 / 25 小时，四舍五入到整天
+  useEffect(() => { if (focusDay) { setView('day'); setShift(Math.round((focusDay.day - today) / 86_400_000)); } }, [focusDay?.seq]);
   const colorOf = (name: string) => projects.find(p => p.name === name)?.color ?? 'var(--mute-2)';
   const open = pop && entries.find(e => e.id === pop.id);
   const no = view === 'day' ? pad(new Date(days[0]).getDate()) : `W${isoWeek(days[3])}`;
