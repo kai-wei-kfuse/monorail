@@ -3,7 +3,7 @@ import { expect, it, vi } from 'vitest';
 import { MemoryFs } from '../data/memoryFs';
 import { createRepos } from '../data/repos';
 import { defaults } from '../shared/settings';
-import { createContext, maintain, pauseCommits, readSerial, run, runOperation } from './commit';
+import { closeMaintenance, createContext, maintain, pauseCommits, readSerial, run, runOperation } from './commit';
 import type { Snapshot } from './commit';
 import { runTx } from './serviceFixture';
 import type { Review } from '../domain/review/schedule';
@@ -81,6 +81,20 @@ it('maintain runs serially between commits and its failure does not block later 
   await second;
   expect(order).toEqual(['commit:1', 'maintain', 'commit:2']);
   await expect(run(f.ctx, async () => {})).resolves.toBeUndefined();
+});
+
+it('closeMaintenance lets the running task finish, cancels queued ones and refuses new ones (E8a1.3)', async () => {
+  const f = fixture(), hold = gate(), order: string[] = [];
+  const running = maintain(f.ctx, async () => { order.push('running:start'); await hold.opened; order.push('running:end'); });
+  const queued = maintain(f.ctx, async () => { order.push('queued'); });
+  await flush();
+  const closed = closeMaintenance(f.ctx);
+  await expect(maintain(f.ctx, async () => {})).rejects.toThrow('CANCELLED');
+  hold.open();
+  await running; await expect(queued).rejects.toThrow('CANCELLED'); await closed;
+  expect(order).toEqual(['running:start', 'running:end']);
+  // 提交不受影响
+  await expect(run(f.ctx, async () => 'ok')).resolves.toBe('ok');
 });
 
 it('pauseCommits waits for a running maintenance task and refuses new ones until resumed', async () => {

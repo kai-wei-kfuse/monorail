@@ -54,7 +54,9 @@ export interface Transaction {
   saveTask(task: Task): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
   saveSettings(settings: Settings): Promise<void>;
 }
-interface Queue { tail: Promise<unknown>; failure?: unknown; snapshotFailure?: unknown; version: number; paused?: { resumed: Promise<void>; release(): void } }
+interface Queue { tail: Promise<unknown>; failure?: unknown; snapshotFailure?: unknown; version: number; paused?: { resumed: Promise<void>; release(): void };
+  /** closeMaintenance 之后：不再接纳维护任务，已排队还没开始的取消 */
+  maintenanceClosed?: boolean }
 const queues = new WeakMap<Ctx, Queue>();
 const settingsListeners = new WeakMap<Ctx, Set<(settings: Settings) => void>>();
 
@@ -161,12 +163,24 @@ export function maintain<T>(ctx: Ctx, task: () => Promise<T>): Promise<T> {
   const queue = queueOf(ctx);
   if (queue.paused) return Promise.reject(new Error('正在安装更新，暂不执行维护任务'));
   if (queue.failure) return Promise.reject(blocked(queue.failure));
+  if (queue.maintenanceClosed) return Promise.reject(new Error('CANCELLED：这个上下文已关闭，不再执行维护任务'));
   const result = queue.tail.then(() => {
     if (queue.failure) throw blocked(queue.failure);
+    if (queue.maintenanceClosed) throw new Error('CANCELLED：这个上下文已关闭，维护任务没有开始');
     return task();
   });
   queue.tail = result.then(() => undefined, () => undefined);
   return result;
+}
+
+/**
+ * 切换数据目录重载之前（执行方案 E8a1 第 3 条）：旧 Ctx 不再接纳维护任务，排队还没开始的取消，
+ * 正在执行的等它做完；交回的 Promise 在队列排空后完成（之前接纳的提交照常完成）。
+ */
+export function closeMaintenance(ctx: Ctx): Promise<void> {
+  const queue = queueOf(ctx);
+  queue.maintenanceClosed = true;
+  return queue.tail.then(() => undefined, () => undefined);
 }
 
 /** A serialized read cannot observe the receipt of a partially applied journal. */

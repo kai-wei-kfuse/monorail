@@ -4,6 +4,7 @@ import { appStore } from '../store/appStore';
 import { SettingsPage } from '../pages/settings/SettingsPage';
 import type { AutomationHostState } from '../pages/settings/automationData';
 import type { Ctx } from '../services/commit';
+import { closeMaintenance } from '../services/commit';
 import { change, changeDataDirectory, changeLists } from '../services/settingsService';
 import * as preset from '../services/presetService';
 import type { SettingsErrors } from '../services/settingsService';
@@ -65,7 +66,8 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
   const onCreateProject = (name: string) => { void preset.createProject(ctx, name, now()).then(onSaved).catch(report); };
   const onCreateTag = (tag: string) => { void preset.createTag(ctx, tag, now()).then(onSaved).catch(report); };
   const onChangeDir = () => {
-    void changeDataDirectory({ async changeDataDirectory() { if (await chooseRoot()) window.location.reload(); } }).catch(report);
+    // 重载前先关掉旧数据目录上的维护任务（例如清理过期操作历史），正在执行的等它做完（0.3.0-beta.3 E8a1）
+    void changeDataDirectory({ async changeDataDirectory() { if (await chooseRoot()) { await closeMaintenance(ctx); window.location.reload(); } } }).catch(report);
   };
   return <SettingsPage section={section} onSection={onSelectSection} settings={settings} onChange={onChange}
     onListsChange={onListsChange} projects={projects} knownTags={knownTags} onCreateProject={onCreateProject} onCreateTag={onCreateTag} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}
