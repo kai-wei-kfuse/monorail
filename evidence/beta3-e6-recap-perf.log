@@ -1,0 +1,13 @@
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+stdout | src/domain/review/recap.perf.test.ts > one year of entries aggregates within a generous bound; prints the measured times
+RECAP_PERF entries=10220 {"prepare":13,"year/project":61,"year/activity":64,"quarter/tag":19,"week/source":5}
+
+ ✓ src/domain/review/recap.perf.test.ts > one year of entries aggregates within a generous bound; prints the measured times 1147ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  00:26:22
+   Duration  1.70s (tests 87%, transform 9%, import 3%, worker 1%)
+
