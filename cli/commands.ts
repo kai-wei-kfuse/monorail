@@ -22,7 +22,9 @@ export type ContextSection = 'timer' | 'pending_actions' | 'options';
 export type FindKind = 'idea' | 'todo_card' | 'task' | 'all';
 export type DayMode = 'activity' | 'calendar';
 
-export type ParsedCliCommand =
+/** 每种命令都可以带全局 `--agent <名字>`（操作历史里的调用方）。 */
+export type ParsedCliCommand = ParsedCommandBody & { agent?: string };
+type ParsedCommandBody =
   | { kind: 'help'; json: boolean; topic?: string }
   | { kind: 'version'; json: boolean }
   | {
@@ -340,14 +342,18 @@ function validateIso(value: string, flagName: string): string {
   return parsed.data;
 }
 
-function extractGlobalJsonAndHelp(argv: string[]): { json: boolean; help: boolean; version: boolean; rest: string[] } {
+interface GlobalFlags { json: boolean; help: boolean; version: boolean; agent?: string; rest: string[] }
+
+function extractGlobalJsonAndHelp(argv: string[]): GlobalFlags {
   let json = false;
   let help = false;
   let version = false;
+  let agent: string | undefined;
   const rest: string[] = [];
   let afterDoubleDash = false;
 
-  for (const token of argv) {
+  for (let index = 0; index < argv.length; index++) {
+    const token = argv[index];
     if (afterDoubleDash) {
       rest.push(token);
       continue;
@@ -355,6 +361,14 @@ function extractGlobalJsonAndHelp(argv: string[]): { json: boolean; help: boolea
     if (token === '--') {
       afterDoubleDash = true;
       rest.push(token);
+      continue;
+    }
+    // 全局 --agent <名字>：操作历史里的调用方（ADR 0019 第 6 条），任何命令都可以带
+    if (token === '--agent' || token.startsWith('--agent=')) {
+      if (agent !== undefined) throw new CliUsageError('USAGE_ERROR：重复参数 --agent');
+      const value = token === '--agent' ? argv[++index] : token.slice('--agent='.length);
+      if (value === undefined || value === '--' || !value.trim()) throw new CliUsageError('USAGE_ERROR：--agent 需要一个名字');
+      agent = value.trim();
       continue;
     }
     if (token === '--json') {
@@ -377,11 +391,16 @@ function extractGlobalJsonAndHelp(argv: string[]): { json: boolean; help: boolea
     rest.push(token);
   }
 
-  return { json, help, version, rest };
+  return { json, help, version, ...(agent !== undefined ? { agent } : {}), rest };
 }
 
 export async function parseCliArgs(argv: string[], options: ParseOptions = {}): Promise<ParsedCliCommand> {
-  const { json, help, version, rest } = extractGlobalJsonAndHelp(argv);
+  const globals = extractGlobalJsonAndHelp(argv);
+  const parsed = await parseCommand(globals, options);
+  return globals.agent !== undefined ? { ...parsed, agent: globals.agent } : parsed;
+}
+
+async function parseCommand({ json, help, version, rest }: GlobalFlags, options: ParseOptions): Promise<ParsedCliCommand> {
 
   if (help) {
     const topic = rest.filter(t => !t.startsWith('-')).slice(0, 2).join(' ') || undefined;

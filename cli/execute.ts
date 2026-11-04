@@ -1,5 +1,5 @@
 import type { ApplicationClient } from '../client/applicationClient.ts';
-import type { ApplicationMethod, ApplicationOutput } from '../src/shared/application.ts';
+import type { ApplicationMethod, ApplicationOutput, CallerOrigin } from '../src/shared/application.ts';
 import { ApplicationError, applicationFailure } from '../src/shared/appError.ts';
 import type { ParsedCliCommand } from './commands.ts';
 
@@ -137,10 +137,16 @@ async function resolveWriteMeta(
   }
 }
 
+/** 这个进程的每次调用都带同一个 origin（CLI 只在启动时识别一次调用方；ADR 0019 第 6 条）。 */
+function withOrigin(client: ApplicationClient, origin: CallerOrigin | undefined): ApplicationClient {
+  if (!origin) return client;
+  return { call: (method, input, callOptions) => client.call(method, input, { ...callOptions, origin: callOptions?.origin ?? origin }) };
+}
+
 export async function executeCliCommand(
   cmd: ParsedCliCommand,
   createClient: () => ApplicationClient,
-  options: { signal?: AbortSignal } = {},
+  options: { signal?: AbortSignal; origin?: CallerOrigin } = {},
 ): Promise<CliExecutionOutcome> {
   if (cmd.kind === 'help') {
     return { kind: 'help', json: cmd.json, topic: cmd.topic };
@@ -149,7 +155,7 @@ export async function executeCliCommand(
     return { kind: 'version', json: cmd.json };
   }
 
-  const client = createClient();
+  const client = withOrigin(createClient(), options.origin);
   const { signal } = options;
 
   switch (cmd.method) {

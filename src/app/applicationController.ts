@@ -47,6 +47,7 @@ import { jsonValue } from '../shared/operation';
 import type { JsonValue } from '../shared/operation';
 import { ApplicationError, applicationFailure } from '../shared/appError';
 import type { ApplicationFailure } from '../shared/appError';
+import type { HistorySource } from '../shared/history';
 
 function deviceTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -309,6 +310,10 @@ function matchesQuery(needle: string, fields: readonly (string | null | undefine
 /** External requests use the same root transaction queue as desktop actions. */
 export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?: AbortSignal) {
   const request = applicationRequest.parse(input);
+  // 操作历史的来源（ADR 0019 第 6 条）：请求带了 origin 就记 MCP / CLI 与调用方；旧客户端没带记「自动化 · 未识别」
+  const source: HistorySource = request.origin
+    ? { kind: request.origin.kind, agent: request.origin.agent }
+    : { kind: 'automation', agent: { name: null, detected_by: 'none' } };
   try {
     if (signal?.aborted) throw new Error('CANCELLED：请求在执行前已取消');
 
@@ -460,7 +465,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [],
           });
           return ideaResult.parse({ id: record.id, text: record.text, created_at: record.created_at, tags: record.tags, pool: record.pool });
-        }, undefined, signal, { action: 'auto.save_idea' });
+        }, undefined, signal, { action: 'auto.save_idea', source });
         return saveIdeaResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -486,7 +491,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             blocking: card.blocking,
             created_at: record.created_at,
           });
-        }, undefined, signal, { action: 'auto.capture_todo' });
+        }, undefined, signal, { action: 'auto.capture_todo', source });
         return captureTodoResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -508,7 +513,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal, { action: 'auto.start_timer' });
+        }, undefined, signal, { action: 'auto.start_timer', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -525,7 +530,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal, { action: 'auto.start_task_item' });
+        }, undefined, signal, { action: 'auto.start_task_item', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -542,7 +547,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal, { action: 'auto.pause_timer' });
+        }, undefined, signal, { action: 'auto.pause_timer', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -559,7 +564,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal, { action: 'auto.resume_timer' });
+        }, undefined, signal, { action: 'auto.resume_timer', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -576,7 +581,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal, { action: 'auto.stop_timer' });
+        }, undefined, signal, { action: 'auto.stop_timer', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -593,7 +598,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal, { action: 'auto.start_break' });
+        }, undefined, signal, { action: 'auto.start_break', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -610,7 +615,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             expected_state: timer.expected_state,
             timer,
           });
-        }, undefined, signal, { action: 'auto.return_from_break' });
+        }, undefined, signal, { action: 'auto.return_from_break', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
@@ -630,7 +635,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             overlaps,
             expected_state: timerStateTokenInTx(tx),
           });
-        }, undefined, signal, { action: 'auto.add_time_entry' });
+        }, undefined, signal, { action: 'auto.add_time_entry', source });
         return addTimeEntryResult.parse({ ...result, next_operation_id: ctx.id() });
       }
     }

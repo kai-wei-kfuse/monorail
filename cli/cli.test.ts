@@ -25,6 +25,7 @@ import {
 import { ApplicationError, applicationErrorSchema } from '../src/shared/appError.ts';
 import { createApplicationClient } from '../client/applicationClient.ts';
 import { runCli } from './main.ts';
+import { detectAgent } from './agentDetect.ts';
 import pkg from '../package.json' with { type: 'json' };
 
 const bundledCli = fileURLToPath(new URL('../dist-cli/monorail-cli.mjs', import.meta.url));
@@ -1158,4 +1159,37 @@ test('origin (ADR 0019 §6) travels as an optional top-level request field: per-
   const dropped = applicationRequest.parse({ method: 'get_context', arguments: {}, origin: { kind: 'browser', agent: {} } });
   assert.equal(dropped.origin, undefined);
   assert.throws(() => applicationRequest.parse({ method: 'get_context', arguments: {}, origin: undefined, extra: 1 }));
+});
+
+test('caller agent (ADR 0019 §6): --agent / MONORAIL_AGENT win over known env variables, otherwise none; every request of one process carries the same origin', async () => {
+  assert.deepEqual(detectAgent(' 手环同步 ', { CLAUDECODE: '1' }), { name: '手环同步', detected_by: 'flag', evidence: '--agent 手环同步' });
+  assert.deepEqual(detectAgent(undefined, { MONORAIL_AGENT: 'cron', CLAUDECODE: '1' }), { name: 'cron', detected_by: 'flag', evidence: 'MONORAIL_AGENT=cron' });
+  assert.deepEqual(detectAgent(undefined, { CLAUDECODE: '1' }), { name: 'Claude Code', detected_by: 'env', evidence: 'CLAUDECODE=1' });
+  assert.deepEqual(detectAgent(undefined, { CODEX_SANDBOX: 'x'.repeat(40) }), { name: 'Codex', detected_by: 'env', evidence: 'CODEX_SANDBOX' });
+  assert.deepEqual(detectAgent('  ', { CLAUDECODE: '', MONORAIL_AGENT: ' ' }), { name: null, detected_by: 'none' });
+
+  const peer = createStatefulPeer();
+  const sent: ApplicationRequest[] = [];
+  const run = (argv: string[], env: Record<string, string>) => {
+    const client = createApplicationClient({ send: req => { sent.push(req); return peer.handle(req); } });
+    return runCli(argv, { createClient: () => client, env, writeStdout: () => {}, writeStderr: () => {} });
+  };
+  assert.equal(await run(['idea', 'add', '来自命令行', '--agent', '手环同步'], { CLAUDECODE: '1' }), 0);
+  assert.deepEqual(sent.map(r => r.method), ['get_context', 'save_idea']);
+  for (const req of sent) assert.deepEqual(req.origin, { kind: 'cli', agent: { name: '手环同步', detected_by: 'flag', evidence: '--agent 手环同步' } });
+  assert.equal((sent[1].arguments as { text?: string }).text, '来自命令行');
+
+  sent.length = 0;
+  assert.equal(await run(['--agent=cron', 'context', '--json'], {}), 0);
+  assert.equal(sent[0].origin?.agent.name, 'cron');
+  sent.length = 0;
+  assert.equal(await run(['context'], { CLAUDECODE: '1' }), 0);
+  assert.deepEqual(sent[0].origin, { kind: 'cli', agent: { name: 'Claude Code', detected_by: 'env', evidence: 'CLAUDECODE=1' } });
+  sent.length = 0;
+  assert.equal(await run(['context'], {}), 0);
+  assert.deepEqual(sent[0].origin, { kind: 'cli', agent: { name: null, detected_by: 'none' } });
+
+  sent.length = 0;
+  for (const argv of [['context', '--agent'], ['context', '--agent', 'a', '--agent=b'], ['context', '--agent=']]) assert.equal(await run(argv, {}), 2);
+  assert.equal(sent.length, 0);
 });

@@ -26,16 +26,25 @@ import type { ApplicationInput, ApplicationMethod } from '../src/shared/applicat
 import { z } from 'zod';
 import type { ApplicationClient } from '../client/applicationClient.ts';
 import { applicationErrorSchema, applicationFailure } from '../src/shared/appError.ts';
+import { mcpAgent } from '../src/shared/agents.ts';
 import pkg from '../package.json' with { type: 'json' };
 
 const { version } = pkg;
+/** 新协议请求信封里的 clientInfo 键（MCP 规范 2026-07-28 的 `_meta`）。 */
+const CLIENT_INFO_KEY = 'io.modelcontextprotocol/clientInfo';
+interface ToolContext { mcpReq: { signal?: AbortSignal; envelope?: unknown } }
 const withError = <T extends z.ZodType>(schema: T) => z.union([schema, applicationErrorSchema]);
 
 export function createServer(client: ApplicationClient) {
   const server = new McpServer({ name: 'monorail', version });
-  const call = async <M extends ApplicationMethod>(method: M, args: ApplicationInput<M>, signal?: AbortSignal) => {
+  // 调用方（ADR 0019 第 6 条）：每次工具调用时读，不缓存。新协议（2026-07-28）每个请求的 _meta 里都带 clientInfo；
+  // 旧协议取 initialize 握手的；旧协议的无状态 HTTP 每个请求新建 server，两者都读不到，记「MCP · 未识别」
+  const call = async <M extends ApplicationMethod>(method: M, args: ApplicationInput<M>, ctx: ToolContext) => {
     try {
-      const result = await client.call(method, args, { signal });
+      const envelope = ctx.mcpReq.envelope as Record<string, unknown> | undefined;
+      const info = (envelope?.[CLIENT_INFO_KEY] as { name?: unknown; version?: unknown } | undefined) ?? server.server.getClientVersion();
+      const origin = { kind: 'mcp' as const, agent: mcpAgent(info) };
+      const result = await client.call(method, args, { signal: ctx.mcpReq.signal, origin });
       return { content: [{ type: 'text' as const, text: JSON.stringify(result) }], structuredContent: result };
     } catch (error) {
       const failure = applicationFailure(error);
@@ -49,7 +58,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: contextInput,
     outputSchema: withError(contextResult),
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-  }, async (args, ctx) => call('get_context', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('get_context', args, ctx));
 
   server.registerTool('get_operation_result', {
     title: '核对单轨操作结果',
@@ -57,7 +66,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: lookupInput,
     outputSchema: withError(lookupResult),
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-  }, async (args, ctx) => call('get_operation_result', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('get_operation_result', args, ctx));
 
   server.registerTool('save_idea', {
     title: '保存想法到单轨',
@@ -65,7 +74,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: ideaInput,
     outputSchema: withError(saveIdeaResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('save_idea', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('save_idea', args, ctx));
 
   server.registerTool('capture_todo', {
     title: '捕捉待办事项到单轨',
@@ -73,7 +82,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: captureTodoInput,
     outputSchema: withError(captureTodoResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('capture_todo', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('capture_todo', args, ctx));
 
   server.registerTool('find_items', {
     title: '查找想法、待办卡片与任务',
@@ -81,7 +90,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: findItemsInput,
     outputSchema: withError(findItemsResult),
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-  }, async (args, ctx) => call('find_items', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('find_items', args, ctx));
 
   server.registerTool('get_time_summary', {
     title: '获取单轨时间统计摘要',
@@ -89,7 +98,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: timeSummaryInput,
     outputSchema: withError(timeSummaryResult),
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-  }, async (args, ctx) => call('get_time_summary', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('get_time_summary', args, ctx));
 
   server.registerTool('list_time_entries', {
     title: '列出区间内的时间明细',
@@ -97,7 +106,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: listTimeEntriesInput,
     outputSchema: withError(listTimeEntriesResult),
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-  }, async (args, ctx) => call('list_time_entries', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('list_time_entries', args, ctx));
 
   server.registerTool('start_timer', {
     title: '开始或切换自由活动计时',
@@ -105,7 +114,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: startTimerInput,
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('start_timer', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('start_timer', args, ctx));
 
   server.registerTool('start_task_item', {
     title: '开始指定待办事项卡片计时',
@@ -113,7 +122,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: startTaskItemInput,
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('start_task_item', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('start_task_item', args, ctx));
 
   server.registerTool('pause_timer', {
     title: '暂停当前计时',
@@ -121,7 +130,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: timerControlInput,
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('pause_timer', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('pause_timer', args, ctx));
 
   server.registerTool('resume_timer', {
     title: '继续已暂停的计时',
@@ -129,7 +138,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: timerControlInput,
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('resume_timer', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('resume_timer', args, ctx));
 
   server.registerTool('stop_timer', {
     title: '停止当前计时',
@@ -137,7 +146,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: timerControlInput,
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('stop_timer', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('stop_timer', args, ctx));
 
   server.registerTool('start_break', {
     title: '开始临时离开活动',
@@ -145,7 +154,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: startBreakInput,
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('start_break', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('start_break', args, ctx));
 
   server.registerTool('return_from_break', {
     title: '从临时离开活动回来',
@@ -153,7 +162,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: timerControlInput,
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('return_from_break', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('return_from_break', args, ctx));
 
   server.registerTool('add_time_entry', {
     title: '手动补录时间记录',
@@ -161,7 +170,7 @@ export function createServer(client: ApplicationClient) {
     inputSchema: addTimeEntryInput,
     outputSchema: withError(addTimeEntryResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  }, async (args, ctx) => call('add_time_entry', args, ctx.mcpReq.signal));
+  }, async (args, ctx) => call('add_time_entry', args, ctx));
 
   return server;
 }

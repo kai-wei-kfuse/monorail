@@ -4,10 +4,13 @@ import { createPipeApplicationClient, type ApplicationClient } from '../client/a
 import type { DesktopCallOptions } from '../client/pipe.ts';
 import { inferMethodFromCommand, parseCliArgs, type ParseOptions } from './commands.ts';
 import { executeCliCommand } from './execute.ts';
+import { detectAgent } from './agentDetect.ts';
 import { renderError, renderOutcome, type CliExitCode } from './output.ts';
 
 export interface RunCliOptions extends ParseOptions {
   createClient?: () => ApplicationClient;
+  /** 识别调用方用的环境变量（测试注入；缺省 process.env） */
+  env?: Readonly<Record<string, string | undefined>>;
   pipe?: string;
   pipeOptions?: Omit<DesktopCallOptions, 'signal'>;
   signal?: AbortSignal;
@@ -35,8 +38,11 @@ export async function runCli(argv: string[], options: RunCliOptions = {}): Promi
     const createClient =
       options.createClient ??
       (() => createPipeApplicationClient(options.pipe, options.pipeOptions));
+    // 调用方：--agent / MONORAIL_AGENT → 已知 agent 环境变量 → 未识别（ADR 0019 第 6 条）
+    const origin = { kind: 'cli' as const, agent: detectAgent(parsed.agent, options.env ?? process.env) };
     const outcome = await executeCliCommand(parsed, createClient, {
       signal: options.signal,
+      origin,
     });
     const rendered = renderOutcome(outcome);
     writeStdout(rendered.stdout);

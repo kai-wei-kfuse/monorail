@@ -61,6 +61,12 @@ node dist-mcp/monorail-mcp.mjs --http --port 8765
 
 显式启动后监听 `http://127.0.0.1:8765/mcp`（端口范围 `1..65535`，默认不随桌面端自启）。使用官方双时代 handler（同时支持 `2026-07-28` 与 `2025-11-25` stateless HTTP，不提供已废弃的 `2024-11-05` 双端点 HTTP+SSE），默认拒绝任何浏览器 `Origin`（含 `null`）并校验 `Host`（仅允许 `127.0.0.1` / `localhost`）。
 
+### 调用方与操作历史（0.3.0-beta.3）
+
+改了数据的工具调用会记进单轨的「操作历史」，来源记「MCP」，调用方取每次调用时握手里的 `clientInfo`（不缓存、不改工具参数、不让模型自报）。原始名字经 [src/shared/agents.ts](../src/shared/agents.ts) 换成显示名，表里没有的按原样显示；对照表还没有逐个用真实客户端核对。旧协议的无状态 HTTP 读不到握手信息，记「MCP · 未识别」。
+
+**更换单轨版本后请重启 AI 客户端**：客户端拉起的 MCP 进程还是旧版本时，它和新的桌面端之间的字段可能对不上；新版 MCP 连旧版桌面端时，旧版会把新增的 `origin` 字段当作参数错误拒绝（报错照常返回，不会当成成功）。详见 [docs/application/README.md](../docs/application/README.md) 第 5 节。
+
 ## 典型调用流程
 
 1. 调用 `get_context({})`，获取当前状态、`operation_id` 与 `expected_state`。

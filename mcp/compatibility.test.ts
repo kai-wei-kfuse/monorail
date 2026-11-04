@@ -100,6 +100,12 @@ for (const era of ['legacy', 'modern'] as const) for (const transportKind of ['s
       assert.ok(isCallToolResult(result));
       assert.notEqual(result.isError, true);
       assert.equal(saveIdeaResult.parse(result.structuredContent).data.text, '中文协议验证\n第二行');
+      // 调用方（ADR 0019 第 6 条）：每次调用时读握手里的 clientInfo；旧协议的无状态 HTTP 每个请求新建 server，读不到记未识别
+      const saved = fixture.calls.find(c => (c as { method: string }).method === 'save_idea') as { origin?: unknown; arguments: Record<string, unknown> };
+      assert.deepEqual(saved.origin, era === 'legacy' && http
+        ? { kind: 'mcp', agent: { name: null, detected_by: 'none' } }
+        : { kind: 'mcp', agent: { name: null, raw: era === 'legacy' ? 'compat-2025' : 'compat-2026', version: '1', detected_by: 'mcp_handshake' } });
+      assert.equal('origin' in saved.arguments, false);
       const lookup = await client.callTool({ name: 'get_operation_result', arguments: { operation_id: randomUUID() } });
       assert.ok(isCallToolResult(lookup)); assert.equal(lookupResult.parse(lookup.structuredContent).status, 'not_found');
       const count = fixture.calls.length;

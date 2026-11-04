@@ -204,3 +204,23 @@ describe('设置的系统副作用（ADR 0019 第 9 条）', () => {
     expect(await history(f)).toHaveLength(0);
   });
 });
+
+describe('自动化来源（E8a4）', () => {
+  it('请求带 origin：历史来源记 MCP / CLI 和调用方（去控制字符、限长）；不带记「自动化 · 未识别」', async () => {
+    const f = fixture(); await seed(f, []);
+    let minute = 0;
+    const save = (text: string, origin?: unknown) => { f.clock(at(++minute)); return handleApplicationRequest(f.ctx, {
+      method: 'save_idea', arguments: { operation_id: crypto.randomUUID(), text }, ...(origin ? { origin } : {}) }); };
+    await save('来自 MCP', { kind: 'mcp', agent: { name: null, raw: 'claude-ai', version: '0.14.2', detected_by: 'mcp_handshake' } });
+    await save('来自 CLI', { kind: 'cli', agent: { name: `手环\u0007同步${'x'.repeat(80)}`, detected_by: 'flag', evidence: '--agent 手环同步' } });
+    await save('旧客户端');
+    await save('坏的 origin', { kind: 'browser', agent: {} });
+    const list = (await of(f, 'auto.save_idea')).reverse();
+    expect(list.map(r => r.source)).toEqual([
+      { kind: 'mcp', agent: { name: null, raw: 'claude-ai', version: '0.14.2', detected_by: 'mcp_handshake' } },
+      { kind: 'cli', agent: { name: `手环同步${'x'.repeat(60)}`, detected_by: 'flag', evidence: '--agent 手环同步' } },
+      { kind: 'automation', agent: { name: null, detected_by: 'none' } },
+      { kind: 'automation', agent: { name: null, detected_by: 'none' } },
+    ]);
+  });
+});

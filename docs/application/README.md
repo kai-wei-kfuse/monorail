@@ -133,3 +133,18 @@ CLI 内部直接通过结构化 JSON 管道发送请求，从不对用户文本�
      - 若回执已存在（`committed`）且用户未显式传 `--expected-state`，CLI 从回执 `request.arguments.expected_state` 恢复当时的原状态令牌，同时保留用户本次命令行传入的业务参数（正文、卡片 ID、项目、标签等），再交由服务端 `runOperation` 比对规范化请求。
      - 因此：**即使后续计时状态已经推进，原样重跑同一条带 `--operation-id` 的计时命令仍能稳定命中回执（`replayed: true`，退出码 `0`）；而一旦篡改任何业务参数或显式传入不一致的 `--expected-state`，服务端必定拒绝并返回 `OPERATION_CONFLICT`（退出码 `3`）**。
      - 若回执为 `not_found`，CLI 按需获取当前上下文后以该 `--operation-id` 执行写入。
+
+---
+
+## 5. 调用方识别与操作历史（0.3.0-beta.3，[ADR 0019](../adr/0019-operation-history.md) 第 6 条）
+
+改了数据的写调用会记进单轨的「操作历史」，并写明是 MCP 还是 CLI、哪个 agent 调的。调用方放在请求顶层的可选 `origin` 里，不进 `arguments`，不影响参数校验，也不参与回执冲突判断。它是自报、未验证的，只用于显示和筛选。
+
+- **CLI**：按下面的顺序识别，取第一个有值的。
+  1. 全局参数 `--agent <名字>`（任何命令都可以带，例如 `monorail --agent 手环同步 idea add "…"`）。
+  2. 环境变量 `MONORAIL_AGENT`。
+  3. 已知 agent 的环境变量：`CLAUDECODE` → Claude Code、`CODEX_SANDBOX` → Codex、`GEMINI_CLI` → Gemini CLI、`CURSOR_AGENT` → Cursor。对照表在 [cli/agentDetect.ts](../../cli/agentDetect.ts)，**还没有逐个用真实工具核对**。
+  4. 都没有就记「CLI · 未识别」。
+- **MCP**：每次工具调用时读握手里的 `clientInfo`，原始名字经 [src/shared/agents.ts](../../src/shared/agents.ts) 的对照表换成显示名，表里没有的按原样显示。旧协议（`2025-11-25`）的本机 HTTP 是无状态的，每个请求新建 server，读不到握手信息，记「MCP · 未识别」。
+- **旧客户端**：没带 `origin` 的请求照常执行，记「自动化 · 未识别」。
+- **更换单轨版本后请重启 AI 客户端**。新版客户端（带 `origin`）连旧版桌面端时，旧版会把这个字段当作参数错误拒绝。报错会照常返回，不会被当成成功。
