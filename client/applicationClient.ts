@@ -6,6 +6,7 @@ import type {
   ApplicationMethod,
   ApplicationOutput,
   ApplicationRequest,
+  CallerOrigin,
 } from '../src/shared/application.ts';
 import { ApplicationError, applicationFailure } from '../src/shared/appError.ts';
 import { callDesktop, defaultPipePath } from './pipe.ts';
@@ -16,21 +17,35 @@ export interface ApplicationTransport {
   send(request: ApplicationRequest, options?: { signal?: AbortSignal }): Promise<unknown>;
 }
 
+/**
+ * Per-call options. `origin` identifies the calling agent for the operation history (ADR 0019 §6);
+ * it travels as a top-level request field, never inside `arguments`, so it cannot affect input
+ * validation or receipt conflict checks.
+ */
+export interface ApplicationCallOptions {
+  signal?: AbortSignal;
+  origin?: CallerOrigin;
+}
+
 /** Typed, transport-independent application client shared by MCP and CLI adapters. */
 export interface ApplicationClient {
   call<M extends ApplicationMethod>(
     method: M,
     input: ApplicationInput<M>,
-    options?: { signal?: AbortSignal },
+    options?: ApplicationCallOptions,
   ): Promise<ApplicationOutput<M>>;
 }
 
-export function createApplicationClient(transport: ApplicationTransport): ApplicationClient {
+/** `defaults.origin` applies when a call does not pass its own (the CLI knows its origin once per process). */
+export function createApplicationClient(
+  transport: ApplicationTransport,
+  defaults: { origin?: CallerOrigin } = {},
+): ApplicationClient {
   return {
     async call<M extends ApplicationMethod>(
       method: M,
       input: ApplicationInput<M>,
-      options?: { signal?: AbortSignal },
+      options?: ApplicationCallOptions,
     ): Promise<ApplicationOutput<M>> {
       const contract = applicationContracts[method];
       if (!contract) {
@@ -52,11 +67,12 @@ export function createApplicationClient(transport: ApplicationTransport): Applic
           next_step: '请根据参数说明修正输入后重试',
         }, parsedInput.error);
       }
+      const origin = options?.origin ?? defaults.origin;
       let raw: unknown;
       try {
         raw = await transport.send(
-          { method, arguments: parsedInput.data } as ApplicationRequest,
-          options,
+          { method, arguments: parsedInput.data, ...(origin ? { origin } : {}) } as ApplicationRequest,
+          { signal: options?.signal },
         );
       } catch (error) {
         if (error instanceof ApplicationError) throw error;
@@ -80,8 +96,9 @@ export function createApplicationClient(transport: ApplicationTransport): Applic
 export function createPipeApplicationClient(
   pipe = defaultPipePath(),
   defaults: Omit<DesktopCallOptions, 'signal'> = {},
+  options: { origin?: CallerOrigin } = {},
 ): ApplicationClient {
   return createApplicationClient({
-    send: (request, options) => callDesktop(pipe, request, { ...defaults, signal: options?.signal }),
-  });
+    send: (request, sendOptions) => callDesktop(pipe, request, { ...defaults, signal: sendOptions?.signal }),
+  }, options);
 }

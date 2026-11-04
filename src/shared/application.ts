@@ -298,22 +298,41 @@ export type ApplicationInput<M extends ApplicationMethod> = z.input<(typeof appl
 export type ApplicationParsedInput<M extends ApplicationMethod> = z.output<(typeof applicationContracts)[M]['input']>;
 export type ApplicationOutput<M extends ApplicationMethod> = z.output<(typeof applicationContracts)[M]['output']>;
 
-export const ideaRequest = z.strictObject({ method: z.literal('save_idea'), arguments: ideaInput });
+/**
+ * 调用方（ADR 0019 第 6 条）：MCP / CLI 进程自报，未经验证，只用于操作历史的显示和筛选，
+ * 不作权限依据，也不参与回执冲突判断。去掉控制字符并截断长度；格式不对时整段丢弃（按「未识别」记），
+ * 绝不因为它让一次调用失败。
+ */
+const selfReported = (max: number) => z.string().transform(value => value.replace(/\p{Cc}/gu, '').slice(0, max));
+export const callerAgent = z.strictObject({
+  name: selfReported(64).nullable(),
+  raw: selfReported(64).optional(),
+  version: selfReported(32).optional(),
+  detected_by: z.enum(['mcp_handshake', 'env', 'flag', 'none']),
+  evidence: selfReported(128).optional(),
+});
+export const callerOrigin = z.strictObject({ kind: z.enum(['mcp', 'cli']), agent: callerAgent });
+export type CallerAgent = z.output<typeof callerAgent>;
+export type CallerOrigin = z.input<typeof callerOrigin>;
+/** 请求顶层的可选 origin，不进 arguments，不影响参数校验。 */
+const origin = callerOrigin.optional().catch(undefined);
+
+export const ideaRequest = z.strictObject({ method: z.literal('save_idea'), arguments: ideaInput, origin });
 export const applicationRequest = z.discriminatedUnion('method', [
   ideaRequest,
-  z.strictObject({ method: z.literal('capture_todo'), arguments: captureTodoInput }),
-  z.strictObject({ method: z.literal('find_items'), arguments: findItemsInput }),
-  z.strictObject({ method: z.literal('get_context'), arguments: contextInput }),
-  z.strictObject({ method: z.literal('get_time_summary'), arguments: timeSummaryInput }),
-  z.strictObject({ method: z.literal('list_time_entries'), arguments: listTimeEntriesInput }),
-  z.strictObject({ method: z.literal('start_timer'), arguments: startTimerInput }),
-  z.strictObject({ method: z.literal('start_task_item'), arguments: startTaskItemInput }),
-  z.strictObject({ method: z.literal('pause_timer'), arguments: timerControlInput }),
-  z.strictObject({ method: z.literal('resume_timer'), arguments: timerControlInput }),
-  z.strictObject({ method: z.literal('stop_timer'), arguments: timerControlInput }),
-  z.strictObject({ method: z.literal('start_break'), arguments: startBreakInput }),
-  z.strictObject({ method: z.literal('return_from_break'), arguments: timerControlInput }),
-  z.strictObject({ method: z.literal('add_time_entry'), arguments: addTimeEntryInput }),
-  z.strictObject({ method: z.literal('get_operation_result'), arguments: lookupInput }),
+  z.strictObject({ method: z.literal('capture_todo'), arguments: captureTodoInput, origin }),
+  z.strictObject({ method: z.literal('find_items'), arguments: findItemsInput, origin }),
+  z.strictObject({ method: z.literal('get_context'), arguments: contextInput, origin }),
+  z.strictObject({ method: z.literal('get_time_summary'), arguments: timeSummaryInput, origin }),
+  z.strictObject({ method: z.literal('list_time_entries'), arguments: listTimeEntriesInput, origin }),
+  z.strictObject({ method: z.literal('start_timer'), arguments: startTimerInput, origin }),
+  z.strictObject({ method: z.literal('start_task_item'), arguments: startTaskItemInput, origin }),
+  z.strictObject({ method: z.literal('pause_timer'), arguments: timerControlInput, origin }),
+  z.strictObject({ method: z.literal('resume_timer'), arguments: timerControlInput, origin }),
+  z.strictObject({ method: z.literal('stop_timer'), arguments: timerControlInput, origin }),
+  z.strictObject({ method: z.literal('start_break'), arguments: startBreakInput, origin }),
+  z.strictObject({ method: z.literal('return_from_break'), arguments: timerControlInput, origin }),
+  z.strictObject({ method: z.literal('add_time_entry'), arguments: addTimeEntryInput, origin }),
+  z.strictObject({ method: z.literal('get_operation_result'), arguments: lookupInput, origin }),
 ]);
 export type ApplicationRequest = z.infer<typeof applicationRequest>;

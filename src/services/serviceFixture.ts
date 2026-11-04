@@ -6,7 +6,7 @@ import { convert } from '../domain/record/convert';
 import type { Card } from '../domain/card/card';
 import type { Task } from '../domain/task/task';
 import { createContext, run } from './commit';
-import type { Snapshot } from './commit';
+import type { Ctx, Snapshot, Transaction } from './commit';
 import type { ReminderPlan } from '../domain/reminders';
 
 export const at = (minute = 0) => new Date(2026, 9, 27, 10, minute).toISOString();
@@ -37,6 +37,9 @@ export async function seed(f: Fixture, cards: Card[], tasks: Task[] = []) {
   ]));
   await run(f.ctx, async tx => { tx.state.current_card = cards[0]?.id ?? null; tx.state.home_mode = cards.length ? 'task' : 'guide'; });
 }
+/** 测试里直接提交一个事务：动作固定为 `test.direct`（ADR 0019 第 5 条；E8a3 起 run 的 intent 必填）。 */
+export const runTx = <T>(ctx: Ctx, work: (tx: Transaction) => Promise<T>, at?: string) =>
+  run(ctx, work, at, { action: 'test.direct' });
 export const getCard = async (f: Fixture, id: string) => (await f.ctx.repos.cards.get(id))!.value;
 export const entries = (f: Fixture) => f.ctx.repos.times.snapshot();
 export const open = (f: Fixture) => entries(f).find(entry => entry.ended_at === null)!;

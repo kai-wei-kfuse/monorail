@@ -47,6 +47,11 @@ export class MdRepo<T extends { id: string }> {
     catch (error) { throw new Error(`${path}: invalid entity`, { cause: error }); }
     return createWrite(path, encode(meta, body), original?.text ?? null);
   }
+  decode(entity: Entity<T>): T {
+    const path = this.path(entity.value.id);
+    try { return this.schema.parse(decode(entity.text, path).meta); }
+    catch (error) { throw new Error(`${path}: invalid entity`, { cause: error }); }
+  }
   async remove(original: Entity<T>): Promise<Write> {
     const path = this.path(original.value.id), current = await this.fs.read(path);
     if (current?.version !== original.version) throw new Error(`External edit (mtime): ${path}`);

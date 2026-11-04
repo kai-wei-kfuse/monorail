@@ -21,9 +21,10 @@ import { projectReview } from './reviewProjection';
 import { appendNotices } from '../store/noticeSlice';
 import { canonicalJson, jsonValue, operationId } from '../shared/operation';
 import type { CommitWarning, JsonValue, Operation, OperationReceipt, OperationResult } from '../shared/operation';
+import type { HistoryIntent } from '../shared/history';
 
 export interface Snapshot {
-  state: AppState; cards: Card[]; tasks: Task[]; records: RecordEntry[];
+  state: AppState; cards: Card[]; tasks: Task[]; records: RecordEntry[]; reviews: Review[];
   entries: TimeEntry[]; home: HomeSlice; backpack: BackpackSlice; review: ReviewSlice; settings: Settings; notices: Notice[];
 }
 export interface ContextOptions {
@@ -32,8 +33,11 @@ export interface ContextOptions {
   random?(): number;
   settingsPlatform?: SettingsPlatform;
   notices?(): Notice[];
+  /** 主窗口会话世代（0.3.0-beta.3 E5）：只有主窗口 bootstrap 从 Rust 取值，其余上下文缺省 0。 */
+  mainEpoch?: number;
 }
-export interface Ctx extends ContextOptions {
+export interface Ctx extends Omit<ContextOptions, 'mainEpoch'> {
+  readonly mainEpoch: number;
   readonly scope: 'root'; onSettingsChange(listener: (settings: Settings) => void): () => void;
   onSnapshot(listener: (snapshot: Snapshot) => void): () => void;
   snapshot(): Snapshot | null;
@@ -59,7 +63,7 @@ export function createContext(options: ContextOptions): Ctx {
   const snapshots = new Set<(snapshot: Snapshot) => void>();
   let latest: Snapshot | null = null;
   let accumulatedNotices: Notice[] = [];
-  const ctx: Ctx = { ...options, scope: 'root',
+  const ctx: Ctx = { ...options, mainEpoch: options.mainEpoch ?? 0, scope: 'root',
     onSettingsChange(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
     onSnapshot(listener) { snapshots.add(listener); return () => { snapshots.delete(listener); }; },
     snapshot: () => latest,
@@ -107,19 +111,62 @@ export async function whenCommitsOpen<T>(ctx: Ctx, work: () => Promise<T>): Prom
 }
 
 interface Execution<T> { data: T; committed_at: string; replayed: boolean; warnings: CommitWarning[] }
+/**
+ * intent（ADR 0019 第 5 条）：0.3.0-beta.3 E0.5 只定类型并穿到这里，暂为可选、不使用；
+ * E8a2 起用于生成操作历史，E8a3 把 run / runOperation 的 intent 改为必填并逐个入口标注。
+ */
+interface ExecuteOptions { operation?: Operation; signal?: AbortSignal; intent?: HistoryIntent }
+
+const queueOf = (ctx: Ctx): Queue => {
+  const queue = queues.get(ctx);
+  if (!queue) throw new Error('未初始化的提交上下文');
+  return queue;
+};
+const blocked = (failure: unknown) => new Error('提交已阻塞；请重启以恢复 journal', { cause: failure });
 
 /** UI callers keep their result type and receive an explicit post-commit error. */
-export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at?: string): Promise<T> {
-  return execute(ctx, work, at).then(result => {
+export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at?: string, intent?: HistoryIntent): Promise<T> {
+  return execute(ctx, work, at, { intent }).then(result => {
     if (result.warnings.length) throw new Error(`数据已提交，后续处理失败：${result.warnings.map(w => `${w.phase}: ${w.message}`).join('；')}`);
     return result.data;
   });
 }
 
 /** Durable commands use exactly the same queue and transaction as UI actions. */
-export function runOperation<T extends JsonValue>(ctx: Ctx, operation: Operation, work: (tx: Transaction) => Promise<T>, at?: string, signal?: AbortSignal): Promise<OperationResult<T>> {
+export function runOperation<T extends JsonValue>(ctx: Ctx, operation: Operation, work: (tx: Transaction) => Promise<T>, at?: string, signal?: AbortSignal, intent?: HistoryIntent): Promise<OperationResult<T>> {
   const id = operationId.parse(operation.id).toLowerCase();
-  return execute(ctx, work, at, { ...operation, id }, signal).then(result => ({ status: 'committed', operation_id: id, ...result }));
+  return execute(ctx, work, at, { operation: { ...operation, id }, signal, intent }).then(result => ({ status: 'committed', operation_id: id, ...result }));
+}
+
+/**
+ * 串行只读（ADR 0019 第 7 条）：排在同一队列上，看不到写了一半的 journal；不建事务、不写 state.yaml。
+ * 队列故障时拒绝。安装更新冻结期间照常可读（读不影响备份）。
+ */
+export function readSerial<T>(ctx: Ctx, read: () => Promise<T>): Promise<T> {
+  const queue = queueOf(ctx);
+  const result = queue.tail.then(() => {
+    if (queue.failure) throw blocked(queue.failure);
+    return read();
+  });
+  queue.tail = result.then(() => undefined, () => undefined);
+  return result;
+}
+
+/**
+ * 维护任务（ADR 0019 第 7 条，例如清理过期操作历史）：排在同一队列尾部串行执行，与提交、读取互斥；
+ * 不建事务、不写 state.yaml，失败不封锁队列。冻结（安装更新）或队列故障时不接纳；
+ * 冻结前已接纳的任务照常执行，`pauseCommits().ready` 会等它结束。
+ */
+export function maintain<T>(ctx: Ctx, task: () => Promise<T>): Promise<T> {
+  const queue = queueOf(ctx);
+  if (queue.paused) return Promise.reject(new Error('正在安装更新，暂不执行维护任务'));
+  if (queue.failure) return Promise.reject(blocked(queue.failure));
+  const result = queue.tail.then(() => {
+    if (queue.failure) throw blocked(queue.failure);
+    return task();
+  });
+  queue.tail = result.then(() => undefined, () => undefined);
+  return result;
 }
 
 /** A serialized read cannot observe the receipt of a partially applied journal. */
@@ -143,8 +190,9 @@ async function postCommit(phase: CommitWarning['phase'], work: () => void | Prom
 }
 
 /** Root contexts enqueue independent actions. Transaction scopes may never enqueue. */
-function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at?: string, operation?: Operation, signal?: AbortSignal): Promise<Execution<T>> {
+function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at: string | undefined, options: ExecuteOptions): Promise<Execution<T>> {
   if (ctx.scope === 'transaction') throw new Error('事务重入：请调用 InTx 函数');
+  const { operation, signal } = options;
   const queue = queues.get(ctx);
   if (!queue) throw new Error('未初始化的提交上下文');
   if (queue.paused) return Promise.reject(new Error('正在安装更新，暂时不能提交新操作'));
@@ -218,6 +266,7 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
         cards: structuredClone(tx.cards),
         tasks: structuredClone(tx.tasks),
         records: structuredClone(tx.records),
+        reviews: structuredClone(tx.reviews),
         entries: entriesSnapshot,
         home,
         backpack,

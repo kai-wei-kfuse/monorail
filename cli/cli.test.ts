@@ -1135,3 +1135,27 @@ test('self-contained dist-cli/monorail-cli.mjs and dist-mcp/monorail-mcp.mjs run
     await server.close();
   }
 });
+
+test('origin (ADR 0019 §6) travels as an optional top-level request field: per-call wins over the client default, absent stays absent, bad values are dropped instead of failing the call', async () => {
+  const sent: ApplicationRequest[] = [];
+  const reply = { ok: true };
+  const transport = { send: async (req: ApplicationRequest) => { sent.push(req); return reply; } };
+  const cliOrigin = { kind: 'cli' as const, agent: { name: 'Claude Code', detected_by: 'env' as const, evidence: 'CLAUDECODE=1' } };
+  const mcpOrigin = { kind: 'mcp' as const, agent: { name: null, raw: 'claude-ai', version: '0.14.2', detected_by: 'mcp_handshake' as const } };
+  const call = (client: ReturnType<typeof createApplicationClient>, origin?: typeof mcpOrigin) =>
+    client.call('get_context', {}, origin ? { origin } : undefined).catch(() => undefined);
+  await call(createApplicationClient(transport));
+  await call(createApplicationClient(transport, { origin: cliOrigin }));
+  await call(createApplicationClient(transport, { origin: cliOrigin }), mcpOrigin);
+  assert.deepEqual(sent.map(req => req.origin), [undefined, cliOrigin, mcpOrigin]);
+  assert.equal('origin' in sent[0], false);
+  assert.deepEqual(sent.map(req => req.arguments), [{}, {}, {}]);
+
+  const parsed = applicationRequest.parse({ method: 'get_context', arguments: {}, origin: {
+    kind: 'cli', agent: { name: `a\u0007b${'x'.repeat(80)}`, version: '1'.repeat(40), detected_by: 'flag' } } });
+  assert.equal(parsed.origin?.agent.name, `ab${'x'.repeat(62)}`);
+  assert.equal(parsed.origin?.agent.version, '1'.repeat(32));
+  const dropped = applicationRequest.parse({ method: 'get_context', arguments: {}, origin: { kind: 'browser', agent: {} } });
+  assert.equal(dropped.origin, undefined);
+  assert.throws(() => applicationRequest.parse({ method: 'get_context', arguments: {}, origin: undefined, extra: 1 }));
+});

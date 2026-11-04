@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { MemoryFs } from './memoryFs';
 import { TimelogV2Repo } from './timelogV2Repo';
-import { Journal, createWrite } from './journal';
+import { Journal, committedWrite, createWrite } from './journal';
 import type { TimeEntry } from '../domain/timeline/entry';
 
 const time = (day: number, hour: number) => new Date(2026, 9, day, hour).toISOString();
@@ -50,4 +50,22 @@ it('groups days without changing input or committed index and writes only change
   await journal.run(crypto.randomUUID(), change);
   repo.acceptCommitted(change);
   expect(repo.snapshot()).toEqual(updated);
+});
+it('changedDays reports the activity days that writes() would rewrite, with copies of before and after (ADR 0019 §4)', async () => {
+  const fs = new MemoryFs(), repo = new TimelogV2Repo(fs), journal = new Journal(fs), now = time(28, 6);
+  const other: TimeEntry = { ...entry(), id: 'other', started_at: time(28, 4), ended_at: time(28, 5), description: 'other' };
+  const writes = await repo.writes([entry(), other], now, 4); await journal.run(crypto.randomUUID(), writes); repo.acceptCommitted(writes);
+  expect(repo.changedDays([entry(), other], 4)).toEqual([]);
+  // 键顺序不同、内容相同不算改动（和 writes() 一样先过 schema）。
+  const reordered = Object.fromEntries(Object.entries(other).reverse()) as unknown as TimeEntry;
+  expect(repo.changedDays([entry(), reordered], 4)).toEqual([]);
+  const moved = { ...entry(), started_at: time(27, 5) };
+  const changes = repo.changedDays([moved, other], 4);
+  expect(changes).toEqual([
+    { day: '2026-10-26', before: [entry()], after: [] },
+    { day: '2026-10-27', before: [], after: [moved] },
+  ]);
+  expect(changes.map(change => change.day)).toEqual((await repo.writes([moved, other], now, 4)).map(write => committedWrite(write).path.slice(8, 18)));
+  changes[0].before[0].description = 'mutated';
+  expect(repo.snapshot().find(item => item.id === 'cross-day')!.description).toBe('work');
 });

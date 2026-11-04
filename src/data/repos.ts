@@ -12,18 +12,21 @@ import type { Entity } from './mdRepo';
 import { StateRepo } from './stateRepo';
 import type { AppState } from './stateRepo';
 import { TimelogV2Repo } from './timelogV2Repo';
+import type { DayChange } from './timelogV2Repo';
 import { SettingsRepo } from './settingsRepo';
 import { cardSchema, recordSchema, taskSchema, reviewSchema } from './schemas';
 import { migrateV2 } from './migrations/v2';
 import { ReceiptRepo } from './receiptRepo';
 import type { OperationReceipt } from '../shared/operation';
 
-export type { Write, AppState, Entity };
+export type { Write, AppState, Entity, DayChange };
 export interface EntityRepo<T> {
   get(id: string): Promise<Entity<T> | null>;
   list(): Promise<Entity<T>[]>;
   write(value: T, original: Entity<T> | null, body?: string): Promise<Write>;
   remove(original: Entity<T>): Promise<Write>;
+  /** 从载入时的原文重新解析出一份独立的值，不受服务就地修改的影响（ADR 0019 第 4 条）。 */
+  decode(entity: Entity<T>): T;
 }
 export interface Repositories {
   receipts: { get(id: string): Promise<OperationReceipt | null>; write(receipt: OperationReceipt): Promise<Write> };
@@ -38,6 +41,7 @@ export interface Repositories {
     between(start: string, end: string): TimeEntry[];
     scan(now: string, boundaryHour: number): Promise<TimeEntry[]>;
     writes(entries: readonly TimeEntry[], now: string, boundaryHour: number): Promise<Write[]>;
+    changedDays(entries: readonly TimeEntry[], boundaryHour: number): DayChange[];
   };
   migrate(now: string, id: () => string): ReturnType<typeof migrateV2>;
   transact(id: string, writes: Write[]): Promise<void>;

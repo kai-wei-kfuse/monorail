@@ -10,6 +10,8 @@ import { createWrite, committedWrite } from './journal';
 import { entrySchema } from './schemas';
 
 
+export interface DayChange { day: string; before: TimeEntry[]; after: TimeEntry[] }
+
 export class TimelogV2Repo {
   private index = new Map<string, TimeEntry[]>();
   constructor(private fs: FileSystem) {}
@@ -35,15 +37,32 @@ export class TimelogV2Repo {
     return this.snapshot().filter(entry => Date.parse(entry.started_at) < Date.parse(end) &&
       (entry.ended_at === null || Date.parse(entry.ended_at) > Date.parse(start)));
   }
-  async writes(entries: readonly TimeEntry[], now: string, boundaryHour: number): Promise<Write[]> {
-    const valid = z.array(entrySchema).parse(entries); assertEntries(valid, now);
+  private group(entries: readonly TimeEntry[], boundaryHour: number): Map<string, TimeEntry[]> {
     const groups = new Map<string, TimeEntry[]>();
-    for (const entry of valid) {
+    for (const entry of entries) {
       const day = activityDay(entry.started_at, boundaryHour);
       const group = groups.get(day);
       if (group) group.push(entry);
       else groups.set(day, [entry]);
     }
+    return groups;
+  }
+  /**
+   * 与已提交索引相比，本次改动了哪些活动日、每天改前改后的条目（ADR 0019 第 4 条）。
+   * 判定与 writes() 相同：按开始时刻的活动日分组后逐日比较。返回的是独立副本。
+   */
+  changedDays(entries: readonly TimeEntry[], boundaryHour: number): DayChange[] {
+    // 和 writes() 一样先过 schema，键的顺序一致，比较结果才与实际写盘一致。
+    const groups = this.group(z.array(entrySchema).parse(entries), boundaryHour), changes: DayChange[] = [];
+    for (const day of new Set([...this.index.keys(), ...groups.keys()])) {
+      const before = this.index.get(day) ?? [], after = groups.get(day) ?? [];
+      if (JSON.stringify(before) !== JSON.stringify(after)) changes.push({ day, before: structuredClone(before), after: structuredClone(after) });
+    }
+    return changes.sort((a, b) => a.day.localeCompare(b.day));
+  }
+  async writes(entries: readonly TimeEntry[], now: string, boundaryHour: number): Promise<Write[]> {
+    const valid = z.array(entrySchema).parse(entries); assertEntries(valid, now);
+    const groups = this.group(valid, boundaryHour);
     const writes: Write[] = [];
     for (const day of new Set([...this.index.keys(), ...groups.keys()])) {
       const beforeEntries = this.index.get(day) ?? [], next = groups.get(day) ?? [];
