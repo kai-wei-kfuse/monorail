@@ -25,6 +25,8 @@ for (const name of ['card', 'task', 'picker', 'degrade', 'baseline', 'review', '
   zones.push({ target: './src/services/tracking', from: `./src/domain/${name}` });
   zones.push({ target: './src/domain/timeline', from: `./src/domain/${name}` });
 }
+// 只有 domain/history 认识所有业务对象；其他 domain 单元不得引用它（ADR 0019 第 4 条）
+for (const name of readdirSync('./src/domain').filter(name => name !== 'history')) zones.push({ target: `./src/domain/${name}`, from: './src/domain/history' });
 for (const name of readdirSync('./src/services').filter(name => /\.ts$/.test(name) && !/\.test\.ts$/.test(name))) {
   zones.push({ target: `./src/services/${name}`, from: './src/services/tracking', except: ['./api.ts'] });
 }

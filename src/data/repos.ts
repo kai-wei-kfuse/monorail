@@ -17,6 +17,8 @@ import { SettingsRepo } from './settingsRepo';
 import { cardSchema, recordSchema, taskSchema, reviewSchema } from './schemas';
 import { migrateV2 } from './migrations/v2';
 import { ReceiptRepo } from './receiptRepo';
+import { HistoryRepo } from './historyRepo';
+export type { HistoryWrite } from './historyRepo';
 import type { OperationReceipt } from '../shared/operation';
 
 export type { Write, AppState, Entity, DayChange };
@@ -30,6 +32,7 @@ export interface EntityRepo<T> {
 }
 export interface Repositories {
   receipts: { get(id: string): Promise<OperationReceipt | null>; write(receipt: OperationReceipt): Promise<Write> };
+  history: HistoryRepo;
   records: EntityRepo<RecordEntry>;
   cards: EntityRepo<Card>;
   tasks: EntityRepo<Task>;
@@ -51,7 +54,7 @@ export interface Repositories {
 export function createRepos(fs: FileSystem): Repositories {
   const journal = new Journal(fs), times = new TimelogV2Repo(fs);
   return {
-    receipts: new ReceiptRepo(fs),
+    receipts: new ReceiptRepo(fs), history: new HistoryRepo(fs),
     records: new MdRepo(fs, 'records', recordSchema), cards: new MdRepo(fs, 'cards', cardSchema),
     tasks: new MdRepo(fs, 'tasks', taskSchema), reviews: new MdRepo(fs, 'reviews', reviewSchema),
     state: new StateRepo(fs), times, settings: new SettingsRepo(fs),

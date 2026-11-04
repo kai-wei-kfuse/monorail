@@ -22,6 +22,8 @@ import { appendNotices } from '../store/noticeSlice';
 import { canonicalJson, jsonValue, operationId } from '../shared/operation';
 import type { CommitWarning, JsonValue, Operation, OperationReceipt, OperationResult } from '../shared/operation';
 import type { HistoryIntent } from '../shared/history';
+import { captureHistory } from './historyCapture';
+import type { MergePointer, PendingHistory } from './historyCapture';
 
 export interface Snapshot {
   state: AppState; cards: Card[]; tasks: Task[]; records: RecordEntry[]; reviews: Review[];
@@ -58,6 +60,9 @@ interface Queue { tail: Promise<unknown>; failure?: unknown; snapshotFailure?: u
   /** closeMaintenance 之后：不再接纳维护任务，已排队还没开始的取消 */
   maintenanceClosed?: boolean }
 const queues = new WeakMap<Ctx, Queue>();
+/** 每个 Ctx 上一条设置历史（设置合并用；ADR 0019 第 3 条）。清理跳过它所指的文件。 */
+const mergePointers = new WeakMap<Ctx, MergePointer>();
+export const historyMergePath = (ctx: Ctx): string | null => mergePointers.get(ctx)?.path ?? null;
 const settingsListeners = new WeakMap<Ctx, Set<(settings: Settings) => void>>();
 
 export function createContext(options: ContextOptions): Ctx {
@@ -247,6 +252,9 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       saveTask: task => tasks.save(task), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
       async saveSettings(value) { settingsWrite = await ctx.repos.settings.write(value); settings = structuredClone(value); },
     };
+    // 改动前的数据（ADR 0019 第 4、5 条）：state、settings 先拷一份；实体与条目的改前值由 entityChanges / changedDays 从载入时的原文取。
+    // 没有进行中条目时自动开始待机放在这之后，所以它在用户动作里作为连带出现。
+    const beforeState = structuredClone(tx.state), beforeSettings = structuredClone(ctx.settings);
     if (!tx.state.open_entry) startSystemInTx(tx, '待机');
     const value = await work(tx);
     const open = tx.entries.filter(entry => entry.ended_at === null);
@@ -261,8 +269,23 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       version: 1, operation_id: operation.id, command: operation.command, input: input!,
       data: jsonValue.parse(value), committed_at: committedAt,
     }));
+    // 操作历史：有实质改动就把历史 write 追加进同一份 journal（receipt 之后、transact 之前）
+    let history: PendingHistory | null = null;
+    if (options.intent) {
+      history = captureHistory(ctx.repos, {
+        intent: options.intent, value, at: commandAt, boundaryHour: tx.settings.dayBoundaryHour, id: ctx.id,
+        ...(operation ? { operation: { id: operation.id, command: operation.command, input: input! } } : {}),
+        before: { state: beforeState as unknown as Record<string, unknown>, settings: beforeSettings },
+        after: { state: tx.state as unknown as Record<string, unknown>, settings: tx.settings, cards: tx.cards, tasks: tx.tasks, entries: tx.entries },
+        changed: { cards: cards.changed(), tasks: tasks.changed(), reviews: reviews.changed(), records: records.changed(),
+          days: ctx.repos.times.changedDays(tx.entries, tx.settings.dayBoundaryHour) },
+      }, mergePointers.get(ctx) ?? null, Date.parse(committedAt));
+      if (history) tx.writes.push(history.write.write);
+    }
     try { await ctx.repos.transact(ctx.id(), tx.writes); }
-    catch (error) { queue.failure = error; throw error; }
+    catch (error) { queue.failure = error; mergePointers.delete(ctx); throw error; }
+    // 合并指针只在提交成功后更新；这次不是设置改动就清空，下一次设置改动另起一条
+    if (options.intent) { if (history?.pointer) mergePointers.set(ctx, history.pointer); else if (history) mergePointers.delete(ctx); }
     // Older snapshots remain readable during a transaction, but must never masquerade as its committed result.
     queue.snapshotFailure = new Error('Committed projection has not been published');
     const warnings: CommitWarning[] = [];

@@ -49,3 +49,54 @@ export interface HistoryIntent {
   subject?: { type: HistorySubjectType; id: string };
   source?: HistorySource;
 }
+
+/* ---------- 记录格式（ADR 0019 第 2、4 条；E8a2） ---------- */
+
+/** 改动所在对象的类型（主体与连带都用它）。 */
+export type HistoryObjectType = 'entry' | 'card' | 'task' | 'record' | 'review' | 'settings' | 'state';
+
+/**
+ * 一项改动：对象、显示名、字段、改前改后的显示值。显示文字在写入时生成并保存（以后改了名字、删了对象也照样看得懂）。
+ * 新建：before 为 null；删除：after 为 null。
+ */
+export interface HistoryChange {
+  type: HistoryObjectType; id: string; name: string;
+  field: string; before: string | null; after: string | null;
+}
+
+export interface HistorySubject { type: HistoryObjectType; id: string; text: string; meta: string }
+
+/** 自动化调用的附加信息：方法、operation_id、规范化参数（上限 8 KB，超出截断并标记）。 */
+export interface HistoryCall { method: string; operation_id: string; params: string; truncated: boolean }
+
+export interface HistoryRecord {
+  version: 1;
+  id: string; at: string;
+  /** 写入时按当时的日界算出的活动日；之后改了日界也不迁移，列表按它分组（审核 G6） */
+  day: string;
+  action: string; label: string;
+  source: HistorySource;
+  /** 系统来源的「为什么会改」 */
+  why?: string;
+  subject: HistorySubject | null;
+  changes: HistoryChange[]; effects: HistoryChange[];
+  /** 设置合并：合并了几次（≥ 2 才写）；全部来回时 reverted 为 true（「改回原值 ×N」） */
+  merged?: number; reverted?: boolean;
+  call?: HistoryCall;
+}
+
+export const HISTORY_PARAMS_LIMIT = 8 * 1024;
+export const HISTORY_RETENTION_DAYS = 180;
+
+/** 设置项的中文名（操作历史的显示）；没列的按键名显示。 */
+export const SETTING_LABELS: Record<string, string> = {
+  mainTasks: '主线任务数', sideTasks: '支线任务数', mainItems: '主线事项数', homeLayout: '首页布局', calendarSnapMinutes: '日历吸附',
+  calendarShowIdle: '日历显示待机', betWeeks: '主线押注周数', dueSoonHours: '临近截止', timeboxDefaultMinutes: '时间盒默认时长',
+  shrinkMaxLevel: '最多缩小几级', refusalThreshold: '拒绝次数阈值', refusalWindowMinutes: '拒绝计数窗口', refusalResetMinutes: '拒绝计数重置',
+  inputHintWindowMinutes: '输入提示窗口', skipSignalCount: '跳过信号次数', subconsciousCount: '潜意识出卡数', ideaPoolLimit: '想法池上限',
+  ideaExpireDays: '想法过期天数', reviewWeekday: '回顾日', dayBoundaryHour: '日界', longActivityMinutes: '长时间活动提醒',
+  deadlineLeadMinutes: '截止提前提醒', offlineAskMinMinutes: '离线追问门槛', accent: '强调色', titleScale: '标题字号', topoMode: '等高线',
+  topoDepth: '等高线深度', motion: '动效', quickbarHotkey: '快速记录条快捷键', mainHotkey: '主窗口快捷键', autostart: '开机自启',
+  alwaysOnTop: '置顶', miniMode: '小窗口样式',
+  'lists.presets': '收藏与快捷活动', 'lists.projects': '项目', 'lists.tags': '标签', 'lists.restPool': '休息池', 'lists.idleName': '待机名称',
+};
