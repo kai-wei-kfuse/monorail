@@ -11,6 +11,7 @@ fn main() {
             "set_reminders",
             "show_quickbar",
             "toggle_mini",
+            "fit_mini_window",
             "read_mini_visibility",
             "begin_main_session",
             "read_recap_view",

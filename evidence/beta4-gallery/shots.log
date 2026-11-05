@@ -1,0 +1,15 @@
+tiny-running: {"title":"写周报","cat":"工作","pop":null,"close":false,"time":"16px","items":""}
+tiny-cat-open: {"title":"写周报","cat":"工作","pop":"cat","close":false,"time":"16px","items":"未分类 | 工作 | 学习 | 求职 | 英语口语练习打卡计划"}
+tiny-cat-picked: {"title":"写周报","cat":"学习","pop":null,"close":false,"time":"16px","items":""}
+tiny-writing: {"title":"","cat":"未分类","pop":"suggest","close":false,"time":"16px","items":"背单词学习 #英语 | 写周报工作 | 整理 beta.4 小窗需求主线任务 | 读《设计模式》第 3 章支线任务 | 投简历求职 #外企 | 看论文学习 #AI | 回邮件工作"}
+tiny-filter: {"title":"投","cat":"未分类","pop":"suggest","close":false,"time":"16px","items":"投简历求职 #外企"}
+tiny-picked-recent: {"title":"投简历","cat":"求职","pop":null,"close":false,"time":"16px","items":""}
+tiny-rename: {"title":"写周报","cat":"工作","pop":null,"close":false,"time":"16px","items":""}
+tiny-long: {"title":"写周报","cat":"英语口语练习打卡计划","pop":null,"close":false,"time":"16px","items":""}
+mini-writing: {"title":"","cat":"未分类","pop":"suggest","close":true,"time":"26px","items":"背单词学习 #英语 | 写周报工作 | 整理 beta.4 小窗需求主线任务 | 读《设计模式》第 3 章支线任务 | 投简历求职 #外企 | 看论文学习 #AI | 回邮件工作"}
+mini-cat-open: {"title":"","cat":"未分类","pop":"cat","close":true,"time":"26px","items":"未分类 | 工作 | 学习 | 求职 | 英语口语练习打卡计划"}
+mini-cat-chosen: {"title":"","cat":"学习","pop":"suggest","close":true,"time":"26px","items":"背单词学习 #英语 | 写周报工作 | 整理 beta.4 小窗需求主线任务 | 读《设计模式》第 3 章支线任务 | 投简历求职 #外企 | 看论文学习 #AI | 回邮件工作"}
+mini-started: {"title":"读书","cat":"学习","pop":null,"close":true,"time":"26px","items":""}
+ideas: {"seg":"想法池IDEAS3 | 已完成DONE2","done":2}
+done: "换一个机械键盘的轴体#生活完成于 今天 11:55手动撤销完成删除 || 查一下公积金提取的流程完成于 11-03 14:19MCP · Claude Code撤销完成删除"
+960 scrollX: false

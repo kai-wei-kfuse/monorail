@@ -15,6 +15,18 @@ export async function resizeMiniWindow(mode: 'mini' | 'tiny', width: number, hei
   await window.setSize(new LogicalSize(Math.max(bounds.minWidth, Math.min(width, bounds.maxWidth)), height));
 }
 
+/** 弹层放在哪边、实际给多高（逻辑像素）。 */
+export interface MiniFit { up: boolean; popup: number }
+/**
+ * 小窗随弹层变高（0.3.0-beta.4 D1）：barHeight 是小窗本体（含说明那一条）的高度，popup 是弹层想要的高度，0 = 收起。
+ * Rust 以收起时的本体位置为锚点：下面放得下往下，放不下且上面更宽就往上（窗口上移、本体不动），高度不超过工作区剩余。
+ */
+export async function fitMiniWindow(mode: 'mini' | 'tiny', width: number, barHeight: number, popup: number): Promise<MiniFit> {
+  const bounds = miniWindowSizes[mode], window = getCurrentWindow();
+  await window.setSizeConstraints({ minWidth: bounds.minWidth, maxWidth: bounds.maxWidth });
+  return invoke<MiniFit>('fit_mini_window', { width: Math.max(bounds.minWidth, Math.min(width, bounds.maxWidth)), barHeight, popup });
+}
+
 export interface MiniVisibility { visible: boolean; revision: number }
 export interface MiniWindowPort {
   toggle(): Promise<boolean>; showMain(): Promise<void>;

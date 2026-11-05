@@ -95,3 +95,26 @@
 .mini-toggle { margin-left: 8px; }
 .mini-toggle[aria-pressed="true"] { border-color: var(--ink); }
 .mini-toggle[aria-pressed="true"] .chev { background: var(--yellow); color: var(--ink); }
+
+/* 0.3.0-beta.4 D1（UI 规范 §11.9，照 mini-prototype.html）：mini窗口读数 16px、分类块；两种窗口「记到」的分类按钮；贴着小窗的弹层 */
+.miniwin.tiny .mini-time { font-size: 16px; }
+.miniwin.tiny .mini-l { display: flex; align-items: center; }
+.miniwin.tiny .mini-l > .mini-title, .miniwin.tiny .mini-l > .mini-title-in { flex: 1 1 auto; }
+.miniwin.tiny .mini-l:has(.mini-cat) { padding-right: 4px; }
+.mini-cat { flex: none; position: relative; display: inline-flex; align-items: center; gap: 4px; max-width: 72px; height: 22px; padding: 0 6px 0 5px; margin-left: 6px;
+  border: 1px solid var(--line-2); background: var(--paper-2); font: 520 11px/1 var(--f-cn); color: #4a4a46; cursor: pointer; }
+.mini-cat:hover, .mini-cat[aria-expanded="true"] { border-color: var(--ink); color: var(--ink); }
+.mini-cat[aria-expanded="true"] { box-shadow: inset 0 -2px 0 var(--yellow); }
+.mini-cat i, .mini-pick i { flex: none; width: 6px; height: 6px; }
+.mini-cat span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-pick { display: inline-flex; align-items: center; gap: 3px; padding: 0 2px; font: inherit; letter-spacing: inherit; color: var(--mute); cursor: pointer; }
+.mini-pick:hover, .mini-pick[aria-expanded="true"] { color: var(--ink); box-shadow: inset 0 -1px 0 var(--mute-2); }
+.mini-pick[aria-expanded="true"] { box-shadow: inset 0 -2px 0 var(--yellow); }
+.mini-pop { position: relative; z-index: 20; box-sizing: border-box; max-height: 430px; overflow: auto; background: var(--paper-2); border: 1px solid var(--ink); scrollbar-width: thin; }
+.mini-pop .sel-pop, .mini-pop .sug { position: static; width: auto; min-width: 0; max-height: none; overflow: visible; border: 0; box-shadow: none; }
+.mini-pop .sel-pop li { height: 30px; }
+.mini-pop .sug .sug-i em { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+.mini-pop .mini-cat-list li .combo-dot { width: 8px; height: 8px; margin: 0; }
+.mini-pop .mini-cat-list li.on { font-weight: 520; }
+.mini-pop .mini-cat-list li.on::after { content: "当前"; margin-left: auto; font: 330 11px/1 var(--f-cn); color: var(--mute); }
+.mini-stack.tiny .mini-pop .sug .sug-foot { font-size: 10.5px; }

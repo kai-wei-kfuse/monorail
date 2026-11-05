@@ -29,7 +29,7 @@ macro_rules! handlers {
         tauri::generate_handler![read_config, save_config, save_quick_record, save_attachment, evidence,
             power::read_lifecycle, reminders::set_reminders, windows::show_quickbar,
             windows::dialog_active, windows::set_shortcut,
-            mini_window::toggle_mini, mini_window::show_main, mini_visibility::read_mini_visibility,
+            mini_window::toggle_mini, mini_window::show_main, mini_window::fit_mini_window, mini_visibility::read_mini_visibility,
             main_session::begin_main_session,
             recap_view::read_recap_view, recap_view::write_recap_view,
             updates::check_update, updates::check_stable_update, updates::set_update_channel,

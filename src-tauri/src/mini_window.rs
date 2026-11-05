@@ -44,11 +44,86 @@ fn read_geometry(path: &Path) -> Result<Option<Geometry>, String> {
         Err(error) => Err(error.to_string()),
     }
 }
-fn save_geometry(window: &WebviewWindow) -> Result<(), String> {
+/// 弹层展开中（0.3.0-beta.4 D1）：收起时小窗本体的左上角（物理像素）、本体高度、向上展开时窗口上移了多少。
+/// 展开期间位置和高度都是临时的，不保存、不夹紧；用户这时拖动小窗，按上移量换算回本体位置。
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Expanded { x: i32, y: i32, bar_height: u32, up_offset: i32 }
+static EXPANDED: std::sync::Mutex<Option<Expanded>> = std::sync::Mutex::new(None);
+
+/// 弹层放哪边、给多高（物理像素）：下面放得下就往下；放不下且上面更宽就往上；高度不超过那一侧的工作区剩余。
+fn place_popup(bar_y: i32, bar_height: u32, popup: u32, area: WorkArea) -> (bool, u32) {
+    let below = (area.y + area.height as i32 - (bar_y + bar_height as i32)).max(0) as u32;
+    let above = (bar_y - area.y).max(0) as u32;
+    let up = popup > below && above > below;
+    (up, popup.min(if up { above } else { below }))
+}
+
+#[derive(Serialize)]
+pub struct MiniFit { up: bool, popup: f64 }
+
+/// 小窗随弹层变高（自动完成、分类下拉）。尺寸参数是逻辑像素；popup 为 0 表示收起，回到本体的位置和高度。
+/// 锁只在读写状态时短暂持有：set_size / set_position 会同步触发 Resized，事件里的 save_geometry 也要拿这把锁。
+fn expanded() -> Result<std::sync::MutexGuard<'static, Option<Expanded>>, String> { EXPANDED.lock().map_err(|e| e.to_string()) }
+
+#[tauri::command]
+pub fn fit_mini_window(window: WebviewWindow, width: f64, bar_height: f64, popup: f64) -> Result<MiniFit, String> {
+    let scale = window.scale_factor().map_err(|e| e.to_string())?;
+    let px = |v: f64| (v.max(0.0) * scale).round() as u32;
+    let (w, bar) = (px(width), px(bar_height).max(1));
+    if popup <= 0.0 {
+        let anchor = expanded()?.take();
+        window.set_size(PhysicalSize::new(w, bar)).map_err(|e| e.to_string())?;
+        if let Some(anchor) = anchor { window.set_position(PhysicalPosition::new(anchor.x, anchor.y)).map_err(|e| e.to_string())?; }
+        save_geometry(&window, false)?;
+        return Ok(MiniFit { up: false, popup: 0.0 });
+    }
+    let current = *expanded()?;
+    let (x, y) = match current {
+        Some(anchor) => (anchor.x, anchor.y),
+        None => { let p = window.outer_position().map_err(|e| e.to_string())?; (p.x, p.y) }
+    };
+    let (up, granted) = match current_work_area(&window)? {
+        Some(area) => place_popup(y, bar, px(popup), area),
+        None => (false, px(popup)),
+    };
+    let up_offset = if up { granted as i32 } else { 0 };
+    *expanded()? = Some(Expanded { x, y, bar_height: bar, up_offset });
+    window.set_size(PhysicalSize::new(w, bar + granted)).map_err(|e| e.to_string())?;
+    window.set_position(PhysicalPosition::new(x, y - up_offset)).map_err(|e| e.to_string())?;
+    Ok(MiniFit { up, popup: granted as f64 / scale })
+}
+
+/// 隐藏前把展开的弹层收回去，下次打开时窗口是本体的大小和位置。
+fn collapse(window: &WebviewWindow) -> Result<(), String> {
+    let anchor = expanded()?.take();
+    if let Some(anchor) = anchor {
+        let size = window.inner_size().map_err(|e| e.to_string())?;
+        window.set_size(PhysicalSize::new(size.width, anchor.bar_height)).map_err(|e| e.to_string())?;
+        window.set_position(PhysicalPosition::new(anchor.x, anchor.y)).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// user_moved：用户刚拖完小窗（WM_EXITSIZEMOVE）。展开中只有这时才按上移量把新位置换算回本体位置；
+/// 其余时候（程序自己改尺寸、位置引起的 Resized）展开中的位置是临时的，原样记本体，不夹紧、不挪窗口。
+fn save_geometry(window: &WebviewWindow, user_moved: bool) -> Result<(), String> {
     let position = window.outer_position().map_err(|e| e.to_string())?;
     let size = window.inner_size().map_err(|e| e.to_string())?;
     // Minimized windows can report an empty client area; preserve the last usable geometry.
     if size.width == 0 || size.height == 0 { return Ok(()); }
+    let anchor = {
+        let mut state = expanded()?;
+        if let (true, Some(anchor)) = (user_moved, state.as_mut()) {
+            anchor.x = position.x;
+            anchor.y = position.y + anchor.up_offset;
+        }
+        *state
+    };
+    if let Some(anchor) = anchor {
+        let value = Geometry { x: anchor.x, y: anchor.y, width: size.width, height: anchor.bar_height };
+        let path = super::config_dir(window.app_handle())?.join("mini-window.json");
+        return fs::write(path, serde_json::to_vec(&value).map_err(|e| e.to_string())?).map_err(|e| e.to_string());
+    }
     let mut value = Geometry { x: position.x, y: position.y, width: size.width, height: size.height };
     if let Some(area) = current_work_area(window)? {
         let (cx, cy) = clamp_to_work_area(value, area);
@@ -101,7 +176,7 @@ unsafe extern "system" fn sizemove_proc(hwnd: HWND, message: u32, wparam: WPARAM
     } else if message == WM_EXITSIZEMOVE {
         hook.in_sizemove.store(false, Ordering::SeqCst);
         let result = unsafe { DefSubclassProc(hwnd, message, wparam, lparam) };
-        if let Err(error) = save_geometry(&hook.window) { eprintln!("mini window: {error}"); }
+        if let Err(error) = save_geometry(&hook.window, true) { eprintln!("mini window: {error}"); }
         return result;
     }
     unsafe { DefSubclassProc(hwnd, message, wparam, lparam) }
@@ -139,16 +214,17 @@ fn create(app: &tauri::AppHandle) -> Result<WebviewWindow, String> {
         window.set_size(PhysicalSize::new(value.width, value.height)).map_err(|e| e.to_string())?;
         window.set_position(PhysicalPosition::new(value.x, value.y)).map_err(|e| e.to_string())?;
     }
-    save_geometry(&window)?;
+    save_geometry(&window, false)?;
     let target = window.clone();
     window.on_window_event(move |event| {
         let result = match event {
             WindowEvent::CloseRequested { api, .. } => {
                 api.prevent_close();
-                let _ = save_geometry(&target);
+                let _ = collapse(&target);
+                let _ = save_geometry(&target, false);
                 target.hide().map_err(|e| e.to_string())
             }
-            WindowEvent::Resized(_) if !in_sizemove.load(Ordering::SeqCst) => save_geometry(&target),
+            WindowEvent::Resized(_) if !in_sizemove.load(Ordering::SeqCst) => save_geometry(&target, false),
             _ => Ok(()),
         };
         if let Err(error) = result { eprintln!("mini window: {error}"); }
@@ -168,11 +244,12 @@ pub async fn toggle_mini(app: tauri::AppHandle) -> Result<bool, String> {
 fn toggle(app: &tauri::AppHandle) -> Result<bool, String> {
     let window = match app.get_webview_window("mini") { Some(window) => window, None => create(app)? };
     if window.is_visible().map_err(|e| e.to_string())? {
-        save_geometry(&window)?;
+        collapse(&window)?;
+        save_geometry(&window, false)?;
         window.hide().map_err(|e| e.to_string())?;
         Ok(false)
     } else {
-        save_geometry(&window)?;
+        save_geometry(&window, false)?;
         window.show().and_then(|_| window.set_focus()).map_err(|e| e.to_string())?;
         Ok(true)
     }
@@ -231,5 +308,21 @@ mod tests {
         assert_eq!(clamp_to_work_area(expanded, area), (2, 1304));
         let negative = Geometry { x: -100, y: -20, width: 320, height: 46 };
         assert_eq!(clamp_to_work_area(negative, area), (0, 0));
+    }
+    #[test]
+    fn popup_opens_down_when_it_fits_and_flips_up_only_when_above_is_roomier() {
+        let area = WorkArea { x: 0, y: 0, width: 2560, height: 1392 };
+        // 靠上：下面放得下，往下，给全高
+        assert_eq!(place_popup(100, 46, 600, area), (false, 600));
+        // 贴底边：下面只剩 10，上面宽，往上，给全高
+        assert_eq!(place_popup(1336, 46, 600, area), (true, 600));
+        // 上下都放不下：选更宽的一侧，高度截到那一侧的剩余
+        assert_eq!(place_popup(400, 46, 1200, area), (false, 946));
+        assert_eq!(place_popup(1000, 46, 1200, area), (true, 1000));
+        // 下面不够但比上面宽：仍往下，截到下面的剩余
+        assert_eq!(place_popup(300, 46, 1200, area), (false, 1046));
+        // 副屏在主屏上方（负坐标）
+        let upper = WorkArea { x: 0, y: -1080, width: 1920, height: 1040 };
+        assert_eq!(place_popup(-80, 46, 400, upper), (true, 400));
     }
 }

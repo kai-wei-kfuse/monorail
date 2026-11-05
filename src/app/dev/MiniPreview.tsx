@@ -15,8 +15,19 @@ export function MiniPreview() {
       accent: '#00f5a0', miniMode: tiny ? 'tiny' : 'mini', epoch: 1, revision: 1, entryId: 'e1', cardId: null, pending_id: null,
       entry: { id: 'e1', description: '写周报', project: '工作', tags: [], startedAt: iso(t0 - 25 * 60_000), cardId: null, kind: '普通' },
       pending: null, resumeDescription: null, card: null, closedEffectiveMs: 0, currentSegStartedAt: null, awayActivity: null,
-      projects: [{ name: '未分类', color: '#888884' }, { name: '工作', color: '#7c5cff' }, { name: '学习', color: '#1aa3ff' }], knownTags: ['周报', '408'],
+      projects: [{ name: '未分类', color: '#888884' }, { name: '工作', color: '#7c5cff' }, { name: '学习', color: '#1aa3ff' },
+        { name: '求职', color: '#ff5a3c' }, { name: '英语口语练习打卡计划', color: '#ff2fa8' }], knownTags: ['周报', '408'],
+      // 0.3.0-beta.4 D1：自动完成的演示数据（收藏、待做的卡、最近的记录）
+      suggest: {
+        favorites: [{ id: 'f1', name: '背单词', project: '学习', tags: ['英语'] }, { id: 'f2', name: '写周报', project: '工作', tags: [] }],
+        cards: [{ id: 'c1', content: '整理 beta.4 小窗需求', track: '主线' }, { id: 'c2', content: '读《设计模式》第 3 章', track: '支线' }],
+        recent: [{ id: 'r1', description: '投简历', project: '求职', tags: ['外企'] }, { id: 'r2', description: '看论文', project: '学习', tags: ['AI'] },
+          { id: 'r3', description: '回邮件', project: '工作', tags: [] }],
+      },
     };
+    // ?idle：从待机开始（点名字就是写新事件）；?long：正在计的这一条分类名很长
+    if (params.has('idle')) s = { ...s, entry: { ...s.entry!, id: 'idle', description: '待机', project: '待机' }, entryId: 'idle' };
+    if (params.has('long')) s = { ...s, entry: { ...s.entry!, project: '英语口语练习打卡计划' } };
     let onSnap: ((v: MiniSnapshot) => void) | null = null, onReply: ((r: MiniReply) => void) | null = null;
     const push = (next: Partial<MiniSnapshot>) => { s = { ...s, ...next, revision: s.revision + 1 }; s.entryId = s.entry?.id ?? null; onSnap?.(s); };
     const entry = (description: string, project: string, tags: string[], from = Date.now()) =>
@@ -32,6 +43,18 @@ export function MiniPreview() {
           if (s.entry && s.entry.project !== '待机' && !s.pending) push({ entry: { ...s.entry, description: p.description ?? s.entry.description, project: p.project ?? s.entry.project, tags: p.tags ?? s.entry.tags } });
           else push({ entry: entry(p.description ?? '（无描述）', p.project ?? '未分类', p.tags ?? [], from), pending: null, pending_id: null, resumeDescription: null });
           return { kind: 'done' };
+        }
+        case 'startFavorite': {
+          const f = s.suggest.favorites.find(x => x.id === c.presetId)!;
+          push({ entry: entry(f.name, f.project, f.tags), pending: null, pending_id: null }); return { kind: 'done' };
+        }
+        case 'startCard': {
+          const k = s.suggest.cards.find(x => x.id === c.targetCardId)!;
+          push({ entry: entry(k.content, '工作', []), pending: null, pending_id: null }); return { kind: 'done' };
+        }
+        case 'continueEntry': {
+          const r = s.suggest.recent.find(x => x.id === c.targetEntryId)!;
+          push({ entry: entry(r.description, r.project, r.tags), pending: null, pending_id: null }); return { kind: 'done' };
         }
         case 'setReadout':
           if (c.target.mode === 'idle') push({ pending: { id: 'p' + s.revision, startedAt: iso(Date.parse(c.at) - c.milliseconds) }, pending_id: 'p' + s.revision });
