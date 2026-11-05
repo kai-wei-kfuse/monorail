@@ -1,0 +1,20 @@
+{
+  "run": {
+    "org.yuanli.utools": "C:\\Users\\kai_wei\\AppData\\Local\\Programs\\utools\\uTools.exe",
+    "QuarkUpdaterTaskUser1.0.0.21": "\"C:\\Users\\kai_wei\\AppData\\Local\\QuarkUpdater\\QuarkUpdater\\1.0.0.21\\updater.exe\" --wake --enable-logging --vmodule=*/components/winhttp/*=1,*/components/update_client/*=2,*/chrome/updater/*=2,*/chrome/updater/quark/*=2,*/quark/utils/*=2",
+    "CometUpdaterTaskUser145.2.7632.4583": "\"C:\\Users\\kai_wei\\AppData\\Local\\Perplexity\\CometUpdater\\145.2.7632.4583\\updater.exe\" --wake",
+    "OneDrive": "\"C:\\Program Files\\Microsoft OneDrive\\OneDrive.exe\" /background",
+    "ctfmon": "C:\\WINDOWS\\system32\\ctfmon.exe",
+    "MuMuPlayerService": "D:\\Program Files\\Netease\\MuMu\\nx_main\\MuMuNxService.exe",
+    "electron.app.Twinkle Tray": "\"C:\\Users\\kai_wei\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe\"",
+    "MAA_EE225B66": "\"D:\\MAA-v5.20.0-win-x64\\MAA.exe\"",
+    "GameViewer": "\"D:\\Program Files\\Netease\\GameViewer\\GameViewer.exe\" --auto-run",
+    "单轨": "C:\\Users\\kai_wei\\AppData\\Local\\单轨\\pixel-record.exe ",
+    "IDMan": "C:\\Program Files (x86)\\Internet Download Manager\\IDMan.exe /onboot"
+  },
+  "daily": {
+    "pid": 46120,
+    "exe": "3dd8873756a04bf9d90bad83ff099bf8e34523c5516d6a95aaa5ad6c62246c4f",
+    "config": "4a004ccdb7bb6ebb76c88d13acf268ee0d89a2a822751982521554cd07eb4b05"
+  }
+}

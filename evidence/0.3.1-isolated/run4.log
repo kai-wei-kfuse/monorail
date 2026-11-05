@@ -1,0 +1,6 @@
+PASS boot
+FAIL updateEntry AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+2 !== 1
+
+PASS finish

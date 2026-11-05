@@ -1,0 +1,527 @@
+[
+  {
+    "version": 1,
+    "id": "3f35a6e5-175b-4f0b-83ab-9656841165c9",
+    "at": "2026-11-05T23:55:26.027Z",
+    "day": "2026-11-06",
+    "action": "system.reconcile",
+    "label": "整理记录",
+    "source": {
+      "kind": "system",
+      "trigger": "reconcile"
+    },
+    "why": "启动或唤回主窗口时整理记录：补齐快速记录条存下的待办和想法",
+    "subject": null,
+    "changes": [
+      {
+        "type": "state",
+        "id": "home_mode",
+        "name": "计时状态",
+        "field": "首页",
+        "before": "引导",
+        "after": "空卡区"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "fc6f2ce3-0487-47e7-b08a-5229471df866",
+    "at": "2026-11-05T23:55:38.608Z",
+    "day": "2026-11-06",
+    "action": "settings.change",
+    "label": "改设置",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "settings"
+    },
+    "subject": {
+      "type": "settings",
+      "id": "trackingMode",
+      "text": "计时模式",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "settings",
+        "id": "trackingMode",
+        "name": "计时模式",
+        "field": "计时模式",
+        "before": "strict",
+        "after": "loose"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "ff0b5df8-a938-437b-8043-a30149f9373d",
+    "at": "2026-11-05T23:55:44.294Z",
+    "day": "2026-11-06",
+    "action": "review.enter",
+    "label": "进入回顾",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "review"
+    },
+    "subject": {
+      "type": "review",
+      "id": "2026-W45",
+      "text": "2026-W45",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "review",
+        "id": "2026-W45",
+        "name": "2026-W45",
+        "field": "状态",
+        "before": null,
+        "after": "进行中"
+      },
+      {
+        "type": "review",
+        "id": "2026-W45",
+        "name": "2026-W45",
+        "field": "步骤",
+        "before": null,
+        "after": "recap"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "5c77ca26-574b-46a5-8ab5-cae69abff6c1",
+    "at": "2026-11-05T23:55:46.890Z",
+    "day": "2026-11-06",
+    "action": "settings.change",
+    "label": "改设置",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "settings"
+    },
+    "subject": {
+      "type": "settings",
+      "id": "trackingMode",
+      "text": "计时模式",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "settings",
+        "id": "trackingMode",
+        "name": "计时模式",
+        "field": "计时模式",
+        "before": "loose",
+        "after": "strict"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "2f217e7b-6a84-4b12-9fb3-58fca57d3a00",
+    "at": "2026-11-05T23:55:49.277Z",
+    "day": "2026-11-06",
+    "action": "auto.add_time_entry",
+    "label": "补录条目",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "entry",
+      "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+      "text": "隔离测试：读书",
+      "meta": "学习 · 11.06 07:05–07:35"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读书",
+        "field": "描述",
+        "before": null,
+        "after": "隔离测试：读书"
+      },
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读书",
+        "field": "项目",
+        "before": null,
+        "after": "学习"
+      },
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读书",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读书",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 07:05–07:35"
+      },
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读书",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读书",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "add_time_entry",
+      "operation_id": "a327a7e1-f03a-473d-9739-ac7b4554ea2f",
+      "params": "{\"description\":\"隔离测试：读书\",\"end\":\"2026-11-05T23:35:49.129+00:00\",\"project\":\"学习\",\"start\":\"2026-11-05T23:05:49.129+00:00\",\"tags\":[]}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "13d1f559-bf7e-40c8-9eb0-891445984a9a",
+    "at": "2026-11-05T23:55:49.654Z",
+    "day": "2026-11-06",
+    "action": "auto.update_time_entry",
+    "label": "改计时记录",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "entry",
+      "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+      "text": "隔离测试：读龙书",
+      "meta": "学习 · 11.06 07:05–07:30"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读龙书",
+        "field": "描述",
+        "before": "隔离测试：读书",
+        "after": "隔离测试：读龙书"
+      },
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读龙书",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": "#编译"
+      },
+      {
+        "type": "entry",
+        "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+        "name": "隔离测试：读龙书",
+        "field": "时间",
+        "before": "11.06 07:05–07:35",
+        "after": "11.06 07:05–07:30"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "update_time_entry",
+      "operation_id": "fc6bfd50-0f0a-43a8-9058-251070dcfade",
+      "params": "{\"description\":\"隔离测试：读龙书\",\"end\":\"2026-11-05T23:30:49.129+00:00\",\"entry_id\":\"cafdf5d3-592c-491a-8be3-857132a51866\",\"expected_state\":\"ts1:6cac03cb-3425-4b0a-a043-26c1393c362a|2026-11-05T23:55:25.728Z|普通|待机|-|-|-|-|-|-|-\",\"tags\":[\"编译\"]}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "3089a857-72d0-4311-958b-7a2882c2a4b3",
+    "at": "2026-11-05T23:57:59.055Z",
+    "day": "2026-11-06",
+    "action": "auto.add_time_entry",
+    "label": "补录条目",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "entry",
+      "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+      "text": "隔离测试：读书",
+      "meta": "学习 · 11.06 07:07–07:37"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读书",
+        "field": "描述",
+        "before": null,
+        "after": "隔离测试：读书"
+      },
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读书",
+        "field": "项目",
+        "before": null,
+        "after": "学习"
+      },
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读书",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读书",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 07:07–07:37"
+      },
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读书",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读书",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "add_time_entry",
+      "operation_id": "61665d10-4095-4325-a330-15486127809b",
+      "params": "{\"description\":\"隔离测试：读书\",\"end\":\"2026-11-05T23:37:58.910+00:00\",\"project\":\"学习\",\"start\":\"2026-11-05T23:07:58.910+00:00\",\"tags\":[]}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "d77c6d26-6d45-4118-8ecb-280f36f2e013",
+    "at": "2026-11-05T23:57:59.421Z",
+    "day": "2026-11-06",
+    "action": "auto.update_time_entry",
+    "label": "改计时记录",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "entry",
+      "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+      "text": "隔离测试：读龙书",
+      "meta": "学习 · 11.06 07:07–07:32"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读龙书",
+        "field": "描述",
+        "before": "隔离测试：读书",
+        "after": "隔离测试：读龙书"
+      },
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读龙书",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": "#编译"
+      },
+      {
+        "type": "entry",
+        "id": "044cb88a-2e8c-4046-9f02-b4267dfbd4b4",
+        "name": "隔离测试：读龙书",
+        "field": "时间",
+        "before": "11.06 07:07–07:37",
+        "after": "11.06 07:07–07:32"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "update_time_entry",
+      "operation_id": "fe5298b5-ea3b-4faf-a4d2-0fec166e8e08",
+      "params": "{\"description\":\"隔离测试：读龙书\",\"end\":\"2026-11-05T23:32:58.910+00:00\",\"entry_id\":\"044cb88a-2e8c-4046-9f02-b4267dfbd4b4\",\"expected_state\":\"ts1:6cac03cb-3425-4b0a-a043-26c1393c362a|2026-11-05T23:55:25.728Z|普通|待机|-|-|-|-|-|-|-\",\"tags\":[\"编译\"]}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "bf0c055a-fe75-4e40-8231-cf79fe166565",
+    "at": "2026-11-05T23:58:37.106Z",
+    "day": "2026-11-06",
+    "action": "auto.add_time_entry",
+    "label": "补录条目",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "entry",
+      "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+      "text": "隔离测试：读书",
+      "meta": "学习 · 11.06 07:08–07:38"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读书",
+        "field": "描述",
+        "before": null,
+        "after": "隔离测试：读书"
+      },
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读书",
+        "field": "项目",
+        "before": null,
+        "after": "学习"
+      },
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读书",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读书",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 07:08–07:38"
+      },
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读书",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读书",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "add_time_entry",
+      "operation_id": "56e22cc0-fb0a-4b05-856f-7116132c2384",
+      "params": "{\"description\":\"隔离测试：读书\",\"end\":\"2026-11-05T23:38:36.930+00:00\",\"project\":\"学习\",\"start\":\"2026-11-05T23:08:36.930+00:00\",\"tags\":[]}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "e3ef4afd-7573-4971-be84-2f387ecb358b",
+    "at": "2026-11-05T23:58:37.536Z",
+    "day": "2026-11-06",
+    "action": "auto.update_time_entry",
+    "label": "改计时记录",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "entry",
+      "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+      "text": "隔离测试：读龙书",
+      "meta": "学习 · 11.06 07:08–07:33"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读龙书",
+        "field": "描述",
+        "before": "隔离测试：读书",
+        "after": "隔离测试：读龙书"
+      },
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读龙书",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": "#编译"
+      },
+      {
+        "type": "entry",
+        "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+        "name": "隔离测试：读龙书",
+        "field": "时间",
+        "before": "11.06 07:08–07:38",
+        "after": "11.06 07:08–07:33"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "update_time_entry",
+      "operation_id": "d6c352a3-bb87-4883-b8e0-4f50e863521d",
+      "params": "{\"description\":\"隔离测试：读龙书\",\"end\":\"2026-11-05T23:33:36.930+00:00\",\"entry_id\":\"fc65fdd6-b231-413d-87b8-789703e70b80\",\"expected_state\":\"ts1:6cac03cb-3425-4b0a-a043-26c1393c362a|2026-11-05T23:55:25.728Z|普通|待机|-|-|-|-|-|-|-\",\"tags\":[\"编译\"]}",
+      "truncated": false
+    }
+  }
+]

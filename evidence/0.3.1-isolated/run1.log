@@ -1,0 +1,7 @@
+PASS boot
+PASS strictIdle
+PASS looseIdle
+PASS backToStrict
+FAIL updateEntry AssertionError [ERR_ASSERTION]: list shows edited entry
+PASS taskMode
+PASS finish

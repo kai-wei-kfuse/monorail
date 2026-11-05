@@ -1,0 +1,155 @@
+{
+  "boot": {
+    "ok": true,
+    "title": "单轨 · MONORAIL",
+    "processes": 1,
+    "settingsKeysWritten": [
+      "taskMode",
+      "trackingMode",
+      "insertBackPlace",
+      "idleAskMinutes"
+    ],
+    "ms": 13674
+  },
+  "strictIdle": {
+    "ok": true,
+    "status": "待机 00:10",
+    "led": "idle",
+    "tbar": [
+      "IDLE",
+      "IDLE待机 00:10",
+      ""
+    ],
+    "ms": 903
+  },
+  "looseIdle": {
+    "ok": true,
+    "status": "没在计时 --:--",
+    "led": "off",
+    "tbar": [
+      "OFF",
+      "NOT TIMING没在计时 00:00",
+      ""
+    ],
+    "readoutStill": true,
+    "calendarIdleToggle": false,
+    "reviewSleepOnly": true,
+    "ms": 8288
+  },
+  "backToStrict": {
+    "ok": true,
+    "status": "待机 00:22",
+    "led": "idle",
+    "ms": 3273
+  },
+  "updateEntry": {
+    "ok": true,
+    "added": "fc65fdd6-b231-413d-87b8-789703e70b80",
+    "edited": {
+      "id": "fc65fdd6-b231-413d-87b8-789703e70b80",
+      "description": "隔离测试：读龙书",
+      "project": "学习",
+      "tags": [
+        "编译"
+      ],
+      "started_at": "2026-11-05T23:08:36.930+00:00",
+      "ended_at": "2026-11-05T23:33:36.930+00:00",
+      "card_id": null,
+      "kind": "普通",
+      "source": "手动"
+    },
+    "idleRefused": "ENTRY_IS_IDLE",
+    "history": [
+      {
+        "action": "auto.update_time_entry",
+        "source": {
+          "kind": "cli",
+          "agent": {
+            "name": "Claude Code",
+            "detected_by": "env",
+            "evidence": "CLAUDECODE=1"
+          }
+        }
+      },
+      {
+        "action": "auto.update_time_entry",
+        "source": {
+          "kind": "cli",
+          "agent": {
+            "name": "Claude Code",
+            "detected_by": "env",
+            "evidence": "CLAUDECODE=1"
+          }
+        }
+      },
+      {
+        "action": "auto.update_time_entry",
+        "source": {
+          "kind": "cli",
+          "agent": {
+            "name": "Claude Code",
+            "detected_by": "env",
+            "evidence": "CLAUDECODE=1"
+          }
+        }
+      }
+    ],
+    "agentRules": "单轨的数据目录（timelog/、records/、cards/、tasks/、",
+    "ms": 2050
+  },
+  "taskMode": {
+    "ok": true,
+    "noRedraw": true,
+    "questModeSection": true,
+    "taskModeFile": true,
+    "ms": 2767
+  },
+  "finish": {
+    "ok": true,
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyPid": [
+      46120,
+      46120
+    ],
+    "historyCount": 10,
+    "actions": [
+      "system.reconcile@system",
+      "settings.change@manual/main",
+      "review.enter@manual/main",
+      "settings.change@manual/main",
+      "auto.add_time_entry@cli",
+      "auto.update_time_entry@cli",
+      "auto.add_time_entry@cli",
+      "auto.update_time_entry@cli",
+      "auto.add_time_entry@cli",
+      "auto.update_time_entry@cli"
+    ],
+    "ms": 4256
+  },
+  "listCheck": {
+    "ok": true,
+    "listHasEdited": true,
+    "history": [
+      {
+        "action": "auto.update_time_entry",
+        "source": {
+          "kind": "cli",
+          "agent": {
+            "name": "Claude Code",
+            "detected_by": "env",
+            "evidence": "CLAUDECODE=1"
+          }
+        },
+        "subject": {
+          "type": "entry",
+          "id": "cafdf5d3-592c-491a-8be3-857132a51866",
+          "text": "隔离测试：读龙书",
+          "meta": "学习 · 11.06 07:05–07:30"
+        }
+      }
+    ],
+    "ms": 6465
+  }
+}
