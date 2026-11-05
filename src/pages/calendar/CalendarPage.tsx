@@ -50,9 +50,9 @@ function useNow(period = 30_000): number {
  * 日历页（设计文档「计时 · 日历」）：日 / 周视图，周一开始；每天从日边界画到次日日边界。
  * 条目按项目上色，待机可以隐藏。点一条打开弹窗；新建以后也直接打开弹窗，好填描述。
  */
-export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapMinutes, showIdle, isIdle, actions, onRange, focusDay }:
+export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapMinutes, showIdle, idleToggle = true, isIdle, actions, onRange, focusDay }:
   { entries: readonly CalendarEntry[]; projects: ProjectOption[]; knownTags: string[]; boundaryHour: number; snapMinutes: number;
-    showIdle: boolean; isIdle: (e: CalEntry) => boolean; actions: CalendarActions; onRange?: (start: number, end: number) => void;
+    showIdle: boolean; /** 宽松模式下不显示〔显示待机〕开关 */ idleToggle?: boolean; isIdle: (e: CalEntry) => boolean; actions: CalendarActions; onRange?: (start: number, end: number) => void;
     /** 从操作历史 ◎ 定位过来：切到日视图看这一天（活动日开始时刻）；seq 变了就再跳一次 */
     focusDay?: { day: number; seq: number } | null }) {
   const now = useNow();
@@ -77,7 +77,7 @@ export function CalendarPage({ entries, projects, knownTags, boundaryHour, snapM
     <Segmented label="视图" value={view} onChange={v => { setView(v); setShift(0); }} options={[{ value: 'day', label: '日' }, { value: 'week', label: '周' }]} />
     <Segmented label="比例" value={String(zoom)} onChange={v => pickZoom(Number(v) as CalZoom)}
       options={CAL_ZOOMS.map(z => ({ value: String(z), label: `${z}×` }))} />
-    <span className="pg-switch"><Switch checked={showIdle} onChange={actions.setShowIdle} label="显示待机" /><span>显示待机</span></span>
+    {idleToggle && <span className="pg-switch"><Switch checked={showIdle} onChange={actions.setShowIdle} label="显示待机" /><span>显示待机</span></span>}
   </>;
   // 复制到它后面那一段；后面放不下（会超过现在）就复制到它前面
   const copyNext = (e: CalendarEntry) => {

@@ -26,6 +26,7 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     // 卡片（cardService）
     start: guard((cardId: string, at: string) => timer.startCard(ctx, cardId, at)),
     checkComplete: guard((cardId: string, at: string) => card.checkComplete(ctx, cardId, at)),
+    checkSplit: guard((cardId: string, at: string) => card.checkSplit(ctx, cardId, at)),
     // fromMini：小窗点的完成、主窗口弹的对话框（两段式），历史来源记小窗
     complete: guard((cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean) =>
       card.complete(ctx, cardId, at, note, keepGoing, fromMini ? { kind: 'manual', via: 'mini' } : undefined)),

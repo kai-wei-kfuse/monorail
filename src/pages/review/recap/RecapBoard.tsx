@@ -23,6 +23,8 @@ export interface RecapBoardProps {
   projectColors: Record<string, string>;
   /** 一次性提示（例如记住的选择读不出来） */
   notice?: string | null;
+  /** 宽松模式：待机不计，开关只剩睡眠（ADR 0021 第 13 条） */
+  loose?: boolean;
 }
 
 /**
@@ -30,7 +32,7 @@ export interface RecapBoardProps {
  * 选择和查询由外面管；这里只管界面状态：展开了哪些组（换分组时收起）、卡片区是否展开全部
  * （换模式、周期或柱子筛选时收回）、悬停的分项（其余变淡）。
  */
-export function RecapBoard({ result: r, view, onView, bucket, onBucket, today, minDay, projectColors, notice }: RecapBoardProps) {
+export function RecapBoard({ result: r, view, onView, bucket, onBucket, today, minDay, projectColors, notice, loose = false }: RecapBoardProps) {
   const [open, setOpen] = useState<{ dim: string; keys: ReadonlySet<string> }>({ dim: view.dim, keys: new Set() });
   const moreKey = [view.view, view.period, view.from, view.to, bucket].join('|');
   const [more, setMore] = useState<{ key: string; done: boolean; notes: boolean }>({ key: moreKey, done: false, notes: false });
@@ -52,14 +54,14 @@ export function RecapBoard({ result: r, view, onView, bucket, onBucket, today, m
   const toggle = (key: string) => { const next = new Set(keys); if (next.has(key)) next.delete(key); else next.add(key); setOpen({ dim: view.dim, keys: next }); };
   return <div className="rv-board" onMouseOver={onHover} onMouseLeave={() => setHot(null)}>
     {notice && <p className="ls-warn rv-notice">{notice}</p>}
-    <Controls view={view} range={r.range} today={today} minDay={minDay} onView={changeView} />
+    <Controls view={view} range={r.range} today={today} minDay={minDay} onView={changeView} loose={loose} />
     <Stats r={r} today={today} />
     <div className={`rv-charts${hot !== null ? ' rv-hot' : ''}`}>
       <Trend r={r} bucket={sel} onBucket={onBucket} hot={hot} />
       <Composition r={r} dim={view.dim} hot={hot} />
     </div>
     <div className={hot !== null ? 'rv-hot' : undefined}>
-      <Breakdown r={r} view={view} bucket={sel} today={today} open={keys} onToggle={toggle} projectColors={projectColors} onBucket={onBucket} hot={hot}
+      <Breakdown r={r} view={view} bucket={sel} today={today} open={keys} onToggle={toggle} projectColors={projectColors} onBucket={onBucket} hot={hot} loose={loose}
         onAll={all => setOpen({ dim: view.dim, keys: all ? new Set(r.groups.map(g => g.key)) : new Set() })} />
     </div>
     <DoneNotes done={inBucket(r.done, sel)} notes={inBucket(r.notes, sel)} scope={scope} mode={view.view} onMode={mode => onView({ ...view, view: mode })}

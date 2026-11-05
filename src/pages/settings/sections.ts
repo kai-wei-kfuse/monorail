@@ -43,7 +43,7 @@ export const SECTIONS: SettingSection[] = [
     { cn: '提醒', en: 'ALERTS', rows: [
       { key: 'longActivityMinutes', cn: '长时间提醒', desc: '同一活动超过这个时长，轻提醒确认一下' },
       { key: 'deadlineLeadMinutes', cn: '期限提醒提前量', desc: '带期限的待办，到期前多久提醒' },
-      { key: 'offlineAskMinMinutes', cn: '离线追问最小间隔', desc: '关机或休眠短于这个时长，不追问，直接算在原来的活动上', onlyIn: 'strict' } ] } ] },
+      { key: 'offlineAskMinMinutes', cn: '离线追问最小间隔', desc: '关机或休眠短于这个时长，直接算在原来的活动上；长于它，紧凑模式下追问这段在做什么，宽松模式下记成没在计时' } ] } ] },
   { id: 'lists', no: '05', cn: '收藏与快捷活动', en: 'LISTS', desc: '收藏和快捷活动都是预设：描述、项目、标签。软件不预置，都由你自己添加。', groups: [
     { cn: '收藏', en: 'FAVORITES', rows: [{ custom: 'favorites', cn: '收藏', desc: '计时条下面一行，输入框没有焦点时按数字键 1–9 启动。做卡时点它是插入（卡等你回来），自由计时时是切换。计时条上点图钉、日历和列表里「设为收藏」也会加到这里' }] },
     { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'presets', cn: '快捷活动', desc: '底栏弹层里一键开始。永远是插入：做完回到原来的事' }] } ] },

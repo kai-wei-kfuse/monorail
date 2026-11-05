@@ -49,6 +49,18 @@ it('changing dayBoundaryHour changes dataVersion, so the period is resolved agai
   expect(after).not.toBe(before);
   expect(Date.parse(after.range.from) - Date.parse(before.range.from)).toBe(2 * 60 * MIN);
 });
+it('宽松模式：待机不计，开关打开也只多睡眠；切回紧凑模式照旧（ADR 0021 第 13 条，G6 审核 S1）', async () => {
+  const f = fixture();
+  await startFree(f.ctx, value, go(f, 0));
+  await stop(f.ctx, go(f, 10));   // 之后开着的是待机
+  const withIdle = { ...week, includeIdle: true };
+  const strict = query(f.ctx, withIdle, go(f, 30));
+  expect(strict.groups.find(g => g.key === '待机')?.ms).toBe(20 * MIN);
+  await change(f.ctx, 'trackingMode', 'loose', go(f, 31));
+  const loose = query(f.ctx, withIdle, at(30));
+  expect(loose.groups.map(g => g.key)).toEqual(['工作']);
+  expect(loose.effectiveMs).toBe(strict.effectiveMs);
+});
 it('refresh every minute while something runs in the period, otherwise at the next activity-day boundary', async () => {
   const f = fixture();
   await startFree(f.ctx, value, go(f, 0));

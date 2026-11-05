@@ -18,7 +18,7 @@ const CORRUPT_NOTICE = '上次的回看设置无法读取，已恢复默认';
  */
 export function useRecap(ctx: Ctx, report: (error: unknown) => void, store: RecapViewPort = recapViewStore): RecapBoardProps {
   const version = useStore(appStore, s => s.home.dataVersion);
-  const projects = useStore(appStore, s => s.settings.lists.projects);
+  const projects = useStore(appStore, s => s.settings.lists.projects), loose = useStore(appStore, s => s.settings.trackingMode === 'loose');
   const [view, setView] = useState<RecapViewState>(DEFAULT_RECAP_VIEW);
   const [loaded, setLoaded] = useState(false), [notice, setNotice] = useState<string | null>(null);
   const [bucket, setBucket] = useState<string | null>(null), [tick, setTick] = useState(0);
@@ -61,5 +61,5 @@ export function useRecap(ctx: Ctx, report: (error: unknown) => void, store: Reca
 
   const projectColors = useMemo(() => Object.fromEntries(projects.map(p => [p.name, p.color])), [projects]);
   return { result: loaded || touched.current ? result : null, view, onView, bucket, onBucket: setBucket,
-    today: result?.today ?? '', minDay: result?.earliestDay ?? null, projectColors, notice };
+    today: result?.today ?? '', minDay: result?.earliestDay ?? null, projectColors, notice, loose };
 }

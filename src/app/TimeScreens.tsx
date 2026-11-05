@@ -49,12 +49,14 @@ function useShared() {
   const projects = useStore(appStore, s => s.backpack.pool.projects), knownTags = useStore(appStore, s => s.home.knownTags);
   const version = useStore(appStore, s => s.home.dataVersion), settings = useStore(appStore, s => s.settings);
   // 宽松模式（ADR 0021 第 13 条）：日历、列表不显示待机，calendarShowIdle 不读
-  return { projects, knownTags, version, boundaryHour: settings.dayBoundaryHour, showIdle: settings.trackingMode === 'loose' ? false : settings.calendarShowIdle };
+  // 宽松模式下〔显示待机〕开关也不显示（G6 审核 S1：点了不起作用）
+  const loose = settings.trackingMode === 'loose';
+  return { projects, knownTags, version, boundaryHour: settings.dayBoundaryHour, showIdle: loose ? false : settings.calendarShowIdle, idleToggle: !loose };
 }
 
 /** 日历页的接线：按页面在看的那几天查条目。focusDay：从操作历史 ◎ 定位过来要看的那一天。 */
 export function CalendarScreen({ ctx, report, focusDay }: { ctx: Ctx; report: (error: unknown) => void; focusDay?: DayFocus | null }) {
-  const { projects, knownTags, version, boundaryHour, showIdle } = useShared();
+  const { projects, knownTags, version, boundaryHour, showIdle, idleToggle } = useShared();
   const [range, setRange] = useState<[number, number] | null>(null);
   const onRange = useCallback((start: number, end: number) => setRange(r => r && r[0] === start && r[1] === end ? r : [start, end]), []);
   // version 只用来在数据变了以后重新查
@@ -69,7 +71,7 @@ export function CalendarScreen({ ctx, report, focusDay }: { ctx: Ctx; report: (e
   };
   // 日历吸附最小间隔统一取 shared/settings.ts 的 defaults.calendarSnapMinutes（1 分钟），不改写用户既有 settings.yaml。
   return <CalendarPage entries={entries} projects={projects} knownTags={knownTags} boundaryHour={boundaryHour} snapMinutes={defaults.calendarSnapMinutes}
-    showIdle={showIdle} isIdle={isIdle} actions={actions} onRange={onRange} focusDay={focusDay} />;
+    showIdle={showIdle} idleToggle={idleToggle} isIdle={isIdle} actions={actions} onRange={onRange} focusDay={focusDay} />;
 }
 
 export interface DayFocus { day: number; seq: number }
@@ -81,7 +83,7 @@ export interface DayFocus { day: number; seq: number }
 export function ListScreen({ ctx, report, view, onView, historyFocus, focusDay, onLocate, onCopied }:
   { ctx: Ctx; report: (error: unknown) => void; view: ListView; onView: (v: ListView) => void; historyFocus?: HistoryFocus | null;
     focusDay?: DayFocus | null; onLocate: (r: HistoryRecord) => void; onCopied?: (text: string) => void }) {
-  const { projects, knownTags, version, boundaryHour, showIdle } = useShared();
+  const { projects, knownTags, version, boundaryHour, showIdle, idleToggle } = useShared();
   const [days, setDays] = useState(7), [historyDays, setHistoryDays] = useState(7);
   const entries = useMemo(() => edit.recentEntries(ctx, days), [ctx, days, version]);   // version：数据变了以后重新查
   // 跳过来的那一条早于已载入的天数时放宽到包含它
@@ -105,5 +107,5 @@ export function ListScreen({ ctx, report, view, onView, historyFocus, focusDay, 
       onMore={() => setHistoryDays(d => d + 7)} onLocate={onLocate} onCopy={onCopy} />;
   }
   return <ListPage entries={entries} projects={projects} knownTags={knownTags} boundaryHour={boundaryHour} isIdle={isIdle} actions={actions}
-    showIdle={showIdle} onShowIdle={on => void edit.setShowIdle(ctx, on, now(), source).catch(report)} onDays={setDays} toggle={toggle} focusDay={focusDay} />;
+    showIdle={showIdle} idleToggle={idleToggle} onShowIdle={on => void edit.setShowIdle(ctx, on, now(), source).catch(report)} onDays={setDays} toggle={toggle} focusDay={focusDay} />;
 }

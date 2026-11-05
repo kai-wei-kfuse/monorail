@@ -36,6 +36,8 @@ import { TagPicker } from '../../ui/controls/TagPicker';
 export interface HomeActions {
   start(cardId: string, at: string): Promise<unknown>;
   checkComplete(cardId: string, at: string): Promise<{ remainingMinutes: number; at: string } | undefined>;
+  /** 打开缩小对话框时现算今天的量和下限（G6 审核 S2） */
+  checkSplit(cardId: string, at: string): Promise<{ todayGoal: number | null; minToday: number } | undefined>;
   /** fromMini：小窗点的完成（两段式），操作历史的来源记小窗 */
   complete(cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean): Promise<unknown>;
   /** 缩小 = 拆成两项（ADR 0021 第 4 条） */
@@ -88,7 +90,7 @@ export function useNow(): number {
 }
 
 type DialogState = { kind: 'short'; cardId: string; remaining: number; at: string; fromMini?: boolean }
-  | { kind: 'complete'; cardId: string; at: string; fromMini?: boolean } | { kind: 'shrink'; cardId: string }
+  | { kind: 'complete'; cardId: string; at: string; fromMini?: boolean } | { kind: 'shrink'; cardId: string; todayGoal: number | null; minToday: number }
   | { kind: 'manual' } | null;
 
 /**
@@ -132,6 +134,10 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     }
     setDialog({ kind: 'complete', cardId, at, fromMini });
   }
+  async function beginShrink(cardId: string, at: string) {
+    const check = await actions.checkSplit(cardId, at);
+    if (check) setDialog({ kind: 'shrink', cardId, ...check });
+  }
   // completeAt 只由小窗的「完成」传进来；当前卡已经换了就按主窗口操作记
   useEffect(() => {
     if (!completeAt || !home.card) return;
@@ -141,7 +147,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   useEffect(() => {
     if (!shrinkFor) return;
     onShrinkConsumed();
-    if (home.card?.id === shrinkFor) setDialog({ kind: 'shrink', cardId: shrinkFor });
+    if (home.card?.id === shrinkFor) void beginShrink(shrinkFor, new Date().toISOString());
   }, [shrinkFor]);
 
   // 抽卡（ADR 0021 第 2 条）：只读拿到结果；抽到就开始那一张。板子空着、带过来的待确认等情况由 G7 的抽屉处理
@@ -195,7 +201,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     actions: <CardActions running={c.status === '进行中'} busy={busy || !!wipe}
       onStart={at => void act(() => actions.start(c.id, at))}
       onComplete={at => void beginComplete(c.id, at)}
-      onShrink={() => setDialog({ kind: 'shrink', cardId: c.id })} />,
+      onShrink={at => void beginShrink(c.id, at)} />,
     fx: wipe && <Wipe no={wipe.no} meta={wipe.meta} title={wipe.title} onCovered={() => setFrozen(null)}
       onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />,
   };
@@ -240,7 +246,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.complete(dialog.cardId, r.at, r.note, r.continueCard, dialog.fromMini)); }} />}
     {dialog?.kind === 'shrink' && full && home.card?.id === full.id && <ShrinkDialog original={full.content} type={full.type}
-      todayGoal={home.card.split?.todayGoal ?? null} minToday={home.card.split?.minToday ?? 5} onCancel={() => setDialog(null)}
+      todayGoal={dialog.todayGoal} minToday={dialog.minToday} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.split(dialog.cardId, { todayContent: r.todayContent, restContent: r.restContent, restMinutes: r.restMinutes }, r.at)); }} />}
     </div>
   </div>;

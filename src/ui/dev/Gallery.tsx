@@ -117,8 +117,8 @@ function HomeMock() {
 function SettingsMock() {
   const [sec, setSec] = useState('timer'), [on, setOn] = useState(true), [v, setV] = useState(60), [seg, setSeg] = useState(0);
   const [dd, setDd] = useState(0), [accent, setAccent] = useState('#00f5a0'), [hk, setHk] = useState('Ctrl+Alt+Shift+R');
-  const items = [['card', '出卡', 'DEAL'], ['degrade', '降级', 'DEGRADE'], ['idea', '想法与回顾', 'IDEAS'], ['timer', '计时', 'TIMER'],
-    ['acts', '快捷活动与休息池', 'LISTS'], ['look', '外观', 'APPEARANCE'], ['keys', '快捷键', 'HOTKEYS'], ['data', '窗口与数据', 'DATA'], ['about', '关于', 'ABOUT']]
+  const items = [['card', '任务', 'QUESTS'], ['quest', '任务模式', 'QUEST MODE'], ['idea', '想法与回顾', 'IDEAS'], ['timer', '计时', 'TIMER'],
+    ['acts', '收藏与快捷活动', 'LISTS'], ['look', '外观', 'APPEARANCE'], ['keys', '快捷键', 'HOTKEYS'], ['data', '窗口与数据', 'DATA'], ['about', '关于', 'ABOUT']]
     .map(([id, cn, en], i) => ({ id, cn, en, no: String(i + 1).padStart(2, '0') }));
   return <SplitLayout nav={<SideNav en="SETTINGS" cn="设置" items={items} active={sec} onSelect={setSec}
     foot={<><Emblem /><div><b>单轨</b><span>v0.1.0</span></div></>} />}>

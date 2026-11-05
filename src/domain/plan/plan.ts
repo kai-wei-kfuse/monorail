@@ -117,6 +117,17 @@ export function carryItems({ source, today, cards, tasks, entries, boundaryHour,
 }
 
 /** 排进今天 / 明天时，时间盒默认填剩下的时长（已定 2，v0.4）。 */
+/**
+ * 拆分用的几个数（ADR 0021 第 4 条）：今天的量（板子上填的；不在板子上取剩下的时长）、今天已计、总已计。
+ * 服务端 split 和打开缩小对话框时的 checkSplit 都在点下的那一刻用它现算（G6 审核 S2：投影只在提交时算，计时中会过期）。
+ */
+export function splitInputs(card: Card, plan: DayPlan, entries: readonly TimeEntry[], boundaryHour: number, at: string) {
+  const day = activityDay(at, boundaryHour);
+  const minutesToday = minutesOnDay(entries, card.id, day, boundaryHour, at), minutesTotal = totalMinutes(entries, card.id, at);
+  const planned = plan.items.find(item => item.card_id === card.id)?.today_minutes ?? null;
+  const todayGoal = card.type === '时间盒卡' ? planned ?? defaultTodayMinutes(card, minutesTotal) : null;
+  return { todayGoal, minutesToday, minutesTotal };
+}
 export function defaultTodayMinutes(card: Card, spentMinutes: number): number | null {
   const rest = remainingMinutes(card, spentMinutes);
   return rest === null ? null : Math.max(5, Math.ceil(rest / 5) * 5);

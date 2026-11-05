@@ -10,7 +10,7 @@ import { MINUTE } from '../shared/time';
 
 const caches = new WeakMap<Ctx, Map<string, RecapResult>>();
 /** 解析好的计时索引：同一个 Ctx、同一个 dataVersion 下各种查询共用（不依赖「现在」）。 */
-const indexes = new WeakMap<Ctx, { version: number; prepared: Prepared }>();
+const indexes = new WeakMap<Ctx, { version: number; loose: boolean; prepared: Prepared }>();
 const LIMIT = 24;
 
 /**
@@ -25,9 +25,11 @@ export function query(ctx: Ctx, q: RecapQuery, asOf: string = ctx.now()): RecapR
   const boundaryHour = settings.dayBoundaryHour;
   const lastReviewAt = state.first_used_day ? recapStart(reviews, state.first_used_day, boundaryHour, asOf) : null;
   const range = resolvePeriod(q.period, { asOf, boundaryHour, lastReviewAt, from: q.from, to: q.to });
-  const entries = ctx.repos.times.snapshot();
+  // 宽松模式（ADR 0021 第 13 条，G6 审核 S1）：待机不计，「含待机 / 睡眠」开关只剩睡眠。数据照记，只在这里滤掉
+  const loose = settings.trackingMode === 'loose';
+  const all = ctx.repos.times.snapshot(), entries = loose ? all.filter(e => e.project !== '待机') : all;
   const live = entries.some(e => e.ended_at === null && e.project !== '待机') && Date.parse(range.to) > Date.parse(asOf);
-  const key = JSON.stringify([ctx.mainEpoch, home.dataVersion, q.period, q.from ?? null, q.to ?? null, q.dim, q.includeIdle, q.bucket ?? null,
+  const key = JSON.stringify([ctx.mainEpoch, home.dataVersion, loose, q.period, q.from ?? null, q.to ?? null, q.dim, q.includeIdle, q.bucket ?? null,
     range.from, range.to, live ? Math.floor(Date.parse(asOf) / MINUTE) : null]);
   let cache = caches.get(ctx);
   if (!cache) caches.set(ctx, cache = new Map());
@@ -35,7 +37,7 @@ export function query(ctx: Ctx, q: RecapQuery, asOf: string = ctx.now()): RecapR
   if (hit) return hit;
   const projectColors = Object.fromEntries(settings.lists.projects.map(p => [p.name, p.color]));
   let index = indexes.get(ctx);
-  if (!index || index.version !== home.dataVersion) indexes.set(ctx, index = { version: home.dataVersion, prepared: prepare(entries) });
+  if (!index || index.version !== home.dataVersion || index.loose !== loose) indexes.set(ctx, index = { version: home.dataVersion, loose, prepared: prepare(entries) });
   const result = computeRecap({ entries, cards, tasks, lastReviewAt, firstUsedDay: state.first_used_day, projectColors, boundaryHour, asOf, query: q, prepared: index.prepared });
   cache.set(key, result);
   if (cache.size > LIMIT) cache.delete(cache.keys().next().value!);

@@ -2,12 +2,13 @@ import type { Card } from '../domain/card/card';
 import { editCardContent, cardTiming } from '../domain/card/edit';
 import { startCard, completeCard, releaseCard, abandonCard } from '../domain/card/transitions';
 import { splitCard, restoreParent } from '../domain/card/shrink';
-import { defaultTodayMinutes, minutesOnDay, totalMinutes } from '../domain/plan/plan';
+import { splitInputs } from '../domain/plan/plan';
+import { minTodayMinutes } from '../domain/card/shrink';
 import { setTodayMinutesInTx } from './planService';
 import { inBackpack, trackOf } from '../domain/task/task';
 import { activityDay } from '../domain/timeline/day';
 import type { Ctx, Transaction } from './commit';
-import { run } from './commit';
+import { readSerial, run } from './commit';
 import type { HistorySource } from '../shared/history';
 import { openInTx, startRefInTx, stopRefInTx, renameRefInTx, retagRefInTx, activeRefInTx, refElapsedInTx, insertStateInTx } from './tracking/api';
 import { afterItem } from '../domain/task/pool';
@@ -82,6 +83,20 @@ export async function checkComplete(ctx: Ctx, cardId: string, at: string): Promi
   return { remainingMinutes: card.type === '时间盒卡' ? Math.max(0, (card.timebox_minutes ?? 0) - elapsed / 60000) : 0, at };
 }
 
+/**
+ * 打开缩小对话框时现算今天的量和今天这份的下限（只读，同 checkComplete；G6 审核 S2）。
+ * 结果卡 todayGoal 为 null。和 split 同一个 splitInputs，点〔缩小〕时滑块的下限就是服务端会接受的下限。
+ */
+export function checkSplit(ctx: Ctx, cardId: string, at: string): Promise<{ todayGoal: number | null; minToday: number }> {
+  return readSerial(ctx, async () => {
+    const entity = await ctx.repos.cards.get(cardId);
+    if (!entity) throw new Error('卡片不存在');
+    const plan = await ctx.repos.plans.read(activityDay(at, ctx.settings.dayBoundaryHour));
+    const { todayGoal, minutesToday } = splitInputs(entity.value, plan.value, ctx.repos.times.snapshot(), ctx.settings.dayBoundaryHour, at);
+    return { todayGoal, minToday: minTodayMinutes(minutesToday) };
+  });
+}
+
 /** 小窗点完成、主窗口弹完成对话框（两段式）：调用方传 source 把来源记成小窗（执行方案 E8a3）。 */
 export const complete = (ctx: Ctx, cardId: string, at: string, note: string, keepGoing = false, source?: HistorySource) => keepGoing
   ? keepGoingCard(ctx, cardId, at, note, source)
@@ -126,10 +141,8 @@ export const split = (ctx: Ctx, cardId: string, input: SplitCommand, at: string)
   const card = getCard(tx, cardId);
   requireCurrent(tx, card);
   if (insertStateInTx(tx)) throw new Error('IN_AWAY_ACTIVITY：正在插入别的事，先回到任务再缩小');
-  const day = activityDay(tx.at, tx.settings.dayBoundaryHour);
-  const minutesToday = minutesOnDay(tx.entries, cardId, day, tx.settings.dayBoundaryHour, tx.at), minutesTotal = totalMinutes(tx.entries, cardId, tx.at);
-  const planned = tx.todayPlan.items.find(item => item.card_id === cardId)?.today_minutes ?? null;
-  const todayGoal = card.type === '时间盒卡' ? planned ?? defaultTodayMinutes(card, minutesTotal) : null;
+  const { todayGoal, minutesToday, minutesTotal } = splitInputs(card, tx.todayPlan, tx.entries, tx.settings.dayBoundaryHour, tx.at);
+  // 取原卡和后一张之间的中点。同一处连拆大约 50 次后会碰到浮点精度，实际用不到；reorderQueue 重排时会把序号排回整数（G6 审核 N4）
   const next = Math.min(...tx.cards.filter(c => c.order > card.order).map(c => c.order), card.order + 1);
   const result = splitCard(card, { ...input, id: tx.id(), at, order: (card.order + next) / 2, todayGoal, minutesToday, minutesTotal });
   // 原卡内容改了：经 editContentInTx，开着的那条计时描述跟着改（之前的条目保留旧描述）；再写时长和级数

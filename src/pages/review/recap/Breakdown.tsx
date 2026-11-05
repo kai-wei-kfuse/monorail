@@ -8,14 +8,15 @@ import { BucketChip } from './Trend';
 import { Chev } from './icons';
 
 /** 明细下面的说明：对比区间、上一期有本期没有的组、标签平分、不含待机与睡眠、并行只算一次。 */
-export function footnotes(r: RecapResult, view: RecapViewState, today: string, showCmp: boolean): string[] {
+export function footnotes(r: RecapResult, view: RecapViewState, today: string, showCmp: boolean, loose = false): string[] {
   const p = r.previous, out: string[] = [];
   if (showCmp) {
     const gone = r.goneKeys;
     out.push(`增减对比${p.label}（${previousRange(p, today)}）。${gone.length ? `${p.label}有、这期没有的：${gone.slice(0, 5).join('、')}${gone.length > 5 ? ` 等 ${gone.length} 项` : ''}。` : ''}`);
   } else if (!p.comparable) out.push(`${p.label}（${previousRange(p, today)}）早于最早的记录，不显示增减。`);
   if (view.dim === 'tag') out.push('一条记录有多个标签时，时长平均分给各个标签，所以各标签加起来仍等于总时长；条数徽标按出现次数计。');
-  if (!view.includeIdle) out.push('不含待机与睡眠，打开右上「含待机/睡眠」可计入。');
+  if (loose) out.push(view.includeIdle ? '宽松模式：没在计时的时间不计。' : '宽松模式：没在计时的时间不计；不含睡眠，打开右上「含睡眠」可计入。');
+  else if (!view.includeIdle) out.push('不含待机与睡眠，打开右上「含待机/睡眠」可计入。');
   out.push('同一时间并行的记录只算一次，并行的时段按条数平分给各组。');
   return out;
 }
@@ -48,15 +49,15 @@ function SubList({ g, dim, projectColors }: { g: RecapGroup; dim: RecapViewState
  * 分组明细：一级行（色块、名称、条数、占比条、百分比、较上一期、时长），点开是二级行。
  * 增减列只在查询给了上一期（整个周期、上一期可比）时出现；筛选某一桶时查询不给，列也就隐藏。
  */
-export function Breakdown({ r, view, bucket, today, open, onToggle, onAll, onBucket, projectColors, hot = null }: {
-  r: RecapResult; view: RecapViewState; bucket: RecapBucket | null; today: string; hot?: string | null;
+export function Breakdown({ r, view, bucket, today, open, onToggle, onAll, onBucket, projectColors, hot = null, loose = false }: {
+  r: RecapResult; view: RecapViewState; bucket: RecapBucket | null; today: string; hot?: string | null; loose?: boolean;
   open: ReadonlySet<string>; onToggle: (key: string) => void; onAll: (open: boolean) => void;
   onBucket: (id: string | null) => void; projectColors: Record<string, string>;
 }) {
   const groups = r.groups, total = groups.reduce((n, g) => n + g.ms, 0), max = Math.max(1, ...groups.map(g => g.ms));
   const showCmp = groups.some(g => g.previousMs !== undefined);
   const allOpen = groups.length > 0 && groups.every(g => open.has(g.key));
-  const notes = footnotes(r, view, today, showCmp);
+  const notes = footnotes(r, view, today, showCmp, loose);
   const right = <>{bucket && <BucketChip bucket={bucket} onClear={() => onBucket(null)} />}<span>{groups.length} 组 · {hm(total)}</span>
     {groups.length > 0 && <button type="button" className="rv-link" onClick={() => onAll(!allOpen)}>{allOpen ? '全部收起' : '全部展开'}</button>}</>;
   return <Group cn="分组明细" en="BREAKDOWN LIST" right={right}>

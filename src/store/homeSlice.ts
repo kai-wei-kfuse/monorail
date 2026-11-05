@@ -2,8 +2,6 @@ export interface HomeCard {
   id: string; slotNo: string; slotOf: string; task: string;
   type: '结果卡' | '时间盒卡'; goalMinutes: number | null; content: string; progressNote: string;
   status: '待做' | '进行中';
-  /** 缩小对话框用（ADR 0021 第 4 条）：时间盒今天的量（板子上填的；不在板子上取剩下的时长）、今天这份的下限；结果卡为 null */
-  split: { todayGoal: number; minToday: number } | null;
   /** Resolved timing project, card tags, and whether the card explicitly overrides its task. */
   project: string; tags: string[]; projectOverridden: boolean;
 }

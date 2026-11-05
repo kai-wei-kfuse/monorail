@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed, entries } from './serviceFixture';
-import { start, complete, checkComplete, split, pass, editContent } from './cardService';
+import { start, complete, checkComplete, checkSplit, split, pass, editContent } from './cardService';
 import { run } from './commit';
 import { shrinkCard } from '../data/migrations/v030/shrink';
 import type { Card } from '../domain/card/card';
@@ -134,6 +134,15 @@ it('时间盒拆分：今天的量改成今天做的分钟；剩下的分钟放�
   const day = (await f.ctx.repos.plans.days())[0];
   expect((await f.ctx.repos.plans.read(day)).value.items).toEqual([expect.objectContaining({ card_id: 'a', today_minutes: 35 })]);
   expect((await f.ctx.repos.state.read()).refusals).toEqual([]);
+});
+it('打开缩小时现算下限和今天的量：开始卡 25 分钟内没有别的提交，下限是 25，和服务端接受的一致（G6 审核 S2）', async () => {
+  const f = fixture(); await seed(f, [card('a', { task_id: 'main', type: '时间盒卡', timebox_minutes: 120 }), card('r', { task_id: 'main' })], [task('main')]);
+  await start(f.ctx, 'a', at()); f.clock(at(25));
+  // 不在板子上：今天的量取剩下的时长（120 − 25 = 95）
+  expect(await checkSplit(f.ctx, 'a', at(25))).toEqual({ todayGoal: 95, minToday: 25 });
+  await expect(split(f.ctx, 'a', { todayContent: '前半', restContent: '后半', restMinutes: 95 - 20 }, at(25))).rejects.toThrow('不能少于今天已经计的时间');
+  await split(f.ctx, 'a', { todayContent: '前半', restContent: '后半', restMinutes: 95 - 25 }, at(25));
+  expect(await checkSplit(f.ctx, 'r', at(25))).toEqual({ todayGoal: null, minToday: 5 });
 });
 it('拆分被拒绝时卡、计时都不变，之后的操作照常', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
