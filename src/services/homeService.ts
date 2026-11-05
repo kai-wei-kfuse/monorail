@@ -74,11 +74,7 @@ export function startFreeInTx(tx: Transaction, value: Omit<EntryTemplate, 'card_
 export const startFree = (ctx: Ctx, value: Omit<EntryTemplate, 'card_id'>, at: string) => action(ctx, at, tx => startFreeInTx(tx, value), { action: 'home.startFree' });
 /** 开始一张卡，起点用待确认的起点（主窗口自动完成、背包〔开始〕、小窗自动完成共用）。 */
 async function startCardFromPendingInTx(tx: Transaction, cardId: string): Promise<void> {
-  requireNotInserting(tx);
   const from = tx.state.pending_at ?? tx.at; clearPending(tx); await startCardInTx(tx, cardId, from);
-}
-function requireNotInserting(tx: Transaction): void {
-  if (tracking.insertStateInTx(tx)) throw new Error('IN_AWAY_ACTIVITY：正在插入别的事，先回到任务或结束原任务，再开始另一张卡');
 }
 export const startCard = (ctx: Ctx, cardId: string, at: string) => action(ctx, at, async tx => {
   await startCardFromPendingInTx(tx, cardId);
@@ -145,7 +141,9 @@ export async function continueEntryInTx(tx: Transaction, entryId: string): Promi
   const card = tx.cards.find(card => card.id === entry.card_id);
   if (card && (card.status === '待做' || card.status === '进行中')) {
     const resume = tx.entries.find(e => e.id === tx.state.resume_entry_id);
-    if (tracking.insertStateInTx(tx) && resume?.card_id === card.id) { clearPending(tx); await resumeInTx(tx); return; }
+    // 插入中、或卡暂停中，继续的正是回到目标那张卡 = 〔回到任务〕/〔继续〕（代码审核 S5）
+    const open = tracking.openInTx(tx);
+    if (resume?.card_id === card.id && (tracking.insertStateInTx(tx) || open?.kind === '暂停')) { clearPending(tx); await resumeInTx(tx); return; }
     await startCardFromPendingInTx(tx, card.id);
     return;
   }
@@ -270,8 +268,7 @@ export async function startTaskItemCheckedInTx(tx: Transaction, input: { expecte
   if (!card) throw new Error('CARD_NOT_FOUND：找不到指定的待办事项卡片');
   if (card.status !== '待做' && card.status !== '进行中') throw new Error(`CARD_NOT_ACTIVE：该事项当前状态为「${card.status}」，不能开始计时`);
   if (card.status === '进行中' && open?.card_id === card.id && open.kind === '普通') return { noop: true };
-  requireNotInserting(tx);
-  await startCardInTx(tx, card.id, tx.at);
+  await startCardInTx(tx, card.id, tx.at);   // 插入中拒绝 IN_AWAY_ACTIVITY（检查在 startCardInTx 里）
   return { noop: false };
 }
 

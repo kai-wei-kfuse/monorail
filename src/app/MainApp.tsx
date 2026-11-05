@@ -205,7 +205,6 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
         break;
       }
       case 'subconscious': if ((r as NoticeResult['subconscious']).accept) setPage('backpack'); break;
-      case 'restReturn': void actions.returnFromRest((r as NoticeResult['restReturn']).answer, at); break;
       case 'backfill': void actions.backfill(r as NoticeResult['backfill']); break;
       default: break;
     }

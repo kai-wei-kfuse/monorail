@@ -491,7 +491,8 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
           text: args.text,
           task_id: args.task_id?.trim() || null,
           due_at: args.due_at ?? null,
-          blocking: args.blocking ?? false,
+          // 0.3.1 起不起作用（删除阻塞机制，已定 12）：参数照收，记录照写 false
+          blocking: false,
         };
         const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
           const { record, card, task } = captureTodoInTx(tx, normalized);

@@ -60,7 +60,7 @@ export function FreeCard({ view, draft, over, now, look, titleScale, actions }:
         <ActionButton data-entry-discard="" cn="放弃" en="DISCARD" icon="x" title="放弃这次计时，这段时间照旧" onClick={() => actions.cancelPending(pending.id)} />
         {away && <><ActionButton compact data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" onClick={actions.pause} /><StopButton onClick={actions.stop} /></>}
       </>
-        : !running ? <ActionButton primary cn="继续" en="RESUME" icon="play" onClick={actions.resume} />
+        : !running ? <ActionButton primary cn="继续" en="RESUME" icon="play" onClick={actions.continueTimer} />
         : <ActionButton primary data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" onClick={actions.pause} />}
       <ActionButton primary={!!pending} cn="抽一张卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />
     </>} />;

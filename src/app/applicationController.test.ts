@@ -113,11 +113,12 @@ it('M6: get_context retains accumulated notices across later transactions, captu
     method: 'capture_todo',
     arguments: { operation_id: ideaCommitted.next_operation_id, text: '复习操作系统进程调度 #408', blocking: true },
   }));
+  // 0.3.1：blocking 参数照收、不起作用（删除阻塞机制，已定 12），记录和卡照写 false
   expect(todo1.data).toMatchObject({
     slot: '支线',
     content: '复习操作系统进程调度 #408',
     tags: ['408'],
-    blocking: true,
+    blocking: false,
   });
 
   const todo2 = captureTodoResult.parse(await handleApplicationRequest(f.ctx, {
@@ -487,4 +488,28 @@ it('complete_idea rejects unknown ideas and ideas outside the pool without writi
   await expect(handleApplicationRequest(f.ctx, { method: 'complete_idea', arguments: { operation_id: crypto.randomUUID(), idea_id: saved.data.id } }))
     .rejects.toMatchObject({ failure: { code: 'IDEA_NOT_ACTIVE' } });
   expect(transact).not.toHaveBeenCalled();
+});
+
+// 0.3.1 代码审核 S3 / S4：「插入的事暂停了」这一状态下 MCP 的方法表（ADR 0021 第 3 条）；away_paused 始终给出
+it('0.3.1 MCP：插入的事暂停了时 pause noop、resume 继续插入的事、stop / start_task_item 拒绝；away_paused 一直在', async () => {
+  const f = fixture(); await seed(f, [card('c1', { task_id: 'main' }), card('c2', { task_id: 'main', order: 2 })], [task('main')]);
+  const ctx = async () => contextResult.parse(await handleApplicationRequest(f.ctx, { method: 'get_context', arguments: {} }));
+  const call = async (method: string, extra: Record<string, unknown> = {}) => {
+    const c = await ctx();
+    return handleApplicationRequest(f.ctx, { method, arguments: { operation_id: c.operation_id, expected_state: c.expected_state, ...extra } } as never);
+  };
+  expect((await ctx()).timer?.away_paused).toBe(false);   // idle 时也给 false
+  await call('start_task_item', { card_id: 'c1' });
+  f.clock(at(10)); await call('start_break', { activity: '上厕所' });
+  f.clock(at(15)); await call('pause_timer');
+  const paused = await ctx();
+  expect(paused.timer).toMatchObject({ mode: 'away', away_paused: true, paused_target: { card_id: 'c1' } });
+  expect(paused.timer?.allowed_actions).toEqual(expect.arrayContaining(['resume_timer', 'return_from_break']));
+  expect(paused.timer?.allowed_actions).not.toContain('pause_timer');
+  expect(timerMutationResult.parse(await call('pause_timer')).data).toMatchObject({ noop: true, reason: 'already_paused' });
+  await expect(call('stop_timer')).rejects.toThrow('IN_AWAY_ACTIVITY');
+  await expect(call('start_task_item', { card_id: 'c2' })).rejects.toThrow('IN_AWAY_ACTIVITY');
+  f.clock(at(20));
+  expect(timerMutationResult.parse(await call('resume_timer')).data.timer).toMatchObject({ mode: 'away', away_paused: false, open_entry: { description: '上厕所', kind: '插入' } });
+  expect((await getCard(f, 'c1')).status).toBe('进行中');
 });

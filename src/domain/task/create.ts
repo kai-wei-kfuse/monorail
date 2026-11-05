@@ -13,10 +13,12 @@ export function taskWithItems(draft: TaskDraft, tasks: Task[], cards: Card[], se
     bet_ends_at: null, default_project: draft.defaultProject?.trim() || null };
   if (draft.slot !== '不在背包') task = putInBackpack(task, draft.slot, tasks, settings, at);
   // Undefined preserves the legacy dialog's empty-task workflow; N4 supplies an explicit list.
-  const contents = draft.items === undefined ? [] : draft.items.length ? draft.items : [name];
+  const raw = draft.items === undefined ? [] : draft.items.length ? draft.items : [name];
+  const contents = raw.map(item => typeof item === 'string' ? { content: item, type: '结果卡' as const, minutes: null } : item);
+  for (const item of contents) if (item.type === '时间盒卡' && !(item.minutes !== null && Number.isInteger(item.minutes) && item.minutes > 0)) throw new Error('时间盒要填正整数分钟');
   if (contents.length > itemCapacity(task, cards, settings)) throw new Error('主线任务事项已满');
   const order = Math.max(0, ...cards.map(card => card.order));
-  const items = contents.map((content, index) => createCard(id(), { content, type: '结果卡', timeboxMinutes: null,
+  const items = contents.map((item, index) => createCard(id(), { content: item.content.trim() || name, type: item.type, timeboxMinutes: item.type === '时间盒卡' ? item.minutes : null,
     blocking: false, dueAt: null, noShrink: false, taskId: task.id, project: null, tags: [] }, at, order + index + 1));
   return { task, items };
 }

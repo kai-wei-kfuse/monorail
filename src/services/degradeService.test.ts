@@ -1,58 +1,35 @@
 import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, seed, entries } from './serviceFixture';
-import { start, shrink } from './cardService';
-import { returnFromRest, registerRefusalInTx } from './degradeService';
+import { start } from './cardService';
+import { rest, resume } from './homeService';
+import { newDay } from './dayChange';
 import { run } from './commit';
+import { startSystemInTx } from './tracking/api';
 
-it('A7 fourth running shrink leaves a pending child and no positive child time before rest', async () => {
-  const f = fixture(); await seed(f, [card('a', { skip_count: 2 })]); await start(f.ctx, 'a', at());
-  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(1), at(2)]; }, undefined, { action: 'test.direct' });
-  f.clock(at(3)); const child = await shrink(f.ctx, 'a', { content: '小任务', type: '结果卡', minutes: null }, at(3));
-  expect(await getCard(f, child)).toMatchObject({ status: '待做', skip_count: 0 });
-  expect(await getCard(f, 'a')).toMatchObject({ status: '已缩小', skip_count: 0 });
-  expect(open(f)).toMatchObject({ description: '休息', started_at: at(3) });
-  expect(entries(f).filter(entry => entry.ended_at !== null).some(s => s.card_id === child)).toBe(false);
-  f.clock(at(5)); await returnFromRest(f.ctx, '', at(5));
-  expect(f.home()).toMatchObject({ mode: 'task', card: { id: child, status: '待做' } });
-  expect(open(f).project).toBe('待机');
-});
-it('A7 input hint resets refusals without switching the timer or entering rest', async () => {
+// 0.3.1 降级（已定 48、55，ADR 0021 第 7 条）：不再按拒绝次数进降级休息；主动休息是一条插入；0.3.0 遗留的 state.rest 在换日时处理一次
+
+it('主动休息：插入一条休息，卡等着；回来接着计这张卡，不问刚才干了什么、不计数', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
-  await run(f.ctx, async tx => { tx.state.last_rest_ended_at = at(); tx.state.refusals = [at(1), at(2), at(3)]; }, undefined, { action: 'test.direct' });
-  const before = open(f);
-  f.clock(at(4)); await run(f.ctx, registerRefusalInTx, at(4), { action: 'test.direct' });
-  expect(open(f)).toEqual(before);
-  expect(await f.ctx.repos.state.read()).toMatchObject({ rest: null, refusals: [], home_mode: 'task' });
-  expect(f.publish.mock.calls.at(-1)![0].notices).toEqual([expect.objectContaining({ kind: 'inputHint' })]);
+  f.clock(at(5)); await rest(f.ctx, at(5));
+  expect(open(f)).toMatchObject({ description: '休息', project: '休息', kind: '插入' });
+  expect((await getCard(f, 'a')).status).toBe('进行中');
+  f.clock(at(15)); await resume(f.ctx, at(15));
+  expect(open(f)).toMatchObject({ card_id: 'a', started_at: at(15) });
+  expect(await f.ctx.repos.state.read()).toMatchObject({ rest: null, refusals: [], rest_answers: {} });
+  expect(entries(f).filter(e => e.project === '休息')).toEqual([expect.objectContaining({ started_at: at(5), ended_at: at(15) })]);
 });
-it.each(['', '   ', '画画'])('rest answer %j at zero duration does not write an overlay', async answer => {
+
+it('0.3.0 遗留的降级休息：换日时处理一次，那段休息留着、转成待机、清空 rest，不问不计数', async () => {
   const f = fixture(); await seed(f, [card('a')]);
-  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(), at()]; await registerRefusalInTx(tx); }, undefined, { action: 'test.direct' });
-  await returnFromRest(f.ctx, answer, at());
-  expect(entries(f)).toHaveLength(1);
-  expect(open(f).project).toBe('待机');
-  expect(await f.ctx.repos.state.read()).toMatchObject({ rest_answers: answer.trim() ? { 画画: 1 } : {} });
-});
-it('repeated trimmed rest answers signal on the third occurrence only, including across day boundaries', async () => {
-  const f = fixture(); f.clock(new Date(2026, 9, 27, 3).toISOString()); await seed(f, [card('a')]);
-  for (let i = 0; i < 4; i++) {
-    const begin = new Date(2026, 9, 27 + i, 3, 55).toISOString(), end = new Date(2026, 9, 27 + i, 4, 5).toISOString();
-    f.clock(begin);
-    await run(f.ctx, async tx => { tx.state.last_rest_ended_at = null; tx.state.refusals = [begin, begin, begin]; await registerRefusalInTx(tx); }, undefined, { action: 'test.direct' });
-    f.clock(end); await returnFromRest(f.ctx, ' 画画 ', end);
-    const notices = f.publish.mock.calls.at(-1)![0].notices;
-    expect(notices.filter((n: { kind: string }) => n.kind === 'subconscious')).toHaveLength(i === 2 ? 1 : 0);
-    if (i === 2) expect(notices[0].data).toEqual({ answer: '画画', count: 3 });
-  }
-  const answers = entries(f).filter(s => s.description === '画画');
-  expect(answers).toHaveLength(4);
-  expect(new Set(answers.map(s => s.id)).size).toBe(4);
-  expect(answers.reduce((sum, s) => sum + Date.parse(s.ended_at!) - Date.parse(s.started_at), 0)).toBe(40 * 60000);
-});
-it('blank positive-duration answers retain automatic rest history and reject time travel', async () => {
-  const f = fixture(); await seed(f, [card('a')]);
-  await run(f.ctx, async tx => { tx.state.refusals = [at(), at(), at()]; await registerRefusalInTx(tx); }, undefined, { action: 'test.direct' });
-  await expect(returnFromRest(f.ctx, '画画', at(-1))).rejects.toThrow('早于');
-  f.clock(at(10)); await returnFromRest(f.ctx, '  ', at(10));
-  expect(entries(f).filter(entry => entry.ended_at !== null)).toEqual([expect.objectContaining({ description: '休息', started_at: at(), ended_at: at(10) })]);
+  await run(f.ctx, async tx => {
+    startSystemInTx(tx, '休息'); tx.state.rest = { started_at: at(), suggestion: '走走' }; tx.state.home_mode = 'rest';
+    tx.state.refusals = [at(), at(), at()];
+  }, at(), { action: 'test.direct' });
+  f.clock(at(30)); await newDay(f.ctx);
+  // 0.3.0 降级休息时卡已放回待做；0.3.1 的 current_card 只能是 null 或进行中的卡（ADR 0021 第 2 条第 9 点），所以首页是空卡区
+  expect(await f.ctx.repos.state.read()).toMatchObject({ rest: null, home_mode: 'blank', current_card: null });
+  expect(open(f)).toMatchObject({ project: '待机', started_at: at(30) });
+  expect(entries(f).filter(e => e.project === '休息')).toEqual([expect.objectContaining({ started_at: at(), ended_at: at(30) })]);
+  // state.yaml 里 0.3.0 要求的字段照写原值（不再更新）
+  expect((await f.ctx.repos.state.read()).refusals).toEqual([at(), at(), at()]);
 });

@@ -75,11 +75,11 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
     ],
   },
   {
-    usage: 'monorail todo add [<text>] [--text-file <path> | --stdin] [--task-id <id>] [--due-at <iso>] [--blocking] [--operation-id <uuid>] [--json]',
+    usage: 'monorail todo add [<text>] [--text-file <path> | --stdin] [--task-id <id>] [--due-at <iso>] [--operation-id <uuid>] [--json]',
     method: 'capture_todo',
     summary: '捕捉待办事项并原子入包（可归入指定任务或自动建单事项支线任务）',
     examples: [
-      'monorail todo add "复习操作系统页面置换 #408" --blocking',
+      'monorail todo add "复习操作系统页面置换 #408"',
       'monorail todo add "完成真题卷" --task-id <task-id> --due-at 2026-11-05T18:00:00+08:00',
     ],
   },

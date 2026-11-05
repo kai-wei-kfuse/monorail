@@ -8,7 +8,6 @@ import { TaskCard } from '../../pages/home/TaskCard';
 import type { TaskCardView } from '../../pages/home/TaskCard';
 import { CardActions } from '../../pages/home/CardActions';
 import { GuideCard } from '../../pages/home/GuideCard';
-import { RestCard } from '../../pages/home/RestCard';
 import { ReviewCard } from '../../pages/home/ReviewCard';
 import { playAfterWipe, playColdIntro } from '../../pages/home/intro';
 import { QuickActs } from '../shell/QuickActs';
@@ -20,7 +19,7 @@ import { NoticeHost } from '../shell/NoticeHost';
 import { StatusBlock } from '../shell/StatusBlock';
 import type { Notice } from '../../widgets/notices/types';
 
-export const PREVIEW_PAGES = ['card', 'over', 'guide', 'rest', 'review', 'mini', 'quickbar'];
+export const PREVIEW_PAGES = ['card', 'over', 'guide', 'review', 'mini', 'quickbar'];
 const look = { topoMode: 'dynamic' as const, topoDepth: 60, paused: false };
 const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '背包', en: 'BACKPACK' }, { id: 'review', cn: '回顾', en: 'REVIEW' }, { id: 'settings', cn: '设置', en: 'SETTINGS' }];
 const min = (m: number) => m * 60_000;
@@ -68,12 +67,11 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
         actions={<CardActions running shrink={page === 'over' ? 'max' : 'ok'} onStart={() => {}} onComplete={() => {}} onShrink={() => {}} />}
         fx={wipe && <Wipe no="支" meta="支线 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => { setWipe(false); playAfterWipe(stage.current!); }} />} />}
       {page === 'guide' && <GuideCard kind="setMain" look={look} onAction={() => {}} />}
-      {page === 'rest' && <RestCard suggestion="眺望窗外" look={look} onBack={() => {}} onAddRest={() => {}} />}
       {page === 'review' && <ReviewCard period="2026-W44" resumeStep="擂台对决" betDue look={look} onOpen={() => {}} />}
     </div>
   </Frame>
   <NoticeHost notices={notices(overlay)} onResolve={(n, r) => console.log(n.kind, r)} onDismiss={() => {}} />
-  {overlay === 'complete' && <CompleteDialog at={iso(0)} isShrinkCard={false} onConfirm={() => {}} onCancel={() => {}} />}
-  {overlay === 'shrink' && <ShrinkDialog original={view.content} type={view.type} timeboxMinutes={60} level={0} maxLevel={2} defaultTimebox={60} onConfirm={() => {}} onCancel={() => {}} />}
+  {overlay === 'complete' && <CompleteDialog at={iso(0)} onConfirm={() => {}} onCancel={() => {}} />}
+  {overlay === 'shrink' && <ShrinkDialog original={view.content} type={view.type} todayGoal={view.type === '时间盒卡' ? 60 : null} minutesToday={18} onConfirm={() => {}} onCancel={() => {}} />}
   </div>;
 }

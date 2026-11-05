@@ -15,7 +15,6 @@ import { CompleteDialog } from './CompleteDialog';
 import { ShrinkDialog } from './ShrinkDialog';
 import { GUIDES, GuideCard } from './GuideCard';
 import type { GuideKind } from './GuideCard';
-import { RestCard } from './RestCard';
 import { ReviewCard } from './ReviewCard';
 import { CardFrame } from './CardFrame';
 import { playAfterWipe, playColdIntro, playResumeIntro } from './intro';
@@ -39,14 +38,17 @@ export interface HomeActions {
   checkComplete(cardId: string, at: string): Promise<{ remainingMinutes: number; at: string } | undefined>;
   /** fromMini：小窗点的完成（两段式），操作历史的来源记小窗 */
   complete(cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean): Promise<unknown>;
-  shrink(cardId: string, input: { content: string; type: '结果卡' | '时间盒卡'; minutes: number | null }, at: string): Promise<unknown>;
+  /** 缩小 = 拆成两项（ADR 0021 第 4 条） */
+  split(cardId: string, input: { todayContent: string; restContent: string; restMinutes: number | null }, at: string): Promise<unknown>;
   editContent(cardId: string, content: string, at: string): Promise<unknown>;
   editMeta(cardId: string, project: string | null, tags: string[], at: string): Promise<unknown>;
   /** 从今天的板子抽一张（只读）；G7 换成翻卡。现在：抽到就直接开始 */
   draw(at: string): Promise<{ kind: string; card?: { id: string } } | undefined>;
   resume(at: string): Promise<unknown>;
+  continueTimer(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
-  returnFromRest(answer: string, at: string): Promise<unknown>;
+  /** 主动休息（已定 48、55）：插入一条「休息」 */
+  rest(at: string): Promise<unknown>;
   // 计时条
   beginPending(at: string): Promise<unknown>;
   cancelPending(pendingId: string, at: string): Promise<unknown>;
@@ -94,11 +96,11 @@ type DialogState = { kind: 'short'; cardId: string; remaining: number; at: strin
  * completeAt：小窗里点了完成、主窗口还原以后，由外壳传进来，接着走完成流程（架构 §5.5）。
  * shrinkFor：跳过信号里选了「拆小」，由外壳传进来卡 id，打开缩小对话框。
  */
-export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview, onAddRest }:
+export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview }:
   { actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: { cardId: string; at: string } | null; onCompleteConsumed: () => void;
     shrinkFor: string | null; onShrinkConsumed: () => void;
-    onGuide: (kind: GuideKind) => void; onOpenReview: () => void; onAddRest?: () => void }) {
-  const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
+    onGuide: (kind: GuideKind) => void; onOpenReview: () => void }) {
+  const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards), planToday = useStore(appStore, s => s.plan.today);
   const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), projects = useStore(appStore, s => s.backpack.pool.projects), settings = useStore(appStore, s => s.settings);
   const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer'), [prefill, setPrefill] = useState<EntryValue | null>(null);
   // 首页布局（设置 → 外观）：分开 = 上面计时条、下面卡区；融合 = 计时条并进大卡（UI 规范 §11.3）
@@ -164,6 +166,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     pause: () => void actions.pause(now_()),
     stop: () => void actions.stop(now_()),
     resume: () => void act(() => actions.resume(now_())),
+    continueTimer: () => void act(() => actions.continueTimer(now_())),
     draw: () => void act(() => drawAndStart(now_())),
     startFavorite,
     startCard: id => void act(() => actions.start(id, now_())),
@@ -197,8 +200,8 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />,
   };
   let body;
-  if (home.mode === 'rest') body = <RestCard suggestion={home.rest?.suggestion ?? null} look={cardLook} onAddRest={onAddRest} onBack={(answer, at) => void act(() => actions.returnFromRest(answer, at))} />;
-  else if (area === 'free') body = <FreeCard view={tv} draft={draft} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
+  // 0.3.1：降级休息卡不再出现（0.3.0 遗留的 state.rest 由换日处理一次，ADR 0021 第 6、7 条）
+  if (area === 'free') body = <FreeCard view={tv} draft={draft} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
     over={home.card?.status === '待做' ? { id: home.card.id, content: home.card.content } : null} />;
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
   else if (home.mode === 'blank') body = <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
@@ -234,11 +237,15 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}
       resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at, fromMini: dialog.fromMini } : null)} />}
-    {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} isShrinkCard={!!full?.shrunk_from} onCancel={() => setDialog(null)}
+    {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.complete(dialog.cardId, r.at, r.note, r.continueCard, dialog.fromMini)); }} />}
-    {dialog?.kind === 'shrink' && full && <ShrinkDialog original={full.content} type={full.type} timeboxMinutes={full.timebox_minutes}
-      level={full.shrink_level} maxLevel={look.shrinkMaxLevel} defaultTimebox={look.timeboxDefault} onCancel={() => setDialog(null)}
-      onConfirm={r => { setDialog(null); void act(() => actions.shrink(dialog.cardId, { content: r.content, type: r.type, minutes: r.timeboxMinutes }, r.at)); }} />}
+    {dialog?.kind === 'shrink' && full && (() => {
+      // 今天的量：板子上填的；不在板子上时取剩下的时长（ADR 0021 第 4 条）
+      const row = planToday.rows.find(r => r.cardId === full.id), spentMs = entries.filter(e => e.card_id === full.id).reduce((s, e) => s + Date.parse(e.ended_at ?? new Date(now).toISOString()) - Date.parse(e.started_at), 0);
+      const goal = full.type === '时间盒卡' ? row?.todayMinutes ?? Math.max(5, Math.ceil(((full.timebox_minutes ?? 0) - spentMs / 60000) / 5) * 5) : null;
+      return <ShrinkDialog original={full.content} type={full.type} todayGoal={goal} minutesToday={row?.minutesToday ?? 0} onCancel={() => setDialog(null)}
+        onConfirm={r => { setDialog(null); void act(() => actions.split(dialog.cardId, { todayContent: r.todayContent, restContent: r.restContent, restMinutes: r.restMinutes }, r.at)); }} />;
+    })()}
     </div>
   </div>;
 }

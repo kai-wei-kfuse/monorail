@@ -139,3 +139,20 @@ describe('插入的事暂停 / 继续、回到任务、结束原任务（已定 
     expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通' });
   });
 });
+
+describe('卡暂停中「继续这一条」继续的正是原来那张卡（代码审核 S5）', () => {
+  it('等于〔继续〕：从点的那一刻接着计，回到目标清掉', async () => {
+    const f = await working(); f.clock(at(5)); await pause(f.ctx, at(5));
+    const cardEntryId = entries(f).find(e => e.card_id === 'c1')!.id;
+    f.clock(at(9)); await continueEntry(f.ctx, cardEntryId, at(9));
+    expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通', started_at: at(9) });
+    expect((await state(f)).resume_entry_id).toBeNull();
+  });
+  it('插入中开始原来那张卡（背包里点开始）= 回到任务；开始别的卡拒绝', async () => {
+    const f = await working(); f.clock(at(10)); await startPreset(f.ctx, 'wc', at(10));
+    await expect(startCard(f.ctx, 'c2', at(11))).rejects.toThrow('IN_AWAY_ACTIVITY');
+    f.clock(at(12)); await startCard(f.ctx, 'c1', at(12));
+    expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通', started_at: at(12) });
+    expect((await state(f)).resume_entry_id).toBeNull();
+  });
+});

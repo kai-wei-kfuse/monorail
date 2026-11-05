@@ -59,7 +59,7 @@ describe('fusedState', () => {
   it('FusedCard 正在计自由记录时保留 .f-input 架构并启用 .compact 紧贴文字宽度与 --ts 大字号，待确认空白输入时不加 .compact', async () => {
     const noopActions: TimerActions = {
       beginPending: vi.fn(), cancelPending: vi.fn(), startFree: vi.fn(), editOpen: vi.fn(),
-      pause: vi.fn(), stop: vi.fn(), resume: vi.fn(), draw: vi.fn(), startFavorite: vi.fn(),
+      pause: vi.fn(), stop: vi.fn(), resume: vi.fn(), continueTimer: vi.fn(), draw: vi.fn(), startFavorite: vi.fn(),
       startCard: vi.fn(), continueEntry: vi.fn(), favorite: vi.fn(),
       readout: vi.fn(), createProject: vi.fn(), createTag: vi.fn(),
     };
@@ -113,7 +113,7 @@ describe('fusedState', () => {
   it('ADR 0006：临时活动时底层内容只读、底部整组禁用并提示回来后可用，AwayDrawer 绑定当前临时活动', () => {
     const actions: TimerActions = {
       beginPending: vi.fn(), cancelPending: vi.fn(), startFree: vi.fn(), editOpen: vi.fn(),
-      pause: vi.fn(), stop: vi.fn(), resume: vi.fn(), draw: vi.fn(), startFavorite: vi.fn(),
+      pause: vi.fn(), stop: vi.fn(), resume: vi.fn(), continueTimer: vi.fn(), draw: vi.fn(), startFavorite: vi.fn(),
       startCard: vi.fn(), continueEntry: vi.fn(), favorite: vi.fn(),
       readout: vi.fn(), createProject: vi.fn(), createTag: vi.fn(),
     };

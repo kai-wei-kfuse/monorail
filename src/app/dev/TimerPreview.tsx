@@ -128,6 +128,7 @@ export function TimerBarPreview() {
         pause: () => { const id = open.id; start({ description: '待机', project: '待机', tags: [] }); setS(x => ({ ...x, resume: id })); },
         stop: () => { start({ description: '待机', project: '待机', tags: [] }); setS(x => ({ ...x, resume: null })); },
         resume: () => { const r = row(s.resume!); start({ description: r.description, project: r.project, tags: r.tags, cardId: r.cardId }); },
+        continueTimer: () => { const r = row(s.resume!); start({ description: r.description, project: r.project, tags: r.tags, cardId: r.cardId }); },
         draw: () => setS(x => ({ ...x, drawn: true, pending: x.pending ?? { id: crypto.randomUUID(), startedAt: iso(Date.now()) } })),
         startFavorite: pick,
         favorite: id => { const r = row(id); setFavs(l => [...l, { id: crypto.randomUUID(), description: r.description, project: r.project, tags: r.tags }]); },

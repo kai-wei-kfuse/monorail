@@ -3,8 +3,7 @@ import { at, card, fixture, getCard, open, seed, task } from './serviceFixture';
 import { createContext, run } from './commit';
 import { refresh } from './dealService';
 import { start } from './cardService';
-import { beginPending, insert, pause, resume, sleep, startFree } from './homeService';
-import { registerRefusalInTx, returnFromRest } from './degradeService';
+import { beginPending, insert, pause, rest, resume, sleep, startFree } from './homeService';
 import { enter, finish, goto } from './reviewService';
 import { startSystemInTx } from './tracking/api';
 
@@ -23,9 +22,8 @@ it.each(['idle', 'free', 'card', 'paused', 'inserted', 'pausedFree', 'insertedFr
     if (mode === 'sleep') await sleep(f.ctx, at(1));
     if (mode === 'pending') await beginPending(f.ctx, at(1));
     if (mode === 'rest') {
-      f.ctx.settings.refusalThreshold = 2;
-      f.clock(at(2)); await run(f.ctx, async tx => { tx.state.refusals = [at(1)]; await registerRefusalInTx(tx); }, at(2), { action: 'test.direct' });
-      expect(open(f).project).toBe('休息');
+      await rest(f.ctx, at(1));
+      expect(open(f)).toMatchObject({ project: '休息', kind: '插入' });
     }
     const before = {
       entries: structuredClone(f.ctx.repos.times.snapshot()),
@@ -65,8 +63,8 @@ it.each(['idle', 'free', 'card', 'paused', 'inserted', 'pausedFree', 'insertedFr
       expect(open(f).started_at).toBe(at(1));
     }
     if (mode === 'rest') {
-      await returnFromRest(restarted, '走走', at(10));
-      expect((await f.ctx.repos.state.read()).rest).toBeNull();
+      await resume(restarted, at(10));
+      expect(open(f)).toMatchObject({ card_id: 'a', started_at: at(10) });
     }
   },
 );

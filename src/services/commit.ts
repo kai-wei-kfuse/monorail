@@ -16,7 +16,7 @@ import { projectHome } from './homeProjection';
 import { projectBackpack } from './backpackProjection';
 import { projectPlan } from './planProjection';
 import type { PlanSlice } from '../store/planSlice';
-import { shiftDay } from '../domain/plan/plan';
+import { minutesOnDay, shiftDay } from '../domain/plan/plan';
 import { activeRefInTx } from './tracking/api';
 import type { BackpackSlice } from '../store/backpackSlice';
 import { entityChanges } from './entityChanges';
@@ -353,7 +353,11 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
         notices: structuredClone(tx.notices),
       });
     }, warnings);
-    await postCommit('reminders', () => ctx.reminders.update(planReminders({ cards: tx.cards, open: tx.entries.find(seg => seg.id === tx.state.open_entry && seg.ended_at === null) ?? null,
+    const openNow = tx.entries.find(seg => seg.id === tx.state.open_entry && seg.ended_at === null) ?? null;
+    const goalItem = openNow?.card_id ? plans.get(todayKey)!.value.items.find(item => item.card_id === openNow.card_id && item.today_minutes !== null) : undefined;
+    const todayGoal = openNow && goalItem ? { cardId: goalItem.card_id, day: todayKey, todayMinutes: goalItem.today_minutes!,
+      minutesToday: minutesOnDay(tx.entries.filter(e => e.id !== openNow.id), goalItem.card_id, todayKey, ctx.settings.dayBoundaryHour, ctx.now()) } : null;
+    await postCommit('reminders', () => ctx.reminders.update(planReminders({ cards: tx.cards, open: openNow, todayGoal,
       deadlineLeadMinutes: ctx.settings.deadlineLeadMinutes, longActivityMinutes: ctx.settings.longActivityMinutes })), warnings);
     if (warnings.length) await postCommit('logging', () => ctx.log(`post-commit-warning:${JSON.stringify(warnings)}`), warnings);
     return { data: value, committed_at: committedAt, replayed: false, warnings };

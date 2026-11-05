@@ -44,7 +44,7 @@ export const captureTodoInput = z.strictObject({
   text: z.string().trim().min(1, '待办内容不能为空').describe('要捕捉的待办事项内容，支持 #标签'),
   task_id: nonEmpty.optional().describe('可选：归入背包中指定任务的 ID；省略时自动创建单事项支线任务'),
   due_at: iso.nullable().optional().describe('可选：截止时间（带时区 ISO 字符串）'),
-  blocking: z.boolean().optional().describe('可选：是否为阻塞事项'),
+  blocking: z.boolean().optional().describe('已停用（0.3.1 起不起作用，保留只为兼容旧调用）'),
 });
 export const todoResult = z.strictObject({
   record_id: z.uuid(),

@@ -17,7 +17,7 @@
 - 用户动作调用 run(rootCtx, callback, at)，并发根动作串行排队。
 - callback 只把 tx 传给 InTx 函数，不能捕获根 ctx 调另一个用户动作。
 - InTx 只接 tx（自带 repos/settings/id/now/at）；run(tx, ...) 同步抛重入错误。
-- homeService → cardService/dealService 的 InTx 与 tracking/api；scheduler → homeService 的 InTx。
+- homeService → cardService/dealService 的 InTx 与 tracking/api；scheduler / dayChange → homeService 的 InTx。
 - cardService → degradeService 的 InTx → tracking/api；cardService → dealService。
 - reviewService → backpackService/ideaService 的 InTx（主线与回顾进度同事务）；任何 service 不得反向调用 reviewService。
 - tracking 内部 service 互不调用；卡侧只经 tracking/api；计时不读取卡/任务。degrade 的「回来」只调 tracking/api。

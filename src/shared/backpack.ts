@@ -6,10 +6,12 @@ export interface CardFields {
 }
 export type BackpackSlot = '主线' | '支线';
 export interface MakeRoom { id: string; action: '冷藏' | '放弃' }
+export interface TaskItemDraft { content: string; type: '结果卡' | '时间盒卡'; minutes: number | null }
 export interface TaskDraft {
   name: string; slot: BackpackSlot | '不在背包'; makeRoom: MakeRoom | null;
-  /** Old task dialog omits items; the N4 dialog supplies its item list (empty means the task itself). */
-  items?: string[]; defaultProject?: string | null;
+  /** Old task dialog omits items; the N4 dialog supplies its item list (empty means the task itself).
+   *  0.3.1（已定 46）：每项可以带类型和分钟数；只给字符串的按结果卡（兼容旧调用）。 */
+  items?: (string | TaskItemDraft)[]; defaultProject?: string | null;
 }
 /** 不属于任何项目的卡按支线算，界面上也叫「支线」。name 是项目名，slot 是标签条上的格号，
  * group 用在背包队列里（和支线项目区分），option 用在项目下拉框里。以后再改名只改这里。 */

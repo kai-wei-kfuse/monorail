@@ -3,12 +3,11 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { Ctx } from '../services/commit';
 import * as card from '../services/cardService';
-import type { ShrinkCommand } from '../services/cardService';
+import type { SplitCommand } from '../services/cardService';
 import * as timer from '../services/homeService';
 import * as preset from '../services/presetService';
 import * as deal from '../services/dealService';
 import * as plan from '../services/planService';
-import { returnFromRest } from '../services/degradeService';
 import { changeLists } from '../services/settingsService';
 import type { BackfillResult } from '../shared/notices';
 import type { HistorySource } from '../shared/history';
@@ -30,7 +29,7 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     // fromMini：小窗点的完成、主窗口弹的对话框（两段式），历史来源记小窗
     complete: guard((cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean) =>
       card.complete(ctx, cardId, at, note, keepGoing, fromMini ? { kind: 'manual', via: 'mini' } : undefined)),
-    shrink: guard((cardId: string, input: ShrinkCommand, at: string) => card.shrink(ctx, cardId, input, at)),
+    split: guard((cardId: string, input: SplitCommand, at: string) => card.split(ctx, cardId, input, at)),
     pass: guard((cardId: string, at: string) => card.pass(ctx, cardId, at)),
     editContent: guard((cardId: string, content: string, at: string) => card.editContent(ctx, cardId, content, at)),
     // 卡头「记到」那一行：project 为 null 是跟随任务的默认项目
@@ -65,7 +64,10 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     }),
     // 计时（timerService）。activity 是快捷活动的 id，或者手写的活动名
     insert: guard((activity: string, at: string) => timer.insert(ctx, activity, at)),
+    /** 〔回来〕〔回到任务〕：回到原来那张卡 / 原来那件事 */
     resume: guard((at: string) => timer.resume(ctx, at)),
+    /** 〔继续〕：插入的事暂停时继续插入的事；否则同原来的继续（卡暂停、自由记录暂停） */
+    continueTimer: guard((at: string) => timer.continueTimer(ctx, at)),
     // 临时活动：手写的名字直接插入（项目默认「生活」）。和已有快捷活动同名就用那一项；勾了「存为快捷活动」先写进列表
     // 两次提交各记一条历史：改列表设置（来源首页）、插入临时活动
     tempActivity: guard(async (name: string, keep: boolean, at: string) => {
@@ -78,8 +80,8 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
       : timer.backfillRange(ctx, { start: r.from, end: r.to }, r.activity, r.at)); }),
     wake: guard((at: string) => timer.wake(ctx, at)),
     answerOffline: guard((from: string, to: string, activity: string, at: string) => timer.answerOffline(ctx, { start: from, end: to }, activity, at)),
-    // 降级（degradeService）
-    returnFromRest: guard((answer: string, at: string) => returnFromRest(ctx, answer, at)),
+    // 主动休息（已定 48、55）：插入一条「休息」，回来就是〔回到任务〕
+    rest: guard((at: string) => timer.rest(ctx, at)),
     // 窗口
     showQuickbar: guard(() => invoke('show_quickbar')),
   };

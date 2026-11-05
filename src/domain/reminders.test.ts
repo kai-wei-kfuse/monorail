@@ -31,3 +31,16 @@ describe('planReminders', () => {
     expect(one.id).not.toBe(two.id);
   });
 });
+
+describe('今天的量到了（0.3.1，已定 49 提议 3）', () => {
+  const run: TimeEntry = { ...open, card_id: 'tb' };
+  const goal = { cardId: 'tb', day: '2026-10-27', todayMinutes: 60, minutesToday: 20 };
+  it('正在计的时间盒卡：在「开始 + 还差的分钟」时提醒一次', () => {
+    const plan = planReminders({ ...base, cards: [card('tb', '进行中', null)], open: run, todayGoal: goal }).find(p => p.id.startsWith('todayGoal:'));
+    expect(plan).toMatchObject({ at: Date.parse(run.started_at) + 40 * 60_000, title: '今天的量到了' });
+  });
+  it('今天已经计够、或开着的不是这张卡：不提醒', () => {
+    expect(planReminders({ ...base, cards: [], open: run, todayGoal: { ...goal, minutesToday: 60 } }).some(p => p.id.startsWith('todayGoal:'))).toBe(false);
+    expect(planReminders({ ...base, cards: [], open, todayGoal: goal }).some(p => p.id.startsWith('todayGoal:'))).toBe(false);
+  });
+});

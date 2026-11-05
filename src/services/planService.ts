@@ -75,6 +75,7 @@ export function skipTodayInTx(tx: Transaction): void {
  */
 export function skipCardInTx(tx: Transaction, cardId: string, drawable: (plan: DayPlan) => string[]): void {
   const plan = structuredClone(tx.todayPlan);
+  if (!plan.items.some(item => item.card_id === cardId) && !plan.skip_until_planned) return;   // 跨过换日时间时不写进另一天（代码审核 S2）
   const seen = [...new Set([...plan.seen, cardId])];
   const left = drawable({ ...plan, seen }).filter(id => !seen.includes(id));
   plan.seen = left.length ? seen : [cardId];
@@ -94,7 +95,7 @@ export function confirmCarryInTx(tx: Transaction, keep: readonly string[]): void
  * 所以同一天重启不重复；前一晚排过的「明天」就是今天这份文件，照样带一次。
  * - 来源：今天之前最近的一份（隔几天才开也只带最近那份），未达成、卡仍在背包、今天还没排的带过来，待确认；
  * - 换日时还在计的卡：直接加进今天（不用确认），只在它开始于今天活动日起点之前时做；
- * - 插入中先结束原任务：由调用方（homeService）在本函数之前处理，这里只看开着的那一条。
+ * - 插入中先结束原任务：由 dayChange 在本函数之前处理（代码审核 B2），这里只看开着的那一条。
  * - 任务模式关掉时整个跳过、不建文件（第 3 轮 N5）。
  */
 export async function rolloverInTx(tx: Transaction, sourceDays: readonly string[]): Promise<void> {
@@ -115,11 +116,11 @@ export async function rolloverInTx(tx: Transaction, sourceDays: readonly string[
     if (existing) existing.carried = false;
     else {
       const spent = totalMinutes(tx.entries, running.id, tx.at);
-      const rest = running.type === '时间盒卡' && running.timebox_minutes !== null ? Math.max(5, running.timebox_minutes - Math.floor(spent)) : null;
-      plan.items.push({ card_id: running.id, priority: '普通', today_minutes: rest, added_at: tx.at, carried: false } satisfies PlanItem);
+      const full = running.type === '时间盒卡' && running.timebox_minutes !== null && spent >= running.timebox_minutes;
+      if (!full) plan.items.push({ card_id: running.id, priority: '普通', today_minutes: defaultTodayMinutes(running, spent), added_at: tx.at, carried: false } satisfies PlanItem);
     }
-    if (!plan.items.some(item => item.carried)) { plan.carried_confirmed = true; }
   }
+  plan.carried_confirmed = !plan.items.some(item => item.carried);
   plan.rolled_over = true;
   tx.savePlan(plan);
 }

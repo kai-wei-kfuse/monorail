@@ -46,7 +46,7 @@ export function captureTodoInTx(tx: Transaction, input: CaptureTodoInput): { rec
     kind: '待办',
     created_at: tx.at,
     due_at: input.due_at ?? null,
-    blocking: input.blocking ?? false,
+    blocking: false,   // 0.3.1 删除阻塞机制（已定 12）：照写 false 供 0.3.0 读
     task_id: targetTaskId,
     card_id: null,
     tags: [],

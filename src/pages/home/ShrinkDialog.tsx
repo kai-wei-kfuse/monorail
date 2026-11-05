@@ -1,48 +1,48 @@
 import { useState } from 'react';
 import { Dialog } from '../../ui/overlay/Dialog';
 import { Button } from '../../ui/controls/Button';
-import { Segmented } from '../../ui/controls/Segmented';
 import { Slider } from '../../ui/controls/Slider';
 import { TextInput } from '../../ui/controls/TextInput';
 import { plainText } from '../../ui/marks/MarkedText';
 import './home.css';
 
-/** 设计文档「降级链」里的缩小常见模式，只作参考。 */
-export const SHRINK_PATTERNS = [
-  ['完成 → 进度', '写完一道算法题', '写 1 小时算法题并记下思路'],
-  ['解决 → 记录', '修好打印机', '排查打印机，记录过程留待下次'],
-  ['前进 → 回顾', '沿 Python 往下学 1 小时', '不再往后学，给今天学的内容出几道题做完'],
-  ['整体 → 一块', '改完整份简历', '只改一段项目经历'],
-  ['执行 → 准备', '给小游戏实现房间系统', '写下房间系统的接口设计'],
-  ['产出 → 起头', '写 1000 字', '列提纲并写第一段'],
-] as const;
-
 export type CardType = '结果卡' | '时间盒卡';
 
 /**
- * 缩小：缩成什么由我自己写。旁边有「结果 / 时间盒」切换，默认沿用原卡的类型。
- * 确认时才算一次拒绝（附录 A7），所以 at 取点「缩小」确认的那一刻；取消不计数。
- * 级数显示「第 N 级 / 共 M 级」；达到上限时首页的缩小按钮已经置灰，不会打开这里。
+ * 缩小 = 今天先做一部分（ADR 0021 第 4 条，已定 50、54；UI 风格规范 §11.15）。
+ * 原来这一项拆成「今天做的」（留在原位、接着计）和「剩下的」（放回背包，排在后面）。
+ * 时间盒：拖滑块分今天做多少分钟，两份加起来等于原来今天的量；今天这份不能少于今天已计。结果卡只写两句。
+ * 不显示第几级，可以一直往下拆。确认时才写盘；取消不写。
  */
-export function ShrinkDialog({ original, type, timeboxMinutes, level, maxLevel, defaultTimebox, onConfirm, onCancel }:
-  { original: string; type: CardType; timeboxMinutes: number | null; level: number; maxLevel: number; defaultTimebox: number;
-    onConfirm: (r: { content: string; type: CardType; timeboxMinutes: number | null; at: string }) => void; onCancel: () => void }) {
-  const [content, setContent] = useState(''), [kind, setKind] = useState<CardType>(type);
-  const [minutes, setMinutes] = useState(timeboxMinutes ?? defaultTimebox);
-  const ok = content.trim().length > 0;
-  const submit = () => { if (ok) onConfirm({ content: content.trim(), type: kind, timeboxMinutes: kind === '时间盒卡' ? minutes : null, at: new Date().toISOString() }); };
-  return <Dialog en={`SHRINK ${level + 1} / ${maxLevel}`} title="缩小成什么" onClose={onCancel}
+export function ShrinkDialog({ original, type, todayGoal, minutesToday, onConfirm, onCancel }:
+  { original: string; type: CardType; todayGoal: number | null; minutesToday: number;
+    onConfirm: (r: { todayContent: string; restContent: string; restMinutes: number | null; at: string }) => void; onCancel: () => void }) {
+  const timebox = type === '时间盒卡' && todayGoal !== null;
+  const min = Math.max(5, Math.ceil((minutesToday + 1) / 5) * 5), max = timebox ? Math.max(min, todayGoal! - 5) : 0;
+  const [today, setToday] = useState(''), [rest, setRest] = useState(plainText(original));
+  const [todayMinutes, setTodayMinutes] = useState(timebox ? Math.min(max, Math.max(min, Math.round(todayGoal! * 0.6 / 5) * 5)) : 0);
+  const ok = today.trim().length > 0 && rest.trim().length > 0 && (!timebox || todayGoal! - todayMinutes >= 5);
+  const submit = () => {
+    if (!ok) return;
+    onConfirm({ todayContent: today.trim(), restContent: rest.trim(), restMinutes: timebox ? todayGoal! - todayMinutes : null, at: new Date().toISOString() });
+  };
+  return <Dialog en="SHRINK · 缩小" title="今天先做一部分" onClose={onCancel}
     footer={<><Button onClick={onCancel}>不缩了</Button><Button tone="ink" disabled={!ok} onClick={submit}>缩小</Button></>}>
-    自我感觉无法完成，可以主动降低标准。原来是「{plainText(original)}」。
+    原来这一项是「{plainText(original)}」{timebox ? `，今天 ${todayGoal} 分钟，已计 ${Math.floor(minutesToday)} 分钟` : ''}。
+    {timebox && <div className="dlg-field">
+      <Slider label="今天做多少" value={todayMinutes} min={min} max={max} step={5} unit="MIN" onChange={setTodayMinutes} ticks={8} />
+      <small className="dlg-hint">剩下 {todayGoal! - todayMinutes} 分钟放回背包</small>
+    </div>}
     <div className="dlg-field">
-      <label htmlFor="shrink-to">缩小后（第 {level + 1} 级，最多 {maxLevel} 级）</label>
-      <TextInput id="shrink-to" autoFocus value={content} placeholder="例如把「学 Python」改成「学 1 小时 Python」"
-        onChange={e => setContent(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit(); }} />
+      <label htmlFor="split-today">今天做的（接着计）</label>
+      <TextInput id="split-today" autoFocus value={today} placeholder="写清楚今天做到哪，例如：只读 4.1–4.3"
+        onChange={e => setToday(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit(); }} />
     </div>
-    <div className="dlg-field dlg-inline">
-      <Segmented label="类型" value={kind} onChange={setKind} options={[{ value: '结果卡', label: '结果' }, { value: '时间盒卡', label: '时间盒' }]} />
-      {kind === '时间盒卡' && <Slider label="目标时长" value={minutes} min={5} max={240} step={5} unit="MIN" onChange={setMinutes} ticks={16} />}
+    <div className="dlg-field">
+      <label htmlFor="split-rest">剩下的（放回背包，排在后面）</label>
+      <TextInput id="split-rest" value={rest} placeholder="例如：4.4 以后和练习"
+        onChange={e => setRest(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit(); }} />
     </div>
-    <dl className="dlg-pat">{SHRINK_PATTERNS.map(([name, from, to]) => <div key={name}><dt>{name}</dt><dd>{from} → {to}</dd></div>)}</dl>
+    <small className="dlg-hint">剩下的那一份变成这个任务里的新一项，不在今天的板子上。可以一直往下拆，不限次数。</small>
   </Dialog>;
 }

@@ -1,7 +1,17 @@
 import { expect, it, vi } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed } from './serviceFixture';
 import { createTask, freezeTask, abandonTask, restoreTask, saveCard, reorderQueue } from './backpackService';
-import { start, shrink, pass, complete } from './cardService';
+import { start, split, pass, complete } from './cardService';
+import { run } from './commit';
+import { shrinkCard } from '../data/migrations/v030/shrink';
+/** 0.3.0 留下的「已缩小」链：用冻结的 0.3.0 缩小直接写进数据目录（0.3.1 不再产生） */
+async function legacyChild(f: ReturnType<typeof fixture>, parentId: string, id: string): Promise<string> {
+  await run(f.ctx, async tx => {
+    const { parent, child } = shrinkCard(tx.cards.find(c => c.id === parentId)!, { id, at: at(), content: '小一步', type: '结果卡', minutes: null, order: 10, maxLevel: 9 });
+    tx.saveCard(parent); tx.saveCard(child); tx.state.current_card = child.id; tx.state.home_mode = 'task';
+  }, at(), { action: 'test.direct' });
+  return id;
+}
 import { insert, resume } from './homeService';
 import type { CardFields } from '../shared/backpack';
 
@@ -62,8 +72,8 @@ it('A3 abandoning a running task stops its timer, preserves completed history, a
 });
 it('A6 hiding ancestors, completing a child, and PASS preserve only the active leaf in queue', async () => {
   const f = fixture(); await seed(f, [card('a', { task_id: 'main' })], [task('main')]); await start(f.ctx, 'a', at());
-  const input = { content: '小一步', type: '结果卡' as const, minutes: null };
-  const b = await shrink(f.ctx, 'a', input, at()), c = await shrink(f.ctx, b, input, at());
+  const b = await legacyChild(f, 'a', 'b'), c = await legacyChild(f, b, 'c');
+  await start(f.ctx, c, at());
   const queue = () => f.publish.mock.calls.at(-1)![0].backpack.queue.flatMap(group => group.cards).map(item => item.id);
   expect(queue()).toEqual([c]); await expect(pass(f.ctx, 'a', at())).rejects.toThrow('先处理');
   await complete(f.ctx, c, at(), '进度'); expect(queue()).toEqual([b]);
@@ -71,7 +81,7 @@ it('A6 hiding ancestors, completing a child, and PASS preserve only the active l
 });
 it('A6 abandoning a task terminates all unfinished shrink ancestors as well as the leaf', async () => {
   const f = fixture(); await seed(f, [card('a', { task_id: 'main' })], [task('main')]);
-  const b = await shrink(f.ctx, 'a', { content: '小一步', type: '结果卡', minutes: null }, at());
+  const b = await legacyChild(f, 'a', 'b');
   await abandonTask(f.ctx, 'main', at());
   expect((await getCard(f, 'a')).status).toBe('已放弃'); expect((await getCard(f, b)).status).toBe('已放弃');
   await restoreTask(f.ctx, 'main', '主线', at()); expect(f.home().card).toBeNull();
@@ -110,10 +120,22 @@ it('queue ties can be reordered while preserving other task positions', async ()
 });
 it.each(['complete', 'pass'] as const)('a moved shrink child can %s after its old task is abandoned without reviving its parent', async action => {
   const f = fixture(); await seed(f, [card('a', { task_id: 'main' })], [task('main')]); await start(f.ctx, 'a', at());
-  const child = await shrink(f.ctx, 'a', { content: '小一步', type: '结果卡', minutes: null }, at());
+  const child = await split(f.ctx, 'a', { todayContent: '先做这些', restContent: '小一步', restMinutes: null }, at());
   await saveCard(f.ctx, child, fields(), at()); await abandonTask(f.ctx, 'main', at());
-  if (action === 'complete') await complete(f.ctx, child, at(), '完成');
-  else await pass(f.ctx, child, at());
+  f.clock(at(1)); await start(f.ctx, child, at(1));
+  f.clock(at(2));
+  if (action === 'complete') await complete(f.ctx, child, at(2), '完成');
+  else await pass(f.ctx, child, at(2));
   expect((await getCard(f, 'a')).status).toBe('已放弃');
   expect((await getCard(f, child)).status).toBe(action === 'complete' ? '已完成' : '已放弃');
+  // 拆分出来的 rest 的父卡不是「已缩小」，完成或 PASS 都不会去改它
+});
+
+it('0.3.1 新建任务：每一项可以选结果或时间盒（已定 46）；只给字符串的按结果卡；时间盒要填分钟', async () => {
+  const f = fixture(); await seed(f, []);
+  const id = await createTask(f.ctx, { name: '把 408 过一遍', slot: '支线', makeRoom: null,
+    items: ['数据结构：线性表', { content: '计算机组成：存储器', type: '时间盒卡', minutes: 90 }] }, at());
+  const cards = (await f.ctx.repos.cards.list()).map(e => e.value).filter(c => c.task_id === id).sort((a, b) => a.order - b.order);
+  expect(cards.map(c => [c.content, c.type, c.timebox_minutes])).toEqual([['数据结构：线性表', '结果卡', null], ['计算机组成：存储器', '时间盒卡', 90]]);
+  await expect(createTask(f.ctx, { name: '坏的', slot: '支线', makeRoom: null, items: [{ content: 'x', type: '时间盒卡', minutes: null }] }, at())).rejects.toThrow('分钟');
 });

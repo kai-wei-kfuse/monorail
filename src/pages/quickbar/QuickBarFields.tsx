@@ -19,8 +19,6 @@ export function QuickBarFields({ value, onChange, tasks }:
   return <div className="qb-fields" data-tauri-drag-region>
     <Segmented label="类型" value={value.kind} onChange={kind => set({ kind })}
       options={[{ value: '想法', label: '想法' }, { value: '待办', label: '待办' }]} />
-    {todo && <button type="button" className="qb-toggle" aria-pressed={value.blocking} title="这件事挡住了别的事，选卡时排最前"
-      onClick={() => set({ blocking: !value.blocking })}>阻塞</button>}
     {todo && <DateTimeInput label="期限" inlineLabel value={value.dueAt} onChange={dueAt => set({ dueAt })} />}
     <Dropdown label="所属项目" value={value.taskId ?? ''} onChange={id => set({ taskId: id || null })}
       options={[{ value: '', label: todo ? LOOSE.option : '不属于项目' }, ...tasks.map(p => ({ value: p.id, label: p.name }))]} />

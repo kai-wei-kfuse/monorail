@@ -41,7 +41,7 @@ export class PlanRepo {
   }
   /** 保留期清理用：列出 plans/ 下所有日期（不读内容）。 */
   async days(): Promise<string[]> {
-    const names = await this.fs.list('plans').catch(() => []);
+    const names = await this.fs.list('plans');   // 目录不存在时返回 []；其余读错误照常抛出（代码审核 N5）
     return names.map(name => name.replace(/^plans\//, '').replace(/\.yaml$/, '')).filter(name => day.safeParse(name).success).sort();
   }
   remove(value: string): Promise<void> { return this.fs.remove(planPath(value)); }

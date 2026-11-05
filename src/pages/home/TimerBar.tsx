@@ -49,7 +49,10 @@ export interface TimerActions {
   pause: () => void;
   /** 停止：截断这一条转为待机，之后没有〔继续〕。 */
   stop: () => void;
+  /** 〔回来〕〔回到任务〕 */
   resume: () => void;
+  /** 〔继续〕（ADR 0021 第 3 条：插入的事暂停时继续插入的事） */
+  continueTimer: () => void;
   draw: () => void;
   startFavorite: (presetId: string) => void;
   startCard: (cardId: string) => void;
@@ -132,7 +135,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
             {view.away && <ActionButton compact data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />}
           </>
             : running || view.away ? <ActionButton primary compact data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />
-            : paused ? <ActionButton primary compact cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.resume} />
+            : paused ? <ActionButton primary compact cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.continueTimer} />
             : <ActionButton primary compact cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={E.next} />}
           {((running && !deciding) || !!view.away) && <StopButton onClick={actions.stop} />}
           {(!running || !!view.away) && !deciding && <button type="button" className="tbar-new" disabled={!!pending} aria-label="开始想下一件事" title="开始想下一件事" onClick={E.next}><Icon name="plus" /></button>}

@@ -61,7 +61,6 @@ export function CardEditor({ initial, isNew, tasks, defaultTimebox, passBlocked,
       <div className="fm-f"><span>期限</span><div className="fm-row">
         <DateTimeInput label="期限" value={f.dueAt} onChange={dueAt => set({ dueAt })} />
       </div></div>
-      <div className="fm-check"><div><b>阻塞</b><p>这件事挡住了别的事，选卡时排最前。</p></div><Switch label="阻塞" checked={f.blocking} onChange={blocking => set({ blocking })} /></div>
       <div className="fm-check"><div><b>不可缩小</b><p>本身很短的任务用，例如找 3 个 JD。</p></div><Switch label="不可缩小" checked={f.noShrink} onChange={noShrink => set({ noShrink })} /></div>
       {!isNew && onPass && <div className="fm-danger">
         <Button tone="danger" disabled={!!passBlocked} onClick={() => onPass(new Date().toISOString())}>PASS</Button>

@@ -3,6 +3,8 @@ import { cardSchema, entrySchema, settingsSchema } from './schemas';
 import { stateSchema } from './state';
 import { historyRecordSchema } from './history';
 import { restoreParent, shrinkCard } from './shrink';
+import { restoreParent as restoreParent031 } from '../../../domain/card/shrink';
+import { abandonCard, completeCard, startCard } from '../../../domain/card/transitions';
 import { defaults } from './settings';
 import { assertEntries } from '../../../domain/timeline/entry';
 import type { Card } from '../../../domain/card/card';
@@ -25,6 +27,22 @@ const rest = { ...baseCard, id: 'c-read-ch4-rest', content: '4.4 以后和练习
 
 const entry = (over: Partial<TimeEntry>): TimeEntry => ({ id: 'e', started_at: at, ended_at: null, description: '', project: '学习', tags: [],
   card_id: null, kind: '普通', source: '计时', updated_at: at, ...over });
+
+describe('0.3.1 读 0.3.0 留下的「已缩小」链（ADR 0021 第 4 条：旧数据照 0.3.0 规则处理）', () => {
+  const input = { at, content: '小一点', type: '结果卡' as const, minutes: null, order: 2, maxLevel: 4 };
+  it('完成叶子只恢复直接父卡和它的进度', () => {
+    const ab = shrinkCard(startCard(baseCard), { ...input, id: 'b' }), bc = shrinkCard(ab.child, { ...input, id: 'c' });
+    const restoredB = restoreParent031(completeCard(bc.child, at, '2026-11-06', '支线', 'C进度'), bc.parent, 'C进度');
+    expect(restoredB).toMatchObject({ status: '待做', progress_note: 'C进度' });
+    expect(ab.parent.status).toBe('已缩小');
+    expect(restoreParent031(completeCard(startCard(restoredB), at, '2026-11-06', '支线', 'B进度'), ab.parent, 'B进度')).toMatchObject({ status: '待做' });
+  });
+  it('不能 PASS 已缩小的祖先；PASS 叶子恢复父卡', () => {
+    const ab = shrinkCard(baseCard, { ...input, id: 'b' }), bc = shrinkCard(ab.child, { ...input, id: 'c' });
+    expect(() => abandonCard(ab.parent)).toThrow('先处理');
+    expect(restoreParent031(abandonCard(bc.child), bc.parent, '').status).toBe('待做');
+  });
+});
 
 describe('0.3.0 读 0.3.1 的数据（ADR 0021 G1 兼容锁定）', () => {
   it('拆分后的两张卡合法，split_note 原样保留', () => {

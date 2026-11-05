@@ -124,11 +124,41 @@ describe('换日带过去（ADR 0021 第 6 条，第 2 轮 B2）', () => {
 
   it('真的跨过换日时间还在计的卡：直接加进今天、不用确认', async () => {
     const f = await setup();
-    f.clock(at(5)); await runTx(f.ctx, tx => startCardInTx(tx, 'c1'), at(5));
+    f.clock(at(5)); await runTx(f.ctx, tx => startCardInTx(tx, 'c2'), at(5));
     f.clock(nextMorning(f)); await newDay(f.ctx);
     const today = await read(f, day(nextMorning(f), f));
-    expect(today.items).toMatchObject([{ card_id: 'c1', carried: false }]);
+    expect(today.items).toMatchObject([{ card_id: 'c2', carried: false, today_minutes: null }]);
     expect(today.carried_confirmed).toBe(true);
+  });
+
+  it('在计的时间盒卡跨夜计满了：不加进今天（代码审核 S1）', async () => {
+    const f = await setup();
+    f.clock(at(5)); await runTx(f.ctx, tx => startCardInTx(tx, 'c1'), at(5));   // 120 分钟，计了一夜
+    f.clock(nextMorning(f)); await newDay(f.ctx);
+    expect((await read(f, day(nextMorning(f), f))).items).toEqual([]);
+  });
+
+  it('换日时还在插入中、原来那条是昨天开始的：先结束原任务，原卡回待做并带过来等确认（代码审核 B2）', async () => {
+    const f = await setup();
+    await plan.add(f.ctx, 'today', { cardId: 'c2', priority: '高' }, at(1));
+    f.clock(at(5)); await runTx(f.ctx, tx => startCardInTx(tx, 'c2'), at(5));
+    const { startFree } = await import('./homeService');
+    f.clock(at(10)); await startFree(f.ctx, { description: '接电话', project: '工作', tags: [] }, at(10));
+    f.clock(nextMorning(f)); await newDay(f.ctx);
+    const s = await f.ctx.repos.state.read();
+    expect(s.resume_entry_id).toBeNull();
+    expect(f.ctx.repos.times.snapshot().find(e => e.ended_at === null)).toMatchObject({ description: '接电话', kind: '普通' });
+    expect((await f.ctx.repos.cards.get('c2'))!.value.status).toBe('待做');
+    expect((await read(f, day(nextMorning(f), f))).items).toMatchObject([{ card_id: 'c2', priority: '高', carried: true }]);
+  });
+
+  it('同一天重启时还在插入中：不结束原任务', async () => {
+    const f = await setup();
+    f.clock(at(5)); await runTx(f.ctx, tx => startCardInTx(tx, 'c2'), at(5));
+    const { startFree } = await import('./homeService');
+    f.clock(at(10)); await startFree(f.ctx, { description: '接电话', project: '工作', tags: [] }, at(10));
+    f.clock(at(20)); await newDay(f.ctx);
+    expect((await f.ctx.repos.state.read()).resume_entry_id).not.toBeNull();
   });
 
   it('换日仍写回顾行和 first_used_day（第 2 轮 B1：refreshInTx 没删多）', async () => {

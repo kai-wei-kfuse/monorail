@@ -53,14 +53,14 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
       stateText={s.pendingOnCard ? ['待开始 · 已在计时', 'PENDING'] : s.paused ? ['已暂停', 'PAUSED'] : s.away ? ['进行中（暂停）', 'PAUSED'] : undefined}
       note={<>{cardView.progressNote && <p className="c-note"><b>上次做到</b>{cardView.progressNote}</p>}{line}</>}
       corner={<>
-        {s.paused && <button type="button" className="c-link" onClick={actions.resume}>继续计这张卡</button>}
+        {s.paused && <button type="button" className="c-link" onClick={actions.continueTimer}>继续计这张卡</button>}
         <button type="button" className="c-link" title="不做这张卡，自己写一件别的事" onClick={writeOther}>写别的</button>
         {corner}{manual}
       </>}
       actions={<>
         {cardActions}
         {pending && <ActionButton compact data-entry-discard="" cn="放弃" en="DISCARD" icon="x" title="放弃这次计时，这段时间照旧" onClick={discard} />}
-        {s.paused ? <ActionButton compact cn="继续" en="RESUME" icon="play" onClick={actions.resume} />
+        {s.paused ? <ActionButton compact cn="继续" en="RESUME" icon="play" onClick={actions.continueTimer} />
           : (s.onCard || s.away || !!view.away) && <ActionButton compact data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" onClick={actions.pause} />}
         {s.onCard || s.away || !!view.away ? stop : null}
         {!pending && (!s.onCard || s.away) && plus}
@@ -108,6 +108,6 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
       </>
       : running ? <><ActionButton primary data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />{stop}{view.away && plus}{draw(false)}</>
       : view.away ? <><ActionButton primary cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={E.next} />{stop}{plus}{draw(false)}</>
-      : paused ? <><ActionButton primary cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.resume} />{plus}{draw(false)}</>
+      : paused ? <><ActionButton primary cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.continueTimer} />{plus}{draw(false)}</>
       : <><ActionButton primary cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={E.next} />{plus}{draw(false)}</>} />;
 }

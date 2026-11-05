@@ -45,7 +45,6 @@ export const isSingle = (t: PoolTask) => t.items.length === 1 && plainText(t.ite
 
 function Meta({ item }: { item: PoolItem }) {
   return <small className="qc-meta">
-    {item.blocking && <span className="tag-block">BLOCK</span>}
     {item.running && <span className="run">进行中</span>}
     <span>{item.type === '时间盒卡' ? `时间盒 ${item.timeboxMinutes} 分` : '结果卡'}</span><span>已用 {clock(item.elapsedMs)}</span>
     {item.dueAt && <span>{when(item.dueAt)} 到期</span>}

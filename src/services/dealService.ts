@@ -15,7 +15,6 @@ export function refreshInTx(tx: Transaction): void {
   const day = activityDay(tx.at, tx.settings.dayBoundaryHour);
   tx.state.first_used_day ??= day;
   for (const review of reviewUpdates(day, tx.state.first_used_day, tx.settings.reviewWeekday, tx.reviews)) tx.saveReview(review);
-  if (tx.state.rest) { tx.state.home_mode = 'rest'; return; }   // 0.3.0 遗留的降级休息，由 dayChange 一次性处理（G5）
   if (tx.state.current_card && !tx.cards.some(card => card.id === tx.state.current_card && card.status === '进行中')) tx.state.current_card = null;
   tx.state.home_mode = tx.state.current_card ? 'task' : 'blank';
 }
@@ -28,10 +27,10 @@ export const refresh = (ctx: Ctx, at: string) => run(ctx, async tx => refreshInT
  */
 export function drawFromPlan(ctx: Ctx, at = ctx.now()): Promise<PickResult> {
   return readSerial(ctx, async () => {
-    const day = activityDay(at, ctx.settings.dayBoundaryHour);
-    const [state, plan, cards, tasks] = await Promise.all([ctx.repos.state.read(), ctx.repos.plans.read(day),
-      ctx.repos.cards.list(), ctx.repos.tasks.list()]);
-    const entries = ctx.repos.times.snapshot();
+    const day = activityDay(at, ctx.settings.dayBoundaryHour), snap = ctx.snapshot();
+    if (!snap) throw new Error('SNAPSHOT_UNAVAILABLE：单轨还没准备好');
+    const { state } = snap, plan = await ctx.repos.plans.read(day), entries = ctx.repos.times.snapshot();
+    const cards = snap.cards.map(value => ({ value })), tasks = snap.tasks.map(value => ({ value }));
     const open = entries.find(entry => entry.id === state.open_entry) ?? null;
     const resume = state.resume_entry_id ? entries.find(entry => entry.id === state.resume_entry_id) ?? null : null;
     return pickFromPlan({ plan: plan.value, cards: cards.map(c => c.value), tasks: tasks.map(t => t.value), entries,
