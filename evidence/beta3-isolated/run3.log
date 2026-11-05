@@ -1,0 +1,3 @@
+PASS mini
+PASS d4
+RUN-EXIT 0

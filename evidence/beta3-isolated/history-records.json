@@ -1,0 +1,2191 @@
+[
+  {
+    "version": 1,
+    "id": "089f8e9c-ca72-4615-b5f3-40c72a80e0ab",
+    "at": "2026-11-05T00:45:10.516Z",
+    "day": "2026-11-05",
+    "action": "auto.capture_todo",
+    "label": "捕获待办",
+    "source": {
+      "kind": "mcp",
+      "agent": {
+        "name": "Claude Desktop",
+        "raw": "claude-ai",
+        "version": "0.14.2",
+        "detected_by": "mcp_handshake"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+      "text": "隔离验收：小窗完成这张卡",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "record",
+        "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "类型",
+        "before": null,
+        "after": "待办"
+      },
+      {
+        "type": "record",
+        "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "池",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": null,
+        "after": "待做"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "任务",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "项目",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "类型",
+        "before": null,
+        "after": "结果卡"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "时间盒",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "做到哪了",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "缩小级数",
+        "before": null,
+        "after": "0"
+      },
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "跳过次数",
+        "before": null,
+        "after": "0"
+      },
+      {
+        "type": "task",
+        "id": "task-card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "名称",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "task",
+        "id": "task-card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": null,
+        "after": "进行中"
+      },
+      {
+        "type": "task",
+        "id": "task-card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "槽位",
+        "before": null,
+        "after": "支线"
+      },
+      {
+        "type": "task",
+        "id": "task-card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "押注到期",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "task",
+        "id": "task-card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "默认项目",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "call": {
+      "method": "capture_todo",
+      "operation_id": "1e7fa9ab-59c6-4e0d-889a-29111bd0af51",
+      "params": "{\"blocking\":false,\"due_at\":null,\"task_id\":null,\"text\":\"隔离验收：小窗完成这张卡\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "89cc7f73-cac8-4e8e-8737-44a4d7e2cb31",
+    "at": "2026-11-05T00:45:10.832Z",
+    "day": "2026-11-05",
+    "action": "auto.start_task_item",
+    "label": "开始事项",
+    "source": {
+      "kind": "mcp",
+      "agent": {
+        "name": "Claude Desktop",
+        "raw": "claude-ai",
+        "version": "0.14.2",
+        "detected_by": "mcp_handshake"
+      }
+    },
+    "subject": {
+      "type": "card",
+      "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+      "text": "隔离验收：小窗完成这张卡",
+      "meta": "隔离验收：小窗完成这张卡"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": "待做",
+        "after": "进行中"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "描述",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "entry",
+        "id": "3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 08:45–至今"
+      },
+      {
+        "type": "entry",
+        "id": "3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "卡",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "entry",
+        "id": "57bc6685-7c38-4898-8199-5781b09210ed",
+        "name": "待机",
+        "field": "时间",
+        "before": "11.05 08:45–至今",
+        "after": "11.05 08:45–08:45"
+      },
+      {
+        "type": "state",
+        "id": "current_card",
+        "name": "计时状态",
+        "field": "当前卡",
+        "before": "（无）",
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "state",
+        "id": "home_mode",
+        "name": "计时状态",
+        "field": "首页",
+        "before": "引导",
+        "after": "任务卡"
+      }
+    ],
+    "call": {
+      "method": "start_task_item",
+      "operation_id": "85a1a887-385c-4325-8ae2-de311d86f66d",
+      "params": "{\"card_id\":\"card-8146052f-f2c7-4acd-af54-149c69533aba\",\"expected_state\":\"ts1:57bc6685-7c38-4898-8199-5781b09210ed|2026-11-05T00:45:03.530Z|普通|待机|-|-|-|-|-|-|-\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "97e59e60-5fd1-4853-ba51-f07ce34ed08a",
+    "at": "2026-11-05T00:45:11.322Z",
+    "day": "2026-11-05",
+    "action": "auto.save_idea",
+    "label": "保存想法",
+    "source": {
+      "kind": "mcp",
+      "agent": {
+        "name": null,
+        "detected_by": "none"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+      "text": "隔离验收：旧协议 HTTP 存的想法",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：旧协议 HTTP 存的想法"
+      },
+      {
+        "type": "record",
+        "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "类型",
+        "before": null,
+        "after": "想法"
+      },
+      {
+        "type": "record",
+        "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "池",
+        "before": null,
+        "after": "活跃池"
+      },
+      {
+        "type": "record",
+        "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "0f881d13-bd72-4d1c-876a-1c0cc8a1d6ca",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "save_idea",
+      "operation_id": "857deb2d-8a81-441d-8ea4-259e6fc66298",
+      "params": "{\"needs\":null,\"text\":\"隔离验收：旧协议 HTTP 存的想法\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "c702a8e0-c38c-4c4c-97d0-589d87a3e54e",
+    "at": "2026-11-05T00:45:11.960Z",
+    "day": "2026-11-05",
+    "action": "auto.save_idea",
+    "label": "保存想法",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+      "text": "隔离验收：Claude Code 存的想法",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：Claude Code 存的想法"
+      },
+      {
+        "type": "record",
+        "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "类型",
+        "before": null,
+        "after": "想法"
+      },
+      {
+        "type": "record",
+        "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "池",
+        "before": null,
+        "after": "活跃池"
+      },
+      {
+        "type": "record",
+        "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "49b539b9-11fd-4622-bb4e-9e02e7d8a41f",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "save_idea",
+      "operation_id": "ec5d098a-6fb7-4e5a-8e45-31e3bddbe89a",
+      "params": "{\"needs\":null,\"text\":\"隔离验收：Claude Code 存的想法\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "0c5efbeb-b8b2-42e1-91de-bb84fa0596fd",
+    "at": "2026-11-05T00:45:12.339Z",
+    "day": "2026-11-05",
+    "action": "auto.save_idea",
+    "label": "保存想法",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": null,
+        "detected_by": "none"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+      "text": "隔离验收：未识别的 CLI",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：未识别的 CLI"
+      },
+      {
+        "type": "record",
+        "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "类型",
+        "before": null,
+        "after": "想法"
+      },
+      {
+        "type": "record",
+        "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "池",
+        "before": null,
+        "after": "活跃池"
+      },
+      {
+        "type": "record",
+        "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "a2dac840-64c9-4450-b987-26670f0f839d",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "save_idea",
+      "operation_id": "a24a0792-2e6f-4eb1-8ffe-1ad34ecadc31",
+      "params": "{\"needs\":null,\"text\":\"隔离验收：未识别的 CLI\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "f4a409a3-e5fb-4f48-9764-a648bc45599f",
+    "at": "2026-11-05T00:47:55.568Z",
+    "day": "2026-11-05",
+    "action": "auto.capture_todo",
+    "label": "捕获待办",
+    "source": {
+      "kind": "mcp",
+      "agent": {
+        "name": "Claude Desktop",
+        "raw": "claude-ai",
+        "version": "0.14.2",
+        "detected_by": "mcp_handshake"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+      "text": "隔离验收：小窗完成这张卡",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "record",
+        "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "类型",
+        "before": null,
+        "after": "待办"
+      },
+      {
+        "type": "record",
+        "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "池",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": null,
+        "after": "待做"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "任务",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "项目",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "类型",
+        "before": null,
+        "after": "结果卡"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "时间盒",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "做到哪了",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "缩小级数",
+        "before": null,
+        "after": "0"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "跳过次数",
+        "before": null,
+        "after": "0"
+      },
+      {
+        "type": "task",
+        "id": "task-card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "名称",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "task",
+        "id": "task-card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": null,
+        "after": "进行中"
+      },
+      {
+        "type": "task",
+        "id": "task-card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "槽位",
+        "before": null,
+        "after": "支线"
+      },
+      {
+        "type": "task",
+        "id": "task-card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "押注到期",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "task",
+        "id": "task-card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "默认项目",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "call": {
+      "method": "capture_todo",
+      "operation_id": "ab7ab550-3156-4a30-8d7b-18ce7a66b265",
+      "params": "{\"blocking\":false,\"due_at\":null,\"task_id\":null,\"text\":\"隔离验收：小窗完成这张卡\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "94ea5037-06b9-4625-a944-887456903ebf",
+    "at": "2026-11-05T00:47:55.921Z",
+    "day": "2026-11-05",
+    "action": "auto.start_task_item",
+    "label": "开始事项",
+    "source": {
+      "kind": "mcp",
+      "agent": {
+        "name": "Claude Desktop",
+        "raw": "claude-ai",
+        "version": "0.14.2",
+        "detected_by": "mcp_handshake"
+      }
+    },
+    "subject": {
+      "type": "card",
+      "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+      "text": "隔离验收：小窗完成这张卡",
+      "meta": "隔离验收：小窗完成这张卡"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "card-8146052f-f2c7-4acd-af54-149c69533aba",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": "进行中",
+        "after": "待做"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "3077ce57-adef-42b4-b9f0-ad665ce633c5",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "描述",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "entry",
+        "id": "3077ce57-adef-42b4-b9f0-ad665ce633c5",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "3077ce57-adef-42b4-b9f0-ad665ce633c5",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "3077ce57-adef-42b4-b9f0-ad665ce633c5",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 08:47–至今"
+      },
+      {
+        "type": "entry",
+        "id": "3077ce57-adef-42b4-b9f0-ad665ce633c5",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "3077ce57-adef-42b4-b9f0-ad665ce633c5",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "卡",
+        "before": null,
+        "after": "隔离验收：小窗完成这张卡"
+      },
+      {
+        "type": "entry",
+        "id": "3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "时间",
+        "before": "11.05 08:45–至今",
+        "after": "11.05 08:45–08:47"
+      },
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": "待做",
+        "after": "进行中"
+      }
+    ],
+    "call": {
+      "method": "start_task_item",
+      "operation_id": "6c1798ff-4493-4aa2-b5df-77c973b772e9",
+      "params": "{\"card_id\":\"card-faf42f0e-fda9-4e13-bafc-088ac54b2f79\",\"expected_state\":\"ts1:3df1c009-8c6f-47c4-bcf5-0567c4fcdfbc|2026-11-05T00:45:10.832Z|普通|未分类|card-8146052f-f2c7-4acd-af54-149c69533aba|card-8146052f-f2c7-4acd-af54-149c69533aba|进行中|-|-|-|-\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "7df3e6f0-ba41-429e-84c7-c5d997abf972",
+    "at": "2026-11-05T00:47:56.418Z",
+    "day": "2026-11-05",
+    "action": "auto.save_idea",
+    "label": "保存想法",
+    "source": {
+      "kind": "mcp",
+      "agent": {
+        "name": null,
+        "detected_by": "none"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+      "text": "隔离验收：旧协议 HTTP 存的想法",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：旧协议 HTTP 存的想法"
+      },
+      {
+        "type": "record",
+        "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "类型",
+        "before": null,
+        "after": "想法"
+      },
+      {
+        "type": "record",
+        "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "池",
+        "before": null,
+        "after": "活跃池"
+      },
+      {
+        "type": "record",
+        "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "a410d101-8a69-4dab-8067-ed3263120f07",
+        "name": "隔离验收：旧协议 HTTP 存的想法",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "save_idea",
+      "operation_id": "96680590-a925-473b-a7b7-b291a31ecd29",
+      "params": "{\"needs\":null,\"text\":\"隔离验收：旧协议 HTTP 存的想法\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "75d23bfa-1544-426d-8c72-574ca991ba9a",
+    "at": "2026-11-05T00:47:56.828Z",
+    "day": "2026-11-05",
+    "action": "auto.add_time_entry",
+    "label": "补录条目",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "手环同步",
+        "detected_by": "flag",
+        "evidence": "--agent 手环同步"
+      }
+    },
+    "subject": {
+      "type": "entry",
+      "id": "80301017-1875-4afa-9fcc-34531c2754df",
+      "text": "隔离验收：晨跑",
+      "meta": "未分类 · 11.05 03:47–04:17"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：晨跑",
+        "field": "描述",
+        "before": null,
+        "after": "隔离验收：晨跑"
+      },
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：晨跑",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：晨跑",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：晨跑",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 03:47–04:17"
+      },
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：晨跑",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：晨跑",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "add_time_entry",
+      "operation_id": "8d37447c-1b17-4e7d-a7cc-8d52d40c2e25",
+      "params": "{\"description\":\"隔离验收：晨跑\",\"end\":\"2026-11-04T20:17:56.643+00:00\",\"project\":\"未分类\",\"start\":\"2026-11-04T19:47:56.643+00:00\",\"tags\":[]}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "e2a38efb-a6a8-44b6-ad76-cdd1759c21d9",
+    "at": "2026-11-05T00:47:57.268Z",
+    "day": "2026-11-05",
+    "action": "auto.save_idea",
+    "label": "保存想法",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": "Claude Code",
+        "detected_by": "env",
+        "evidence": "CLAUDECODE=1"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+      "text": "隔离验收：Claude Code 存的想法",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：Claude Code 存的想法"
+      },
+      {
+        "type": "record",
+        "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "类型",
+        "before": null,
+        "after": "想法"
+      },
+      {
+        "type": "record",
+        "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "池",
+        "before": null,
+        "after": "活跃池"
+      },
+      {
+        "type": "record",
+        "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "f2d43d68-72c5-43f4-8d5d-f9df42d7ee43",
+        "name": "隔离验收：Claude Code 存的想法",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "save_idea",
+      "operation_id": "951f7311-838f-4c1a-acf9-6cfc466f47ad",
+      "params": "{\"needs\":null,\"text\":\"隔离验收：Claude Code 存的想法\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "50035cfc-4b7d-4805-9c4d-507ece2baeb5",
+    "at": "2026-11-05T00:47:57.672Z",
+    "day": "2026-11-05",
+    "action": "auto.save_idea",
+    "label": "保存想法",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": null,
+        "detected_by": "none"
+      }
+    },
+    "subject": {
+      "type": "record",
+      "id": "900fe191-265d-4558-b267-ab87267f90ca",
+      "text": "隔离验收：未识别的 CLI",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "900fe191-265d-4558-b267-ab87267f90ca",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：未识别的 CLI"
+      },
+      {
+        "type": "record",
+        "id": "900fe191-265d-4558-b267-ab87267f90ca",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "类型",
+        "before": null,
+        "after": "想法"
+      },
+      {
+        "type": "record",
+        "id": "900fe191-265d-4558-b267-ab87267f90ca",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "900fe191-265d-4558-b267-ab87267f90ca",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "池",
+        "before": null,
+        "after": "活跃池"
+      },
+      {
+        "type": "record",
+        "id": "900fe191-265d-4558-b267-ab87267f90ca",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "900fe191-265d-4558-b267-ab87267f90ca",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "900fe191-265d-4558-b267-ab87267f90ca",
+        "name": "隔离验收：未识别的 CLI",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [],
+    "call": {
+      "method": "save_idea",
+      "operation_id": "3ade8d46-9f5b-42e9-9765-ca68cd3bb495",
+      "params": "{\"needs\":null,\"text\":\"隔离验收：未识别的 CLI\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "25ecc9a8-4208-4d4a-8d03-1cc162a56bc4",
+    "at": "2026-11-05T00:49:02.300Z",
+    "day": "2026-11-05",
+    "action": "quickbar.idea",
+    "label": "保存想法",
+    "source": {
+      "kind": "manual",
+      "via": "quickbar"
+    },
+    "subject": {
+      "type": "record",
+      "id": "765b7180-5042-4d7a-8320-e883f111883e",
+      "text": "隔离验收：快速记录条的待办",
+      "meta": "想法"
+    },
+    "changes": [
+      {
+        "type": "record",
+        "id": "765b7180-5042-4d7a-8320-e883f111883e",
+        "name": "隔离验收：快速记录条的待办",
+        "field": "内容",
+        "before": null,
+        "after": "隔离验收：快速记录条的待办"
+      },
+      {
+        "type": "record",
+        "id": "765b7180-5042-4d7a-8320-e883f111883e",
+        "name": "隔离验收：快速记录条的待办",
+        "field": "类型",
+        "before": null,
+        "after": "想法"
+      },
+      {
+        "type": "record",
+        "id": "765b7180-5042-4d7a-8320-e883f111883e",
+        "name": "隔离验收：快速记录条的待办",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "record",
+        "id": "765b7180-5042-4d7a-8320-e883f111883e",
+        "name": "隔离验收：快速记录条的待办",
+        "field": "池",
+        "before": null,
+        "after": "活跃池"
+      },
+      {
+        "type": "record",
+        "id": "765b7180-5042-4d7a-8320-e883f111883e",
+        "name": "隔离验收：快速记录条的待办",
+        "field": "需要",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "765b7180-5042-4d7a-8320-e883f111883e",
+        "name": "隔离验收：快速记录条的待办",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "record",
+        "id": "765b7180-5042-4d7a-8320-e883f111883e",
+        "name": "隔离验收：快速记录条的待办",
+        "field": "附件",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "d78d06b3-2c70-4767-9616-51b80a1a239a",
+    "at": "2026-11-05T00:50:52.643Z",
+    "day": "2026-11-05",
+    "action": "card.complete",
+    "label": "完成卡片",
+    "source": {
+      "kind": "manual",
+      "via": "mini"
+    },
+    "subject": {
+      "type": "card",
+      "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+      "text": "隔离验收：小窗完成这张卡",
+      "meta": "隔离验收：小窗完成这张卡"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": "进行中",
+        "after": "已完成"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "3077ce57-adef-42b4-b9f0-ad665ce633c5",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "时间",
+        "before": "11.05 08:47–至今",
+        "after": "11.05 08:47–08:50"
+      },
+      {
+        "type": "entry",
+        "id": "cf29d453-2c1e-4b59-879a-955ada1a2a09",
+        "name": "待机",
+        "field": "描述",
+        "before": null,
+        "after": "待机"
+      },
+      {
+        "type": "entry",
+        "id": "cf29d453-2c1e-4b59-879a-955ada1a2a09",
+        "name": "待机",
+        "field": "项目",
+        "before": null,
+        "after": "待机"
+      },
+      {
+        "type": "entry",
+        "id": "cf29d453-2c1e-4b59-879a-955ada1a2a09",
+        "name": "待机",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "cf29d453-2c1e-4b59-879a-955ada1a2a09",
+        "name": "待机",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 08:50–至今"
+      },
+      {
+        "type": "entry",
+        "id": "cf29d453-2c1e-4b59-879a-955ada1a2a09",
+        "name": "待机",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "cf29d453-2c1e-4b59-879a-955ada1a2a09",
+        "name": "待机",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "task",
+        "id": "task-card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "name": "隔离验收：小窗完成这张卡",
+        "field": "状态",
+        "before": "进行中",
+        "after": "已完成"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "c3bd5e78-2c92-48d9-9319-497a8e28b168",
+    "at": "2026-11-05T00:51:17.567Z",
+    "day": "2026-11-05",
+    "action": "entry.create",
+    "label": "新建计时条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 07:10–07:57"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+        "name": "（无描述）",
+        "field": "描述",
+        "before": null,
+        "after": "（无描述）"
+      },
+      {
+        "type": "entry",
+        "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+        "name": "（无描述）",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+        "name": "（无描述）",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 07:10–07:57"
+      },
+      {
+        "type": "entry",
+        "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+        "name": "（无描述）",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+        "name": "（无描述）",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "c1c2fe12-e787-414b-b009-c5576f2fc1af",
+    "at": "2026-11-05T00:51:28.046Z",
+    "day": "2026-11-05",
+    "action": "review.enter",
+    "label": "进入回顾",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "review"
+    },
+    "subject": {
+      "type": "review",
+      "id": "2026-W45",
+      "text": "2026-W45",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "review",
+        "id": "2026-W45",
+        "name": "2026-W45",
+        "field": "状态",
+        "before": null,
+        "after": "进行中"
+      },
+      {
+        "type": "review",
+        "id": "2026-W45",
+        "name": "2026-W45",
+        "field": "步骤",
+        "before": null,
+        "after": "recap"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "191db8d9-ca5a-4143-aa1c-53deb15c1ff7",
+    "at": "2026-11-05T00:52:43.264Z",
+    "day": "2026-11-05",
+    "action": "entry.patch",
+    "label": "改条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "list"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "80301017-1875-4afa-9fcc-34531c2754df",
+      "text": "隔离验收：列表里改的描述",
+      "meta": "未分类 · 11.05 03:47–04:17"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：列表里改的描述",
+        "field": "描述",
+        "before": "隔离验收：晨跑",
+        "after": "隔离验收：列表里改的描述"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "a7f17f9c-b290-4a5d-8c9c-763801481381",
+    "at": "2026-11-05T00:52:46.472Z",
+    "day": "2026-11-05",
+    "action": "settings.change",
+    "label": "改设置",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "settings"
+    },
+    "subject": {
+      "type": "settings",
+      "id": "accent",
+      "text": "强调色",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "settings",
+        "id": "accent",
+        "name": "强调色",
+        "field": "强调色",
+        "before": "#fffa00",
+        "after": "#00f5a0"
+      }
+    ],
+    "effects": [],
+    "merged": 3
+  },
+  {
+    "version": 1,
+    "id": "98916c4a-3336-4b92-a92b-b9d72cf02865",
+    "at": "2026-11-05T00:59:10.881Z",
+    "day": "2026-11-05",
+    "action": "entry.create",
+    "label": "新建计时条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "89462b72-3e11-48b8-a409-95e3b84398d2",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 05:54–05:55"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "89462b72-3e11-48b8-a409-95e3b84398d2",
+        "name": "（无描述）",
+        "field": "描述",
+        "before": null,
+        "after": "（无描述）"
+      },
+      {
+        "type": "entry",
+        "id": "89462b72-3e11-48b8-a409-95e3b84398d2",
+        "name": "（无描述）",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "89462b72-3e11-48b8-a409-95e3b84398d2",
+        "name": "（无描述）",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "89462b72-3e11-48b8-a409-95e3b84398d2",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 05:54–05:55"
+      },
+      {
+        "type": "entry",
+        "id": "89462b72-3e11-48b8-a409-95e3b84398d2",
+        "name": "（无描述）",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "89462b72-3e11-48b8-a409-95e3b84398d2",
+        "name": "（无描述）",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "2c32a650-62a0-492c-978c-763e3c12a4bd",
+    "at": "2026-11-05T00:59:45.125Z",
+    "day": "2026-11-05",
+    "action": "entry.create",
+    "label": "新建计时条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 05:57–05:58"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "描述",
+        "before": null,
+        "after": "（无描述）"
+      },
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 05:57–05:58"
+      },
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "7bce9e4b-5596-4711-9fdf-99ea4c16dd64",
+    "at": "2026-11-05T00:59:49.188Z",
+    "day": "2026-11-05",
+    "action": "entry.update",
+    "label": "调整条目时间",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 05:57–05:59"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": "11.05 05:57–05:58",
+        "after": "11.05 05:57–05:59"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "8a6528d1-eba9-4a5b-baf2-ee490c884954",
+    "at": "2026-11-05T00:59:53.249Z",
+    "day": "2026-11-05",
+    "action": "entry.update",
+    "label": "调整条目时间",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 05:57–06:00"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "1ff56dbd-491a-429a-8f36-c41553069699",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": "11.05 05:57–05:59",
+        "after": "11.05 05:57–06:00"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "b8e92450-44bb-4078-aaff-038ae7d19e0a",
+    "at": "2026-11-05T01:00:50.896Z",
+    "day": "2026-11-05",
+    "action": "entry.create",
+    "label": "新建计时条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 04:58–04:59"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+        "name": "（无描述）",
+        "field": "描述",
+        "before": null,
+        "after": "（无描述）"
+      },
+      {
+        "type": "entry",
+        "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+        "name": "（无描述）",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+        "name": "（无描述）",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 04:58–04:59"
+      },
+      {
+        "type": "entry",
+        "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+        "name": "（无描述）",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+        "name": "（无描述）",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "4943c438-053a-4d88-b1f1-d7d1c09d9241",
+    "at": "2026-11-05T01:00:55.299Z",
+    "day": "2026-11-05",
+    "action": "entry.update",
+    "label": "调整条目时间",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "80301017-1875-4afa-9fcc-34531c2754df",
+      "text": "隔离验收：列表里改的描述",
+      "meta": "未分类 · 11.05 04:03–04:17"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "80301017-1875-4afa-9fcc-34531c2754df",
+        "name": "隔离验收：列表里改的描述",
+        "field": "时间",
+        "before": "11.05 03:47–04:17",
+        "after": "11.05 04:03–04:17"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "66095536-d420-42ab-bb16-b347dff68080",
+    "at": "2026-11-05T01:00:59.765Z",
+    "day": "2026-11-05",
+    "action": "entry.update",
+    "label": "调整条目时间",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 07:10–07:55"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "0f1efd66-63f2-42a7-97ef-cba755e50548",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": "11.05 07:10–07:57",
+        "after": "11.05 07:10–07:55"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "b0cc490f-9959-44fa-9326-dc1f8ff9cde5",
+    "at": "2026-11-05T01:01:56.472Z",
+    "day": "2026-11-05",
+    "action": "entry.update",
+    "label": "调整条目时间",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 04:58–05:00"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "317943e8-035e-41d7-b605-3ce5b96de2f3",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": "11.05 04:58–04:59",
+        "after": "11.05 04:58–05:00"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "1942054b-a779-4aad-b97b-770d20570c9f",
+    "at": "2026-11-05T01:03:49.759Z",
+    "day": "2026-11-05",
+    "action": "entry.create",
+    "label": "新建计时条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "09f6aa42-2d5a-4231-afed-75b05564157d",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 08:00–08:02"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "09f6aa42-2d5a-4231-afed-75b05564157d",
+        "name": "（无描述）",
+        "field": "描述",
+        "before": null,
+        "after": "（无描述）"
+      },
+      {
+        "type": "entry",
+        "id": "09f6aa42-2d5a-4231-afed-75b05564157d",
+        "name": "（无描述）",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "09f6aa42-2d5a-4231-afed-75b05564157d",
+        "name": "（无描述）",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "09f6aa42-2d5a-4231-afed-75b05564157d",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 08:00–08:02"
+      },
+      {
+        "type": "entry",
+        "id": "09f6aa42-2d5a-4231-afed-75b05564157d",
+        "name": "（无描述）",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "09f6aa42-2d5a-4231-afed-75b05564157d",
+        "name": "（无描述）",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "6771fb12-8860-4d7e-a0be-d805ee20209c",
+    "at": "2026-11-05T01:03:55.118Z",
+    "day": "2026-11-05",
+    "action": "entry.create",
+    "label": "新建计时条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "78467b30-b3dc-4f27-80a9-83d9051984ec",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 06:01–06:02"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "78467b30-b3dc-4f27-80a9-83d9051984ec",
+        "name": "（无描述）",
+        "field": "描述",
+        "before": null,
+        "after": "（无描述）"
+      },
+      {
+        "type": "entry",
+        "id": "78467b30-b3dc-4f27-80a9-83d9051984ec",
+        "name": "（无描述）",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "78467b30-b3dc-4f27-80a9-83d9051984ec",
+        "name": "（无描述）",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "78467b30-b3dc-4f27-80a9-83d9051984ec",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 06:01–06:02"
+      },
+      {
+        "type": "entry",
+        "id": "78467b30-b3dc-4f27-80a9-83d9051984ec",
+        "name": "（无描述）",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "78467b30-b3dc-4f27-80a9-83d9051984ec",
+        "name": "（无描述）",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "3faf54aa-940c-43ca-908b-2c1a3baaeb0d",
+    "at": "2026-11-05T01:04:56.681Z",
+    "day": "2026-11-05",
+    "action": "entry.create",
+    "label": "新建计时条目",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 05:31–05:33"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+        "name": "（无描述）",
+        "field": "描述",
+        "before": null,
+        "after": "（无描述）"
+      },
+      {
+        "type": "entry",
+        "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+        "name": "（无描述）",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+        "name": "（无描述）",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": null,
+        "after": "11.05 05:31–05:33"
+      },
+      {
+        "type": "entry",
+        "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+        "name": "（无描述）",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+        "name": "（无描述）",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "30baf573-d90c-4962-8ba4-1b8c6f3a1c48",
+    "at": "2026-11-05T01:04:58.128Z",
+    "day": "2026-11-05",
+    "action": "entry.setDuration",
+    "label": "改时长",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "calendar"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+      "text": "（无描述）",
+      "meta": "未分类 · 11.05 05:31–05:51"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "a5ed5570-77fe-40a2-8b72-71dcc4d5be15",
+        "name": "（无描述）",
+        "field": "时间",
+        "before": "11.05 05:31–05:33",
+        "after": "11.05 05:31–05:51"
+      }
+    ],
+    "effects": []
+  }
+]

@@ -1,0 +1,395 @@
+{
+  "boot": {
+    "ok": true,
+    "ms": 9119,
+    "title": "单轨 · MONORAIL",
+    "processes": 1,
+    "connected": "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=0",
+    "runEntryAdded": false
+  },
+  "d6": {
+    "ok": true,
+    "ms": 768,
+    "tray": "插入一项活动 QUICK ACTIVITY 结束后自动回到原来的卡 OFF 存为快捷活动 开始"
+  },
+  "automation": {
+    "ok": true,
+    "ms": 3084,
+    "cliExit": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "records": [
+      {
+        "action": "auto.capture_todo",
+        "kind": "mcp",
+        "agent": {
+          "name": "Claude Desktop",
+          "raw": "claude-ai",
+          "version": "0.14.2",
+          "detected_by": "mcp_handshake"
+        },
+        "method": "capture_todo"
+      },
+      {
+        "action": "auto.start_task_item",
+        "kind": "mcp",
+        "agent": {
+          "name": "Claude Desktop",
+          "raw": "claude-ai",
+          "version": "0.14.2",
+          "detected_by": "mcp_handshake"
+        },
+        "method": "start_task_item"
+      },
+      {
+        "action": "auto.save_idea",
+        "kind": "mcp",
+        "agent": {
+          "name": null,
+          "detected_by": "none"
+        },
+        "method": "save_idea"
+      },
+      {
+        "action": "auto.add_time_entry",
+        "kind": "cli",
+        "agent": {
+          "name": "手环同步",
+          "detected_by": "flag",
+          "evidence": "--agent 手环同步"
+        },
+        "method": "add_time_entry"
+      },
+      {
+        "action": "auto.save_idea",
+        "kind": "cli",
+        "agent": {
+          "name": "Claude Code",
+          "detected_by": "env",
+          "evidence": "CLAUDECODE=1"
+        },
+        "method": "save_idea"
+      },
+      {
+        "action": "auto.save_idea",
+        "kind": "cli",
+        "agent": {
+          "name": null,
+          "detected_by": "none"
+        },
+        "method": "save_idea"
+      }
+    ]
+  },
+  "mini": {
+    "ok": true,
+    "ms": 2735,
+    "complete": {
+      "source": {
+        "kind": "manual",
+        "via": "mini"
+      },
+      "subject": {
+        "type": "card",
+        "id": "card-faf42f0e-fda9-4e13-bafc-088ac54b2f79",
+        "text": "隔离验收：小窗完成这张卡",
+        "meta": "隔离验收：小窗完成这张卡"
+      }
+    }
+  },
+  "d4": {
+    "ok": true,
+    "ms": 12523,
+    "samples": [
+      {
+        "round": 1,
+        "ms": 511,
+        "text": "— 没有在做的事 待机 IDLE 00:01"
+      },
+      {
+        "round": 1,
+        "ms": 1019,
+        "text": "— 没有在做的事 待机 IDLE 00:02"
+      },
+      {
+        "round": 1,
+        "ms": 1532,
+        "text": "— 没有在做的事 待机 IDLE 00:02"
+      },
+      {
+        "round": 1,
+        "ms": 2045,
+        "text": "— 没有在做的事 待机 IDLE 00:03"
+      },
+      {
+        "round": 1,
+        "ms": 2559,
+        "text": "— 没有在做的事 待机 IDLE 00:03"
+      },
+      {
+        "round": 1,
+        "ms": 3073,
+        "text": "— 没有在做的事 待机 IDLE 00:04"
+      },
+      {
+        "round": 1,
+        "ms": 3587,
+        "text": "— 没有在做的事 待机 IDLE 00:04"
+      },
+      {
+        "round": 1,
+        "ms": 4099,
+        "text": "— 没有在做的事 待机 IDLE 00:05"
+      },
+      {
+        "round": 1,
+        "ms": 4612,
+        "text": "— 没有在做的事 待机 IDLE 00:05"
+      },
+      {
+        "round": 1,
+        "ms": 5127,
+        "text": "— 没有在做的事 待机 IDLE 00:06"
+      },
+      {
+        "round": 1,
+        "ms": 5641,
+        "text": "— 没有在做的事 待机 IDLE 00:06"
+      },
+      {
+        "round": 1,
+        "ms": 6154,
+        "text": "— 没有在做的事 待机 IDLE 00:07"
+      },
+      {
+        "round": 2,
+        "ms": 506,
+        "text": "— 没有在做的事 待机 IDLE 00:08"
+      },
+      {
+        "round": 2,
+        "ms": 1019,
+        "text": "— 没有在做的事 待机 IDLE 00:08"
+      },
+      {
+        "round": 2,
+        "ms": 1533,
+        "text": "— 没有在做的事 待机 IDLE 00:09"
+      },
+      {
+        "round": 2,
+        "ms": 2044,
+        "text": "— 没有在做的事 待机 IDLE 00:09"
+      },
+      {
+        "round": 2,
+        "ms": 2556,
+        "text": "— 没有在做的事 待机 IDLE 00:10"
+      },
+      {
+        "round": 2,
+        "ms": 3059,
+        "text": "— 没有在做的事 待机 IDLE 00:10"
+      },
+      {
+        "round": 2,
+        "ms": 3572,
+        "text": "— 没有在做的事 待机 IDLE 00:11"
+      },
+      {
+        "round": 2,
+        "ms": 4086,
+        "text": "— 没有在做的事 待机 IDLE 00:11"
+      },
+      {
+        "round": 2,
+        "ms": 4599,
+        "text": "— 没有在做的事 待机 IDLE 00:12"
+      },
+      {
+        "round": 2,
+        "ms": 5114,
+        "text": "— 没有在做的事 待机 IDLE 00:12"
+      },
+      {
+        "round": 2,
+        "ms": 5627,
+        "text": "— 没有在做的事 待机 IDLE 00:13"
+      },
+      {
+        "round": 2,
+        "ms": 6140,
+        "text": "— 没有在做的事 待机 IDLE 00:13"
+      }
+    ],
+    "recoveredMs": 506
+  },
+  "quickbar": {
+    "ok": true,
+    "ms": 2831,
+    "action": "quickbar.idea",
+    "subject": {
+      "type": "record",
+      "id": "765b7180-5042-4d7a-8320-e883f111883e",
+      "text": "隔离验收：快速记录条的待办",
+      "meta": "想法"
+    },
+    "others": []
+  },
+  "calendar": {
+    "ok": true,
+    "ms": 4049,
+    "geo": {
+      "x": 523,
+      "top": 243,
+      "hourPx": 46,
+      "ratio": 1
+    },
+    "createdMinutes": 2,
+    "created": "11.05 05:31–05:33",
+    "setDuration": [
+      "时间: 11.05 05:31–05:33 → 11.05 05:31–05:51"
+    ],
+    "popText": "ENTRY – 继续 复制 设为收藏 存为卡 删除"
+  },
+  "list": {
+    "ok": true,
+    "ms": 1193,
+    "patch": [
+      "描述: 隔离验收：晨跑 → 隔离验收：列表里改的描述"
+    ],
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "list"
+    }
+  },
+  "settings": {
+    "ok": true,
+    "ms": 3171,
+    "newFiles": 1,
+    "merged": 2,
+    "changes": [
+      {
+        "type": "settings",
+        "id": "accent",
+        "name": "强调色",
+        "field": "强调色",
+        "before": "#fffa00",
+        "after": "#ff7a1a"
+      }
+    ],
+    "afterRevert": [
+      {
+        "merged": 3,
+        "reverted": false,
+        "changes": 1
+      }
+    ]
+  },
+  "historyView": {
+    "ok": true,
+    "ms": 7426,
+    "rows": [
+      "08:52:46 手动 主窗口 · 设置 改设置×3 强调色",
+      "08:52:43 手动 主窗口 · 列表 改条目 隔离验收：列表里改的描述 未分类 · 11.05 03:47–04:17",
+      "08:51:28 手动 主窗口 · 回顾 进入回顾 2026-W45",
+      "08:51:17 手动 主窗口 · 日历 新建计时条目 （无描述） 未分类 · 11.05 07:10–07:57",
+      "08:50:52 手动 小窗 完成卡片 隔离验收：小窗完成这张卡 隔离验收：小窗完成这张卡",
+      "08:49:02 手动 快速记录条 保存想法 隔离验收：快速记录条的待办 想法",
+      "08:47:57 CLI 未识别 保存想法 隔离验收：未识别的 CLI",
+      "08:47:57 CLI Claude Code 保存想法 隔离验收：Claude Code 存的想法",
+      "08:47:56 CLI 手环同步 补录条目 隔离验收：晨跑 未分类 · 11.05 03:47–04:17",
+      "08:47:56 MCP 未识别 保存想法 隔离验收：旧协议 HTTP 存的想法",
+      "08:47:55 MCP Claude Desktop 开始事项 隔离验收：小窗完成这张卡 隔离验收：小窗完成这张卡",
+      "08:47:55 MCP Claude Desktop 捕获待办 隔离验收：小窗完成这张卡",
+      "08:45:12 CLI 未识别 保存想法 隔离验收：未识别的 CLI",
+      "08:45:11 CLI Claude Code 保存想法 隔离验收：Claude Code 存的想法",
+      "08:45:11 MCP 未识别 保存想法 隔离验收：旧协议 HTTP 存的想法",
+      "08:45:10 MCP Claude Desktop 开始事项 隔离验收：小窗完成这张卡 隔离验收：小窗完成这张卡",
+      "08:45:10 MCP Claude Desktop 捕获待办 隔离验收：小窗完成这张卡"
+    ],
+    "agents": [
+      "全部调用方 11",
+      "Claude Desktop 4",
+      "Claude Code 2",
+      "手环同步 1",
+      "",
+      "未识别 4"
+    ],
+    "detail": "CHANGES改动 新条目 — → 「隔离验收：晨跑」 · 未分类 · 11.05 03:47–04:17 CALL调用 调用方 手环同步 对方自报 · 未验证 识别方式：命令里带了 --agent 手环同步（也可以用 MONORAIL_AGENT 环境变量） 命令 node monorail-cli.mjs time add '隔离验收：晨跑' --start 2026-11-04T19:47:56.643+00:00 --end 2026-11-04T20:17:56.643+00:00 --project '未分类' --agent '手环同步' --json 方法 add_time_entry operation_id 8d37447c-1b17-4e7d-a7cc-8d52d40c2e25 复制 ID 原始参数 JSON",
+    "clipboardOk": true,
+    "calView": {
+      "tab": "日历",
+      "cols": 1
+    },
+    "scroll": {
+      "sw": 960,
+      "cw": 960,
+      "pw": 928,
+      "pc": 928
+    }
+  },
+  "settings09": {
+    "ok": true,
+    "ms": 2603,
+    "recent": [
+      "今天08:47 CLI 未识别 保存想法 隔离验收：未识别的 CLI",
+      "今天08:47 CLI Claude Code 保存想法 隔离验收：Claude Code 存的想法",
+      "今天08:47 CLI 手环同步 补录条目 隔离验收：晨跑",
+      "今天08:47 MCP 未识别 保存想法 隔离验收：旧协议 HTTP 存的想法",
+      "今天08:47 MCP Claude Desktop 开始事项 隔离验收：小窗完成这张卡"
+    ],
+    "after": {
+      "tab": "列表",
+      "filter": "仅自动化11",
+      "open": 1
+    }
+  },
+  "finish": {
+    "ok": true,
+    "ms": 4541,
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyPid": [
+      15080,
+      15080
+    ],
+    "historyCount": 29,
+    "actions": [
+      "auto.capture_todo@mcp",
+      "auto.start_task_item@mcp",
+      "auto.save_idea@mcp",
+      "auto.save_idea@cli",
+      "auto.save_idea@cli",
+      "auto.capture_todo@mcp",
+      "auto.start_task_item@mcp",
+      "auto.save_idea@mcp",
+      "auto.add_time_entry@cli",
+      "auto.save_idea@cli",
+      "auto.save_idea@cli",
+      "quickbar.idea@manual/quickbar",
+      "card.complete@manual/mini",
+      "entry.create@manual/main/calendar",
+      "review.enter@manual/main/review",
+      "entry.patch@manual/main/list",
+      "settings.change@manual/main/settings",
+      "entry.create@manual/main/calendar",
+      "entry.create@manual/main/calendar",
+      "entry.update@manual/main/calendar",
+      "entry.update@manual/main/calendar",
+      "entry.create@manual/main/calendar",
+      "entry.update@manual/main/calendar",
+      "entry.update@manual/main/calendar",
+      "entry.update@manual/main/calendar",
+      "entry.create@manual/main/calendar",
+      "entry.create@manual/main/calendar",
+      "entry.create@manual/main/calendar",
+      "entry.setDuration@manual/main/calendar"
+    ]
+  }
+}

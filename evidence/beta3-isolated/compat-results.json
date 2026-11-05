@@ -1,0 +1,376 @@
+{
+  "m1": {
+    "ok": true,
+    "craft": null,
+    "pendingJournals": 0,
+    "v025": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "journal-recovered:0",
+        "reconcile:0",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data:cards=2"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 29,
+      "historyAddedByRecovery": 0
+    },
+    "beta3": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "mcp-main-visible:true",
+        "journal-recovered:0",
+        "reconcile:0",
+        "history-cleanup:{\"removed\":0,\"failed\":0,\"cutoff\":\"2026-05-10\"}",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=2"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 29
+    }
+  },
+  "m2": {
+    "ok": true,
+    "craft": {
+      "scenario": "m2",
+      "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+      "commit": "Error: INJECTED_POWER_LOSS at history/2026-11-05/091351905-89ef613d-2486-4b6d-883d-3132502479b2.json",
+      "journals": [
+        ".journal/27c9e764-8860-4875-ac0a-459c9334b4c6.json"
+      ],
+      "plan": [
+        {
+          "path": "state.yaml",
+          "beforeNull": false
+        },
+        {
+          "path": "history/2026-11-05/091351905-89ef613d-2486-4b6d-883d-3132502479b2.json",
+          "beforeNull": true
+        }
+      ]
+    },
+    "pendingJournals": 1,
+    "v025": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "journal-recovered:1",
+        "reconcile:0",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data:cards=2"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "historyAddedByRecovery": 1
+    },
+    "beta3": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "mcp-main-visible:true",
+        "journal-recovered:0",
+        "reconcile:0",
+        "history-cleanup:{\"removed\":0,\"failed\":0,\"cutoff\":\"2026-05-10\"}",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=2"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30
+    }
+  },
+  "m3": {
+    "ok": true,
+    "craft": {
+      "scenario": "m3",
+      "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+      "secondCommit": "Error: INJECTED_POWER_LOSS at history/2026-11-05/091416200-2cf64d38-51b3-4919-8896-c94d6dc46322.json",
+      "journals": [
+        ".journal/16a8efb0-f8ee-476d-a688-73934d38872d.json"
+      ],
+      "plan": [
+        {
+          "path": "settings.yaml",
+          "beforeNull": false,
+          "textNull": false
+        },
+        {
+          "path": "state.yaml",
+          "beforeNull": false,
+          "textNull": false
+        },
+        {
+          "path": "history/2026-11-05/091416200-2cf64d38-51b3-4919-8896-c94d6dc46322.json",
+          "beforeNull": false,
+          "textNull": false
+        }
+      ],
+      "settingsOnDisk": "80"
+    },
+    "pendingJournals": 1,
+    "v025": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "journal-recovered:1",
+        "reconcile:0",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data:cards=2"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "historyAddedByRecovery": 1,
+      "settingsTitleScale": "80",
+      "mergedRecord": [
+        {
+          "merged": 2,
+          "changes": [
+            "65→80"
+          ]
+        }
+      ]
+    },
+    "beta3": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "mcp-main-visible:true",
+        "journal-recovered:0",
+        "reconcile:0",
+        "history-cleanup:{\"removed\":0,\"failed\":0,\"cutoff\":\"2026-05-10\"}",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=2"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30
+    }
+  },
+  "m4": {
+    "ok": true,
+    "craft": {
+      "scenario": "m4",
+      "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+      "recordId": "257e18ae-737c-409d-91ee-5a45122226de",
+      "loggedRecord": "records/765b7180-5042-4d7a-8320-e883f111883e.md"
+    },
+    "pendingJournals": 0,
+    "v025": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "journal-recovered:0",
+        "reconcile:1",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 29,
+      "historyAddedByRecovery": 0,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": null,
+        "card_id": "card-257e18ae-737c-409d-91ee-5a45122226de"
+      },
+      "loggedRecordKept": true
+    },
+    "beta3": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "mcp-main-visible:true",
+        "journal-recovered:0",
+        "reconcile:0",
+        "history-cleanup:{\"removed\":0,\"failed\":0,\"cutoff\":\"2026-05-10\"}",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": "set",
+        "card_id": "card-257e18ae-737c-409d-91ee-5a45122226de"
+      },
+      "cardsForRecord": 1,
+      "quickbarHistory": 1
+    }
+  },
+  "m5-card": {
+    "ok": true,
+    "craft": {
+      "scenario": "m5-card",
+      "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+      "commit": "Error: INJECTED_POWER_LOSS at cards/card-5a18fbcb-0de0-4e4c-baf1-1324401dc39d.md",
+      "recordId": "5a18fbcb-0de0-4e4c-baf1-1324401dc39d",
+      "journals": [
+        ".journal/ac35cba5-57ed-4f5c-b2dc-0a3588ad4ac9.json"
+      ],
+      "plan": [
+        "cards/card-5a18fbcb-0de0-4e4c-baf1-1324401dc39d.md",
+        "tasks/task-card-5a18fbcb-0de0-4e4c-baf1-1324401dc39d.md",
+        "records/5a18fbcb-0de0-4e4c-baf1-1324401dc39d.md",
+        "state.yaml",
+        "history/2026-11-05/091503913-2aaf5e89-076a-4064-8339-b7680ea82ce1.json"
+      ]
+    },
+    "pendingJournals": 1,
+    "v025": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "journal-recovered:1",
+        "reconcile:0",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "historyAddedByRecovery": 1,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": "2026-11-05T01:15:03.954Z",
+        "card_id": "card-5a18fbcb-0de0-4e4c-baf1-1324401dc39d"
+      }
+    },
+    "beta3": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "mcp-main-visible:true",
+        "journal-recovered:0",
+        "reconcile:0",
+        "history-cleanup:{\"removed\":0,\"failed\":0,\"cutoff\":\"2026-05-10\"}",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": "set",
+        "card_id": "card-5a18fbcb-0de0-4e4c-baf1-1324401dc39d"
+      },
+      "cardsForRecord": 1,
+      "quickbarHistory": 1
+    }
+  },
+  "m5-record": {
+    "ok": true,
+    "craft": {
+      "scenario": "m5-record",
+      "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+      "commit": "Error: INJECTED_POWER_LOSS at records/58553813-63e4-4427-a35d-7a8bcd852419.md",
+      "recordId": "58553813-63e4-4427-a35d-7a8bcd852419",
+      "journals": [
+        ".journal/16ad70db-f06f-443e-b51e-b5176c430109.json"
+      ],
+      "plan": [
+        "cards/card-58553813-63e4-4427-a35d-7a8bcd852419.md",
+        "tasks/task-card-58553813-63e4-4427-a35d-7a8bcd852419.md",
+        "records/58553813-63e4-4427-a35d-7a8bcd852419.md",
+        "state.yaml",
+        "history/2026-11-05/091526845-e5d439aa-50fb-47ff-a100-73e4d64a1191.json"
+      ]
+    },
+    "pendingJournals": 1,
+    "v025": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "journal-recovered:1",
+        "reconcile:0",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "historyAddedByRecovery": 1,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": "2026-11-05T01:15:26.887Z",
+        "card_id": "card-58553813-63e4-4427-a35d-7a8bcd852419"
+      }
+    },
+    "beta3": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "mcp-main-visible:true",
+        "journal-recovered:0",
+        "reconcile:0",
+        "history-cleanup:{\"removed\":0,\"failed\":0,\"cutoff\":\"2026-05-10\"}",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": "set",
+        "card_id": "card-58553813-63e4-4427-a35d-7a8bcd852419"
+      },
+      "cardsForRecord": 1,
+      "quickbarHistory": 1
+    }
+  },
+  "m5-history": {
+    "ok": true,
+    "craft": {
+      "scenario": "m5-history",
+      "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data",
+      "commit": "Error: INJECTED_POWER_LOSS at history/2026-11-05/091550528-b0cb75cd-7835-493c-a7a1-3bade671739e.json",
+      "recordId": "44dd7b4d-fc30-461b-8025-08d7f7c29d0e",
+      "journals": [
+        ".journal/69c99f90-2a28-408f-b13f-ea8913839014.json"
+      ],
+      "plan": [
+        "cards/card-44dd7b4d-fc30-461b-8025-08d7f7c29d0e.md",
+        "tasks/task-card-44dd7b4d-fc30-461b-8025-08d7f7c29d0e.md",
+        "records/44dd7b4d-fc30-461b-8025-08d7f7c29d0e.md",
+        "state.yaml",
+        "history/2026-11-05/091550528-b0cb75cd-7835-493c-a7a1-3bade671739e.json"
+      ]
+    },
+    "pendingJournals": 1,
+    "v025": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "journal-recovered:1",
+        "reconcile:0",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-025-db06cfcd51d6\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "historyAddedByRecovery": 1,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": "2026-11-05T01:15:50.569Z",
+        "card_id": "card-44dd7b4d-fc30-461b-8025-08d7f7c29d0e"
+      }
+    },
+    "beta3": {
+      "opened": true,
+      "error": null,
+      "evidence": [
+        "mcp-main-visible:true",
+        "journal-recovered:0",
+        "reconcile:0",
+        "history-cleanup:{\"removed\":0,\"failed\":0,\"cutoff\":\"2026-05-10\"}",
+        "connected:C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b3-f8e4216de6a9\\data:cards=3"
+      ],
+      "journals": 0,
+      "processesLeft": 0,
+      "historyFiles": 30,
+      "record": {
+        "created_via": "quickbar",
+        "history_logged_at": "set",
+        "card_id": "card-44dd7b4d-fc30-461b-8025-08d7f7c29d0e"
+      },
+      "cardsForRecord": 1,
+      "quickbarHistory": 1
+    }
+  }
+}

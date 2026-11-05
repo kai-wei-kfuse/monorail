@@ -1,0 +1,61 @@
+Get-FileHash : The term 'G
+et-FileHash' is not recogn
+ized as the name of a cmdl
+et, function, script file,
+ or operable program. Chec
+k the spelling of the name
+, or if a path was include
+d, verify that the path is
+ correct and try again.
+At line:5 char:80
++ ... s\kai_wei\AppData\Lo
+cal\单轨\pixel-record.exe') 
+{ (Get-FileHash 'C:\Use ..
+.
++                         
+                          
+   ~~~~~~~~~~~~
+    + CategoryInfo        
+      : ObjectNotFound:   
+  (Get-FileHash:String)   
+  [], CommandNotFoundE    
+xception
+    + FullyQualifiedError 
+   Id : CommandNotFoundE  
+  xception
+ 
+Get-FileHash : The term 'G
+et-FileHash' is not recogn
+ized as the name of a cmdl
+et, function, script file,
+ or operable program. Chec
+k the spelling of the name
+, or if a path was include
+d, verify that the path is
+ correct and try again.
+At line:6 char:99
++ ... a\Roaming\local.pixe
+lrecord.app\config.json') 
+{ (Get-FileHash 'C:\Use ..
+.
++                         
+                          
+   ~~~~~~~~~~~~
+    + CategoryInfo        
+      : ObjectNotFound:   
+  (Get-FileHash:String)   
+  [], CommandNotFoundE    
+xception
+    + FullyQualifiedError 
+   Id : CommandNotFoundE  
+  xception
+ 
+PASS boot
+PASS d6
+FAIL automation AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- '手环同步'
+
+RUN-EXIT 0

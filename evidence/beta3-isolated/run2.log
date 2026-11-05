@@ -1,0 +1,6 @@
+{"pid":15080,"exe":"f93c0ae2f46e7cff7f3a674746448a3f66117ebf60a54cafa5cba8dcdb59bf1d","config":"4a004ccdb7bb6ebb76c88d13acf268ee0d89a2a822751982521554cd07eb4b05"}
+PASS automation
+FAIL mini Error: CDP: no 'mini' window on port 19371
+FAIL d4 Error: CDP: no 'mini' window on port 19371
+PASS quickbar
+RUN-EXIT 0

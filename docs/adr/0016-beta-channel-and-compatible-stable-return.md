@@ -8,7 +8,7 @@
 - 锁定的 updater 2.14.0 提供单次 `UpdaterBuilder::version_comparator`；全局 allow_downgrades 会放行所有不同版本，不符合本需求的显式选择。
 - 当前产品名「单轨」、identifier `local.pixelrecord.app`、NSIS currentUser；生成 NSIS 模板支持允许降级，但目标 Beta/稳定安装包仍须实测，不能只凭旧0.1.3生成脚本下结论。
 - 当前0.3.0与v0.2.5的state/settings/entity/timelog/journal格式无差异；新增receipts目录在旧版常规读取路径中被忽略。此为有限兼容证据，不代表未来任意版本可回退。
-- 0.3.0-beta.3（2026-11-05 补充）：schema 仍为 2；新增 `history/` 目录与记录的两个可选字段 `created_via`、`history_logged_at`（ADR 0019「兼容与恢复」）。v0.2.5 源码审计结论为可读、可恢复、改写时保留新字段；**隔离安装实测矩阵未做**。`private_release.rs` 的 `AUDITED_COMPATIBLE_STABLE_VERSIONS` 仍列 `0.2.5`；beta.3 发布前须完成实测，未完成时是否从表中移除由发布前决定，不能只凭源码审计声明兼容。
+- 0.3.0-beta.3（2026-11-05 补充）：schema 仍为 2；新增 `history/` 目录与记录的两个可选字段 `created_via`、`history_logged_at`（ADR 0019「兼容与恢复」）。v0.2.5 源码审计结论为可读、可恢复、改写时保留新字段；2026-11-05 隔离安装实测矩阵 1–5 通过（真 0.2.5 打开、恢复、改写后交回 beta.3，见 `evidence/beta3-isolated/README.md`），第 6 条新版客户端连旧版桌面未测。`private_release.rs` 的 `AUDITED_COMPATIBLE_STABLE_VERSIONS` 仍列 `0.2.5`，与实测结论一致；这只是数据层面的有限证据，不代表退回后操作历史可用（旧版不显示也不补记）。
 
 ## 决定
 

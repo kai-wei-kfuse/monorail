@@ -1,0 +1,26 @@
+segs 日|周|1×|2×|3×|4×
+{"scale":"1×","geo":{"x":523,"y":330,"hourPx":46,"view":1},"y0":330.5,"dy":0.92,"log":[{"ghost":"05:54–05:55"},{"pop":"–"}],"added":[["entry.create","11.05 05:54–05:55"]]}
+segs 日|周|1×|2×|3×|4×
+{"scale":"2×","geo":{"x":523,"y":422,"hourPx":92,"view":1},"y0":422.5,"dy":1.84,"log":[{"ghost":"05:57–05:58"},{"pop":"–"}],"added":[["entry.create","11.05 05:57–05:58"]]}
+segs 日|周|1×|2×|3×|4×
+{"scale":"3×","geo":{"x":523,"y":430,"hourPx":138,"view":1},"y0":430.5,"dy":2.76,"log":[{"ghost":"05:57–05:59"},{"pop":null}],"added":[["entry.update","11.05 05:57–05:59"]]}
+segs 日|周|1×|2×|3×|4×
+{"scale":"4×","geo":{"x":523,"y":430,"hourPx":184,"view":1},"y0":430.5,"dy":3.68,"log":[{"ghost":"05:57–06:00"},{"pop":null}],"added":[["entry.update","11.05 05:57–06:00"]]}
+segs 日|周|1×|2×|3×|4×
+{"scale":"3×","geo":{"x":523,"y":376,"hourPx":138,"view":1},"y0":376.5,"dy":2.76,"log":[{"ghost":"04:58–04:59"},{"pop":"–"}],"added":[["entry.create","11.05 04:58–04:59"]]}
+segs 日|周|1×|2×|3×|4×
+{"scale":"4×","geo":{"x":523,"y":247,"hourPx":184,"view":1},"y0":247.5,"dy":3.68,"log":[{"ghost":"04:03–04:17"},{"pop":null}],"added":[["entry.update","11.05 04:03–04:17"]]}
+segs 日|周|1×|2×|3×|4×
+{"scale":"1×","geo":{"x":523,"y":422,"hourPx":46,"view":1},"y0":422.5,"dy":0.92,"log":[{"ghost":"07:10–07:55"},{"pop":null}],"added":[["entry.update","11.05 07:10–07:55"]]}
+{"clickShort":"block not found"}
+segs 日|周|1×|2×|3×|4×
+{"scale":"4×","geo":{"x":523,"y":422,"hourPx":184,"view":1},"y0":422.5,"dy":3.68,"log":[{"ghost":"04:58–05:00"},{"pop":null}],"added":[["entry.update","11.05 04:58–05:00"]]}
+segs 日|周|1×|2×|3×|4×
+{"scale":"1×","geo":{"x":523,"y":330,"hourPx":46,"view":1},"y0":330.5,"dy":0.92,"log":[{"ghost":null},{"pop":"–"}],"added":[]}
+{"clickShort":{"block":{"x":523.5,"y":332.390625,"h":4},"opened":true,"newHistory":[]}}
+segs 日|周|1×|2×|3×|4×
+{"scale":"4×","geo":{"x":523,"y":430,"hourPx":184,"view":1},"y0":436,"dy":3.68,"log":[{"ghost":"08:00–08:02"},{"pop":"–"}],"added":[["entry.create","11.05 08:00–08:02"]]}
+{"clickShort":{"block":{"x":523.5,"y":438.0625,"h":6.125},"opened":true,"newHistory":[]}}
+segs 日|周|1×|2×|3×|4×
+{"scale":"2×","geo":{"x":523,"y":422,"hourPx":92,"view":1},"y0":428,"dy":1.84,"log":[{"ghost":"06:01–06:02"},{"pop":"–"}],"added":[["entry.create","11.05 06:01–06:02"]]}
+{"clickShort":{"block":{"x":523.5,"y":430.53125,"h":4},"opened":true,"newHistory":[]}}
