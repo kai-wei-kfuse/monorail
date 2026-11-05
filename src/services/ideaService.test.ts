@@ -3,9 +3,9 @@ import { at, fixture, task, seed } from './serviceFixture';
 import type { Fixture } from './serviceFixture';
 import { createRecord } from '../domain/record/record';
 import type { RecordEntry } from '../domain/record/record';
-import { activeIdeas, coldOffer } from '../domain/idea/pool';
+import { activeIdeas, coldOffer, ideaStatus } from '../domain/idea/pool';
 import { pair } from '../domain/idea/arena';
-import { convertIdea, deleteIdea, editIdea, expire, revive, resolveDuel } from './ideaService';
+import { complete, completeIdeaInTx, completedBy, convertIdea, deleteIdea, editIdea, expire, revive, resolveDuel, uncomplete } from './ideaService';
 import { saveRecord, reconcile } from './recordService';
 import { run } from './commit';
 
@@ -103,4 +103,75 @@ it('metadata-only lifecycle edits preserve extended Markdown bodies and repeated
   expect((await f.ctx.repos.records.get(a.id))!.body).toBe('完整长正文\n附加资料');
   await editIdea(f.ctx, a.id, { text: '新的全文', needs: null }, at(2));
   expect((await f.ctx.repos.records.get(a.id))!.body).toBe('新的全文');
+});
+
+// ===== 0.3.0-beta.4 D2：想法「已完成」（ADR 0020） =====
+it('D2 complete stores 冷库 + completed_at on disk, leaves the pool and limit, and lists newest first', async () => {
+  const f = fixture(), a = idea({ text: 'A' }), b = idea({ text: 'B' }); await ideas(f, [a, b]);
+  await complete(f.ctx, a.id, at(5)); await complete(f.ctx, b.id, at(9));
+  const saved = (await f.ctx.repos.records.get(a.id))!;
+  expect(saved.value).toMatchObject({ pool: '冷库', cold_since: at(5), completed_at: at(5), completed_by: { kind: 'manual', agent: null }, last_touched_at: at(5) });
+  expect(saved.text).toMatch(/pool: 冷库/);
+  expect(ideaStatus(saved.value)).toBe('已完成');
+  expect(activeIdeas(await records(f))).toEqual([]);
+  const view = f.publish.mock.calls.at(-1)![0].backpack;
+  expect(view.ideas).toEqual([]);
+  expect(view.doneIdeas.map((i: { id: string }) => i.id)).toEqual([b.id, a.id]);
+  expect(view.coldIdeas).toEqual([]);
+});
+it('D2 completed ideas never appear in the cold offer, cannot be revived or duelled, and do not expire again', async () => {
+  const f = fixture(), done = idea(), cold = idea({ pool: '冷库', cold_since: at(1) }); await ideas(f, [done, cold]);
+  await complete(f.ctx, done.id, at(0));
+  expect(coldOffer(await records(f)).map(i => i.id)).toEqual([cold.id]);
+  await expect(revive(f.ctx, [done.id], at(10))).rejects.toThrow('已完成');
+  await expect(resolveDuel(f.ctx, done.id, cold.id, at(10))).rejects.toThrow('已完成');
+  const later = new Date(Date.parse(at()) + 400 * 86400000).toISOString(); f.clock(later);
+  expect(await expire(f.ctx, later)).toBe(0);
+  expect(ideaStatus((await f.ctx.repos.records.get(done.id))!.value)).toBe('已完成');
+});
+it('D2 only active ideas can be completed; uncomplete returns to the pool as touched even when the pool is full', async () => {
+  const f = fixture(); f.ctx.settings.ideaPoolLimit = 1;
+  const a = idea(), b = idea(), converted = idea({ pool: '已转任务', card_id: 'c' }), cold = idea({ pool: '冷库', cold_since: at() });
+  await ideas(f, [a, b, converted, cold]);
+  await expect(complete(f.ctx, converted.id, at(1))).rejects.toThrow('已转任务');
+  await expect(complete(f.ctx, cold.id, at(1))).rejects.toThrow('冷库');
+  await complete(f.ctx, a.id, at(2));
+  await expect(uncomplete(f.ctx, b.id, at(3))).rejects.toThrow('不是已完成');
+  await uncomplete(f.ctx, a.id, at(4));
+  expect((await f.ctx.repos.records.get(a.id))!.value).toMatchObject({ pool: '活跃池', cold_since: null, completed_at: null, completed_by: null, last_touched_at: at(4) });
+  expect(activeIdeas(await records(f))).toHaveLength(2);
+});
+it('D2 completing again inside a transaction is a noop and the completer comes from the history source', async () => {
+  const f = fixture(), a = idea(); await ideas(f, [a]);
+  const first = await run(f.ctx, async tx => completeIdeaInTx(tx, a.id, completedBy({ kind: 'cli', agent: { name: 'Claude Code', detected_by: 'env' } })), at(1), { action: 'test.direct' });
+  expect(first.noop).toBe(false);
+  expect(first.record.completed_by).toEqual({ kind: 'cli', agent: 'Claude Code' });
+  const again = await run(f.ctx, async tx => completeIdeaInTx(tx, a.id, completedBy(undefined)), at(2), { action: 'test.direct' });
+  expect(again.noop).toBe(true);
+  expect((await f.ctx.repos.records.get(a.id))!.value.completed_at).toBe(at(1));
+  expect(completedBy({ kind: 'mcp', agent: { name: null, detected_by: 'none' } })).toEqual({ kind: 'mcp', agent: null });
+});
+it('D2 round trip through an older version: revived there (活跃池 + stale completed_at) reads as active and the next transition clears the fields', async () => {
+  const f = fixture(), a = idea(); await ideas(f, [a]); await complete(f.ctx, a.id, at(1));
+  // v0.2.5 的冷库捞回只改 pool / cold_since / last_touched_at，passthrough 原样留下完成字段
+  const original = (await f.ctx.repos.records.get(a.id))!;
+  await f.ctx.repos.transact(crypto.randomUUID(), [await f.ctx.repos.records.write({ ...original.value, pool: '活跃池', cold_since: null, last_touched_at: at(2) }, original)]);
+  const stale = (await f.ctx.repos.records.get(a.id))!.value;
+  expect(stale.completed_at).toBe(at(1));
+  expect(ideaStatus(stale)).toBe('活跃池');
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
+  expect(f.publish.mock.calls.at(-1)![0].backpack.ideas.map((i: { id: string }) => i.id)).toEqual([a.id]);
+  const later = new Date(Date.parse(at(2)) + 60 * 86400000).toISOString(); f.clock(later);
+  expect(await expire(f.ctx, later)).toBe(1);
+  expect((await f.ctx.repos.records.get(a.id))!.value).toMatchObject({ pool: '冷库', completed_at: null, completed_by: null });
+  expect(ideaStatus((await f.ctx.repos.records.get(a.id))!.value)).toBe('冷库');
+});
+it('D2 records written by older versions without completion fields stay byte-compatible after unrelated transitions', async () => {
+  const f = fixture(), a = idea(); await ideas(f, [a]);
+  await editIdea(f.ctx, a.id, { text: '改一下', needs: null }, at(1));
+  const text = (await f.ctx.repos.records.get(a.id))!.text;
+  expect(text).not.toMatch(/completed_/);
+  const later = new Date(Date.parse(at(1)) + 60 * 86400000).toISOString(); f.clock(later);
+  await expire(f.ctx, later);
+  expect((await f.ctx.repos.records.get(a.id))!.text).not.toMatch(/completed_/);
 });

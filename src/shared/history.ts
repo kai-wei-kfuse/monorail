@@ -67,6 +67,7 @@ export const historyActions = {
   // 想法（ideaService）
   'idea.convertToTask': A('想法转任务', 'task'), 'idea.convert': A('想法转卡片', 'card'), 'idea.delete': A('删除想法', 'record'),
   'idea.edit': A('改想法', 'record'), 'idea.expire': A('想法进冷库', 'record'), 'idea.revive': A('从冷库捞回', 'record'), 'idea.resolveDuel': A('想法对决', 'record'),
+  'idea.complete': A('完成想法', 'record'), 'idea.uncomplete': A('撤销完成想法', 'record'),
   // 收藏、项目、标签（presetService）
   'preset.addFavorite': A('新建收藏', 'settings'), 'preset.favorite': A('设为收藏', 'settings'), 'preset.editFavorite': A('改收藏', 'settings'),
   'preset.removeFavorite': A('删除收藏', 'settings'), 'preset.reorderFavorites': A('调整收藏顺序', 'settings'),
@@ -86,11 +87,11 @@ export const historyActions = {
   'entry.setShowIdle': A('显示待机', 'settings'), 'entry.saveAsCard': A('存为卡', 'card'),
   // 系统（后台）
   'system.dayChange': A('活动日切换'), 'system.resume': A('补记离线时段', 'entry'), 'system.reconcile': A('整理记录'),
-  // 自动化（MCP / CLI 的 10 个写方法）
+  // 自动化（MCP / CLI 的 11 个写方法）
   'auto.save_idea': A('保存想法', 'record'), 'auto.capture_todo': A('捕获待办', 'record'), 'auto.start_timer': A('开始计时', 'entry'),
   'auto.start_task_item': A('开始事项', 'card'), 'auto.pause_timer': A('暂停', 'entry'), 'auto.resume_timer': A('继续', 'entry'),
   'auto.stop_timer': A('停止计时', 'entry'), 'auto.start_break': A('开始临时活动', 'entry'), 'auto.return_from_break': A('回来', 'entry'),
-  'auto.add_time_entry': A('补录条目', 'entry'),
+  'auto.add_time_entry': A('补录条目', 'entry'), 'auto.complete_idea': A('完成想法', 'record'),
 } as const satisfies Record<string, HistoryActionSpec>;
 
 /** 系统来源的「为什么会改」（ADR 0019 第 5 条）。 */

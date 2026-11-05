@@ -18,6 +18,13 @@ const base = (): CompareInput => ({ cards: [], tasks: [], reviews: [], records: 
   names: { tasks: new Map([['t1', '找工作']]), cards: new Map([['c1', '查服务器']]), entries: new Map() } });
 
 describe('compareAll', () => {
+  it('0.3.0-beta.4 D2：完成想法显示「活跃池 → 已完成」，不显示成冷库', () => {
+    const idea = { id: 'r1', text: '试试新咖啡', kind: '想法', created_at: t(9), due_at: null, blocking: false, task_id: null, card_id: null, tags: [],
+      attachments: [], needs: null, pool: '活跃池', last_touched_at: t(9), cold_since: null } as const;
+    const done = { ...idea, pool: '冷库' as const, cold_since: t(10), completed_at: t(10), completed_by: { kind: 'manual' as const, agent: null }, last_touched_at: t(10) };
+    expect(compareAll({ ...base(), records: [{ id: 'r1', before: { ...idea, tags: [], attachments: [] }, after: { ...done, tags: [], attachments: [] } }] }))
+      .toEqual([{ type: 'record', id: 'r1', name: '试试新咖啡', field: '池', before: '活跃池', after: '已完成' }]);
+  });
   it('新建条目：改前都是 null；删除：改后都是 null', () => {
     const created = compareAll({ ...base(), entries: { before: [], after: [entry()] } });
     expect(created.map(c => [c.field, c.before, c.after])).toEqual([['描述', null, '写周报'], ['项目', null, '工作'], ['标签', null, '（无标签）'],

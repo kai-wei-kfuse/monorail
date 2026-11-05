@@ -15,6 +15,9 @@ export const recordSchema = z.object({
   card_id: nullableText, tags: z.array(z.string()), attachments: z.array(attachmentPath),
   needs: nullableText, pool: z.enum(['活跃池', '冷库', '已转任务']).nullable(),
   last_touched_at: iso, cold_since: iso.nullable(),
+  // ADR 0020：已完成 = 冷库 + completed_at。不加 refine：旧版捞回后会留下「活跃池 + completed_at」的合法文件
+  completed_at: iso.nullable().optional(),
+  completed_by: z.object({ kind: z.enum(['manual', 'mcp', 'cli', 'automation']), agent: z.string().nullable() }).nullable().optional(),
 }).passthrough().refine(record => record.kind === '想法' ? record.pool !== null : record.pool === null, '记录类型与想法池状态不一致')
   .refine(record => record.pool === '冷库' ? record.cold_since !== null : record.cold_since === null, '冷库时间与状态不一致')
   .refine(record => record.pool !== '已转任务' || record.card_id !== null, '已转任务的想法缺少卡片');

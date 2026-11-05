@@ -5,6 +5,7 @@ import type { Card } from '../card/card';
 import type { Task } from '../task/task';
 import type { Review } from '../review/schedule';
 import type { RecordEntry } from '../record/record';
+import { ideaStatus } from '../idea/pool';
 import type { TimeEntry } from '../timeline/entry';
 import type { HistoryChange, HistoryObjectType, HistorySubject } from '../../shared/history';
 import { SETTING_LABELS } from '../../shared/history';
@@ -60,7 +61,8 @@ const TASK: Field<Task>[] = [
 const REVIEW: Field<Review>[] = [['状态', r => r.status], ['步骤', r => r.step]];
 const RECORD: Field<RecordEntry>[] = [
   ['内容', r => cut(r.text)], ['类型', r => r.kind], ['标签', r => tags(r.tags)],
-  ['池', r => r.pool ?? '（无）'], ['需要', r => r.needs ?? '（无）'], ['截止', r => r.due_at ? `${md(r.due_at)} ${clock(r.due_at)}` : '（无）'],
+  // ADR 0020：已完成存成冷库 + completed_at，历史里按状态显示「已完成」
+  ['池', r => ideaStatus(r) ?? r.pool ?? '（无）'], ['需要', r => r.needs ?? '（无）'], ['截止', r => r.due_at ? `${md(r.due_at)} ${clock(r.due_at)}` : '（无）'],
   ['附件', r => r.attachments.length ? `${r.attachments.length} 个` : '（无）'],
 ];
 /** 计时状态里算实质改动的字段（ADR 0019 第 1 条）；open_entry 的变化已经体现在条目上，pending、open_entry_day 等是簿记。 */

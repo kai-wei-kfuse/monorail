@@ -1,7 +1,9 @@
 import type { RecordEntry } from '../domain/record/record';
 import { extractTags } from '../domain/record/record';
 import { convert } from '../domain/record/convert';
-import { activeIdeas, requireIdea, reviveIdea, weakest, expiredIdeas } from '../domain/idea/pool';
+import { activeIdeas, clearDone, completeIdea, ideaStatus, requireIdea, reviveIdea, uncompleteIdea, weakest, expiredIdeas } from '../domain/idea/pool';
+import type { IdeaCompletedBy } from '../domain/record/record';
+import type { HistorySource } from '../shared/history';
 import { decide, pair } from '../domain/idea/arena';
 import type { Duel } from '../domain/idea/arena';
 import type { Ctx, Transaction } from './commit';
@@ -41,7 +43,7 @@ function convertIdeaInTx(tx: Transaction, id: string, input: IdeaTaskInput): str
     id: index === 0 ? `card-${id}` : tx.id(),
   }));
   cards.forEach(card => tx.saveCard(card));
-  tx.saveRecord({ ...idea, pool: '已转任务', card_id: cards[0].id, last_touched_at: tx.at, cold_since: null });
+  tx.saveRecord({ ...clearDone(idea), pool: '已转任务', card_id: cards[0].id, last_touched_at: tx.at, cold_since: null });
   refreshInTx(tx);
   return cards.map(card => card.id);
 }
@@ -61,6 +63,25 @@ export const editIdea = (ctx: Ctx, id: string, input: { text: string; needs: str
   tx.saveRecord({ ...idea, text: input.text, tags: extractTags(input.text), needs: input.needs?.trim() || null, last_touched_at: at });
 }, at, { action: 'idea.edit' });
 
+/** 谁标的完成（ADR 0020 第 1 条）：取这次操作的历史来源；没给来源的是主窗口手动。 */
+export function completedBy(source: HistorySource | undefined): IdeaCompletedBy {
+  if (!source || source.kind === 'manual' || source.kind === 'system') return { kind: 'manual', agent: null };
+  return { kind: source.kind, agent: source.agent.name ?? null };
+}
+/** 完成一个想法；本来就已完成的返回 noop（MCP / CLI 重复标记不报错，ADR 0020 第 4 条）。 */
+export function completeIdeaInTx(tx: Transaction, id: string, by: IdeaCompletedBy): { record: RecordEntry; noop: boolean } {
+  const idea = findIdea(tx, id);
+  if (ideaStatus(idea) === '已完成') return { record: idea, noop: true };
+  const done = completeIdea(idea, tx.at, by);
+  tx.saveRecord(done);
+  return { record: done, noop: false };
+}
+export const complete = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => { completeIdeaInTx(tx, id, completedBy(undefined)); }, at,
+  { action: 'idea.complete', subject: { type: 'record', id } });
+export const uncomplete = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {
+  tx.saveRecord(uncompleteIdea(findIdea(tx, id), tx.at));
+}, at, { action: 'idea.uncomplete', subject: { type: 'record', id } });
+
 export function expireInTx(tx: Transaction): number {
   const expired = expiredIdeas(tx.records, tx.at, tx.settings.ideaExpireDays);
   expired.forEach(idea => tx.saveRecord(idea));
@@ -75,6 +96,7 @@ export function reviveInTx(tx: Transaction, ids: string[], confirmed = false): R
   const at = tx.at;
   if (ids.length === 0 || new Set(ids).size !== ids.length) throw new Error('请选择不同的冷库想法');
   const ideas = ids.map(id => findIdea(tx, id));
+  if (ideas.some(idea => ideaStatus(idea) === '已完成')) throw new Error('想法已完成，请先在「已完成」里撤销完成');
   if (ideas.some(idea => idea.pool !== '冷库')) throw new Error('想法不在冷库');
   const active = activeIdeas(tx.records), free = tx.settings.ideaPoolLimit - active.length;
   if (free >= ids.length) {
@@ -94,6 +116,7 @@ export const revive = (ctx: Ctx, ids: string[], at: string, confirmed = false): 
 export function resolveDuelInTx(tx: Transaction, winnerId: string, loserId: string): void {
   const at = tx.at;
   const winner = findIdea(tx, winnerId), loser = findIdea(tx, loserId);
+  if ([winner, loser].some(idea => ideaStatus(idea) === '已完成')) throw new Error('已完成的想法不参加对决');
   const cold = [winner, loser].filter(idea => idea.pool === '冷库');
   if (cold.length) {
     if (activeIdeas(tx.records).length < tx.settings.ideaPoolLimit) throw new Error('池中已有空位，请重新直接捞回');

@@ -8,7 +8,7 @@ import type { Settings } from '../shared/settings';
 import { refElapsedInTx } from './tracking/api';
 import { knownTags } from '../domain/timeline/tags';
 import { projectOptions } from '../domain/timeline/project';
-import { coldOffer } from '../domain/idea/pool';
+import { coldOffer, doneIdeas } from '../domain/idea/pool';
 import { LOOSE } from '../shared/backpack';
 
 export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEntry[], entries: TimeEntry[], settings: Settings, at: string): BackpackSlice {
@@ -45,6 +45,9 @@ export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEnt
       .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))
       .map(record => ({ id: record.id, text: record.text, tags: record.tags, needs: record.needs,
         pool: record.pool as '活跃池' | '已转任务', createdAt: record.created_at, lastTouchedAt: record.last_touched_at })),
+    // ADR 0020：已完成的想法单独一组，按完成时间新到旧
+    doneIdeas: doneIdeas(records).map(record => ({ id: record.id, text: record.text, tags: record.tags, needs: record.needs,
+      completedAt: record.completed_at!, completedBy: record.completed_by ?? { kind: 'manual', agent: null } })),
     coldIdeas: coldOffer(records)
       .map(record => ({ id: record.id, text: record.text, needs: record.needs, coldSince: record.cold_since! })),
   };
