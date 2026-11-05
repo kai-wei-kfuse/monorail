@@ -1,0 +1,116 @@
+{
+  "boot": {
+    "ok": true,
+    "ms": 8449,
+    "title": "单轨 · MONORAIL",
+    "processes": 1
+  },
+  "ideas": {
+    "ok": true,
+    "ms": 6244,
+    "toast": "已完成「隔离验收：试试楼下的手冲咖啡 …」",
+    "history": [
+      {
+        "action": "auto.save_idea",
+        "label": "保存想法",
+        "kind": "cli",
+        "agent": null,
+        "changes": [
+          "null→活跃池"
+        ]
+      },
+      {
+        "action": "auto.save_idea",
+        "label": "保存想法",
+        "kind": "cli",
+        "agent": null,
+        "changes": [
+          "null→活跃池"
+        ]
+      },
+      {
+        "action": "idea.complete",
+        "label": "完成想法",
+        "kind": "manual",
+        "via": "main",
+        "agent": null,
+        "changes": [
+          "活跃池→已完成"
+        ]
+      },
+      {
+        "action": "idea.uncomplete",
+        "label": "撤销完成想法",
+        "kind": "manual",
+        "via": "main",
+        "agent": null,
+        "changes": [
+          "已完成→活跃池"
+        ]
+      },
+      {
+        "action": "auto.complete_idea",
+        "label": "完成想法",
+        "kind": "cli",
+        "agent": "Claude Code",
+        "changes": [
+          "活跃池→已完成"
+        ]
+      }
+    ],
+    "cli": {
+      "done": {
+        "id": "aedfcc4f-9650-46d4-84d7-5c806650b740",
+        "text": "隔离验收：查一下公积金提取流程",
+        "status": "已完成",
+        "completed_at": "2026-11-05T06:45:03.045Z",
+        "noop": false
+      },
+      "againNoop": true,
+      "find": [
+        "已完成"
+      ],
+      "bad": "IDEA_NOT_FOUND"
+    }
+  },
+  "miniSmall": {
+    "ok": false,
+    "ms": 4296,
+    "error": "Error: press: .mini-cat-list li 学习\n    at press (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:52:17)\n    at async Object.miniSmall (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:134:5)\n    at async file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:246:61"
+  },
+  "miniUp": {
+    "ok": false,
+    "ms": 3,
+    "error": "Error: click: .mini-btn[aria-label=\"暂停\"] \n    at Object.click (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/lib.mjs:83:22)\n    at async Object.miniUp (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:159:5)\n    at async file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:246:61"
+  },
+  "miniTiny": {
+    "ok": false,
+    "ms": 4417,
+    "error": "Error: press: .mini-cat-list li 工作\n    at press (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:52:17)\n    at async Object.miniTiny (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:195:5)\n    at async file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:246:61"
+  },
+  "miniHideExpanded": {
+    "ok": false,
+    "ms": 589,
+    "error": "Error: click: .mini-title \n    at Object.click (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/lib.mjs:83:22)\n    at async Object.miniHideExpanded (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:217:5)\n    at async file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:246:61"
+  },
+  "finish": {
+    "ok": true,
+    "ms": 4452,
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyPid": [
+      39192,
+      39192
+    ],
+    "historyCount": 6,
+    "actions": [
+      "auto.save_idea@cli",
+      "auto.save_idea@cli",
+      "idea.complete@manual/main",
+      "idea.uncomplete@manual/main",
+      "auto.complete_idea@cli",
+      "settings.change@manual/main"
+    ]
+  }
+}

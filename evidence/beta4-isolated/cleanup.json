@@ -1,0 +1,26 @@
+{
+  "identifier": "local.pixelrecord.beta4test.t0d2623b5ea1a",
+  "takenAt": "2026-11-05T07:05:13.734Z",
+  "runSame": true,
+  "isolatedRunEntry": [],
+  "dailyExeSame": true,
+  "dailyConfigSame": true,
+  "dailyPid": [
+    39192,
+    39192
+  ],
+  "removed": [
+    {
+      "dir": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.beta4test.t0d2623b5ea1a",
+      "gone": true
+    },
+    {
+      "dir": "C:\\Users\\kai_wei\\AppData\\Local\\local.pixelrecord.beta4test.t0d2623b5ea1a",
+      "gone": true
+    },
+    {
+      "dir": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-b4-0d2623b5ea1a",
+      "gone": true
+    }
+  ]
+}

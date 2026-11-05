@@ -1,0 +1,8 @@
+PASS boot
+PASS ideas
+PASS miniSmall
+PASS miniUp
+PASS miniTiny
+PASS miniHideExpanded
+PASS finish
+RUN-EXIT 0

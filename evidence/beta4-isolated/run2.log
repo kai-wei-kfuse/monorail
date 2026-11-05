@@ -1,0 +1,8 @@
+PASS boot
+PASS ideas
+FAIL miniSmall Error: press: .mini-cat-list li 学习
+FAIL miniUp Error: click: .mini-btn[aria-label="暂停"] 
+FAIL miniTiny Error: press: .mini-cat-list li 工作
+FAIL miniHideExpanded Error: click: .mini-title 
+PASS finish
+RUN-EXIT 0

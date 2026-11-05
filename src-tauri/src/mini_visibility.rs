@@ -56,8 +56,11 @@ pub fn install(window: &WebviewWindow) -> Result<(), String> {
     window.run_on_main_thread(move || {
         let result = unsafe { attach(hwnd as HWND, move |visible| {
             let revision = REVISION.fetch_add(1, Ordering::SeqCst) + 1;
-            if let Err(error) = app.emit_to("main", "mini-visibility", Visibility { visible, revision }) {
-                eprintln!("mini visibility: {error}");
+            // 小窗自己也收：被关掉时还在写名字，就和点别处一样离开输入框、收起弹层（0.3.0-beta.4 D1）
+            for target in ["main", "mini"] {
+                if let Err(error) = app.emit_to(target, "mini-visibility", Visibility { visible, revision }) {
+                    eprintln!("mini visibility: {error}");
+                }
             }
         }) };
         if sender.send(result).is_err() { eprintln!("mini visibility installation receiver disconnected"); }

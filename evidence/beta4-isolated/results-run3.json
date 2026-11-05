@@ -1,0 +1,317 @@
+{
+  "boot": {
+    "ok": true,
+    "ms": 13808,
+    "title": "单轨 · MONORAIL",
+    "processes": 1
+  },
+  "ideas": {
+    "ok": true,
+    "ms": 6034,
+    "toast": "已完成「隔离验收：试试楼下的手冲咖啡 …」",
+    "history": [
+      {
+        "action": "auto.save_idea",
+        "label": "保存想法",
+        "kind": "cli",
+        "agent": null,
+        "changes": [
+          "null→活跃池"
+        ]
+      },
+      {
+        "action": "auto.save_idea",
+        "label": "保存想法",
+        "kind": "cli",
+        "agent": null,
+        "changes": [
+          "null→活跃池"
+        ]
+      },
+      {
+        "action": "idea.complete",
+        "label": "完成想法",
+        "kind": "manual",
+        "via": "main",
+        "agent": null,
+        "changes": [
+          "活跃池→已完成"
+        ]
+      },
+      {
+        "action": "idea.uncomplete",
+        "label": "撤销完成想法",
+        "kind": "manual",
+        "via": "main",
+        "agent": null,
+        "changes": [
+          "已完成→活跃池"
+        ]
+      },
+      {
+        "action": "auto.complete_idea",
+        "label": "完成想法",
+        "kind": "cli",
+        "agent": "Claude Code",
+        "changes": [
+          "活跃池→已完成"
+        ]
+      }
+    ],
+    "cli": {
+      "done": {
+        "id": "84905233-da77-43af-9c34-149d140da626",
+        "text": "隔离验收：查一下公积金提取流程",
+        "status": "已完成",
+        "completed_at": "2026-11-05T06:53:00.402Z",
+        "noop": false
+      },
+      "againNoop": true,
+      "find": [
+        "已完成"
+      ],
+      "bad": "IDEA_NOT_FOUND"
+    }
+  },
+  "miniSmall": {
+    "ok": false,
+    "ms": 8037,
+    "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(started.changes.some(c => c.field === '项目' && c.after === '学习'))\n\n    at Object.miniSmall (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:161:12)\n    at async file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/beta4-isolated/run.mjs:255:61"
+  },
+  "miniUp": {
+    "ok": true,
+    "ms": 5770,
+    "g1": {
+      "x": 276,
+      "y": 1301,
+      "w": 520,
+      "h": 88,
+      "barTop": 1301,
+      "barH": 88,
+      "pop": null,
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": "已暂停：隔离验收：读书",
+      "cat": null,
+      "close": true,
+      "timeFont": "26px"
+    },
+    "g2": {
+      "x": 276,
+      "y": 1135,
+      "w": 520,
+      "h": 254,
+      "barTop": 1301,
+      "barH": 88,
+      "pop": {
+        "up": true,
+        "h": 166,
+        "sug": true,
+        "cat": false
+      },
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": null,
+      "cat": "未分类",
+      "close": true,
+      "timeFont": "26px"
+    },
+    "g3": {
+      "x": 276,
+      "y": 1301,
+      "w": 520,
+      "h": 88,
+      "barTop": 1301,
+      "barH": 88,
+      "pop": null,
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": "隔离验收：读书",
+      "cat": "学习",
+      "close": true,
+      "timeFont": "26px"
+    },
+    "items": [
+      "隔离验收：读书"
+    ],
+    "history": [
+      "mini.pause@mini",
+      "mini.continueEntry@mini"
+    ]
+  },
+  "miniTiny": {
+    "ok": true,
+    "ms": 9093,
+    "g0": {
+      "x": 276,
+      "y": 1301,
+      "w": 320,
+      "h": 46,
+      "barTop": 1301,
+      "barH": 46,
+      "pop": null,
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": "隔离验收：读书",
+      "cat": "学习",
+      "close": false,
+      "timeFont": "16px"
+    },
+    "g1": {
+      "x": 276,
+      "y": 1051,
+      "w": 320,
+      "h": 296,
+      "barTop": 1301,
+      "barH": 46,
+      "pop": {
+        "up": true,
+        "h": 250,
+        "sug": false,
+        "cat": true
+      },
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": "隔离验收：读书",
+      "cat": "学习",
+      "close": false,
+      "timeFont": "16px"
+    },
+    "g2": {
+      "x": 276,
+      "y": 1301,
+      "w": 320,
+      "h": 46,
+      "barTop": 1301,
+      "barH": 46,
+      "pop": null,
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": "隔离验收：读书",
+      "cat": "工作",
+      "close": false,
+      "timeFont": "16px"
+    },
+    "g3": {
+      "x": 276,
+      "y": 1135,
+      "w": 320,
+      "h": 212,
+      "barTop": 1301,
+      "barH": 46,
+      "pop": {
+        "up": true,
+        "h": 166,
+        "sug": true,
+        "cat": false
+      },
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": null,
+      "cat": "未分类",
+      "close": false,
+      "timeFont": "16px"
+    },
+    "g4": {
+      "x": 276,
+      "y": 1301,
+      "w": 320,
+      "h": 46,
+      "barTop": 1301,
+      "barH": 46,
+      "pop": null,
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": "已暂停：隔离验收：读书",
+      "cat": null,
+      "close": false,
+      "timeFont": "16px"
+    },
+    "history": [
+      "settings.change@main",
+      "mini.editOpen@mini",
+      "mini.pause@mini"
+    ]
+  },
+  "miniHideExpanded": {
+    "ok": true,
+    "ms": 5028,
+    "open": {
+      "x": 276,
+      "y": 1135,
+      "w": 320,
+      "h": 212,
+      "barTop": 1301,
+      "barH": 46,
+      "pop": {
+        "up": true,
+        "h": 166,
+        "sug": true,
+        "cat": false
+      },
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": null,
+      "cat": "未分类",
+      "close": false,
+      "timeFont": "16px"
+    },
+    "reopened": {
+      "x": 276,
+      "y": 1301,
+      "w": 320,
+      "h": 46,
+      "barTop": 1301,
+      "barH": 46,
+      "pop": null,
+      "availTop": 0,
+      "availH": 1392,
+      "dpr": 1,
+      "title": "待确认",
+      "cat": null,
+      "close": false,
+      "timeFont": "16px"
+    },
+    "saved": {
+      "x": 268,
+      "y": 1300,
+      "width": 320,
+      "height": 46
+    },
+    "historyAfter": 11
+  },
+  "finish": {
+    "ok": true,
+    "ms": 4208,
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyPid": [
+      39192,
+      39192
+    ],
+    "historyCount": 11,
+    "actions": [
+      "auto.save_idea@cli",
+      "auto.save_idea@cli",
+      "idea.complete@manual/main",
+      "idea.uncomplete@manual/main",
+      "auto.complete_idea@cli",
+      "mini.editOpen@manual/mini",
+      "mini.pause@manual/mini",
+      "mini.continueEntry@manual/mini",
+      "settings.change@manual/main",
+      "mini.editOpen@manual/mini",
+      "mini.pause@manual/mini"
+    ]
+  }
+}

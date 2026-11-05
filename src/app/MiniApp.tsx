@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { listen } from '@tauri-apps/api/event';
 import { fitMiniWindow, miniWindowSizes } from '../platform/miniWindow';
 import { miniUnresponsive, miniWindowBus } from '../platform/windowBus';
 import type { MiniCommand, MiniOutcome, MiniSnapshot, MiniWindowBus } from '../platform/windowBus';
@@ -67,6 +68,14 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     return () => { alive = false; void offs.then(fns => fns.forEach(f => f())); };
   }, [bus]);
 
+  // 小窗被关掉（主窗口底栏、M、托盘）时还在写：和点别处一样离开输入框（有字就写盘，没字接着计待确认），
+  // 收起弹层；否则隐藏的窗口里编辑还开着，下次打开弹层被截在本体的高度里（0.3.0-beta.4 D1 实测）
+  const leaveEdit = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (!('__TAURI_INTERNALS__' in window)) return;
+    const off = listen<{ visible: boolean }>('mini-visibility', e => { if (!e.payload.visible) leaveEdit.current(); });
+    return () => { void off.then(fn => fn()); };
+  }, []);
   // 分类下拉开着时：点小窗以外的地方或按 Esc 收起（写名字时 Esc 由输入框处理，同时放弃这次编辑）
   useEffect(() => {
     if (!catOpen) return;
@@ -195,6 +204,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     }
     if (!keepIt && edit.startedHere && now_.pending_id) act({ type: 'cancelPending', pending_id: now_.pending_id });
   };
+  leaveEdit.current = () => { setCatOpen(false); closeEdit(true); };
   // 选中自动完成里的一项：不按离开写盘，直接开始这件事（同主窗口 useEntry.choose）
   const choose = (command: Parameters<Send>[0]) => {
     const s = latest.current ?? snap;

@@ -1,0 +1,17 @@
+PASS boot
+PASS ideas
+FAIL miniSmall Error: press: #mini-project 
+FAIL miniUp Error: click: .mini-btn[aria-label="暂停"] 
+FAIL miniTiny Error: press: #mini-cat 
+FAIL miniHideExpanded AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ {
++   cat: false,
++   h: 136,
++   sug: true,
++   up: false
++ }
+- null
+
+RUN-EXIT 0

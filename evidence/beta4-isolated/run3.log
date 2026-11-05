@@ -1,0 +1,11 @@
+PASS boot
+PASS ideas
+FAIL miniSmall AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(started.changes.some(c => c.field === '项目' && c.after === '学习'))
+
+PASS miniUp
+PASS miniTiny
+PASS miniHideExpanded
+PASS finish
+RUN-EXIT 0
