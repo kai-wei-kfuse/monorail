@@ -88,7 +88,8 @@ items:
 | 一张卡在计时，或**卡暂停中** | 插入 | 插入 |
 | 插入中 / 插入的事暂停了 | 替换插入的事（`resume_entry_id` 不变） | 替换插入的事；**继续的正是原来那张卡的条目 =〔回到任务〕，是别的卡就拒绝**（同 B2） |
 | 自由记录在计时（`普通`，非待机） | 插入 | 切换 |
-| 待机 / 自由记录暂停中 / 什么都没在计 | 直接开始 | 直接开始 |
+| 自由记录暂停中 | 插入（保留暂停前的回到目标，同 0.2.5 / ADR 0006；代码审核 G1–G4 确认） | 直接开始 |
+| 待机 / 什么都没在计 | 直接开始 | 直接开始 |
 
   卡暂停中按插入处理（第 2 轮 S2）：用户说的是「换了东西之后自动暂停，可以选择返回」；现有 `insertInTx` 遇到非 `普通` 条目本来就保留 `resume_entry_id`（`timerService.ts:37-41`）。快捷活动和收藏靠预设的 `place` 区分（`presetService.ts:20-38`），不再读 `mode`（设置里照写原值）。改动的函数：`startFreeInTx`、`startPresetInTx`、`continueEntryInTx`、`dispatchMiniCommand` 的 `editOpen` 新事件和 `startCard`；MCP `start_break` 找预设（`homeService.ts:277`）和 `get_context` 的 `options.break_presets`（`applicationController.ts:342`）都由 `mode === '插入'` 改看 `place === '弹层'`（第 2 轮 S6），同步 `docs/application/README.md`。
 - **待确认起点**（第 2 轮 B3）：`insertInTx` 加 `from` 参数（同 `startInTx`）；插入、替换两个分支都取 `from = pending_at ?? at` 并 `clearPending`，原来那条在 `from` 处截断，交给 `place`。做卡时点计时框「写别的」、往前拨起点、再输入，起点不丢，也不会留下待确认。
@@ -106,6 +107,7 @@ items:
   `get_context` 的 `timer` 加只读字段 `away_paused: boolean`（第 3 轮 N3，`timerContextSchema` 是 `strictObject`，算输出约定扩展，和 `today_plan` 一起进兼容测试），agent 不用从 `open_entry.project` 推断。`checkNormalPreconditions`（`homeService.ts:217`）、`allowed` 表（`applicationController.ts:94-118`）和第 243 行提示按这张表改；`mcp/compatibility.test.ts`、`cli/cli.test.ts` 加两种状态的用例。
 - **回到任务** = 现有 `resumeInTx`。
 - **结束原任务** = `homeService.endOriginalInTx`：调 tracking 新导出 `promoteInsertInTx(tx)`（审核 S5，`timerService` 内部把开着的那条 `kind` 改成 `普通`、清 `resume_entry_id`，走 `place` / `acceptInTx`；插入的事暂停时开着的是待机，改成 `待机 / 普通`），然后 `alignInTx` 自然把原来那张卡放回待做（仍在今天的板子上，进度不变，已定 19、26）。自由计时时同样，只是没有卡。历史 `home.endOriginal`，主体是原来那张卡。
+- **插入中开始的正是原来那张卡**（背包里点〔开始〕、继续它的条目）=〔回到任务〕；**卡暂停中继续它的条目** =〔继续〕（代码审核 S5）。检查放在 `cardService.startCardInTx` 里，所有开始卡的路径都覆盖。
 - **插入中不能抽卡、也不能直接开始另一张卡**（已定 20；计划 v0.7 第 6 条「直接开始另一张卡改成不允许」；审核 B2）：抽屉里卡上的〔开始〕、详情里的〔开始〕、板子行的〔开始〕在三种插入状态下都灰掉，提示「先回到任务或结束原任务」。MCP `start_task_item` 在插入中报 `IN_AWAY_ACTIVITY`（沿用现有错误码），不在 `away` 的 `allowed` 里。插入中也不能完成原来那张卡：首页被插入卡盖住，小窗插入时只显示〔↩ 回到 …〕不显示〔完成〕，先回到任务再完成（第 2 轮 N4）。
 - **悄悄结束原任务的路径（有意保留）**：`sleep`（`homeService.ts:91`）和离线结算（`timerService.ts:61-67`）会清 `resume_entry_id`，插入中发生时等于结束原任务；睡觉、长时间离线本来就意味着原来的事不接着了。两处历史都已有记录（`home.sleep`、`system.resume`），连带改动里显示原来那张卡回待做。
 - **换日时在插入中**：第 6 条换日处理里自动「结束原任务」（只在原来那条开始于今天活动日起点之前时做），记在 `system.dayChange` 的连带改动里。
