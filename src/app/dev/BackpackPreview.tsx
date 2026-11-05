@@ -4,7 +4,7 @@ import { TitleBar } from '../../ui/frame/TitleBar';
 import { WindowButtons } from '../../ui/frame/WindowButtons';
 import type { BackpackActions, BackpackTab } from '../../pages/backpack/BackpackPage';
 import { BackpackPage } from '../../pages/backpack/BackpackPage';
-import type { IdeaView, TaskView, QueueGroup } from '../../pages/backpack/types';
+import type { DoneIdeaView, IdeaView, TaskView, QueueGroup } from '../../pages/backpack/types';
 import { NEW_CARD } from '../../widgets/CardEditor';
 import type { PoolView } from '../../pages/backpack/TaskPool';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
@@ -30,8 +30,13 @@ const IDEAS: IdeaView[] = [
   { id: 'i2', text: '把读过的 Agent 文章整理成一份对比表', tags: ['AI'], needs: '大量 token', pool: '活跃池', createdAt: ago(41), lastTouchedAt: ago(41) },
   { id: 'i3', text: '给打印机做个喷头清洁提醒', tags: [], needs: null, pool: '已转任务', createdAt: ago(3), lastTouchedAt: ago(1) },
 ];
+// 0.3.0-beta.4 D2：已完成的想法（手动、MCP 各一条）；?nodone 时为空列表
+const DONE: DoneIdeaView[] = [
+  { id: 'd1', text: '换一个机械键盘的轴体', tags: ['生活'], needs: null, completedAt: ago(0.1), completedBy: { kind: 'manual', agent: null } },
+  { id: 'd2', text: '查一下公积金提取的流程', tags: [], needs: null, completedAt: ago(2), completedBy: { kind: 'mcp', agent: 'Claude Code' } },
+];
 const noop: BackpackActions = { createTask() {}, addItem() {}, setDefaultProject() {}, freezeTask() {}, abandonTask() {}, restoreTask() {}, saveCard() {}, startCard() {}, passCard() {},
-  convertIdea() {}, deleteIdea() {}, createProject() {}, createTag() {} };
+  convertIdea() {}, deleteIdea() {}, completeIdea() {}, uncompleteIdea() {}, createProject() {}, createTag() {} };
 // 任务池按上面的队列组装：每张卡一个事项；不属于任务的那组当成一个只有一项的支线任务
 const item = (c: QueueGroup['cards'][number]) => ({ id: c.id, content: c.fields.content, type: c.fields.type, timeboxMinutes: c.fields.timeboxMinutes,
   elapsedMs: c.status === '进行中' ? 52 * 60_000 : 0, running: c.status === '进行中', blocking: c.fields.blocking, dueAt: c.fields.dueAt,
@@ -47,6 +52,7 @@ const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '�
 
 // ?full：支线上限 1，两个支线任务里超出的那个按 E4 标出来
 const FULL = new URLSearchParams(location.search).has('full');
+const NO_DONE = new URLSearchParams(location.search).has('nodone');
 
 /** 背包页预览（只在开发时用）：?tab=pool|ideas，?o=task|card|idea 打开对应对话框。 */
 export function BackpackPreview({ tab: initial, overlay }: { tab: string; overlay: string | null }) {
@@ -60,7 +66,7 @@ export function BackpackPreview({ tab: initial, overlay }: { tab: string; overla
     <WindowButtons pinned={false} maximized={false} onPin={() => {}} onMinimize={() => {}} onMaximize={() => {}} onClose={() => {}} />
   </TitleBar>;
   return <Frame titleBar={title} statusBar={<StatusBar />}>
-    <BackpackPage tab={tab} onTab={setTab} pool={pool(FULL)} tasks={TASKS} queue={QUEUE} ideas={IDEAS} knownTags={PREVIEW_TAGS}
+    <BackpackPage tab={tab} onTab={setTab} pool={pool(FULL)} tasks={TASKS} queue={QUEUE} ideas={IDEAS} doneIdeas={NO_DONE ? [] : DONE} knownTags={PREVIEW_TAGS}
       ideaLimit={10} defaultTimebox={60} actions={noop} />
   </Frame>;
 }

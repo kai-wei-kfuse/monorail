@@ -12,7 +12,7 @@ import { startCard } from '../services/homeService';
 import { changeLists } from '../services/settingsService';
 
 /** Wires the backpack page to the store projection and the N4 services. Errors surface through `report`. */
-export function BackpackScreen({ ctx, report }: { ctx: Ctx; report: (error: unknown) => void }) {
+export function BackpackScreen({ ctx, report, onInfo }: { ctx: Ctx; report: (error: unknown) => void; onInfo?: (title: string, text: string) => void }) {
   const view = useStore(appStore, state => state.backpack);
   const [tab, setTab] = useState<BackpackTab>('pool');
   const { ideaPoolLimit, timeboxDefaultMinutes } = ctx.settings;
@@ -29,9 +29,14 @@ export function BackpackScreen({ ctx, report }: { ctx: Ctx; report: (error: unkn
     passCard: (cardId, at) => call(() => pass(ctx, cardId, at)),
     convertIdea: (ideaId, input, at) => call(() => ideas.convertIdeaToTask(ctx, ideaId, input, at)),
     deleteIdea: (ideaId, at) => call(() => ideas.deleteIdea(ctx, ideaId, at)),
+    completeIdea: (ideaId, text, at) => call(async () => {
+      await ideas.complete(ctx, ideaId, at);
+      onInfo?.(`已完成「${text.length > 16 ? text.slice(0, 15) + '…' : text}」`, '收进「已完成」；在那里可以撤销。');
+    }),
+    uncompleteIdea: (ideaId, at) => call(() => ideas.uncomplete(ctx, ideaId, at)),
     createProject: (name, at) => call(() => preset.createProject(ctx, name, at)),
     createTag: (tag, at) => call(() => ctx.settings.lists.tags.includes(tag) ? Promise.resolve() : changeLists(ctx, { tags: [...ctx.settings.lists.tags, tag] }, at)),
   };
-  return <BackpackPage tab={tab} onTab={setTab} pool={view.pool} tasks={view.tasks} queue={view.queue} ideas={view.ideas}
+  return <BackpackPage tab={tab} onTab={setTab} pool={view.pool} tasks={view.tasks} queue={view.queue} ideas={view.ideas} doneIdeas={view.doneIdeas}
     knownTags={view.pool.knownTags} ideaLimit={ideaPoolLimit} defaultTimebox={timeboxDefaultMinutes} actions={actions} />;
 }

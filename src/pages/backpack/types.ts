@@ -24,3 +24,9 @@ export interface IdeaView {
   pool: '活跃池' | '已转任务';
   createdAt: string; lastTouchedAt: string;
 }
+
+/** 已完成的想法（0.3.0-beta.4 D2，ADR 0020）：按完成时间新到旧。 */
+export interface DoneIdeaView {
+  id: string; text: string; tags: string[]; needs: string | null; completedAt: string;
+  completedBy: { kind: 'manual' | 'mcp' | 'cli' | 'automation'; agent: string | null };
+}

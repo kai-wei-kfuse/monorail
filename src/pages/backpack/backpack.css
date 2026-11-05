@@ -20,3 +20,20 @@
 .slot.empty .slot-no b { color: var(--mute-2); }
 .slot.empty .slot-body { align-content: center; justify-items: start; color: var(--mute); }
 .slot.main { border-color: var(--ink); box-shadow: inset 0 3px 0 var(--yellow); }
+
+/* 0.3.0-beta.4 D2：想法池〔想法池 | 已完成〕分段与已完成列表（UI 规范 §11.10，照 idea-done-prototype.html） */
+.seg.id-seg button { min-width: 0; height: 30px; padding: 0 14px; font-size: 12px; }
+.seg.id-seg button i { margin-left: 6px; font: 500 8px/1 var(--f-en); letter-spacing: .16em; font-style: normal; color: var(--mute-2); }
+.seg.id-seg button[aria-checked="true"] i { color: #85857f; }
+.seg.id-seg button b { margin-left: 6px; font: 600 11px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--mute); }
+.seg.id-seg button[aria-checked="true"] b { color: var(--yellow); }
+.bp-tools .seg.id-seg + .inp { width: 240px; }
+.sbtn.id-ok { display: inline-flex; align-items: center; gap: 6px; }
+.sbtn.id-ok svg { width: 11px; height: 11px; }
+.ls-item.id-done b { color: var(--ink); }
+.id-tick { display: inline-grid; place-items: center; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; background: var(--ink); color: var(--yellow); }
+.id-tick svg { width: 10px; height: 10px; }
+.ls-meta .id-when { color: var(--ink-3); }
+.ls-meta .id-by { padding: 1px 5px; border: 1px solid var(--line-2); font-size: 11px; color: var(--mute); }
+.ls-meta .id-by.auto { border-color: var(--ink); background: var(--ink); color: var(--yellow); }
+.id-note { margin: 18px 0 0; font: 330 12px/1.6 var(--f-cn); color: var(--mute); }

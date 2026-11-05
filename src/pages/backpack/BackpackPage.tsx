@@ -14,7 +14,7 @@ import type { IdeaTaskInput } from '../../services/ideaService';
 import { TaskPool } from './TaskPool';
 import type { PoolView } from './TaskPool';
 import { IdeaPool } from './IdeaPool';
-import type { IdeaView, TaskView, QueueGroup } from './types';
+import type { DoneIdeaView, IdeaView, TaskView, QueueGroup } from './types';
 
 export type BackpackTab = 'pool' | 'ideas';
 
@@ -31,6 +31,9 @@ export interface BackpackActions {
   passCard: (cardId: string, at: string) => void;
   convertIdea: (ideaId: string, input: IdeaTaskInput, at: string) => void;
   deleteIdea: (ideaId: string, at: string) => void;
+  /** 0.3.0-beta.4 D2：做到了的想法收进「已完成」；text 用于完成后的提示 */
+  completeIdea: (ideaId: string, text: string, at: string) => void;
+  uncompleteIdea: (ideaId: string, at: string) => void;
   createProject: (name: string, at: string) => void;
   createTag: (tag: string, at: string) => void;
 }
@@ -39,20 +42,20 @@ type Open =
   | { kind: 'task'; slot: BackpackSlot }
   | { kind: 'card'; cardId: string }
   | { kind: 'idea'; idea: IdeaView }
-  | { kind: 'delete'; idea: IdeaView }
+  | { kind: 'delete'; idea: { id: string; text: string } }
   | null;
 
 const HEAD = {
   pool: ['01', 'TASK POOL', '任务池', '要做的事都在这里，分主线任务和支线任务。首页抽到的卡，就是任务下面的事项。每个任务可以设「计时记到」哪个项目。点事项可以编辑。'],
-  ideas: ['02', 'IDEAS', '想法池', '想法不出现在首页。约 60 天没动过就自动进冷库，不是删除，随时可以捞回来。'],
+  ideas: ['02', 'IDEAS', '想法池', '想法不出现在首页。约 60 天没动过就自动进冷库，不是删除，随时可以捞回来。已经做到了的点〔完成〕，收进「已完成」，不占上限，也不会进冷库。'],
 } as const;
 
 /**
  * 背包页（方案 §7.5）：左侧分页（任务池 / 想法池），右侧内容；编辑类对话框都在这里打开。
  * 任务池的数据是 store 的 backpack.pool；编辑事项要的完整字段从 queue 里按卡 id 找。
  */
-export function BackpackPage({ tab, onTab, pool, tasks, queue, ideas, knownTags, ideaLimit, defaultTimebox, actions }:
-  { tab: BackpackTab; onTab: (tab: BackpackTab) => void; pool: PoolView; tasks: TaskView[]; queue: QueueGroup[]; ideas: IdeaView[];
+export function BackpackPage({ tab, onTab, pool, tasks, queue, ideas, doneIdeas, knownTags, ideaLimit, defaultTimebox, actions }:
+  { tab: BackpackTab; onTab: (tab: BackpackTab) => void; pool: PoolView; tasks: TaskView[]; queue: QueueGroup[]; ideas: IdeaView[]; doneIdeas: DoneIdeaView[];
     knownTags: string[]; ideaLimit: number; defaultTimebox: number; actions: BackpackActions }) {
   const [open, setOpen] = useState<Open>(null);
   const close = () => setOpen(null), at = () => new Date().toISOString();
@@ -81,7 +84,9 @@ export function BackpackPage({ tab, onTab, pool, tasks, queue, ideas, knownTags,
         restore: (id, slot) => actions.restoreTask(id, slot, at()),
         createProject: name => actions.createProject(name, at()),
       }} />}
-      {tab === 'ideas' && <IdeaPool ideas={ideas} limit={ideaLimit} onConvert={idea => setOpen({ kind: 'idea', idea })} onDelete={idea => setOpen({ kind: 'delete', idea })} />}
+      {tab === 'ideas' && <IdeaPool ideas={ideas} done={doneIdeas} limit={ideaLimit} onConvert={idea => setOpen({ kind: 'idea', idea })}
+        onDelete={idea => setOpen({ kind: 'delete', idea })} onComplete={idea => actions.completeIdea(idea.id, idea.text, at())}
+        onUncomplete={idea => actions.uncompleteIdea(idea.id, at())} />}
     </SplitLayout>
 
     {open?.kind === 'task' && <TaskDialog mode="new" initialSlot={open.slot} inBackpack={inBackpack}

@@ -252,7 +252,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
         {page === 'review' && <ReviewScreen ctx={ctx} report={report} />}
         {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} updates={updates}
           section={settingsSection} onOpenHistory={record => { setSettingsSection('automation'); openHistory(record); }} />}
-        {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} />}
+        {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} onInfo={info} />}
       </div>
     </Frame>
     <NoticeHost notices={notices} onResolve={onResolve} onDismiss={n => dismissNotice(n.id)} extra={[...errors, ...toasts]}
