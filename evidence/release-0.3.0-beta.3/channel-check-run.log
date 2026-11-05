@@ -1,0 +1,2 @@
+PASS: live stable selects v0.2.5; live beta selects v0.3.0-beta.3; manifest compatible; beta upgrade (from 0.2.5 and 0.3.0-beta.2) accepted only on beta channel
+EXIT 0
