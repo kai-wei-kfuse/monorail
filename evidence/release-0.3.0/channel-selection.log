@@ -1,0 +1,1 @@
+PASS: live stable, beta and return-to-stable all select v0.3.0; manifest compatible (stable, schema 2); upgrade from 0.2.5 (stable) and 0.3.0-beta.3 (beta, stable, return-to-stable) accepted; 0.3.0 does not re-offer itself
