@@ -2,6 +2,8 @@ import { McpServer } from '@modelcontextprotocol/server';
 import {
   addTimeEntryInput,
   addTimeEntryResult,
+  updateTimeEntryInput,
+  updateTimeEntryResult,
   captureTodoInput,
   captureTodoResult,
   completeIdeaInput,
@@ -29,6 +31,7 @@ import { z } from 'zod';
 import type { ApplicationClient } from '../client/applicationClient.ts';
 import { applicationErrorSchema, applicationFailure } from '../src/shared/appError.ts';
 import { mcpAgent } from '../src/shared/agents.ts';
+import { AGENT_RULES } from '../src/shared/agentRules.ts';
 import pkg from '../package.json' with { type: 'json' };
 
 const { version } = pkg;
@@ -38,7 +41,8 @@ interface ToolContext { mcpReq: { signal?: AbortSignal; envelope?: unknown } }
 const withError = <T extends z.ZodType>(schema: T) => z.union([schema, applicationErrorSchema]);
 
 export function createServer(client: ApplicationClient) {
-  const server = new McpServer({ name: 'monorail', version });
+  // 握手说明：做不到时回来告诉用户，不能自己改数据文件（0.3.1 附带需求第 2 条）
+  const server = new McpServer({ name: 'monorail', version }, { instructions: AGENT_RULES });
   // 调用方（ADR 0019 第 6 条）：每次工具调用时读，不缓存。新协议（2026-07-28）每个请求的 _meta 里都带 clientInfo；
   // 旧协议取 initialize 握手的；旧协议的无状态 HTTP 每个请求新建 server，两者都读不到，记「MCP · 未识别」
   const call = async <M extends ApplicationMethod>(method: M, args: ApplicationInput<M>, ctx: ToolContext) => {
@@ -56,7 +60,7 @@ export function createServer(client: ApplicationClient) {
 
   server.registerTool('get_context', {
     title: '获取单轨当前上下文',
-    description: '读取单轨当前计时状态、待处理通知（pending_actions）、可用项目/标签，并签发可复制的 operation_id 与 expected_state。冷调用写工具前先调用本工具；不要自行伪造 UUID 或状态令牌。示例输入：{}',
+    description: '读取单轨当前计时状态、待处理通知（pending_actions）、可用项目/标签，并签发可复制的 operation_id 与 expected_state。冷调用写工具前先调用本工具；不要自行伪造 UUID 或状态令牌。示例输入：{}。' + AGENT_RULES,
     inputSchema: contextInput,
     outputSchema: withError(contextResult),
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
@@ -165,6 +169,14 @@ export function createServer(client: ApplicationClient) {
     outputSchema: withError(timerMutationResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, async (args, ctx) => call('return_from_break', args, ctx));
+
+  server.registerTool('update_time_entry', {
+    title: '修改已有的时间记录',
+    description: '改一条已有计时记录的开始、结束、描述、项目或标签（规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改）。不能删除记录。entry_id 来自 list_time_entries。',
+    inputSchema: updateTimeEntryInput,
+    outputSchema: withError(updateTimeEntryResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('update_time_entry', args, ctx));
 
   server.registerTool('add_time_entry', {
     title: '手动补录时间记录',

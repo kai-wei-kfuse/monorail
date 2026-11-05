@@ -25,6 +25,7 @@ import { createApplicationClient, createPipeApplicationClient } from '../client/
 import { callDesktop } from '../client/pipe.ts';
 import { runCli } from '../cli/main.ts';
 import { ApplicationError, applicationErrorSchema } from '../src/shared/appError.ts';
+import { AGENT_RULES } from '../src/shared/agentRules.ts';
 
 const main = fileURLToPath(new URL('./main.ts', import.meta.url));
 const bundledEntry = fileURLToPath(new URL('../dist-mcp/monorail-mcp.mjs', import.meta.url));
@@ -43,6 +44,7 @@ const toolNames = [
   'stop_timer',
   'start_break',
   'return_from_break',
+  'update_time_entry',
   'add_time_entry',
   'complete_idea',
 ];
@@ -93,6 +95,9 @@ for (const era of ['legacy', 'modern'] as const) for (const transportKind of ['s
       const client = era === 'legacy' ? legacy : modern;
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map(t => t.name), toolNames);
+      // 0.3.1 G8：握手说明和 get_context 描述带给 agent 的规则
+      assert.equal(client.getInstructions(), AGENT_RULES);
+      assert.ok(tools.find(t => t.name === 'get_context')?.description?.includes(AGENT_RULES));
       assert.equal(tools[0].inputSchema.type, 'object');
       const context = await client.callTool({ name: 'get_context', arguments: {} });
       assert.ok(isCallToolResult(context));

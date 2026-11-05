@@ -100,6 +100,7 @@ const CLI_CMD: Record<string, (p: P) => string> = {
   pause_timer: () => 'timer pause', resume_timer: () => 'timer resume', stop_timer: () => 'timer stop',
   start_break: p => `break start ${sq(p.activity)}`, return_from_break: () => 'break return',
   add_time_entry: p => `time add ${sq(p.description)} --start ${p.start} --end ${p.end}${tagFlags(p)}`,
+  update_time_entry: p => `entry edit ${p.entry_id}${p.start ? ` --start ${p.start}` : ''}${p.end ? ` --end ${p.end}` : ''}${p.description !== undefined ? ` --description ${sq(p.description)}` : ''}${Array.isArray(p.tags) && p.tags.length === 0 ? ' --clear-tags' : ''}${tagFlags(p)}`,
 };
 
 /** CLI 来源的调用还原成命令行；参数被截断或方法不认识时交回 null。 */

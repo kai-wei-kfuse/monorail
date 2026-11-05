@@ -107,7 +107,7 @@ describe('settings defaults & UI', () => {
     ]);
   });
 
-  it('09 AI 与自动化排在 10 关于之前，且能力列表严格对齐 applicationContracts 全部 16 项方法', () => {
+  it('09 AI 与自动化排在 10 关于之前，且能力列表严格对齐 applicationContracts 全部 17 项方法', () => {
     const autoSec = SECTIONS.find(s => s.id === 'automation');
     const aboutSec = SECTIONS.find(s => s.id === 'about');
     expect(autoSec?.no).toBe('09');

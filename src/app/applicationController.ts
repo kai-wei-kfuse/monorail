@@ -1,6 +1,8 @@
 import {
   addTimeEntryData,
   addTimeEntryResult,
+  updateTimeEntryData,
+  updateTimeEntryResult,
   applicationRequest,
   captureTodoResult,
   completeIdeaData,
@@ -23,6 +25,7 @@ import { completeIdeaInTx, completedBy } from '../services/ideaService';
 import { ideaStatus } from '../domain/idea/pool';
 import {
   addTimeEntryCheckedInTx,
+  updateTimeEntryCheckedInTx,
   pauseTimerCheckedInTx,
   resumeTimerCheckedInTx,
   returnFromBreakCheckedInTx,
@@ -92,16 +95,16 @@ function buildTimerContext(
   let allowed: string[];
   if (state.rest !== null) {
     mode = 'rest';
-    allowed = ['add_time_entry'];
+    allowed = ['add_time_entry', 'update_time_entry'];
   } else if (open.kind === '插入') {
     mode = 'away';
     // 插入中：替换插入的事（start_timer / start_break）、暂停插入的事、回到任务；插入的事暂停了：继续插入的事、回到任务
     allowed = open.project === '待机'
-      ? ['resume_timer', 'return_from_break', 'start_timer', 'start_break', 'add_time_entry']
-      : ['pause_timer', 'return_from_break', 'start_timer', 'start_break', 'add_time_entry'];
+      ? ['resume_timer', 'return_from_break', 'start_timer', 'start_break', 'add_time_entry', 'update_time_entry']
+      : ['pause_timer', 'return_from_break', 'start_timer', 'start_break', 'add_time_entry', 'update_time_entry'];
   } else if (state.pending_id !== null) {
     mode = 'pending';
-    allowed = ['add_time_entry'];
+    allowed = ['add_time_entry', 'update_time_entry'];
   } else if (open.kind === '暂停') {
     mode = 'paused';
     allowed = [
@@ -111,13 +114,14 @@ function buildTimerContext(
       'start_task_item',
       'start_break',
       'add_time_entry',
+      'update_time_entry',
     ];
   } else if (open.project === '待机') {
     mode = 'idle';
-    allowed = ['start_timer', 'start_task_item', 'start_break', 'add_time_entry'];
+    allowed = ['start_timer', 'start_task_item', 'start_break', 'add_time_entry', 'update_time_entry'];
   } else {
     mode = 'running';
-    allowed = ['pause_timer', 'stop_timer', 'start_timer', 'start_task_item', 'start_break', 'add_time_entry'];
+    allowed = ['pause_timer', 'stop_timer', 'start_timer', 'start_task_item', 'start_break', 'add_time_entry', 'update_time_entry'];
   }
 
   return timerContextSchema.parse({
@@ -638,6 +642,24 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
           });
         }, undefined, signal, { action: 'auto.return_from_break', source });
         return timerMutationResult.parse({ ...result, next_operation_id: ctx.id() });
+      }
+
+      case 'update_time_entry': {
+        const args = request.arguments;
+        const normalized = {
+          expected_state: args.expected_state,
+          entry_id: args.entry_id,
+          ...(args.start !== undefined ? { start: args.start } : {}),
+          ...(args.end !== undefined ? { end: args.end } : {}),
+          ...(args.description !== undefined ? { description: args.description } : {}),
+          ...(args.project !== undefined ? { project: args.project.trim() || '未分类' } : {}),
+          ...(args.tags !== undefined ? { tags: [...args.tags] } : {}),
+        };
+        const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
+          const { entry, overlaps } = updateTimeEntryCheckedInTx(tx, normalized);
+          return updateTimeEntryData.parse({ entry: summarizeEntry(entry), overlaps, expected_state: timerStateTokenInTx(tx) });
+        }, undefined, signal, { action: 'auto.update_time_entry', subject: { type: 'entry', id: args.entry_id }, source });
+        return updateTimeEntryResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
       case 'add_time_entry': {

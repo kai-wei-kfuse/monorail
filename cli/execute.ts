@@ -347,6 +347,41 @@ export async function executeCliCommand(
       }
     }
 
+    case 'update_time_entry': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'update_time_entry',
+        operationId: cmd.operationId,
+        expectedState: cmd.expectedState,
+        needsExpectedState: true,
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'update_time_entry',
+          {
+            operation_id: meta.operationId,
+            expected_state: meta.expectedState!,
+            entry_id: cmd.entryId,
+            ...(cmd.start !== undefined ? { start: cmd.start } : {}),
+            ...(cmd.end !== undefined ? { end: cmd.end } : {}),
+            ...(cmd.description !== undefined ? { description: cmd.description } : {}),
+            ...(cmd.project !== undefined ? { project: cmd.project } : {}),
+            ...(cmd.tags !== undefined ? { tags: cmd.tags } : {}),
+          },
+          { signal },
+        );
+        return {
+          kind: 'ok',
+          json: cmd.json,
+          method: 'update_time_entry',
+          operationId: result.operation_id,
+          result,
+        };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'update_time_entry', operationId: meta.operationId });
+      }
+    }
+
     case 'start_timer': {
       const meta = await resolveWriteMeta(client, {
         method: 'start_timer',

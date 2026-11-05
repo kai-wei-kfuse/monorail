@@ -94,11 +94,11 @@ export const historyActions = {
   'entry.setShowIdle': A('显示待机', 'settings'), 'entry.saveAsCard': A('存为卡', 'card'),
   // 系统（后台）
   'system.dayChange': A('活动日切换'), 'system.resume': A('补记离线时段', 'entry'), 'system.reconcile': A('整理记录'),
-  // 自动化（MCP / CLI 的 11 个写方法）
+  // 自动化（MCP / CLI 的 12 个写方法；0.3.1 加 update_time_entry）
   'auto.save_idea': A('保存想法', 'record'), 'auto.capture_todo': A('捕获待办', 'record'), 'auto.start_timer': A('开始计时', 'entry'),
   'auto.start_task_item': A('开始事项', 'card'), 'auto.pause_timer': A('暂停', 'entry'), 'auto.resume_timer': A('继续', 'entry'),
   'auto.stop_timer': A('停止计时', 'entry'), 'auto.start_break': A('开始临时活动', 'entry'), 'auto.return_from_break': A('回来', 'entry'),
-  'auto.add_time_entry': A('补录条目', 'entry'), 'auto.complete_idea': A('完成想法', 'record'),
+  'auto.add_time_entry': A('补录条目', 'entry'), 'auto.update_time_entry': A('改计时记录', 'entry'), 'auto.complete_idea': A('完成想法', 'record'),
 } as const satisfies Record<string, HistoryActionSpec>;
 
 /** 系统来源的「为什么会改」（ADR 0019 第 5 条）。 */

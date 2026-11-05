@@ -333,6 +333,30 @@ export async function returnFromBreakCheckedInTx(tx: Transaction, input: { expec
   return { noop: false };
 }
 
+/** 改一条已有计时记录（MCP / CLI update_time_entry）：时间走 updateRangeInTx、内容走 patchMetadataInTx，规则同日历。 */
+export function updateTimeEntryCheckedInTx(tx: Transaction, input: { expected_state: string; entry_id: string; start?: string; end?: string; description?: string; project?: string; tags?: string[] }) {
+  checkExpectedState(tx, input.expected_state);
+  const entry = tx.entries.find(e => e.id === input.entry_id);
+  if (!entry) throw new Error('ENTRY_NOT_FOUND：找不到这条计时记录，请先用 list_time_entries 查 ID');
+  let overlaps: ReturnType<typeof tracking.overlaps> = [];
+  if (input.start !== undefined || input.end !== undefined) {
+    if (entry.ended_at === null && input.end !== undefined) throw new Error('ENTRY_RUNNING：正在计时的记录不能设结束时间，只能改开始');
+    const start = input.start ?? entry.started_at, end = entry.ended_at === null ? null : input.end ?? entry.ended_at;
+    // 新时段盖住的别的记录（日历同一套：被盖住的部分让出来），同 add_time_entry 回报
+    overlaps = tracking.overlaps(tx.entries.filter(e => e.id !== entry.id), start, end ?? tx.at, tx.at);
+    tracking.updateRangeInTx(tx, entry.id, start, end);
+  }
+  const patch: Partial<Pick<EntryTemplate, 'description' | 'project' | 'tags'>> = {};
+  if (input.description !== undefined) patch.description = input.description.trim();
+  if (input.project !== undefined) patch.project = validateUserProject(tx.settings.lists.projects, input.project);
+  if (input.tags !== undefined) patch.tags = validateUserTags(input.tags);
+  if (Object.keys(patch).length) {
+    if (entry.card_id && (patch.description !== undefined || patch.project !== undefined)) throw new Error('ENTRY_FROM_CARD：这条记录来自卡，描述和项目要在单轨里改卡');
+    tracking.patchMetadataInTx(tx, entry.id, patch);
+  }
+  alignInTx(tx);
+  return { entry: tx.entries.find(e => e.id === entry.id)!, overlaps };
+}
 export function addTimeEntryCheckedInTx(tx: Transaction, input: { description: string; start: string; end: string; project?: string; tags?: string[] }) {
   const description = input.description.trim();
   if (!description) throw new Error('INVALID_DESCRIPTION：补录活动描述不能为空');

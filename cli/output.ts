@@ -1,6 +1,7 @@
 import type { ApplicationMethod, ApplicationOutput } from '../src/shared/application.ts';
 import { applicationFailure, type ApplicationFailure } from '../src/shared/appError.ts';
 import pkg from '../package.json' with { type: 'json' };
+import { AGENT_RULES } from '../src/shared/agentRules.ts';
 import { CliUsageError } from './commands.ts';
 import { CliExecutionError, type CliExecutionOutcome } from './execute.ts';
 
@@ -118,6 +119,15 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
     ],
   },
   {
+    usage: 'monorail entry edit <entry-id> [--start <iso>] [--end <iso>] [--description <text>] [--project <name>] [--tag <tag> | --clear-tags] [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'update_time_entry',
+    summary: '修改一条已有的时间记录（规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改；--tag 整体替换标签；不能删除）',
+    examples: [
+      'monorail entry edit 0f3c2a1e-0000-4000-8000-000000000000 --start 2026-11-03T09:10:00+08:00 --end 2026-11-03T09:40:00+08:00',
+      'monorail entry edit 0f3c2a1e-0000-4000-8000-000000000000 --description "看龙书第三章" --project 学习',
+    ],
+  },
+  {
     usage: 'monorail timer start [<description>] [--text-file <path> | --stdin] [--project <name>] [--tag <tag>] [--operation-id <uuid>] [--expected-state <token>] [--json]',
     method: 'start_timer',
     summary: '开始自由活动计时',
@@ -172,6 +182,8 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
 export function renderHelpText(): string {
   const lines: string[] = [
     `monorail v${getCliVersion()} — 单轨（MONORAIL）命令行入口`,
+    '',
+    `给 agent 的规则：${AGENT_RULES}`,
     '',
     '用法：',
     '  monorail <command> [subcommand] [options]',
@@ -348,6 +360,17 @@ export function renderHumanSuccess(
       return lines.join('\n');
     }
 
+    case 'update_time_entry': {
+      const r = result as ApplicationOutput<'update_time_entry'>;
+      const lines = [
+        `已修改时间记录 [${r.data.entry.id}] (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        `区间: ${r.data.entry.started_at} ~ ${r.data.entry.ended_at ?? '（正在计时）'} | 项目: ${r.data.entry.project} | 描述: ${r.data.entry.description}`,
+        `新时段盖住的已有记录数: ${r.data.overlaps.length}`,
+        ...formatWarnings(r.warnings),
+      ];
+      return lines.join('\n');
+    }
+
     case 'start_timer':
     case 'start_task_item':
     case 'pause_timer':
@@ -374,6 +397,7 @@ export function renderOutcome(outcome: CliExecutionOutcome): { stdout: string; e
           status: 'ok',
           kind: 'help',
           version: getCliVersion(),
+          rules: AGENT_RULES,
           commands: CLI_HELP_COMMANDS,
         }),
         exitCode: 0,

@@ -1,12 +1,18 @@
 # 单轨（MONORAIL）MCP 服务（0.3.0）
 
-当前版本 **0.3.0**。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 16 项核心工具（0.3.0-beta.4 加 `complete_idea`）。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
+当前版本 **0.3.0**。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 17 项核心工具（0.3.0-beta.4 加 `complete_idea`，0.3.1 加 `update_time_entry`）。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
+
+## 给 agent 的规则（0.3.1）
+
+> 单轨的数据目录（`timelog/`、`records/`、`cards/`、`tasks/`、`plans/`、`history/` 等）只能由单轨程序读写。直接修改这些文件不会记入操作历史，还会让单轨之后的操作报「External edit」而失败。如果 CLI 没有你需要的命令、MCP 没有你需要的工具或权限，请停下并告诉用户：做不到，缺的是什么功能。不要改文件、写脚本或用其他办法绕过。
+
+这段话在 MCP 握手的 `instructions` 里，也写在 `get_context` 工具描述的末尾；文案只有一份，在 [src/shared/agentRules.ts](../src/shared/agentRules.ts)。这只是提示词层面的约束，挡不住执意绕过的 agent。
 
 ## 工具清单（M4–M8 & A1–A4）
 
 | 工具名 | 类型 | 作用与核心契约 |
 |---|---|---|
-| `get_context` | 只读 | 获取当前计时状态、待处理通知（`pending_actions`，含累积未消除的离线追问等）、可选项目/标签/快捷离开项，并签发 `operation_id` 与 `expected_state`。 |
+| `get_context` | 只读 | 获取当前计时状态、待处理通知（`pending_actions`，含累积未消除的离线追问、空闲追问等）、可选项目/标签/快捷离开项、今日任务板（`today_plan`，0.3.1），并签发 `operation_id` 与 `expected_state`。`today_plan` 为 `null` 表示任务模式关掉了；今天还没排是 `items: []`，不是 `null`。（代码里快照缺板子时也给 `null`，但每次提交发布的快照都带板子，启动完成前 `get_context` 直接报 `APP_NOT_READY`，所以正常运行时只有任务模式关掉这一种情况。） |
 | `get_operation_result` | 只读 | 按 `operation_id` 核对操作是否已在 journal 中持久化落盘（`committed` / `not_found`）；`committed` 额外返回持久化规范化请求 `request: { method, arguments }`。 |
 | `save_idea` | 幂等写 | 保存文字到想法池（支持多行与 `#标签`、可选 `needs`），不创建任务、不开始计时。 |
 | `capture_todo` | 幂等写 | 捕捉待办记录并在同一事务生成待办卡片（缺省归入单事项支线任务，可选传入背包中已有 `task_id`），不改变当前计时。 |
@@ -21,6 +27,7 @@
 | `start_break` | 幂等写 | 插入短暂临时离开活动（如「上厕所」「吃饭」），底层原活动保留为返回目标。 |
 | `return_from_break` | 幂等写 | 结束当前临时离开活动（`kind=插入`），恢复原活动/卡片（若从待机插入则回到待机）。 |
 | `add_time_entry` | 幂等写 | 手动补录过去已完成的时间段（`start`/`end`），保留并行记录语义并返回重叠明细（`overlaps`）。 |
+| `update_time_entry` | 幂等写 | 修改一条已有计时记录（`entry_id` 来自 `list_time_entries`）的 `start` / `end` / `description` / `project` / `tags`，至少改一项；需传 `operation_id` 与 `expected_state`。规则同单轨日历：正在计时的只能改开始（传 `end` 报 `ENTRY_RUNNING`）；来自卡的记录，描述和项目要在卡上改（报 `ENTRY_FROM_CARD`）；`tags` 整体替换。新时段盖住的已有记录在 `overlaps` 里返回。不能删除记录（0.3.1，ADR 0021）。 |
 | `complete_idea` | 幂等写 | 把想法池里的一个想法（`idea_id`，先用 `find_items` 查到）标记为已完成，进入想法池的「已完成」列表；已完成的再标记返回 `noop: true`；冷库、已转任务的报 `IDEA_NOT_ACTIVE`（0.3.0-beta.4，ADR 0020）。`find_items` 的想法 `pool` 多一个值「已完成」。 |
 
 ## 运行与配置

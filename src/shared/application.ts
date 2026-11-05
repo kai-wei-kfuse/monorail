@@ -267,6 +267,18 @@ export const addTimeEntryInput = z.strictObject({
   project: z.string().optional().describe('可选：已知项目名称（缺省为「未分类」）'),
   tags: z.array(z.string()).optional().describe('可选：标签列表'),
 });
+/** 改一条已有的计时记录（0.3.1）：规则同日历——正在计的那一条只能改开始；来自卡的描述和项目要在卡上改；不能删除。 */
+export const updateTimeEntryInput = z.strictObject({
+  operation_id: operationId.describe('复制自 get_context 或上次写结果的 next_operation_id'),
+  expected_state: nonEmpty.describe('复制自 get_context 的 expected_state；改记录会影响计时状态，状态变了就拒绝'),
+  entry_id: nonEmpty.describe('要改的计时记录 ID（来自 list_time_entries）'),
+  start: iso.optional().describe('可选：新的开始时间（带时区 ISO 字符串）'),
+  end: iso.optional().describe('可选：新的结束时间（带时区 ISO 字符串；正在计时的记录不能设结束时间）'),
+  description: z.string().trim().min(1, '描述不能为空').optional().describe('可选：新的描述（来自卡的记录请改卡）'),
+  project: z.string().optional().describe('可选：新的项目名称（来自卡的记录请改卡）'),
+  tags: z.array(z.string()).optional().describe('可选：新的标签列表（整体替换）'),
+}).refine(v => v.start !== undefined || v.end !== undefined || v.description !== undefined || v.project !== undefined || v.tags !== undefined,
+  '至少要改一项：start、end、description、project、tags');
 export const overlapCoverageSchema = z.strictObject({
   id: nonEmpty,
   description: z.string(),
@@ -282,6 +294,8 @@ export const addTimeEntryData = z.strictObject({
   expected_state: nonEmpty,
 });
 export const addTimeEntryResult = committedEnvelope(addTimeEntryData);
+export const updateTimeEntryData = z.strictObject({ entry: timerEntrySummary, overlaps: z.array(overlapCoverageSchema), expected_state: nonEmpty });
+export const updateTimeEntryResult = committedEnvelope(updateTimeEntryData);
 
 export const lookupInput = z.strictObject({ operation_id: operationId });
 export const committedRequestSummary = z.strictObject({
@@ -316,6 +330,7 @@ export const applicationContracts = {
   start_break: { input: startBreakInput, output: timerMutationResult, readOnly: false },
   return_from_break: { input: timerControlInput, output: timerMutationResult, readOnly: false },
   add_time_entry: { input: addTimeEntryInput, output: addTimeEntryResult, readOnly: false },
+  update_time_entry: { input: updateTimeEntryInput, output: updateTimeEntryResult, readOnly: false },
   complete_idea: { input: completeIdeaInput, output: completeIdeaResult, readOnly: false },
 } as const;
 
@@ -360,6 +375,7 @@ export const applicationRequest = z.discriminatedUnion('method', [
   z.strictObject({ method: z.literal('start_break'), arguments: startBreakInput, origin }),
   z.strictObject({ method: z.literal('return_from_break'), arguments: timerControlInput, origin }),
   z.strictObject({ method: z.literal('add_time_entry'), arguments: addTimeEntryInput, origin }),
+  z.strictObject({ method: z.literal('update_time_entry'), arguments: updateTimeEntryInput, origin }),
   z.strictObject({ method: z.literal('complete_idea'), arguments: completeIdeaInput, origin }),
   z.strictObject({ method: z.literal('get_operation_result'), arguments: lookupInput, origin }),
 ]);

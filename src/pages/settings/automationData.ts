@@ -125,8 +125,8 @@ export const CAPABILITY_CATEGORIES: ReadonlyArray<{ title: string; methods: stri
   },
   {
     title: '时间统计与记录补录',
-    methods: 'get_time_summary · list_time_entries · add_time_entry',
-    summary: '按日或周汇总时间使用情况（严格区分非待机覆盖、待机与未记录空白）、按带时区起止时间查询明细、补录过去已完成的时间记录。',
+    methods: 'get_time_summary · list_time_entries · add_time_entry · update_time_entry',
+    summary: '按日或周汇总时间使用情况（严格区分非待机覆盖、待机与未记录空白）、按带时区起止时间查询明细、补录过去已完成的时间记录、修改已有记录的时间和内容（规则同日历，不能删除）。',
   },
 ];
 

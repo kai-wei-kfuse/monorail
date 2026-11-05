@@ -20,12 +20,14 @@ import {
   saveIdeaResult,
   timeSummaryResult,
   timerMutationResult,
+  updateTimeEntryResult,
   type ApplicationMethod,
   type ApplicationRequest,
 } from '../src/shared/application.ts';
 import { ApplicationError, applicationErrorSchema } from '../src/shared/appError.ts';
 import { createApplicationClient } from '../client/applicationClient.ts';
 import { runCli } from './main.ts';
+import { AGENT_RULES } from '../src/shared/agentRules.ts';
 import { detectAgent } from './agentDetect.ts';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -426,6 +428,26 @@ function createStatefulPeer() {
         });
       }
 
+      case 'update_time_entry': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'update_time_entry', rest, () => {
+          assertExpectedState(req.arguments.expected_state);
+          const index = entries.findIndex(e => e.id === req.arguments.entry_id);
+          if (index < 0) throw new Error('ENTRY_NOT_FOUND：找不到这条计时记录');
+          const old = entries[index];
+          const entry = {
+            ...old,
+            ...(req.arguments.start !== undefined ? { started_at: req.arguments.start } : {}),
+            ...(req.arguments.end !== undefined ? { ended_at: req.arguments.end } : {}),
+            ...(req.arguments.description !== undefined ? { description: req.arguments.description } : {}),
+            ...(req.arguments.project !== undefined ? { project: req.arguments.project } : {}),
+            ...(req.arguments.tags !== undefined ? { tags: req.arguments.tags } : {}),
+          };
+          entries[index] = entry;
+          return { entry, overlaps: [], expected_state: expectedState };
+        });
+      }
+
       case 'start_timer': {
         const { operation_id, ...rest } = req.arguments;
         return runWrite(operation_id, 'start_timer', rest, () => {
@@ -755,6 +777,11 @@ test('CLI --help and --version (human and --json) succeed with exit 0 without to
   assert.equal(parsedHelp.status, 'ok');
   assert.equal(parsedHelp.kind, 'help');
   assert.equal(parsedHelp.version, pkg.version);
+  // 0.3.1 G8：给 agent 的规则在 --help 开头和 --help --json 的 rules 字段
+  assert.equal(parsedHelp.rules, AGENT_RULES);
+  let helpText = '';
+  await runCli(['--help'], { createClient: failCreateClient, writeStdout: t => { helpText += t; } });
+  assert.ok(helpText.split('\n').slice(0, 4).join('\n').includes(AGENT_RULES));
 
   let verJsonOut = '';
   const verCode = await runCli(['--version', '--json'], {
@@ -824,10 +851,24 @@ test('CLI usage validation rejects unknown commands, unknown/duplicate flags, co
     assert.equal(err.category, 'not_executed');
   }
 
+  // CliUsageError 默认下一步带规则（未知子命令用默认下一步）
+  let subJson = '';
+  assert.equal(await runCli(['idea', 'unknown-sub', '--json'], { createClient: failCreateClient, writeStdout: t => { subJson += t; } }), 2);
+  assert.match(applicationErrorSchema.parse(JSON.parse(subJson).error).next_step, /不要直接改单轨数据目录里的文件/);
+
+  // 未知命令：人读与 --json 都说明 CLI 没有这个命令、要停下告诉用户（0.3.1 G8）
+  let unknownErr = '';
+  assert.equal(await runCli(['entry', 'delete', 'x'], { createClient: failCreateClient, writeStdout: () => {}, writeStderr: t => { unknownErr += t; } }), 2);
+  assert.match(unknownErr, /不要直接改单轨数据目录里的文件/);
+  let unknownJson = '';
+  assert.equal(await runCli(['rewrite-timelog', '--json'], { createClient: failCreateClient, writeStdout: t => { unknownJson += t; } }), 2);
+  const unknownBody = applicationErrorSchema.parse(JSON.parse(unknownJson).error);
+  assert.match(unknownBody.next_step, /CLI 没有这个命令.*告诉用户做不到、缺什么/);
+
   assert.equal(clientCreated, false);
 });
 
-test('CLI reaches all 16 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin', async () => {
+test('CLI reaches all 17 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin', async () => {
   const peer = createStatefulPeer();
 
   // 1. context (get_context) - read-only, 1 call
@@ -933,6 +974,18 @@ test('CLI reaches all 16 application methods and preserves multiline Chinese tex
   );
   assert.equal(addTimeRes.exitCode, 0);
   assert.equal(addTimeEntryResult.parse(JSON.parse(addTimeRes.stdout).result).data.entry.description, '整理学习笔记');
+
+  // 12b. entry edit (update_time_entry, 0.3.1 G8)：改结束时间和标签；一项都不改在本地就被拒绝
+  const addedId = addTimeEntryResult.parse(JSON.parse(addTimeRes.stdout).result).data.entry.id;
+  const editRes = await execCli(['entry', 'edit', addedId, '--end', '2026-11-03T08:50:00+08:00', '--tag', '复习', '--json'], peer);
+  assert.equal(editRes.exitCode, 0, editRes.stderr);
+  const edited = updateTimeEntryResult.parse(JSON.parse(editRes.stdout).result).data.entry;
+  assert.deepEqual([edited.id, edited.ended_at, edited.tags], [addedId, '2026-11-03T08:50:00+08:00', ['复习']]);
+  const callsBeforeEmptyEdit = peer.calls.length;
+  const emptyEdit = await execCli(['entry', 'edit', addedId], peer);
+  assert.equal(emptyEdit.exitCode, 2);
+  assert.match(emptyEdit.stderr, /至少要改一项/);
+  assert.equal(peer.calls.length, callsBeforeEmptyEdit);
 
   // 13. time summary (get_time_summary)
   const summaryRes = await execCli(['time', 'summary', '--day', 'today', '--day-mode', 'activity', '--json'], peer);

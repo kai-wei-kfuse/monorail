@@ -5,6 +5,12 @@
 - **MCP 适配器**（`mcp/` → `dist-mcp/monorail-mcp.mjs`）：面向原生支持 MCP（`2025-11-25` / `2026-07-28`，stdio 或本机 Streamable HTTP）的宿主。详见 [mcp/README.md](../../mcp/README.md)。
 - **CLI 适配器**（`cli/` → `dist-cli/monorail-cli.mjs`）：面向具备命令行/Shell 执行能力的代理、自动化脚本与终端用户。自包含单文件包**不打包** `@modelcontextprotocol/*` 依赖。
 
+## 给 agent 的规则（0.3.1）
+
+> 单轨的数据目录（`timelog/`、`records/`、`cards/`、`tasks/`、`plans/`、`history/` 等）只能由单轨程序读写。直接修改这些文件不会记入操作历史，还会让单轨之后的操作报「External edit」而失败。如果 CLI 没有你需要的命令、MCP 没有你需要的工具或权限，请停下并告诉用户：做不到，缺的是什么功能。不要改文件、写脚本或用其他办法绕过。
+
+这段话写在 `monorail --help` 的开头、`--help --json` 的顶层 `rules` 字段、未知命令报错和参数错误默认的 `next_step` 里；MCP 那边在握手 `instructions` 和 `get_context` 描述里。文案只有一份，在 [src/shared/agentRules.ts](../../src/shared/agentRules.ts)。这只是提示词层面的约束，挡不住执意绕过的 agent。
+
 ---
 
 ## 1. 架构与代码阅读路径（面向新 Session）
@@ -26,7 +32,7 @@
 
 ---
 
-## 2. CLI 命令对照表（14 个子命令 → 16 个应用方法）
+## 2. CLI 命令对照表（15 个子命令 → 17 个应用方法）
 
 运行方式：
 - 开发源码：`node cli/main.ts <command> ...`（或 `npm run cli -- <command> ...`）
@@ -42,6 +48,7 @@
 | `monorail time summary` | `get_time_summary` | 可选 `--day today\|yesterday\|this_week\|YYYY-MM-DD`、`--day-mode activity\|calendar` |
 | `monorail time entries` | `list_time_entries` | 必填 `--from <iso>`、`--to <iso>`（带时区偏移） |
 | `monorail time add [<description>]` | `add_time_entry` | 正文三选一，必填 `--start <iso>`、`--end <iso>`；可选 `--project <name>`、重复 `--tag <tag>`、`--operation-id <uuid>` |
+| `monorail entry edit <entry-id>` | `update_time_entry` | 必填 `<entry-id>`（通过 `time entries` 获取）；至少一项：`--start <iso>`、`--end <iso>`、`--description <text>`、`--project <name>`、重复 `--tag <tag>`（整体替换）或 `--clear-tags`；可选 `--operation-id <uuid>`、`--expected-state <token>`。规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改；不能删除（0.3.1） |
 | `monorail timer start [<description>]` | `start_timer` | 正文三选一，可选 `--project <name>`、重复 `--tag <tag>`、`--operation-id <uuid>`、`--expected-state <token>` |
 | `monorail timer start-item <card-id>` | `start_task_item` | 必填 `<card-id>`（通过 `find` 或 `context` 获取）；可选 `--operation-id <uuid>`、`--expected-state <token>` |
 | `monorail timer pause` | `pause_timer` | 可选 `--operation-id <uuid>`、`--expected-state <token>` |
@@ -51,7 +58,9 @@
 | `monorail break return` | `return_from_break` | 可选 `--operation-id <uuid>`、`--expected-state <token>` |
 | `monorail operation get <id>` | `get_operation_result` | 必填 `<id>`（UUID），只读查询持久化回执 |
 
-通用选项：`--help`（`-h`）、`--version`（`-v`）、`--json`。`--help`、`--version` 与本地参数校验错误**不会**连接或启动单轨后台进程。
+通用选项：`--help`（`-h`）、`--version`（`-v`）、`--json`。`--help`、`--version` 与本地参数校验错误**不会**连接或启动单轨后台进程。`--help --json` 输出 `{ status: "ok", kind: "help", version, rules, commands }`，其中 `rules` 是上面那段给 agent 的规则（0.3.1 新加的字段）。
+
+`monorail context` 的 `today_plan`（今日任务板，0.3.1）为 `null` 表示任务模式关掉了；今天还没排是 `items: []`，不是 `null`。（代码里快照缺板子时也给 `null`，但每次提交发布的快照都带板子，启动完成前 `get_context` 直接报 `APP_NOT_READY`，所以正常运行时只有任务模式关掉这一种情况。）
 
 ---
 

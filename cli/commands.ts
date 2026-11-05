@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { operationId } from '../src/shared/operation.ts';
 import type { ApplicationMethod } from '../src/shared/application.ts';
 import { ApplicationError, type ApplicationFailure } from '../src/shared/appError.ts';
+import { AGENT_RULES_NEXT_STEP } from '../src/shared/agentRules.ts';
 
 export class CliUsageError extends ApplicationError {
-  constructor(message: string, nextStep = '运行 monorail --help 查看命令格式与参数说明') {
+  constructor(message: string, nextStep = `运行 monorail --help 查看命令格式与参数说明；${AGENT_RULES_NEXT_STEP}`) {
     const failure: ApplicationFailure = {
       status: 'error',
       code: 'USAGE_ERROR',
@@ -96,6 +97,19 @@ type ParsedCommandBody =
       project?: string;
       tags?: string[];
       operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'update_time_entry';
+      entryId: string;
+      start?: string;
+      end?: string;
+      description?: string;
+      project?: string;
+      tags?: string[];
+      operationId?: string;
+      expectedState?: string;
     }
   | {
       kind: 'call';
@@ -777,6 +791,44 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     );
   }
 
+  if (cmd === 'entry') {
+    const [sub, ...args] = subTokens;
+    if (sub !== 'edit') {
+      throw new CliUsageError(`USAGE_ERROR：未知子命令 "entry ${sub ?? ''}".trim()；支持 entry edit <entry-id>`);
+    }
+    const raw = parseTokens(args, {
+      booleanFlags: new Set(['--clear-tags']),
+      singleFlags: new Set(['--start', '--end', '--description', '--project', '--operation-id', '--expected-state']),
+      multiFlags: new Set(['--tag']),
+    });
+    if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：entry edit 必须提供 1 个计时记录 ID（来自 monorail time entries）');
+    }
+    const rawStart = raw.singles.get('--start'), rawEnd = raw.singles.get('--end');
+    const tagList = raw.multis.get('--tag');
+    if (raw.booleans.has('--clear-tags') && tagList !== undefined) {
+      throw new CliUsageError('USAGE_ERROR：--clear-tags 不能和 --tag 一起用');
+    }
+    const tags = raw.booleans.has('--clear-tags') ? [] : tagList;
+    const description = raw.singles.get('--description'), project = raw.singles.get('--project');
+    if (rawStart === undefined && rawEnd === undefined && description === undefined && project === undefined && tags === undefined) {
+      throw new CliUsageError('USAGE_ERROR：entry edit 至少要改一项：--start、--end、--description、--project、--tag 或 --clear-tags');
+    }
+    return {
+      kind: 'call',
+      json,
+      method: 'update_time_entry',
+      entryId: raw.positionals[0].trim(),
+      start: rawStart === undefined ? undefined : validateIso(rawStart, '--start'),
+      end: rawEnd === undefined ? undefined : validateIso(rawEnd, '--end'),
+      description,
+      project,
+      tags,
+      operationId: validateOperationId(raw.singles.get('--operation-id')),
+      expectedState: validateExpectedState(raw.singles.get('--expected-state')),
+    };
+  }
+
   if (cmd === 'operation') {
     const [sub, ...args] = subTokens;
     if (sub !== 'get') {
@@ -802,7 +854,8 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
   }
 
   throw new CliUsageError(
-    `USAGE_ERROR：未知命令 "${cmd}"；运行 monorail --help 查看全部支持的命令`,
+    `USAGE_ERROR：未知命令 "${cmd}"；CLI 没有这个命令，运行 monorail --help 查看全部支持的命令`,
+    `CLI 没有这个命令。${AGENT_RULES_NEXT_STEP}`,
   );
 }
 
