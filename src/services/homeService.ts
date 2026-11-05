@@ -2,6 +2,8 @@ import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import type { HistoryIntent, HistorySource } from '../shared/history';
 import * as tracking from './tracking/api';
+import { entryAction } from '../domain/timeline/insert';
+import type { EntrySource } from '../domain/timeline/insert';
 import type { ReadoutRequest, ReadoutPlan, EntryTemplate, TimeEntry } from './tracking/api';
 import { alignInTx, startCardInTx, editContentInTx, editMetaInTx } from './cardService';
 import type { MiniCommand, MiniOutcome } from '../platform/windowBus';
@@ -30,12 +32,20 @@ export const overlaps = (ctx: Ctx, start: string, end: string, at = ctx.now()) =
 export function startPresetInTx(tx: Transaction, presetId: string): void {
   const preset = tx.settings.lists.presets.find(item => item.id === presetId);
   if (!preset) throw new Error('预设不存在');
-  const value = { description: preset.name, project: preset.project, tags: preset.tags, card_id: null };
-  if (preset.mode === '插入') tracking.insertInTx(tx, value);
-  else {
-    const from = tx.state.pending_at ?? tx.at; clearPending(tx);
-    tracking.startInTx(tx, value, from); tx.state.current_card = null; tx.state.home_mode = 'blank';
-  }
+  // 快捷活动（弹层）永远插入；收藏（计时条）做卡时插入、自由计时时切换（已定 21、22、25）。0.3.1 不读 mode
+  startOtherInTx(tx, { description: preset.name, project: preset.project, tags: preset.tags }, preset.place === '弹层' ? 'quick' : 'favorite');
+}
+/**
+ * 开始别的事的统一入口（ADR 0021 第 3 条入口表，第 2 轮 B3）：做卡时插入、插入中替换、自由计时时按来源插入或切换。
+ * 起点都取待确认起点（往前拨过的起点不丢），并清掉待确认。
+ */
+export function startOtherInTx(tx: Transaction, value: Omit<EntryTemplate, 'card_id'>, source: EntrySource): void {
+  const resume = tx.state.resume_entry_id ? tx.entries.find(e => e.id === tx.state.resume_entry_id) : undefined;
+  const decision = entryAction(tracking.openInTx(tx), resume, source);
+  const from = tx.state.pending_at ?? tx.at; clearPending(tx);
+  if (decision === 'insert' || decision === 'replace') { tracking.insertInTx(tx, { ...value, card_id: null }, from); return; }
+  tracking.startInTx(tx, { ...value, card_id: null }, from);
+  tx.state.current_card = null; tx.state.home_mode = 'blank';
 }
 export const startPreset = (ctx: Ctx, presetId: string, at: string) => action(ctx, at, tx => startPresetInTx(tx, presetId), { action: 'home.startPreset' });
 function template(tx: Transaction, activity: string): EntryTemplate {
@@ -58,15 +68,17 @@ export function cancelPendingInTx(tx: Transaction, pendingId: string): void {
   if (tx.cards.find(card => card.id === tx.state.current_card)?.status === '待做') { tx.state.current_card = null; tx.state.home_mode = 'blank'; }
 }
 export const cancelPending = (ctx: Ctx, pendingId: string, at: string) => action(ctx, at, tx => cancelPendingInTx(tx, pendingId), { action: 'home.cancelPending' });
-export function startFreeInTx(tx: Transaction, value: Omit<EntryTemplate, 'card_id'>): void {
-  const from = tx.state.pending_at ?? tx.at; clearPending(tx);
-  tracking.startInTx(tx, { ...value, card_id: null }, from);
-  tx.state.current_card = null; tx.state.home_mode = 'blank';
+export function startFreeInTx(tx: Transaction, value: Omit<EntryTemplate, 'card_id'>, source: EntrySource = 'timerBox'): void {
+  startOtherInTx(tx, value, source);
 }
 export const startFree = (ctx: Ctx, value: Omit<EntryTemplate, 'card_id'>, at: string) => action(ctx, at, tx => startFreeInTx(tx, value), { action: 'home.startFree' });
 /** 开始一张卡，起点用待确认的起点（主窗口自动完成、背包〔开始〕、小窗自动完成共用）。 */
 async function startCardFromPendingInTx(tx: Transaction, cardId: string): Promise<void> {
+  requireNotInserting(tx);
   const from = tx.state.pending_at ?? tx.at; clearPending(tx); await startCardInTx(tx, cardId, from);
+}
+function requireNotInserting(tx: Transaction): void {
+  if (tracking.insertStateInTx(tx)) throw new Error('IN_AWAY_ACTIVITY：正在插入别的事，先回到任务或结束原任务，再开始另一张卡');
 }
 export const startCard = (ctx: Ctx, cardId: string, at: string) => action(ctx, at, async tx => {
   await startCardFromPendingInTx(tx, cardId);
@@ -74,7 +86,10 @@ export const startCard = (ctx: Ctx, cardId: string, at: string) => action(ctx, a
 export const pause = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.pauseInTx(tx), { action: 'home.pause' });
 // 停止计的是卡时，卡跟着 align 放回去
 export const stop = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.stopInTx(tx), { action: 'home.stop' });
-export const insert = (ctx: Ctx, activity: string, at: string) => action(ctx, at, tx => tracking.insertInTx(tx, template(tx, activity)), { action: 'home.insert' });
+export const insert = (ctx: Ctx, activity: string, at: string) => action(ctx, at, tx => {
+  const value = template(tx, activity), preset = tx.settings.lists.presets.find(p => p.id === activity);
+  startOtherInTx(tx, value, preset?.place === '计时条' ? 'favorite' : preset ? 'quick' : 'temp');
+}, { action: 'home.insert' });
 export async function resumeInTx(tx: Transaction): Promise<void> {
   const target = tx.entries.find(entry => entry.id === tx.state.resume_entry_id);
   const card = tx.cards.find(card => card.id === target?.card_id);
@@ -83,6 +98,22 @@ export async function resumeInTx(tx: Transaction): Promise<void> {
   } else tracking.resumeInTx(tx, target ? { ...target, card_id: null } : undefined);
 }
 export const resume = (ctx: Ctx, at: string) => action(ctx, at, resumeInTx, { action: 'home.resume' });
+/** 〔继续〕（第 3 轮 B1）：插入的事暂停时继续插入的事；否则同现有的继续（卡暂停、自由记录暂停）。 */
+export async function continueInTx(tx: Transaction): Promise<void> {
+  if (tracking.insertStateInTx(tx) === 'insertPaused') { tracking.continueInsertInTx(tx); return; }
+  await resumeInTx(tx);
+}
+export const continueTimer = (ctx: Ctx, at: string) => action(ctx, at, continueInTx, { action: 'home.continueInsert' });
+/** 结束原任务（已定 19、26）：插入的事变成普通自由记录接着计；原来那张卡回待做，仍在今天的板子上。 */
+export function endOriginalInTx(tx: Transaction): void { tracking.promoteInsertInTx(tx); }
+export const endOriginal = (ctx: Ctx, at: string) => action(ctx, at, tx => {
+  const resume = tx.entries.find(e => e.id === tx.state.resume_entry_id);
+  endOriginalInTx(tx);
+  return resume?.card_id ?? null;
+}, { action: 'home.endOriginal' });
+/** 主动休息（已定 48、55）：等同快捷活动插入一条「休息」；回来就是〔回到任务〕，不问、不计数。 */
+export function restInTx(tx: Transaction): void { startOtherInTx(tx, { description: '休息', project: '休息', tags: [] }, 'quick'); }
+export const rest = (ctx: Ctx, at: string) => action(ctx, at, restInTx, { action: 'home.rest' });
 export const sleep = (ctx: Ctx, at: string) => action(ctx, at, tx => { clearPending(tx); tracking.startSystemInTx(tx, '睡眠'); tx.state.resume_entry_id = null; }, { action: 'home.sleep' });
 export const wake = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.startSystemInTx(tx, '待机'), { action: 'home.wake' });
 export const backfillRange = (ctx: Ctx, range: Range, activity: string, at: string) => action(ctx, at, tx => tracking.manualInTx(tx, template(tx, activity), range.start, range.end), { action: 'home.backfillRange' });
@@ -111,9 +142,14 @@ export const setReadout = (ctx: Ctx, request: ReadoutRequest, seen: ReadoutPlan 
 /** 日历和列表也会调用：source 记页面（缺省记首页）。 */
 export async function continueEntryInTx(tx: Transaction, entryId: string): Promise<void> {
   const entry = tx.entries.find(entry => entry.id === entryId); if (!entry) throw new Error('计时条目不存在');
-  const card = tx.cards.find(card => card.id === entry.card_id), from = tx.state.pending_at ?? tx.at; clearPending(tx);
-  if (card && (card.status === '待做' || card.status === '进行中')) await startCardInTx(tx, card.id, from);
-  else tracking.startInTx(tx, { ...entry, card_id: null }, from);
+  const card = tx.cards.find(card => card.id === entry.card_id);
+  if (card && (card.status === '待做' || card.status === '进行中')) {
+    const resume = tx.entries.find(e => e.id === tx.state.resume_entry_id);
+    if (tracking.insertStateInTx(tx) && resume?.card_id === card.id) { clearPending(tx); await resumeInTx(tx); return; }
+    await startCardFromPendingInTx(tx, card.id);
+    return;
+  }
+  startOtherInTx(tx, { description: entry.description, project: entry.project, tags: entry.tags }, 'continue');
 }
 export const continueEntry = (ctx: Ctx, entryId: string, at: string, source?: HistorySource) => action(ctx, at, tx => continueEntryInTx(tx, entryId),
   { action: 'home.continueEntry', ...(source ? { source } : {}) });
@@ -164,7 +200,8 @@ export const dispatchMiniCommand = (ctx: Ctx, command: MiniCommand): Promise<Min
   if ('pending_id' in command && command.pending_id !== tx.state.pending_id) throw new Error('已经换成别的事了');
   switch (command.type) {
     case 'pause': tracking.pauseInTx(tx); break;
-    case 'resume': await resumeInTx(tx); break;
+    case 'resume': await continueInTx(tx); break;
+    case 'backToTask': await resumeInTx(tx); break;
     case 'beginPending': beginPendingInTx(tx); break;
     case 'cancelPending': cancelPendingInTx(tx, command.pending_id); break;
     case 'openMain': return { kind: 'openMain' };
@@ -178,7 +215,7 @@ export const dispatchMiniCommand = (ctx: Ctx, command: MiniCommand): Promise<Min
       const open = tracking.openInTx(tx)!;
       if (tx.state.pending_id || open.project === '待机') {
         if (!command.patch.description?.trim()) throw new Error('请输入正在做的事');
-        startFreeInTx(tx, { description: command.patch.description.trim(), project: command.patch.project ?? '未分类', tags: command.patch.tags ?? [] });
+        startFreeInTx(tx, { description: command.patch.description.trim(), project: command.patch.project ?? '未分类', tags: command.patch.tags ?? [] }, 'mini');
       } else editOpenInTx(tx, open.id, command.patch);
       break;
     }
@@ -216,12 +253,12 @@ function checkNormalPreconditions(tx: Transaction, allowBreak = false): TimeEntr
 
 export function startTimerCheckedInTx(tx: Transaction, input: { expected_state: string; description: string; project?: string; tags?: string[] }): { noop: boolean } {
   checkExpectedState(tx, input.expected_state);
-  checkNormalPreconditions(tx);
+  checkNormalPreconditions(tx, true);   // 插入中：替换插入的事（同界面，ADR 0021 第 3 条方法表）
   const description = input.description.trim();
   if (!description) throw new Error('INVALID_DESCRIPTION：活动描述不能为空');
   const project = validateUserProject(tx.settings.lists.projects, input.project);
   const tags = validateUserTags(input.tags);
-  startFreeInTx(tx, { description, project, tags });
+  startFreeInTx(tx, { description, project, tags }, 'mcpTimer');
   alignInTx(tx);
   return { noop: false };
 }
@@ -233,13 +270,17 @@ export async function startTaskItemCheckedInTx(tx: Transaction, input: { expecte
   if (!card) throw new Error('CARD_NOT_FOUND：找不到指定的待办事项卡片');
   if (card.status !== '待做' && card.status !== '进行中') throw new Error(`CARD_NOT_ACTIVE：该事项当前状态为「${card.status}」，不能开始计时`);
   if (card.status === '进行中' && open?.card_id === card.id && open.kind === '普通') return { noop: true };
+  requireNotInserting(tx);
   await startCardInTx(tx, card.id, tx.at);
   return { noop: false };
 }
 
 export function pauseTimerCheckedInTx(tx: Transaction, input: { expected_state: string }): { noop: boolean; reason: 'already_paused' | 'already_idle' | null } {
   checkExpectedState(tx, input.expected_state);
-  const open = checkNormalPreconditions(tx);
+  const open = checkNormalPreconditions(tx, true);
+  const inserting = tracking.insertStateInTx(tx);
+  if (inserting === 'insertPaused') return { noop: true, reason: 'already_paused' };
+  if (inserting === 'inserting') { tracking.pauseInTx(tx); alignInTx(tx); return { noop: false, reason: null }; }
   if (!open || open.kind === '暂停') return { noop: true, reason: 'already_paused' };
   if (open.project === '待机') return { noop: true, reason: 'already_idle' };
   tracking.pauseInTx(tx); alignInTx(tx);
@@ -248,8 +289,9 @@ export function pauseTimerCheckedInTx(tx: Transaction, input: { expected_state: 
 
 export async function resumeTimerCheckedInTx(tx: Transaction, input: { expected_state: string }): Promise<{ noop: boolean; reason: 'already_running' | null }> {
   checkExpectedState(tx, input.expected_state);
-  const open = checkNormalPreconditions(tx);
+  const open = checkNormalPreconditions(tx, true);
   if (open && open.project !== '待机') return { noop: true, reason: 'already_running' };
+  if (tracking.insertStateInTx(tx) === 'insertPaused') { tracking.continueInsertInTx(tx); alignInTx(tx); return { noop: false, reason: null }; }
   const target = tx.state.resume_entry_id ? tx.entries.find(entry => entry.id === tx.state.resume_entry_id) : undefined;
   if (!target) throw new Error('NO_RESUME_TARGET：当前没有可继续的暂停活动，请使用 start_timer 或 start_task_item 开始新计时');
   await resumeInTx(tx); alignInTx(tx);
@@ -258,7 +300,7 @@ export async function resumeTimerCheckedInTx(tx: Transaction, input: { expected_
 
 export function stopTimerCheckedInTx(tx: Transaction, input: { expected_state: string }): { noop: boolean; reason: 'already_idle' | null } {
   checkExpectedState(tx, input.expected_state);
-  const open = checkNormalPreconditions(tx);
+  const open = checkNormalPreconditions(tx);   // 插入状态下拒绝 IN_AWAY_ACTIVITY（先 return_from_break 或在界面结束原任务）
   if (!open || (open.project === '待机' && open.kind === '普通' && tx.state.resume_entry_id === null)) return { noop: true, reason: 'already_idle' };
   tracking.stopInTx(tx); alignInTx(tx);
   return { noop: false, reason: null };
@@ -269,11 +311,11 @@ export function startBreakCheckedInTx(tx: Transaction, input: { expected_state: 
   checkNormalPreconditions(tx, true);
   const raw = input.activity.trim();
   if (!raw) throw new Error('INVALID_DESCRIPTION：临时活动名称不能为空');
-  const preset = tx.settings.lists.presets.find(item => item.mode === '插入' && (item.id === raw || item.name === raw));
+  const preset = tx.settings.lists.presets.find(item => item.place === '弹层' && (item.id === raw || item.name === raw));
   const value: EntryTemplate = preset
     ? { description: preset.name, project: preset.project, tags: preset.tags, card_id: null }
     : { description: raw, project: '生活', tags: [], card_id: null };
-  tracking.insertInTx(tx, value); alignInTx(tx);
+  startOtherInTx(tx, value, 'mcpBreak'); alignInTx(tx);
   return { noop: false };
 }
 

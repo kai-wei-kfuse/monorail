@@ -14,9 +14,11 @@ it('A2 nested insert/pause keeps one return target and excludes interruptions fr
   expect(open(f)).toMatchObject({ card_id: 'c', project: '未分类' });
   expect(f.home().closedEffectiveMs).toBe(10 * 60000);
 });
-it('stop ends the open entry into idle without a return target and releases the card', async () => {
+it('0.3.1：插入状态下不能停止（已定 57，ADR 0021 第 3 条）；不在插入时停止照旧清回到目标、放回卡', async () => {
   const f = fixture(); await seed(f, [card('c')]); await start(f.ctx, 'c', at());
   f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
+  await expect(stop(f.ctx, at(15))).rejects.toThrow('IN_AWAY_ACTIVITY');
+  f.clock(at(12)); await resume(f.ctx, at(12));
   f.clock(at(15)); await stop(f.ctx, at(15));
   expect(open(f)).toMatchObject({ project: '待机', card_id: null, started_at: at(15) });
   expect((await f.ctx.repos.state.read()).resume_entry_id).toBeNull();
@@ -182,6 +184,10 @@ it('ADR 0006: projects resumeEntry across consecutive/paused inserts, recomputes
   await insert(f.ctx, '喝水', at(42));
   expect(f.home().resumeEntry?.id).toBe(pausedTargetId);
 
+  // 0.3.1：插入中不能直接开始另一张卡（已定 20），先回到原来的事
+  await expect(startCard(f.ctx, 'c1', at(43))).rejects.toThrow('IN_AWAY_ACTIVITY');
+  f.clock(at(44)); await resume(f.ctx, at(44));
+
   // 4. 任务卡进行中插入临时活动 + 待确认并存 + 完全覆盖导致返回目标失效与卡释放（同时保留 pending）
   f.clock(at(50));
   await startCard(f.ctx, 'c1', at(50));
@@ -222,15 +228,17 @@ it('ADR 0006: projects resumeEntry across consecutive/paused inserts, recomputes
   expect(open(f)).toMatchObject({ project: '待机', kind: '普通', started_at: at(67) });
 
   // 5. 验证两条 pending + 插入路径的 claim 时间语义：
-  // 路径 A：先 pending(at(70))、再插入(at(75))、后确认(at(80)) -> 插入段保留 75..80，新活动从 at(80) 开始
+  // 路径 A：先 pending(at(70))、再点快捷活动(at(75))、后写新事件(at(80))。0.3.1（第 2 轮 B3）：每个入口都用待确认起点并清掉它，
+  // 不再和 0.2.5 一样让插入与待确认并存 -> 洗手从 at(70) 开始，待确认清空；at(80) 的新事件从 at(80) 开始
   f.clock(at(70));
   await beginPending(f.ctx, at(70));
   f.clock(at(75));
   await insert(f.ctx, '洗手', at(75));
   const washId = open(f).id;
+  expect(await f.ctx.repos.state.read()).toMatchObject({ pending_id: null, pending_at: null });
   f.clock(at(80));
   await startFree(f.ctx, { description: '路径A新活动', project: '工作', tags: [] }, at(80));
-  expect(entries(f).find(e => e.id === washId)).toMatchObject({ started_at: at(75), ended_at: at(80) });
+  expect(entries(f).find(e => e.id === washId)).toMatchObject({ started_at: at(70), ended_at: at(80) });
   expect(open(f)).toMatchObject({ description: '路径A新活动', started_at: at(80) });
 
   // 路径 B：先插入(at(90))、再 pending(at(95))、后确认(at(100)) -> 插入段在 at(95) 截断，新活动从 at(95) 开始
@@ -242,7 +250,9 @@ it('ADR 0006: projects resumeEntry across consecutive/paused inserts, recomputes
   f.clock(at(100));
   await startFree(f.ctx, { description: '路径B新活动', project: '工作', tags: [] }, at(100));
   expect(entries(f).find(e => e.id === waterId)).toMatchObject({ started_at: at(90), ended_at: at(95) });
-  expect(open(f)).toMatchObject({ description: '路径B新活动', started_at: at(95) });
+  // 0.3.1（ADR 0021 第 3 条入口表）：插入中写新事件 = 替换插入的事，原来那条照样等着回去
+  expect(open(f)).toMatchObject({ description: '路径B新活动', started_at: at(95), kind: '插入' });
+  expect((await f.ctx.repos.state.read()).resume_entry_id).not.toBeNull();
 });
 
 it('stopping while paused clears resume_entry_id and releases an in-progress card back to todo', async () => {

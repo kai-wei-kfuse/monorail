@@ -52,7 +52,7 @@ export const historyActions = {
   'home.continueEntry': A('继续这一条', 'entry'), 'home.editMeta': A('改卡片项目和标签', 'card'), 'home.editOpen': A('改正在计时的内容', 'entry'),
   'home.commitReadout': A('改读数', 'entry'),
   // 小窗命令（dispatchMiniCommand）
-  'mini.pause': A('暂停', 'entry'), 'mini.resume': A('继续', 'entry'), 'mini.complete': A('完成卡片', 'card'), 'mini.openMain': A('打开主窗口'),
+  'mini.pause': A('暂停', 'entry'), 'mini.resume': A('继续', 'entry'), 'mini.backToTask': A('回到任务', 'entry'), 'mini.complete': A('完成卡片', 'card'), 'mini.openMain': A('打开主窗口'),
   'mini.beginPending': A('开始待确认', 'state'), 'mini.cancelPending': A('放弃待确认', 'state'), 'mini.editOpen': A('改正在计时的内容', 'entry'),
   'mini.editCard': A('改卡片内容', 'card'), 'mini.setReadout': A('改读数', 'entry'),
   'mini.startFavorite': A('开始收藏', 'entry'), 'mini.startCard': A('开始卡片', 'card'), 'mini.continueEntry': A('继续这一条', 'entry'),

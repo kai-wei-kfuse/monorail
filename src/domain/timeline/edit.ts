@@ -56,7 +56,7 @@ export function applyReadout(entries: readonly TimeEntry[], request: ReadoutRequ
   return { kind: 'done', plan, entries: place(entries, { ...entry, started_at: plan.start, updated_at: now }, 'switch', now, id) };
 }
 
-export function editEntry(entries: readonly TimeEntry[], entryId: string, patch: Partial<Pick<TimeEntry, 'description' | 'project' | 'tags' | 'started_at' | 'ended_at'>>, at: string, id: () => string): TimeEntry[] {
+export function editEntry(entries: readonly TimeEntry[], entryId: string, patch: Partial<Pick<TimeEntry, 'description' | 'project' | 'tags' | 'started_at' | 'ended_at' | 'kind'>>, at: string, id: () => string): TimeEntry[] {
   const entry = entries.find(value => value.id === entryId);
   if (!entry) throw new Error('计时条目不存在');
   if (entry.ended_at === null && patch.ended_at !== undefined) throw new Error('正在计时的条目不能直接设置结束时间');

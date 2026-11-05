@@ -12,6 +12,8 @@ const edit = { ...base, revision: z.number().int().nonnegative() };
 export const miniCommandSchema = z.discriminatedUnion('type', [
   z.object({ ...base, type: z.literal('pause') }).strict(),
   z.object({ ...base, type: z.literal('resume') }).strict(),
+  // 0.3.1：resume = 继续（插入的事暂停时继续插入的事）；backToTask = 〔↩ 回到 …〕（ADR 0021 第 3 条）
+  z.object({ ...base, type: z.literal('backToTask') }).strict(),
   z.object({ ...base, type: z.literal('complete'), cardId: id }).strict(),
   z.object({ ...base, type: z.literal('openMain') }).strict(),
   z.object({ ...base, type: z.literal('beginPending'), pending_id: z.null() }).strict(),

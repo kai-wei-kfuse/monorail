@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed, entries } from './serviceFixture';
-import { start, complete, checkComplete, shrink, pass, leaveTo, editContent } from './cardService';
+import { start, complete, checkComplete, shrink, pass, editContent } from './cardService';
 import { insert, backfillRange } from './homeService';
 import { cardMilliseconds } from '../domain/timeline/stats';
 
@@ -97,12 +97,7 @@ it('A6 PASS restores the parent, allows replacement at the same level, and forbi
   await pass(f.ctx, replacement, at()); await pass(f.ctx, b, at());
   expect((await getCard(f, 'a')).status).toBe('待做');
 });
-it('leaveTo releases the running card while switching to the chosen activity', async () => {
-  const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
-  await leaveTo(f.ctx, 'wc', at());
-  expect((await getCard(f, 'a')).status).toBe('待做');
-  expect(open(f)).toMatchObject({ description: '厕所', card_id: null, kind: '普通' });
-});
+
 it('a rejected shrink changes neither card, timer nor refusal count and the next action still works', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
   const state = await f.ctx.repos.state.read(), before = entries(f);

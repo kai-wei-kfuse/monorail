@@ -1,0 +1,141 @@
+import { describe, expect, it } from 'vitest';
+import { at, card, fixture, getCard, open, entries, seed } from './serviceFixture';
+import type { Fixture } from './serviceFixture';
+import { start } from './cardService';
+import { beginPending, commitReadout, continueEntry, continueTimer, dispatchMiniCommand, endOriginal, insert, pause, resume, rest, startCard, startFree, startPreset, stop } from './homeService';
+import { canContinueInsert } from './tracking/api';
+import type { MiniCommand } from '../platform/windowBus';
+
+// 插入（ADR 0021 第 3 条，执行方案 G4）
+async function working() {
+  const f = fixture();
+  f.ctx.settings.lists.presets = [
+    { id: 'wc', name: '厕所', project: '生活', tags: [], mode: '切换', place: '弹层' },          // 快捷活动：mode 不再读
+    { id: 'mail', name: '回邮件', project: '工作', tags: [], mode: '插入', place: '计时条' },     // 收藏
+  ];
+  await seed(f, [card('c1', { content: '读第 4 章' }), card('c2', { content: '跑步', order: 2 })]);
+  await start(f.ctx, 'c1', at());
+  return f;
+}
+const state = (f: Fixture) => f.ctx.repos.state.read();
+const mini = async (f: Fixture, type: 'pause' | 'resume' | 'backToTask', at_: string) => {
+  const s = await state(f);
+  return dispatchMiniCommand(f.ctx, { type, requestId: crypto.randomUUID(), at: at_, entryId: s.open_entry, cardId: s.current_card, epoch: 0 } as MiniCommand);
+};
+
+describe('做卡时开始别的事都是插入', () => {
+  it.each([
+    ['快捷活动（mode 写着切换也插入）', (f: Fixture) => startPreset(f.ctx, 'wc', at(10))],
+    ['收藏', (f: Fixture) => startPreset(f.ctx, 'mail', at(10))],
+    ['计时框写新事件', (f: Fixture) => startFree(f.ctx, { description: '接电话', project: '工作', tags: [] }, at(10))],
+    ['临时活动', (f: Fixture) => insert(f.ctx, '拿快递', at(10))],
+  ] as const)('%s：卡保持进行中，回到目标是卡', async (_, act) => {
+    const f = await working(); f.clock(at(10)); await act(f);
+    expect(open(f)).toMatchObject({ kind: '插入', card_id: null, started_at: at(10) });
+    expect((await getCard(f, 'c1')).status).toBe('进行中');
+    const resumeId = (await state(f)).resume_entry_id;
+    expect(entries(f).find(e => e.id === resumeId)).toMatchObject({ card_id: 'c1', ended_at: at(10) });
+  });
+
+  it('待确认起点（往前拨过）不丢，待确认清掉（第 2 轮 B3）', async () => {
+    const f = await working();
+    f.clock(at(10)); await beginPending(f.ctx, at(10));
+    const pid = (await state(f)).pending_id!;
+    await commitReadout(f.ctx, { target: { mode: 'pending', id: pid }, at: at(10), milliseconds: 4 * 60000 }, null);
+    f.clock(at(12)); await startFree(f.ctx, { description: '接电话', project: '工作', tags: [] }, at(12));
+    expect(open(f)).toMatchObject({ kind: '插入', started_at: at(6) });
+    expect(await state(f)).toMatchObject({ pending_id: null, pending_at: null });
+  });
+
+  it('卡暂停中再开始别的事也是插入，原来那张照样等着', async () => {
+    const f = await working(); f.clock(at(5)); await pause(f.ctx, at(5));
+    f.clock(at(8)); await startFree(f.ctx, { description: '接电话', project: '工作', tags: [] }, at(8));
+    expect(open(f)).toMatchObject({ kind: '插入', description: '接电话' });
+    expect((await getCard(f, 'c1')).status).toBe('进行中');
+  });
+
+  it('插入中再开始别的事：替换插入的事，回到目标不变', async () => {
+    const f = await working(); f.clock(at(10)); await startPreset(f.ctx, 'wc', at(10));
+    const target = (await state(f)).resume_entry_id;
+    f.clock(at(15)); await startFree(f.ctx, { description: '回同事消息', project: '工作', tags: [] }, at(15));
+    expect(open(f)).toMatchObject({ kind: '插入', description: '回同事消息' });
+    expect((await state(f)).resume_entry_id).toBe(target);
+  });
+
+  it('插入中不能开始另一张卡（已定 20）；继续原来那张卡的条目 = 回到任务', async () => {
+    const f = await working(); f.clock(at(10)); await startPreset(f.ctx, 'wc', at(10));
+    await expect(startCard(f.ctx, 'c2', at(11))).rejects.toThrow('IN_AWAY_ACTIVITY');
+    const cardEntryId = entries(f).find(e => e.card_id === 'c1')!.id;
+    f.clock(at(12)); await continueEntry(f.ctx, cardEntryId, at(12));
+    expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通', started_at: at(12) });
+    expect((await state(f)).resume_entry_id).toBeNull();
+  });
+
+  it('自由计时时：快捷活动插入，计时框写新事件照常切换', async () => {
+    const f = fixture(); await seed(f, []);
+    f.clock(at(1)); await startFree(f.ctx, { description: '写周报', project: '工作', tags: [] }, at(1));
+    f.clock(at(5)); await insert(f.ctx, 'wc', at(5));
+    expect(open(f)).toMatchObject({ kind: '插入' });
+    f.clock(at(8)); await resume(f.ctx, at(8));
+    expect(open(f)).toMatchObject({ description: '写周报', kind: '普通' });
+    f.clock(at(10)); await startFree(f.ctx, { description: '开会', project: '工作', tags: [] }, at(10));
+    expect(open(f)).toMatchObject({ description: '开会', kind: '普通' });
+    expect((await state(f)).resume_entry_id).toBeNull();
+  });
+});
+
+describe('插入的事暂停 / 继续、回到任务、结束原任务（已定 19、26、56、57；第 3 轮 B1）', () => {
+  it.each(['首页', '小窗'] as const)('%s 的暂停 / 继续：暂停是插入的事暂停（待机 / 插入），继续接着插入的事', async via => {
+    const f = await working(); f.clock(at(10)); await startPreset(f.ctx, 'wc', at(10));
+    const target = (await state(f)).resume_entry_id;
+    f.clock(at(14)); if (via === '首页') await pause(f.ctx, at(14)); else await mini(f, 'pause', at(14));
+    expect(open(f)).toMatchObject({ project: '待机', kind: '插入' });
+    expect((await state(f)).resume_entry_id).toBe(target);
+    expect(canContinueInsert(entries(f), open(f), entries(f).find(e => e.id === target))).toBe(true);
+    f.clock(at(18)); if (via === '首页') await continueTimer(f.ctx, at(18)); else await mini(f, 'resume', at(18));
+    expect(open(f)).toMatchObject({ description: '厕所', kind: '插入', started_at: at(18) });
+    expect((await state(f)).resume_entry_id).toBe(target);
+  });
+
+  it('插入的事暂停时再点暂停什么都不做；插入状态下不能停止', async () => {
+    const f = await working(); f.clock(at(10)); await startPreset(f.ctx, 'wc', at(10));
+    f.clock(at(14)); await pause(f.ctx, at(14));
+    const before = open(f);
+    f.clock(at(15)); await pause(f.ctx, at(15));
+    expect(open(f)).toEqual(before);
+    await expect(stop(f.ctx, at(16))).rejects.toThrow('IN_AWAY_ACTIVITY');
+  });
+
+  it('〔回到任务〕（含小窗 backToTask）：卡接着计，插入的时间不算进卡', async () => {
+    const f = await working(); f.clock(at(10)); await startPreset(f.ctx, 'wc', at(10));
+    f.clock(at(14)); await pause(f.ctx, at(14));
+    f.clock(at(20)); await mini(f, 'backToTask', at(20));
+    expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通', started_at: at(20) });
+    expect((await state(f)).resume_entry_id).toBeNull();
+  });
+
+  it('结束原任务：插入的事变成普通自由记录接着计，原来那张回待做', async () => {
+    const f = await working(); f.clock(at(10)); await startFree(f.ctx, { description: '接电话', project: '工作', tags: [] }, at(10));
+    const insertId = open(f).id;
+    f.clock(at(15)); await endOriginal(f.ctx, at(15));
+    expect(open(f)).toMatchObject({ id: insertId, description: '接电话', kind: '普通', started_at: at(10) });
+    expect((await state(f)).resume_entry_id).toBeNull();
+    expect((await getCard(f, 'c1')).status).toBe('待做');
+  });
+
+  it('结束原任务也适用于插入的事暂停时：那段待机变成普通待机', async () => {
+    const f = await working(); f.clock(at(10)); await startPreset(f.ctx, 'wc', at(10));
+    f.clock(at(14)); await pause(f.ctx, at(14));
+    f.clock(at(16)); await endOriginal(f.ctx, at(16));
+    expect(open(f)).toMatchObject({ project: '待机', kind: '普通' });
+    expect((await getCard(f, 'c1')).status).toBe('待做');
+  });
+
+  it('主动休息（已定 48、55）：插入一条「休息」，回来就是回到任务', async () => {
+    const f = await working(); f.clock(at(10)); await rest(f.ctx, at(10));
+    expect(open(f)).toMatchObject({ description: '休息', project: '休息', kind: '插入' });
+    expect((await state(f)).rest).toBeNull();
+    f.clock(at(20)); await resume(f.ctx, at(20));
+    expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通' });
+  });
+});

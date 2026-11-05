@@ -13,6 +13,7 @@ export { addFavoriteInTx, favoriteInTx, editFavoriteInTx, removeFavoriteInTx, re
 export type { FavoriteValue } from './presetService';
 export { openInTx } from './transaction';
 export { startInTx, startSystemInTx, pauseInTx, stopInTx, insertInTx, resumeInTx, stopRefInTx, renameRefInTx, retagRefInTx } from './timerService';
+export { insertStateInTx, pauseInsertInTx, continueInsertInTx, canContinueInsert, promoteInsertInTx, retypeEntryInTx } from './timerService';
 export { settleOfflineInTx } from './timerService';
 export { manualInTx, editInTx, deleteInTx, previewReadoutInTx, setReadoutInTx, setRefTotalInTx } from './timeEditService';
 export { updateRangeInTx, moveInTx, copyInTx, patchMetadataInTx, setStartInTx, setEndInTx, setDurationInTx } from './timeEditService';

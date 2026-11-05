@@ -95,7 +95,10 @@ function buildTimerContext(
     allowed = ['add_time_entry'];
   } else if (open.kind === '插入') {
     mode = 'away';
-    allowed = ['return_from_break', 'start_break', 'add_time_entry'];
+    // 插入中：替换插入的事（start_timer / start_break）、暂停插入的事、回到任务；插入的事暂停了：继续插入的事、回到任务
+    allowed = open.project === '待机'
+      ? ['resume_timer', 'return_from_break', 'start_timer', 'start_break', 'add_time_entry']
+      : ['pause_timer', 'return_from_break', 'start_timer', 'start_break', 'add_time_entry'];
   } else if (state.pending_id !== null) {
     mode = 'pending';
     allowed = ['add_time_entry'];
@@ -134,6 +137,7 @@ function buildTimerContext(
       goal_minutes: activeCard.type === '时间盒卡' ? activeCard.timebox_minutes : null,
     } : null,
     rest: state.rest ? { suggestion: state.rest.suggestion, started_at: state.rest.started_at } : null,
+    away_paused: mode === 'away' && open.project === '待机',
     allowed_actions: allowed,
   });
 }
@@ -242,7 +246,7 @@ function nextStepForCode(code: string): string {
     case 'PENDING_CONFIRMATION':
       return '单轨界面存在待确认起点；请提示用户在单轨界面完成确认或放弃后再调用计时工具';
     case 'IN_AWAY_ACTIVITY':
-      return '当前处于临时离开活动中；请先调用 return_from_break 结束临时活动，再执行普通计时控制';
+      return '当前正在插入别的事（做卡途中插进来的事，或临时活动）；可以用 start_timer / start_break 换成另一件事、pause_timer / resume_timer 暂停或继续插入的事，或调用 return_from_break 回到原来的任务；停止计时、开始另一张卡要先回到任务或在单轨界面结束原任务';
     case 'IN_DEGRADE_REST':
       return '当前处于降级休息状态；请提示用户在单轨界面完成休息返回后再开始计时';
     case 'NO_RESUME_TARGET':

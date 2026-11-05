@@ -110,6 +110,8 @@ export const timerContextSchema = z.strictObject({
     goal_minutes: z.number().positive().nullable(),
   }).nullable(),
   rest: z.strictObject({ suggestion: z.string().nullable(), started_at: iso }).nullable(),
+  /** 0.3.1（第 3 轮 N3）：插入的事暂停了（mode 仍是 away）；旧客户端忽略 */
+  away_paused: z.boolean().optional(),
   allowed_actions: z.array(z.string()),
 });
 

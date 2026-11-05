@@ -220,19 +220,30 @@ it('M6 & M7: executes full timer lifecycle, break/return, manual backfill, time 
   expect(breakStarted.data.timer.mode).toBe('away');
   expect(breakStarted.data.timer.paused_target?.card_id).toBe('c1');
 
+  expect(breakStarted.data.timer.away_paused).toBe(false);
+  expect(breakStarted.data.timer.allowed_actions).toEqual(expect.arrayContaining(['pause_timer', 'return_from_break', 'start_timer']));
+  // 0.3.1（ADR 0021 第 3 条方法表）：插入中 pause_timer 暂停插入的事；resume_timer 继续插入的事；stop_timer 拒绝
   await expect(handleApplicationRequest(f.ctx, {
+    method: 'stop_timer',
+    arguments: { operation_id: breakStarted.next_operation_id, expected_state: breakStarted.data.expected_state },
+  })).rejects.toThrow('IN_AWAY_ACTIVITY');
+  f.clock(at(26));
+  const breakPaused = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
     method: 'pause_timer',
     arguments: { operation_id: breakStarted.next_operation_id, expected_state: breakStarted.data.expected_state },
-  })).rejects.toThrow('IN_AWAY_ACTIVITY');
-  await expect(handleApplicationRequest(f.ctx, {
+  }));
+  expect(breakPaused.data.timer).toMatchObject({ mode: 'away', away_paused: true, paused_target: { card_id: 'c1' } });
+  f.clock(at(28));
+  const breakContinued = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
     method: 'resume_timer',
-    arguments: { operation_id: breakStarted.next_operation_id, expected_state: breakStarted.data.expected_state },
-  })).rejects.toThrow('IN_AWAY_ACTIVITY');
+    arguments: { operation_id: breakPaused.next_operation_id, expected_state: breakPaused.data.expected_state },
+  }));
+  expect(breakContinued.data.timer).toMatchObject({ mode: 'away', away_paused: false, open_entry: { description: '上厕所', kind: '插入' }, paused_target: { card_id: 'c1' } });
 
   f.clock(at(30));
   const returned = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
     method: 'return_from_break',
-    arguments: { operation_id: breakStarted.next_operation_id, expected_state: breakStarted.data.expected_state },
+    arguments: { operation_id: breakContinued.next_operation_id, expected_state: breakContinued.data.expected_state },
   }));
   expect(returned.data.timer.mode).toBe('running');
   expect(returned.data.timer.open_entry.card_id).toBe('c1');
@@ -265,12 +276,18 @@ it('M6 & M7: executes full timer lifecycle, break/return, manual backfill, time 
     method: 'start_break',
     arguments: { operation_id: stoppedFromPause.next_operation_id, expected_state: stoppedFromPause.data.expected_state, activity: '喝水' },
   }));
-  expect(idleBreak.data.timer.mode).toBe('away');
+  // 0.3.1：什么都没在计时开始快捷活动就是直接开始（没有要等的事，不出插入卡，ADR 0021 第 3 条入口表）
+  expect(idleBreak.data.timer.mode).toBe('running');
+  expect(idleBreak.data.timer.open_entry).toMatchObject({ description: '喝水', kind: '普通' });
   expect(idleBreak.data.timer.paused_target).toBeNull();
 
   f.clock(at(48));
-  const idleReturned = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
+  await expect(handleApplicationRequest(f.ctx, {
     method: 'return_from_break',
+    arguments: { operation_id: idleBreak.next_operation_id, expected_state: idleBreak.data.expected_state },
+  })).rejects.toThrow('NOT_IN_BREAK');
+  const idleReturned = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'stop_timer',
     arguments: { operation_id: idleBreak.next_operation_id, expected_state: idleBreak.data.expected_state },
   }));
   expect(idleReturned.data.timer.mode).toBe('idle');

@@ -7,7 +7,7 @@ import { activityDay } from '../domain/timeline/day';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import type { HistorySource } from '../shared/history';
-import { openInTx, startRefInTx, stopRefInTx, renameRefInTx, retagRefInTx, activeRefInTx, refElapsedInTx, startInTx as startEntryInTx } from './tracking/api';
+import { openInTx, startRefInTx, stopRefInTx, renameRefInTx, retagRefInTx, activeRefInTx, refElapsedInTx } from './tracking/api';
 import { afterItem } from '../domain/task/pool';
 import { registerRefusalInTx } from './degradeService';
 
@@ -118,11 +118,4 @@ export const pass = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx 
   finishItemInTx(tx, card); alignInTx(tx);
 }, at, { action: 'card.pass' });
 
-export const leaveTo = (ctx: Ctx, activityId: string, at: string) => run(ctx, async tx => {
-  const activity = tx.settings.lists.presets.find(item => item.id === activityId);
-  if (!activity) throw new Error('快捷活动不存在');
-  const card = tx.cards.find(item => item.id === tx.state.current_card);
-  if (card) tx.saveCard(releaseCard(card));
-  startEntryInTx(tx, { description: activity.name, project: activity.project, card_id: null, tags: activity.tags });
-  alignInTx(tx);
-}, at, { action: 'card.leaveTo' });
+
