@@ -855,6 +855,8 @@ test('CLI usage validation rejects unknown commands, unknown/duplicate flags, co
   let subJson = '';
   assert.equal(await runCli(['idea', 'unknown-sub', '--json'], { createClient: failCreateClient, writeStdout: t => { subJson += t; } }), 2);
   assert.match(applicationErrorSchema.parse(JSON.parse(subJson).error).next_step, /不要直接改单轨数据目录里的文件/);
+  // 报错里的子命令名不带 .trim() 字样（G8 审核 N1）
+  assert.match(applicationErrorSchema.parse(JSON.parse(subJson).error).message, /未知子命令 "idea unknown-sub"；/);
 
   // 未知命令：人读与 --json 都说明 CLI 没有这个命令、要停下告诉用户（0.3.1 G8）
   let unknownErr = '';

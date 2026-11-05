@@ -521,7 +521,7 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     }
     if (sub !== 'add') {
       throw new CliUsageError(
-        `USAGE_ERROR：未知子命令 "idea ${sub ?? ''}".trim()；请使用 monorail idea add <text> 或 monorail idea done <idea_id>`,
+        `USAGE_ERROR：未知子命令 "${`idea ${sub ?? ''}`.trim()}"；请使用 monorail idea add <text> 或 monorail idea done <idea_id>`,
       );
     }
     const raw = parseTokens(args, {
@@ -546,7 +546,7 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     const [sub, ...args] = subTokens;
     if (sub !== 'add') {
       throw new CliUsageError(
-        `USAGE_ERROR：未知子命令 "todo ${sub ?? ''}".trim()；请使用 monorail todo add <text>`,
+        `USAGE_ERROR：未知子命令 "${`todo ${sub ?? ''}`.trim()}"；请使用 monorail todo add <text>`,
       );
     }
     const raw = parseTokens(args, {
@@ -663,7 +663,7 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     }
 
     throw new CliUsageError(
-      `USAGE_ERROR：未知子命令 "time ${sub ?? ''}".trim()；支持 time summary、time entries、time add`,
+      `USAGE_ERROR：未知子命令 "${`time ${sub ?? ''}`.trim()}"；支持 time summary、time entries、time add`,
     );
   }
 
@@ -741,7 +741,7 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     }
 
     throw new CliUsageError(
-      `USAGE_ERROR：未知子命令 "timer ${sub ?? ''}".trim()；支持 timer start、timer start-item、timer pause、timer resume、timer stop`,
+      `USAGE_ERROR：未知子命令 "${`timer ${sub ?? ''}`.trim()}"；支持 timer start、timer start-item、timer pause、timer resume、timer stop`,
     );
   }
 
@@ -787,14 +787,14 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     }
 
     throw new CliUsageError(
-      `USAGE_ERROR：未知子命令 "break ${sub ?? ''}".trim()；支持 break start <activity>、break return`,
+      `USAGE_ERROR：未知子命令 "${`break ${sub ?? ''}`.trim()}"；支持 break start <activity>、break return`,
     );
   }
 
   if (cmd === 'entry') {
     const [sub, ...args] = subTokens;
     if (sub !== 'edit') {
-      throw new CliUsageError(`USAGE_ERROR：未知子命令 "entry ${sub ?? ''}".trim()；支持 entry edit <entry-id>`);
+      throw new CliUsageError(`USAGE_ERROR：未知子命令 "${`entry ${sub ?? ''}`.trim()}"；支持 entry edit <entry-id>`);
     }
     const raw = parseTokens(args, {
       booleanFlags: new Set(['--clear-tags']),
@@ -833,7 +833,7 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     const [sub, ...args] = subTokens;
     if (sub !== 'get') {
       throw new CliUsageError(
-        `USAGE_ERROR：未知子命令 "operation ${sub ?? ''}".trim()；请使用 monorail operation get <operation-id>`,
+        `USAGE_ERROR：未知子命令 "${`operation ${sub ?? ''}`.trim()}"；请使用 monorail operation get <operation-id>`,
       );
     }
     const raw = parseTokens(args, {

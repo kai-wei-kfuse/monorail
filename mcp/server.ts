@@ -172,7 +172,7 @@ export function createServer(client: ApplicationClient) {
 
   server.registerTool('update_time_entry', {
     title: '修改已有的时间记录',
-    description: '改一条已有计时记录的开始、结束、描述、项目或标签（规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改）。不能删除记录。entry_id 来自 list_time_entries。',
+    description: '改一条已有计时记录的开始、结束、描述、项目或标签（规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改；开着的待机不能改描述和项目，要开始做事请用 start_timer）。不能删除记录。entry_id 来自 list_time_entries。返回的 overlaps 是新时段和这些已有记录重叠（并行保留，不改它们；被盖住的待机会让出来）。',
     inputSchema: updateTimeEntryInput,
     outputSchema: withError(updateTimeEntryResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },

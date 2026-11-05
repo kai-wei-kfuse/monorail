@@ -121,7 +121,7 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
   {
     usage: 'monorail entry edit <entry-id> [--start <iso>] [--end <iso>] [--description <text>] [--project <name>] [--tag <tag> | --clear-tags] [--operation-id <uuid>] [--expected-state <token>] [--json]',
     method: 'update_time_entry',
-    summary: '修改一条已有的时间记录（规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改；--tag 整体替换标签；不能删除）',
+    summary: '修改一条已有的时间记录（规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改；开着的待机不能改描述和项目；--tag 整体替换标签；不能删除）',
     examples: [
       'monorail entry edit 0f3c2a1e-0000-4000-8000-000000000000 --start 2026-11-03T09:10:00+08:00 --end 2026-11-03T09:40:00+08:00',
       'monorail entry edit 0f3c2a1e-0000-4000-8000-000000000000 --description "看龙书第三章" --project 学习',
@@ -365,7 +365,7 @@ export function renderHumanSuccess(
       const lines = [
         `已修改时间记录 [${r.data.entry.id}] (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
         `区间: ${r.data.entry.started_at} ~ ${r.data.entry.ended_at ?? '（正在计时）'} | 项目: ${r.data.entry.project} | 描述: ${r.data.entry.description}`,
-        `新时段盖住的已有记录数: ${r.data.overlaps.length}`,
+        `和新时段重叠的已有记录数（并行保留，没改它们）: ${r.data.overlaps.length}`,
         ...formatWarnings(r.warnings),
       ];
       return lines.join('\n');

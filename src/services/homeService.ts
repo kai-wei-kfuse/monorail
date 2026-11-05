@@ -342,7 +342,7 @@ export function updateTimeEntryCheckedInTx(tx: Transaction, input: { expected_st
   if (input.start !== undefined || input.end !== undefined) {
     if (entry.ended_at === null && input.end !== undefined) throw new Error('ENTRY_RUNNING：正在计时的记录不能设结束时间，只能改开始');
     const start = input.start ?? entry.started_at, end = entry.ended_at === null ? null : input.end ?? entry.ended_at;
-    // 新时段盖住的别的记录（日历同一套：被盖住的部分让出来），同 add_time_entry 回报
+    // 新时段和这些已有记录重叠：日历同一套 overlay，非待机的并行保留、不改它们，只有被盖住的待机让出来（同 add_time_entry 回报）
     overlaps = tracking.overlaps(tx.entries.filter(e => e.id !== entry.id), start, end ?? tx.at, tx.at);
     tracking.updateRangeInTx(tx, entry.id, start, end);
   }
@@ -352,6 +352,8 @@ export function updateTimeEntryCheckedInTx(tx: Transaction, input: { expected_st
   if (input.tags !== undefined) patch.tags = validateUserTags(input.tags);
   if (Object.keys(patch).length) {
     if (entry.card_id && (patch.description !== undefined || patch.project !== undefined)) throw new Error('ENTRY_FROM_CARD：这条记录来自卡，描述和项目要在单轨里改卡');
+    // 改开着的待机的项目等于从那一刻起在做这件事：交给 start_timer（G8 审核 S2）
+    if (entry.ended_at === null && entry.project === '待机' && (patch.description !== undefined || patch.project !== undefined)) throw new Error('ENTRY_IS_IDLE：这是正在计的待机，不能改成别的活动；要从现在开始做一件事请用 start_timer');
     tracking.patchMetadataInTx(tx, entry.id, patch);
   }
   alignInTx(tx);

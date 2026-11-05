@@ -267,7 +267,7 @@ export const addTimeEntryInput = z.strictObject({
   project: z.string().optional().describe('可选：已知项目名称（缺省为「未分类」）'),
   tags: z.array(z.string()).optional().describe('可选：标签列表'),
 });
-/** 改一条已有的计时记录（0.3.1）：规则同日历——正在计的那一条只能改开始；来自卡的描述和项目要在卡上改；不能删除。 */
+/** 改一条已有的计时记录（0.3.1）：规则同日历——正在计的那一条只能改开始；来自卡的描述和项目要在卡上改；开着的待机不能改描述和项目；不能删除。 */
 export const updateTimeEntryInput = z.strictObject({
   operation_id: operationId.describe('复制自 get_context 或上次写结果的 next_operation_id'),
   expected_state: nonEmpty.describe('复制自 get_context 的 expected_state；改记录会影响计时状态，状态变了就拒绝'),

@@ -26,6 +26,8 @@ it('改已结束记录的时间和内容：时段、描述、项目、标签都�
   const result = updateTimeEntryResult.parse(await update(f, { entry_id: id, start: at(12), end: at(27), description: '听编译原理播客', project: '学习', tags: ['播客'] }));
   expect(result.data.entry).toMatchObject({ id, started_at: at(12), ended_at: at(27), description: '听编译原理播客', project: '学习', tags: ['播客'] });
   expect(result.data.overlaps).toContainEqual(expect.objectContaining({ id: other.data.entry.id, from: at(25), to: at(27) }));
+  // 并行保留：重叠的那条本身没变（G8 审核 S1）
+  expect(entries(f).find(e => e.id === other.data.entry.id)).toMatchObject({ started_at: at(25), ended_at: at(30), description: '散步' });
   expect(entries(f).find(e => e.id === id)).toMatchObject({ started_at: at(12), ended_at: at(27), description: '听编译原理播客' });
   const history = (await f.ctx.repos.history.readDays('2000-01-01', '2999-12-31')).records;
   expect(history[0]).toMatchObject({ action: 'auto.update_time_entry', subject: { type: 'entry', id } });
@@ -45,6 +47,16 @@ it('正在计时的那一条只能改开始；来自卡的记录描述和项目�
   const moved = updateTimeEntryResult.parse(await update(f, { entry_id: running.id, start: at(5), tags: ['专注'] }));
   expect(moved.data.entry).toMatchObject({ id: running.id, started_at: at(5), ended_at: null, tags: ['专注'] });
   expect(open(f)).toMatchObject({ id: running.id, card_id: 'c1', started_at: at(5) });
+});
+
+it('开着的待机不能改描述和项目（交给 start_timer），标签可以改（G8 审核 S2）', async () => {
+  const f = fixture(); await seed(f, []);
+  f.clock(at(10));
+  const idle = open(f);
+  expect(idle.project).toBe('待机');
+  await expect(update(f, { entry_id: idle.id, project: '未分类', description: '其实在工作' })).rejects.toThrow('ENTRY_IS_IDLE');
+  await expect(update(f, { entry_id: idle.id, description: '其实在工作' })).rejects.toThrow('ENTRY_IS_IDLE');
+  expect(open(f)).toMatchObject({ id: idle.id, project: '待机' });
 });
 
 it('找不到记录、状态变了、一项都不改：拒绝且不写', async () => {

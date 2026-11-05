@@ -1,6 +1,6 @@
-# 单轨（MONORAIL）MCP 服务（0.3.0）
+# 单轨（MONORAIL）MCP 服务
 
-当前版本 **0.3.0**。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 17 项核心工具（0.3.0-beta.4 加 `complete_idea`，0.3.1 加 `update_time_entry`）。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
+版本号以 `package.json` 为准。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 17 项核心工具（0.3.0-beta.4 加 `complete_idea`，0.3.1 加 `update_time_entry`）。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
 
 ## 给 agent 的规则（0.3.1）
 
@@ -27,7 +27,7 @@
 | `start_break` | 幂等写 | 插入短暂临时离开活动（如「上厕所」「吃饭」），底层原活动保留为返回目标。 |
 | `return_from_break` | 幂等写 | 结束当前临时离开活动（`kind=插入`），恢复原活动/卡片（若从待机插入则回到待机）。 |
 | `add_time_entry` | 幂等写 | 手动补录过去已完成的时间段（`start`/`end`），保留并行记录语义并返回重叠明细（`overlaps`）。 |
-| `update_time_entry` | 幂等写 | 修改一条已有计时记录（`entry_id` 来自 `list_time_entries`）的 `start` / `end` / `description` / `project` / `tags`，至少改一项；需传 `operation_id` 与 `expected_state`。规则同单轨日历：正在计时的只能改开始（传 `end` 报 `ENTRY_RUNNING`）；来自卡的记录，描述和项目要在卡上改（报 `ENTRY_FROM_CARD`）；`tags` 整体替换。新时段盖住的已有记录在 `overlaps` 里返回。不能删除记录（0.3.1，ADR 0021）。 |
+| `update_time_entry` | 幂等写 | 修改一条已有计时记录（`entry_id` 来自 `list_time_entries`）的 `start` / `end` / `description` / `project` / `tags`，至少改一项；需传 `operation_id` 与 `expected_state`。规则同单轨日历：正在计时的只能改开始（传 `end` 报 `ENTRY_RUNNING`）；来自卡的记录，描述和项目要在卡上改（报 `ENTRY_FROM_CARD`）；`tags` 整体替换；开着的待机不能改描述和项目（报 `ENTRY_IS_IDLE`，要开始做事请用 `start_timer`）。返回的 `overlaps` 是新时段和这些已有记录重叠（并行保留，不改它们；被盖住的待机会让出来）。不能删除记录（0.3.1，ADR 0021）。 |
 | `complete_idea` | 幂等写 | 把想法池里的一个想法（`idea_id`，先用 `find_items` 查到）标记为已完成，进入想法池的「已完成」列表；已完成的再标记返回 `noop: true`；冷库、已转任务的报 `IDEA_NOT_ACTIVE`（0.3.0-beta.4，ADR 0020）。`find_items` 的想法 `pool` 多一个值「已完成」。 |
 
 ## 运行与配置

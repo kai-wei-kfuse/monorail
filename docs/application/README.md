@@ -48,7 +48,7 @@
 | `monorail time summary` | `get_time_summary` | 可选 `--day today\|yesterday\|this_week\|YYYY-MM-DD`、`--day-mode activity\|calendar` |
 | `monorail time entries` | `list_time_entries` | 必填 `--from <iso>`、`--to <iso>`（带时区偏移） |
 | `monorail time add [<description>]` | `add_time_entry` | 正文三选一，必填 `--start <iso>`、`--end <iso>`；可选 `--project <name>`、重复 `--tag <tag>`、`--operation-id <uuid>` |
-| `monorail entry edit <entry-id>` | `update_time_entry` | 必填 `<entry-id>`（通过 `time entries` 获取）；至少一项：`--start <iso>`、`--end <iso>`、`--description <text>`、`--project <name>`、重复 `--tag <tag>`（整体替换）或 `--clear-tags`；可选 `--operation-id <uuid>`、`--expected-state <token>`。规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改；不能删除（0.3.1） |
+| `monorail entry edit <entry-id>` | `update_time_entry` | 必填 `<entry-id>`（通过 `time entries` 获取）；至少一项：`--start <iso>`、`--end <iso>`、`--description <text>`、`--project <name>`、重复 `--tag <tag>`（整体替换）或 `--clear-tags`；可选 `--operation-id <uuid>`、`--expected-state <token>`。规则同单轨日历：正在计时的只能改开始；来自卡的描述和项目要在卡上改；开着的待机不能改描述和项目（`ENTRY_IS_IDLE`）；结果的 `overlaps` 是新时段和这些已有记录重叠（并行保留，不改它们；被盖住的待机会让出来）；不能删除（0.3.1） |
 | `monorail timer start [<description>]` | `start_timer` | 正文三选一，可选 `--project <name>`、重复 `--tag <tag>`、`--operation-id <uuid>`、`--expected-state <token>` |
 | `monorail timer start-item <card-id>` | `start_task_item` | 必填 `<card-id>`（通过 `find` 或 `context` 获取）；可选 `--operation-id <uuid>`、`--expected-state <token>` |
 | `monorail timer pause` | `pause_timer` | 可选 `--operation-id <uuid>`、`--expected-state <token>` |
