@@ -1,12 +1,9 @@
 // 计时条自动完成的候选（原型 home.js 的 useEntry）：收藏、待做的卡、最近的记录，按输入筛选。
 
-export interface SuggestFavorite { id: string; name: string; project: string; tags: string[] }
-export interface SuggestCard { id: string; content: string; track: '主线' | '支线' }
-export interface SuggestRecent { id: string; description: string; project: string; tags: string[] }
-export interface SuggestData { favorites: SuggestFavorite[]; cards: SuggestCard[]; recent: SuggestRecent[] }
-
-/** 最近的记录里不列这几个系统项目：选中它们「继续」没有意义。 */
-const NOT_RECENT = new Set(['待机', '休息', '睡眠']);
+// 数据形状在 shared/suggest.ts，来源在 services/suggestSource.ts（主窗口计时条与小窗共用，0.3.0-beta.4 D1）。
+import { NOT_RECENT } from '../../shared/suggest';
+import type { SuggestData } from '../../shared/suggest';
+export type { SuggestCard, SuggestData, SuggestFavorite, SuggestRecent } from '../../shared/suggest';
 
 /**
  * 按输入筛选，不分大小写，没写字时全列。卡最多 4 张；最近的记录按新到旧传进来，描述相同的只留最新一条，最多 5 条。

@@ -8,7 +8,7 @@ vi.mock('@tauri-apps/api/event', () => ({ emitTo: vi.fn(async () => {}), listen:
 }) }));
 const snapshot: MiniSnapshot = { epoch: 1, revision: 2, entryId: null, cardId: null, pending_id: null, entry: null, pending: null,
   resumeDescription: null, card: null, closedEffectiveMs: 0, currentSegStartedAt: null, awayActivity: null,
-  projects: [], knownTags: [], accent: '#fffa00' };
+  projects: [], knownTags: [], accent: '#fffa00', suggest: { favorites: [], cards: [], recent: [] } };
 /** 依次送进一个新订阅，交回被接下的 (epoch, revision)。 */
 async function feed(list: [number, number][]) {
   const handle = vi.fn(); await miniWindowBus.onSnapshot(handle);

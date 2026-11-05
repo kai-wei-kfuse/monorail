@@ -120,6 +120,15 @@ describe('快速记录条：先补记、再消费', () => {
 });
 
 describe('来源', () => {
+  it('0.3.0-beta.4 D1：小窗写新事件时选中收藏，历史记「开始收藏 · 小窗」', async () => {
+    const f = fixture(); await seed(f, []);
+    f.ctx.settings.lists.presets = [{ id: 'fav', name: '背单词', project: '学习', tags: [], mode: '切换', place: '计时条' }];
+    await dispatchMiniCommand(f.ctx, { ...miniSeen(f), type: 'beginPending', pending_id: null });
+    const s = projectMini(f.ctx.snapshot()!, f.ctx.mainEpoch);
+    await dispatchMiniCommand(f.ctx, { ...miniSeen(f), type: 'startFavorite', revision: s.revision, pending_id: s.pending_id, presetId: 'fav' });
+    const [started] = await of(f, 'mini.startFavorite');
+    expect(started).toMatchObject({ label: '开始收藏', source: { kind: 'manual', via: 'mini' } });
+  });
   it('小窗完成卡片走完全链路：小窗命令本身不写历史，主窗口对话框确认后那次提交记「小窗」', async () => {
     const f = fixture(); await seed(f, [card('c', { task_id: 't' }), card('d', { task_id: 't' })], [task('t')]);
     await startCard(f.ctx, 'c', at()); f.clock(at(10));

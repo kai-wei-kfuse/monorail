@@ -1,5 +1,6 @@
 import { emitTo, listen } from '@tauri-apps/api/event';
 import { z } from 'zod';
+import type { SuggestData } from '../shared/suggest';
 
 const id = z.string().min(1), iso = z.iso.datetime({ offset: true });
 const metadata = z.object({ description: z.string().optional(), project: z.string().min(1).optional(), tags: z.array(z.string()).optional() }).strict();
@@ -17,6 +18,10 @@ export const miniCommandSchema = z.discriminatedUnion('type', [
   z.object({ ...base, type: z.literal('cancelPending'), pending_id: id }).strict(),
   z.object({ ...edit, type: z.literal('editOpen'), pending_id: id.nullable(), patch: metadata }).strict(),
   z.object({ ...edit, type: z.literal('editCard'), cardId: id, content: z.string().min(1), project: z.string().nullable().optional(), tags: z.array(z.string()).optional() }).strict(),
+  // 0.3.0-beta.4 D1：写新事件时选中自动完成里的一项，直接开始（同主窗口的收藏 / 开始这张卡 / 继续这一条）
+  z.object({ ...edit, type: z.literal('startFavorite'), pending_id: id.nullable(), presetId: id }).strict(),
+  z.object({ ...edit, type: z.literal('startCard'), pending_id: id.nullable(), targetCardId: id }).strict(),
+  z.object({ ...edit, type: z.literal('continueEntry'), pending_id: id.nullable(), targetEntryId: id }).strict(),
   z.object({ ...edit, type: z.literal('setReadout'), pending_id: id.nullable(),
     target: z.object({ mode: z.enum(['idle', 'pending', 'entry', 'ref']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
 ]);
@@ -33,6 +38,8 @@ export interface MiniSnapshot {
   card: { id: string; content: string; status: '待做' | '进行中'; project: string | null; tags: string[]; goalMinutes: number | null } | null;
   closedEffectiveMs: number; currentSegStartedAt: string | null; awayActivity: string | null;
   projects: { name: string; color: string }[]; knownTags: string[];
+  /** 写新事件时的自动完成（0.3.0-beta.4 D1）：收藏、待做的卡、最近的记录（已去重，最多 100 条） */
+  suggest: SuggestData;
 }
 export type MiniOutcome = { kind: 'done' } | { kind: 'confirm'; plan: MiniReadoutPlan; hit: z.infer<typeof coverage>[] }
   | { kind: 'complete'; cardId: string; at: string } | { kind: 'openMain' } | { kind: 'error'; message: string };

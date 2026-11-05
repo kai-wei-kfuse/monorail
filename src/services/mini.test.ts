@@ -191,3 +191,66 @@ it('a command from an older main-window session is rejected with a fresh snapsho
     expect(transact).not.toHaveBeenCalled(); expect(entries(reloaded)).toEqual(before);
   } finally { stop(); }
 });
+
+// ===== 0.3.0-beta.4 D1：小窗自动完成与写新事件 =====
+it('D1 snapshot carries favorites, todo cards and deduplicated recent entries, cached per published snapshot', async () => {
+  const f = fixture(); await seed(f, [card('k1', { task_id: 't', content: '沿 [Python] 往下学' }), card('k2', { task_id: 't', status: '已完成' })], [task('t')]);
+  f.ctx.settings.lists.presets = [{ id: 'fav', name: '背单词', project: '学习', tags: ['英语'], mode: '切换', place: '计时条' },
+    { id: 'wc', name: '厕所', project: '生活', tags: [], mode: '插入', place: '弹层' }];
+  f.clock(at(1)); await startFree(f.ctx, { description: '回邮件', project: '工作', tags: [] }, at(1));
+  f.clock(at(2)); await startFree(f.ctx, { description: '午休', project: '休息', tags: [] }, at(2));
+  f.clock(at(3)); await startFree(f.ctx, { description: '回邮件', project: '工作', tags: ['新'] }, at(3));
+  const snapshot = f.ctx.snapshot()!;
+  const mini = projectMini(snapshot, 0);
+  expect(mini.suggest.favorites).toEqual([{ id: 'fav', name: '背单词', project: '学习', tags: ['英语'] }]);
+  expect(mini.suggest.cards).toEqual([{ id: 'k1', content: '沿 Python 往下学', track: '主线' }]);
+  // 同名只留最新；休息、待机不列
+  expect(mini.suggest.recent.map(r => [r.description, r.tags])).toEqual([['回邮件', ['新']]]);
+  expect(projectMini(snapshot, 0).suggest).toEqual(mini.suggest);
+});
+it('D1 recent entries sent to the mini window are capped after deduplication', async () => {
+  const f = fixture(); await seed(f, []);
+  for (let n = 0; n < 105; n++) { f.clock(at(n)); await startFree(f.ctx, { description: `事${n}`, project: '工作', tags: [] }, at(n)); }
+  const recent = projectMini(f.ctx.snapshot()!, 0).suggest.recent;
+  expect(recent).toHaveLength(100);
+  expect(recent[0].description).toBe('事104');
+});
+it('D1 picking a favorite, a card or a recent entry while writing starts it at the pending anchor', async () => {
+  const f = fixture(); await seed(f, [card('k', { task_id: 't', content: '写接口' })], [task('t')]);
+  f.ctx.settings.lists.presets = [{ id: 'fav', name: '背单词', project: '学习', tags: ['英语'], mode: '切换', place: '计时条' }];
+  await startFree(f.ctx, { description: '回邮件', project: '工作', tags: ['邮件'] }, at());
+  const mailId = open(f).id;
+  // 收藏
+  f.clock(at(10)); await dispatchMiniCommand(f.ctx, { ...seen(f), type: 'beginPending', pending_id: null });
+  f.clock(at(12)); await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'startFavorite', pending_id: f.home().pending!.id, presetId: 'fav' });
+  expect(open(f)).toMatchObject({ description: '背单词', project: '学习', tags: ['英语'], started_at: at(10) });
+  expect(f.home().pending).toBeNull();
+  // 最近的记录：照抄描述、项目、标签另起一条
+  f.clock(at(20)); await dispatchMiniCommand(f.ctx, { ...seen(f), type: 'beginPending', pending_id: null });
+  f.clock(at(21)); await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'continueEntry', pending_id: f.home().pending!.id, targetEntryId: mailId });
+  expect(open(f)).toMatchObject({ description: '回邮件', project: '工作', tags: ['邮件'], started_at: at(20) });
+  expect(open(f).id).not.toBe(mailId);
+  // 待做的卡
+  f.clock(at(30)); await dispatchMiniCommand(f.ctx, { ...seen(f), type: 'beginPending', pending_id: null });
+  f.clock(at(31)); await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'startCard', pending_id: f.home().pending!.id, targetCardId: 'k' });
+  expect(open(f)).toMatchObject({ card_id: 'k', started_at: at(30) });
+  expect((await getCard(f, 'k')).status).toBe('进行中');
+});
+it('D1 suggestion commands keep identity checks: stale revision or pending session is rejected without writing; non-todo cards are refused', async () => {
+  const f = fixture(); await seed(f, [card('k', { task_id: 't' })], [task('t')]);
+  f.ctx.settings.lists.presets = [{ id: 'fav', name: '背单词', project: '学习', tags: [], mode: '切换', place: '计时条' }];
+  await beginPending(f.ctx, at()); const stale = { ...editSeen(f), pending_id: f.home().pending!.id };
+  await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
+  const transact = vi.spyOn(f.ctx.repos, 'transact');
+  await expect(dispatchMiniCommand(f.ctx, { ...stale, type: 'startFavorite', presetId: 'fav' })).rejects.toThrow('已经换成');
+  expect(transact).not.toHaveBeenCalled();
+  await startCard(f.ctx, 'k', at(1)); transact.mockClear();
+  await beginPending(f.ctx, at(2));
+  await expect(dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'startCard', pending_id: f.home().pending!.id, targetCardId: 'k' })).rejects.toThrow('不在待做');
+});
+it('D1 writing a new event carries the chosen category; @project in the name wins (MiniApp sends it in editOpen.patch)', async () => {
+  const f = fixture(); await startFree(f.ctx, value, at()); f.clock(at(10));
+  await dispatchMiniCommand(f.ctx, { ...seen(f), type: 'beginPending', pending_id: null });
+  await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'editOpen', pending_id: f.home().pending!.id, patch: { description: '写方案', project: '工作', tags: [] } });
+  expect(open(f)).toMatchObject({ description: '写方案', project: '工作', started_at: at(10) });
+});

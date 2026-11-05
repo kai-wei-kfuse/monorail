@@ -3,7 +3,7 @@ import type { Settings } from '../../shared/settings';
 import type { Projection } from '../../store/appStore';
 import type { HomeSlice } from '../../store/homeSlice';
 import type { TaskView } from '../../store/backpackSlice';
-import { plainText } from '../../ui/marks/MarkedText';
+import { suggestSource } from '../../services/suggestSource';
 import type { FavoriteView } from './PresetRow';
 import type { TimerView } from './TimerBar';
 
@@ -14,7 +14,6 @@ type TimeEntry = Projection['entries'][number];
 export interface TimerSource { home: HomeSlice; entries: readonly TimeEntry[]; cards: readonly Card[]; tasks: readonly TaskView[]; settings: Settings; projects: readonly { name: string; color: string }[] }
 
 export function timerView({ home, entries, cards, tasks, settings, projects }: TimerSource): TimerView {
-  const track = (c: Card) => tasks.find(t => t.id === c.task_id)?.slot === '主线' ? '主线' as const : '支线' as const;
   const isAway = home.entry?.kind === '插入';
   const away = isAway ? home.entry : null;
   const baseEntry = isAway ? (home.resumeEntry ?? null) : home.entry;
@@ -23,12 +22,9 @@ export function timerView({ home, entries, cards, tasks, settings, projects }: T
     paused: isAway ? null : home.resumeDescription,
     waitingCard: home.card?.status === '待做', canDraw: !home.card && home.mode !== 'rest',
     projects: [...projects], knownTags: home.knownTags,
-    suggest: {
-      favorites: favorites(settings).map(f => ({ id: f.id, name: f.name, project: f.project, tags: f.tags })),
-      cards: cards.filter(c => c.status === '待做').map(c => ({ id: c.id, content: plainText(c.content), track: track(c) })),
-      recent: [...entries].sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at))
-        .map(e => ({ id: e.id, description: e.description, project: e.project, tags: e.tags })),
-    },
+    // 自动完成：与小窗同一来源（services/suggestSource，0.3.0-beta.4 D1）
+    suggest: suggestSource({ presets: settings.lists.presets, cards, entries,
+      tasks: tasks.map(t => ({ id: t.id, slot: t.slot })) }),
   };
 }
 

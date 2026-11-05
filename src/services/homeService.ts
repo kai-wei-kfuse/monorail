@@ -28,16 +28,17 @@ export const manual = (ctx: Ctx, value: Omit<EntryTemplate, 'card_id'>, start: s
   action(ctx, at, tx => tracking.manualInTx(tx, { ...value, card_id: null }, start, end).id, { action: 'home.manual' });
 export const overlaps = (ctx: Ctx, start: string, end: string, at = ctx.now()) =>
   tracking.overlaps(ctx.repos.times.snapshot(), start, end, at);
-export const startPreset = (ctx: Ctx, presetId: string, at: string) => action(ctx, at, tx => {
+export function startPresetInTx(tx: Transaction, presetId: string): void {
   const preset = tx.settings.lists.presets.find(item => item.id === presetId);
   if (!preset) throw new Error('预设不存在');
   const value = { description: preset.name, project: preset.project, tags: preset.tags, card_id: null };
   if (preset.mode === '插入') tracking.insertInTx(tx, value);
   else {
-    const from = tx.state.pending_at ?? at; clearPending(tx);
+    const from = tx.state.pending_at ?? tx.at; clearPending(tx);
     tracking.startInTx(tx, value, from); tx.state.current_card = null; tx.state.home_mode = 'blank';
   }
-}, { action: 'home.startPreset' });
+}
+export const startPreset = (ctx: Ctx, presetId: string, at: string) => action(ctx, at, tx => startPresetInTx(tx, presetId), { action: 'home.startPreset' });
 function template(tx: Transaction, activity: string): EntryTemplate {
   const preset = tx.settings.lists.presets.find(preset => preset.id === activity);
   if (preset) return { description: preset.name, project: preset.project, tags: preset.tags, card_id: null };
@@ -64,8 +65,12 @@ export function startFreeInTx(tx: Transaction, value: Omit<EntryTemplate, 'card_
   tx.state.current_card = null; tx.state.home_mode = 'blank';
 }
 export const startFree = (ctx: Ctx, value: Omit<EntryTemplate, 'card_id'>, at: string) => action(ctx, at, tx => startFreeInTx(tx, value), { action: 'home.startFree' });
+/** 开始一张卡，起点用待确认的起点（主窗口自动完成、背包〔开始〕、小窗自动完成共用）。 */
+async function startCardFromPendingInTx(tx: Transaction, cardId: string): Promise<void> {
+  const from = tx.state.pending_at ?? tx.at; clearPending(tx); await startCardInTx(tx, cardId, from);
+}
 export const startCard = (ctx: Ctx, cardId: string, at: string) => action(ctx, at, async tx => {
-  const from = tx.state.pending_at ?? at; clearPending(tx); await startCardInTx(tx, cardId, from);
+  await startCardFromPendingInTx(tx, cardId);
 }, { action: 'home.startCard' });
 export const draw = (ctx: Ctx, at: string) => action(ctx, at, tx => {
   if (tx.state.pending_id === null) { tx.state.pending_id = tx.id(); tx.state.pending_at = at; }
@@ -109,12 +114,14 @@ export const answerOffline = (ctx: Ctx, gap: Range, activity: string, at: string
 }, { action: 'home.answerOffline' });
 export const setReadout = (ctx: Ctx, request: ReadoutRequest, seen: ReadoutPlan | null) => action(ctx, request.at, tx => tracking.setReadoutInTx(tx, request, seen), { action: 'home.setReadout' });
 /** 日历和列表也会调用：source 记页面（缺省记首页）。 */
-export const continueEntry = (ctx: Ctx, entryId: string, at: string, source?: HistorySource) => action(ctx, at, async tx => {
+export async function continueEntryInTx(tx: Transaction, entryId: string): Promise<void> {
   const entry = tx.entries.find(entry => entry.id === entryId); if (!entry) throw new Error('计时条目不存在');
-  const card = tx.cards.find(card => card.id === entry.card_id), from = tx.state.pending_at ?? at; clearPending(tx);
+  const card = tx.cards.find(card => card.id === entry.card_id), from = tx.state.pending_at ?? tx.at; clearPending(tx);
   if (card && (card.status === '待做' || card.status === '进行中')) await startCardInTx(tx, card.id, from);
   else tracking.startInTx(tx, { ...entry, card_id: null }, from);
-}, { action: 'home.continueEntry', ...(source ? { source } : {}) });
+}
+export const continueEntry = (ctx: Ctx, entryId: string, at: string, source?: HistorySource) => action(ctx, at, tx => continueEntryInTx(tx, entryId),
+  { action: 'home.continueEntry', ...(source ? { source } : {}) });
 export const editMeta = (ctx: Ctx, cardId: string, project: string | null, tags: string[], at: string) => action(ctx, at, tx => {
   editMetaInTx(tx, cardId, project, tags);
 }, { action: 'home.editMeta' });
@@ -188,6 +195,14 @@ export const dispatchMiniCommand = (ctx: Ctx, command: MiniCommand): Promise<Min
       break;
     }
     case 'setReadout': return commitReadoutInTx(tx, { target: command.target, milliseconds: command.milliseconds, at: command.at }, command.seen);
+    // 0.3.0-beta.4 D1：小窗写新事件时选中自动完成里的一项，和主窗口同一套做法
+    case 'startFavorite': startPresetInTx(tx, command.presetId); break;
+    case 'startCard': {
+      const card = tx.cards.find(card => card.id === command.targetCardId);
+      if (!card || card.status !== '待做') throw new Error('这张卡已经不在待做里了');
+      await startCardFromPendingInTx(tx, card.id); break;
+    }
+    case 'continueEntry': await continueEntryInTx(tx, command.targetEntryId); break;
   }
   return { kind: 'done' };
 }, { action: `mini.${command.type}`, source: { kind: 'manual', via: 'mini' } });

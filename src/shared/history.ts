@@ -55,6 +55,7 @@ export const historyActions = {
   'mini.pause': A('暂停', 'entry'), 'mini.resume': A('继续', 'entry'), 'mini.complete': A('完成卡片', 'card'), 'mini.openMain': A('打开主窗口'),
   'mini.beginPending': A('开始待确认', 'state'), 'mini.cancelPending': A('放弃待确认', 'state'), 'mini.editOpen': A('改正在计时的内容', 'entry'),
   'mini.editCard': A('改卡片内容', 'card'), 'mini.setReadout': A('改读数', 'entry'),
+  'mini.startFavorite': A('开始收藏', 'entry'), 'mini.startCard': A('开始卡片', 'card'), 'mini.continueEntry': A('继续这一条', 'entry'),
   // 卡片（cardService）
   'card.editContent': A('改卡片内容', 'card'), 'card.start': A('开始卡片', 'card'), 'card.complete': A('完成卡片', 'card'), 'card.shrink': A('缩小卡片', 'card'),
   'card.redraw': A('换一张', 'card'), 'card.pass': A('PASS', 'card'), 'card.leaveTo': A('离开去做', 'entry'),
