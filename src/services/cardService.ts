@@ -2,14 +2,12 @@ import type { Card } from '../domain/card/card';
 import { editCardContent, cardTiming } from '../domain/card/edit';
 import { startCard, completeCard, continueCard, releaseCard, abandonCard } from '../domain/card/transitions';
 import { shrinkCard, restoreParent } from '../domain/card/shrink';
-import { skipCard } from '../domain/degrade/signals';
 import { inBackpack, trackOf } from '../domain/task/task';
 import { activityDay } from '../domain/timeline/day';
 import type { Ctx, Transaction } from './commit';
 import { run } from './commit';
 import type { HistorySource } from '../shared/history';
-import { openInTx, startRefInTx, stopRefInTx, startSystemInTx, renameRefInTx, retagRefInTx, activeRefInTx, refElapsedInTx, startInTx as startEntryInTx } from './tracking/api';
-import { drawInTx } from './dealService';
+import { openInTx, startRefInTx, stopRefInTx, renameRefInTx, retagRefInTx, activeRefInTx, refElapsedInTx, startInTx as startEntryInTx } from './tracking/api';
 import { afterItem } from '../domain/task/pool';
 import { registerRefusalInTx } from './degradeService';
 
@@ -88,8 +86,9 @@ export const complete = (ctx: Ctx, cardId: string, at: string, note: string, kee
   restoreInTx(tx, done);
   if (keepGoing) tx.saveCard(continueCard(done, tx.id(), at, nextOrder(tx)));
   stopRefInTx(tx, cardId);
-  tx.state.current_card = null;
-  finishItemInTx(tx, done); drawInTx(tx); alignInTx(tx);
+  // 完成后不自动抽（ADR 0021 第 2 条第 7 点），回到空卡区
+  tx.state.current_card = null; tx.state.home_mode = 'blank';
+  finishItemInTx(tx, done); alignInTx(tx);
 }, at, { action: 'card.complete', subject: { type: 'card', id: cardId }, ...(source ? { source } : {}) });
 
 export interface ShrinkCommand { content: string; type: Card['type']; minutes: number | null }
@@ -107,25 +106,6 @@ export const shrink = (ctx: Ctx, cardId: string, input: ShrinkCommand, at: strin
   return result.child.id;
 }, at, { action: 'card.shrink' });
 
-export const redraw = (ctx: Ctx, cardId: string | null, at: string, note?: string) => run(ctx, async tx => {
-  let excluded: string;
-  if (cardId) {
-    const card = getCard(tx, cardId); requireCurrent(tx, card);
-    const skipped = skipCard(releaseCard({ ...card, progress_note: note ?? card.progress_note }), tx.settings.skipSignalCount);
-    tx.saveCard(skipped.card); excluded = card.id;
-    if (skipped.signal) tx.notices.push({ id: tx.id(), kind: 'skipSignal', data: { cardId, title: card.content, count: skipped.card.skip_count } });
-  } else {
-    if (tx.state.home_mode !== 'review' || !tx.state.review_period) throw new Error('没有可以再抽的卡');
-    excluded = `review:${tx.state.review_period}`;
-  }
-  tx.state.seen = [...new Set([...tx.state.seen, excluded])];
-  tx.state.current_card = null;
-  if (cardId) stopRefInTx(tx, cardId); else startSystemInTx(tx, '待机');
-  drawInTx(tx);
-  await registerRefusalInTx(tx);
-  alignInTx(tx);
-}, at, { action: 'card.redraw' });
-
 export const pass = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx => {
   const card = getCard(tx, cardId);
   if (card.status === '已放弃') return;
@@ -134,7 +114,8 @@ export const pass = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx 
     tx.state.current_card = null;
     stopRefInTx(tx, cardId);
   }
-  finishItemInTx(tx, card); drawInTx(tx); alignInTx(tx);
+  if (!tx.state.current_card) tx.state.home_mode = 'blank';
+  finishItemInTx(tx, card); alignInTx(tx);
 }, at, { action: 'card.pass' });
 
 export const leaveTo = (ctx: Ctx, activityId: string, at: string) => run(ctx, async tx => {

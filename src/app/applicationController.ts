@@ -33,7 +33,7 @@ import {
   timerStateToken,
   timerStateTokenInTx,
 } from '../services/homeService';
-import type { Ctx } from '../services/commit';
+import type { Ctx, Snapshot } from '../services/commit';
 import { assertQueueHealthy, readOperation, runOperation } from '../services/commit';
 import { clipEntriesInRange, summarizeDay } from '../domain/timeline/stats';
 import { cardTiming } from '../domain/card/edit';
@@ -216,6 +216,7 @@ function readCommittedView(ctx: Ctx): {
   entries: TimeEntry[];
   settings: Settings;
   notices: Notice[];
+  plan: Snapshot['plan'] | null;
 } {
   assertQueueHealthy(ctx);
   const snap = ctx.snapshot();
@@ -230,6 +231,7 @@ function readCommittedView(ctx: Ctx): {
     entries: snap.entries,
     settings: snap.settings,
     notices: ctx.notices(),
+    plan: snap.plan ?? null,
   };
 }
 
@@ -338,11 +340,17 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             options: {
               projects: ['未分类', ...view.settings.lists.projects.map(p => p.name)],
               known_tags: knownTags([...view.entries, ...view.settings.lists.presets, ...view.cards], view.settings.lists.tags),
+              // 0.3.1：快捷活动（place 弹层）永远是插入，不再看 mode（ADR 0021 第 3 条，第 2 轮 S6）
               break_presets: view.settings.lists.presets
-                .filter(p => p.mode === '插入')
+                .filter(p => p.place === '弹层')
                 .map(p => ({ id: p.id, name: p.name, project: p.project, tags: [...p.tags] })),
             },
           } : {}),
+          today_plan: view.settings.taskMode && view.plan ? {
+            day: view.plan.today.day, skip_until_planned: view.plan.today.skipUntilPlanned, carry_pending: view.plan.today.carryPending,
+            items: view.plan.today.rows.map(r => ({ card_id: r.cardId, title: r.title, track: r.track, priority: r.priority, today_minutes: r.todayMinutes,
+              minutes_today: r.minutesToday, achieved: r.achieved, running: r.running, carried: r.carried, due_today: r.dueThatDay })),
+          } : null,
         });
       }
 

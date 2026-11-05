@@ -5,7 +5,8 @@ import { run } from './commit';
 import { activityDay } from '../domain/timeline/day';
 import { carryItems, defaultTodayMinutes, minutesOnDay, shiftDay, startedBeforeDay, totalMinutes, workable } from '../domain/plan/plan';
 import type { DayPlan, PlanItem, PlanPriority } from '../domain/plan/plan';
-import { openInTx } from './tracking/api';
+import { activeRefInTx, openInTx } from './tracking/api';
+import { drawableOnPlan } from '../domain/picker/pick';
 
 export type PlanDay = 'today' | 'tomorrow';
 const todayOf = (tx: Transaction) => activityDay(tx.at, tx.settings.dayBoundaryHour);
@@ -136,4 +137,9 @@ export const remove = (ctx: Ctx, which: PlanDay, cardId: string, at: string) =>
 export const edit = (ctx: Ctx, which: PlanDay, input: EditInput, at: string) =>
   run(ctx, tx => editInTx(tx, which, input), at, { action: 'plan.edit', subject: subjectOf(input.cardId) });
 export const skipToday = (ctx: Ctx, at: string) => run(ctx, async tx => skipTodayInTx(tx), at, { action: 'plan.skip' });
+/** 〔换一张〕：跳过这张、这一轮不再出（不累计 skip_count，不推跳过信号，ADR 0021 第 2 条第 6 点）。 */
+export const skipCard = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx => {
+  skipCardInTx(tx, cardId, plan => drawableOnPlan({ plan, cards: tx.cards, tasks: tx.tasks, entries: tx.entries,
+    boundaryHour: tx.settings.dayBoundaryHour, at: tx.at, activeCard: activeRefInTx(tx) }).map(c => c.card.id));
+}, at, { action: 'plan.skipCard', subject: subjectOf(cardId) });
 export const confirmCarry = (ctx: Ctx, keep: readonly string[], at: string) => run(ctx, async tx => confirmCarryInTx(tx, keep), at, { action: 'plan.carry' });

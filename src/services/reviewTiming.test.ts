@@ -2,9 +2,9 @@ import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, seed, task } from './serviceFixture';
 import { createContext, run } from './commit';
 import { refresh } from './dealService';
-import { redraw, start } from './cardService';
+import { start } from './cardService';
 import { beginPending, insert, pause, resume, sleep, startFree } from './homeService';
-import { returnFromRest } from './degradeService';
+import { registerRefusalInTx, returnFromRest } from './degradeService';
 import { enter, finish, goto } from './reviewService';
 import { startSystemInTx } from './tracking/api';
 
@@ -24,8 +24,7 @@ it.each(['idle', 'free', 'card', 'paused', 'inserted', 'pausedFree', 'insertedFr
     if (mode === 'pending') await beginPending(f.ctx, at(1));
     if (mode === 'rest') {
       f.ctx.settings.refusalThreshold = 2;
-      await redraw(f.ctx, 'a', at(1));
-      f.clock(at(2)); await redraw(f.ctx, 'a', at(2));
+      f.clock(at(2)); await run(f.ctx, async tx => { tx.state.refusals = [at(1)]; await registerRefusalInTx(tx); }, at(2), { action: 'test.direct' });
       expect(open(f).project).toBe('休息');
     }
     const before = {

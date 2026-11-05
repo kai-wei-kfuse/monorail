@@ -1,25 +1,9 @@
 import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, seed, entries } from './serviceFixture';
-import { start, redraw, shrink } from './cardService';
+import { start, shrink } from './cardService';
 import { returnFromRest, registerRefusalInTx } from './degradeService';
 import { run } from './commit';
 
-it('A7 fourth redraw executes first and preserves the new card behind rest', async () => {
-  const f = fixture(); await seed(f, [card('a'), card('b', { order: 2 })]);
-  for (let i = 0; i < 4; i++) {
-    f.clock(at(i)); await redraw(f.ctx, (await f.ctx.repos.state.read()).current_card, at(i));
-  }
-  expect(await f.ctx.repos.state.read()).toMatchObject({ home_mode: 'rest', current_card: 'a', rest: { started_at: at(3), suggestion: null } });
-  expect(await getCard(f, 'b')).toMatchObject({ skip_count: 2, status: '待做' });
-  expect(open(f)).toMatchObject({ description: '休息', source: '自动' });
-  f.clock(at(10)); await returnFromRest(f.ctx, ' 看小说 ', at(10));
-  expect(await f.ctx.repos.state.read()).toMatchObject({ home_mode: 'task', current_card: 'a', rest: null, refusals: [], rest_answers: { 看小说: 1 } });
-  expect(open(f)).toMatchObject({ project: '待机', card_id: null });
-  expect(entries(f).filter(entry => entry.ended_at !== null).filter(s => s.started_at === at(3))).toEqual([
-    expect.objectContaining({ description: '看小说', project: '休息', source: '自动', ended_at: at(10) }),
-  ]);
-  expect(entries(f).some(s => s.description === '休息' && s.ended_at === at(10))).toBe(false);
-});
 it('A7 fourth running shrink leaves a pending child and no positive child time before rest', async () => {
   const f = fixture(); await seed(f, [card('a', { skip_count: 2 })]); await start(f.ctx, 'a', at());
   await run(f.ctx, async tx => { tx.state.refusals = [at(), at(1), at(2)]; }, undefined, { action: 'test.direct' });

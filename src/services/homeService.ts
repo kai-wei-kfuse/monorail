@@ -4,7 +4,6 @@ import type { HistoryIntent, HistorySource } from '../shared/history';
 import * as tracking from './tracking/api';
 import type { ReadoutRequest, ReadoutPlan, EntryTemplate, TimeEntry } from './tracking/api';
 import { alignInTx, startCardInTx, editContentInTx, editMetaInTx } from './cardService';
-import { drawInTx } from './dealService';
 import type { MiniCommand, MiniOutcome } from '../platform/windowBus';
 import { validateUserProject, validateUserTags } from '../domain/timeline/project';
 import type { AppState } from '../data/repos';
@@ -72,10 +71,6 @@ async function startCardFromPendingInTx(tx: Transaction, cardId: string): Promis
 export const startCard = (ctx: Ctx, cardId: string, at: string) => action(ctx, at, async tx => {
   await startCardFromPendingInTx(tx, cardId);
 }, { action: 'home.startCard' });
-export const draw = (ctx: Ctx, at: string) => action(ctx, at, tx => {
-  if (tx.state.pending_id === null) { tx.state.pending_id = tx.id(); tx.state.pending_at = at; }
-  drawInTx(tx);
-}, { action: 'home.draw' });
 export const pause = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.pauseInTx(tx), { action: 'home.pause' });
 // 停止计的是卡时，卡跟着 align 放回去
 export const stop = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.stopInTx(tx), { action: 'home.stop' });

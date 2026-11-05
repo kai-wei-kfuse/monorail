@@ -40,10 +40,10 @@ export interface HomeActions {
   /** fromMini：小窗点的完成（两段式），操作历史的来源记小窗 */
   complete(cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean): Promise<unknown>;
   shrink(cardId: string, input: { content: string; type: '结果卡' | '时间盒卡'; minutes: number | null }, at: string): Promise<unknown>;
-  redraw(cardId: string | null, at: string): Promise<unknown>;
   editContent(cardId: string, content: string, at: string): Promise<unknown>;
   editMeta(cardId: string, project: string | null, tags: string[], at: string): Promise<unknown>;
-  draw(at: string): Promise<unknown>;
+  /** 从今天的板子抽一张（只读）；G7 换成翻卡。现在：抽到就直接开始 */
+  draw(at: string): Promise<{ kind: string; card?: { id: string } } | undefined>;
   resume(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
   returnFromRest(answer: string, at: string): Promise<unknown>;
@@ -142,13 +142,10 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     if (home.card?.id === shrinkFor && home.card.shrink === 'ok') setDialog({ kind: 'shrink', cardId: shrinkFor });
   }, [shrinkFor]);
 
-  async function redraw(at: string) {
-    if (!home.card || !live) return;
-    setFrozen(live);
-    await act(() => actions.redraw(home.card!.id, at));
-    const next = appStore.getState().home.card;
-    if (!next) { setFrozen(null); return; }
-    setWipe({ no: next.slotNo, meta: `${next.task} · ${next.type}${next.goalMinutes ? ` · ${next.goalMinutes} 分钟` : ''}`, title: next.content.replace(/[[\]]/g, '') });
+  // 抽卡（ADR 0021 第 2 条）：只读拿到结果；抽到就开始那一张。板子空着、带过来的待确认等情况由 G7 的抽屉处理
+  async function drawAndStart(at: string) {
+    const result = await actions.draw(at);
+    if (result?.kind === 'task' && result.card) await actions.start(result.card.id, at);
   }
 
   // 计时条的动作：点击时刻在这里取；抽卡、开始卡和卡区一样走 act，换卡期间按钮不可点
@@ -167,7 +164,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     pause: () => void actions.pause(now_()),
     stop: () => void actions.stop(now_()),
     resume: () => void act(() => actions.resume(now_())),
-    draw: () => void act(() => actions.draw(now_())),
+    draw: () => void act(() => drawAndStart(now_())),
     startFavorite,
     startCard: id => void act(() => actions.start(id, now_())),
     continueEntry: id => void actions.continueEntry(id, now_()),
@@ -195,8 +192,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     actions: <CardActions running={c.status === '进行中'} shrink={c.shrink} busy={busy || !!wipe}
       onStart={at => void act(() => actions.start(c.id, at))}
       onComplete={at => void beginComplete(c.id, at)}
-      onShrink={() => setDialog({ kind: 'shrink', cardId: c.id })}
-      onRedraw={at => void redraw(at)} />,
+      onShrink={() => setDialog({ kind: 'shrink', cardId: c.id })} />,
     fx: wipe && <Wipe no={wipe.no} meta={wipe.meta} title={wipe.title} onCovered={() => setFrozen(null)}
       onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />,
   };
@@ -207,7 +203,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
   else if (home.mode === 'blank') body = <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
     <div /><div className="alt-hero"><h1>现在做什么？</h1><p>抽一张卡，开始下一件事。</p></div><div />
-    <div className="foot"><ActivityActions className="actions" disabled={!!tv.away}><ActionButton primary cn="抽卡" en="DRAW" icon="play" onClick={() => void act(() => actions.draw(new Date().toISOString()))} /></ActivityActions></div>
+    <div className="foot"><ActivityActions className="actions" disabled={!!tv.away}><ActionButton primary cn="抽卡" en="DRAW" icon="play" onClick={() => void act(() => drawAndStart(new Date().toISOString()))} /></ActivityActions></div>
   </CardFrame>;
   else if (home.mode === 'task' && view && task) {
     const corner = <>

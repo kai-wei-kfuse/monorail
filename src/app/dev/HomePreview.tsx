@@ -65,7 +65,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
     <div ref={stage} style={{ display: 'grid', minHeight: 0 }} onDoubleClick={e => { if (!(e.target as HTMLElement).closest('.title, .title-edit')) setWipe(true); }}>
       {(page === 'card' || page === 'over') && <TaskCard view={view} look={look} titleScale={65} onEditContent={(_, text) => setContent(text)}
         corner={<span className="c-hint">还没有主线</span>}
-        actions={<CardActions running shrink={page === 'over' ? 'max' : 'ok'} onStart={() => {}} onComplete={() => {}} onShrink={() => {}} onRedraw={() => {}} />}
+        actions={<CardActions running shrink={page === 'over' ? 'max' : 'ok'} onStart={() => {}} onComplete={() => {}} onShrink={() => {}} />}
         fx={wipe && <Wipe no="支" meta="支线 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => { setWipe(false); playAfterWipe(stage.current!); }} />} />}
       {page === 'guide' && <GuideCard kind="setMain" look={look} onAction={() => {}} />}
       {page === 'rest' && <RestCard suggestion="眺望窗外" look={look} onBack={() => {}} onAddRest={() => {}} />}

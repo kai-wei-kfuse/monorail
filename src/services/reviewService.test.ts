@@ -5,7 +5,7 @@ import { createContext, run } from './commit';
 import { freezeTask } from './backpackService';
 import { enter, goto, addIdea, duel, takeCold, skipCold, continueBet, switchMain, finish } from './reviewService';
 import { refresh } from './dealService';
-import { start, redraw } from './cardService';
+import { start } from './cardService';
 import { insert } from './homeService';
 import { query } from './recapService';
 import { createRecord } from '../domain/record/record';
@@ -201,8 +201,9 @@ it('recap spans superseded periods since the last completion, clips overlays, an
   expect((await saved(f)).some(row => row.period === '2026-W43')).toBe(true);
 });
 
-it('progress noted by redraw is dated and visible even though the card is unfinished', async () => {
-  const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at()); f.clock(at(1)); await redraw(f.ctx, 'a', at(1), '继续这里');
+it('progress noted on an unfinished card is dated and visible', async () => {
+  const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at()); f.clock(at(1));
+  await run(f.ctx, async tx => { tx.saveCard({ ...tx.cards.find(c => c.id === 'a')!, progress_note: '继续这里' }); }, at(1), { action: 'test.direct' });
   f.clock(at(2)); await enter(f.ctx, at(2));
   expect(query(f.ctx, { period: 'week', dim: 'project', includeIdle: false }, at(2)).notes)
     .toEqual([expect.objectContaining({ id: 'a', content: 'a', note: '继续这里', at: at(1) })]);

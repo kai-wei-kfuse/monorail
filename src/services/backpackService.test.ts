@@ -83,10 +83,12 @@ it('editing card fields resets skips, updates deadline plans, and keeps historic
   expect(f.update.mock.calls.at(-1)![0]).toContainEqual(expect.objectContaining({ body: '新内容', at: Date.parse(at(30)) }));
   const id = await saveCard(f.ctx, null, fields(), at()); expect(await getCard(f, id)).toMatchObject({ source_record_id: null, order: 2 });
 });
-it('reorders only a complete queue and makes the new head the pending home card', async () => {
+it('reorders only a complete queue; the home page does not deal a card (0.3.1)', async () => {
   const f = fixture(); await seed(f, [card('a'), card('b', { order: 2 })]);
   await expect(reorderQueue(f.ctx, null, ['b'], at())).rejects.toThrow('完整顺序');
-  await reorderQueue(f.ctx, null, ['b', 'a'], at()); expect(f.home().card?.id).toBe('a');
+  await reorderQueue(f.ctx, null, ['b', 'a'], at());
+  expect((await getCard(f, 'b')).order).toBeLessThan((await getCard(f, 'a')).order);
+  expect(f.home()).toMatchObject({ mode: 'blank', card: null });
 });
 it('moving a running card to a parked task releases it and switching active task records a new project', async () => {
   const f = fixture(); await seed(f, [card('a')], [task('main'), { ...task('cold'), slot: '支线', slot_index: null, status: '冷藏' }]);

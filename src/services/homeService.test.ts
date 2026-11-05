@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { fixture, at, card, task, seed, entries, open, getCard } from './serviceFixture';
-import { start, redraw } from './cardService';
+import { start } from './cardService';
+import { registerRefusalInTx } from './degradeService';
 import { insert, resume, pause, stop, backfillRange, settleOffline, answerOffline, sleep, wake, beginPending, cancelPending, startFree, startCard, commitReadout } from './homeService';
 import { activeRefInTx } from './tracking/api';
 import { run } from './commit';
@@ -130,7 +131,7 @@ it('starting a backpack card switches from active/paused/rest/pending states, is
 
   // 5. 降级休息中从背包直接启动卡片：清除 rest 并切到该卡计时
   f.clock(at(20));
-  await redraw(f.ctx, 'c2', at(20));
+  await run(f.ctx, async tx => { tx.state.refusals = [at(20), at(20), at(20)]; await registerRefusalInTx(tx); }, at(20), { action: 'test.direct' });
   expect((await f.ctx.repos.state.read()).rest).not.toBeNull();
   expect(open(f).project).toBe('休息');
   f.clock(at(25));

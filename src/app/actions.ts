@@ -6,6 +6,8 @@ import * as card from '../services/cardService';
 import type { ShrinkCommand } from '../services/cardService';
 import * as timer from '../services/homeService';
 import * as preset from '../services/presetService';
+import * as deal from '../services/dealService';
+import * as plan from '../services/planService';
 import { returnFromRest } from '../services/degradeService';
 import { changeLists } from '../services/settingsService';
 import type { BackfillResult } from '../shared/notices';
@@ -29,12 +31,13 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     complete: guard((cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean) =>
       card.complete(ctx, cardId, at, note, keepGoing, fromMini ? { kind: 'manual', via: 'mini' } : undefined)),
     shrink: guard((cardId: string, input: ShrinkCommand, at: string) => card.shrink(ctx, cardId, input, at)),
-    redraw: guard((cardId: string | null, at: string) => card.redraw(ctx, cardId, at)),
     pass: guard((cardId: string, at: string) => card.pass(ctx, cardId, at)),
     editContent: guard((cardId: string, content: string, at: string) => card.editContent(ctx, cardId, content, at)),
     // 卡头「记到」那一行：project 为 null 是跟随任务的默认项目
     editMeta: guard((cardId: string, project: string | null, tags: string[], at: string) => timer.editMeta(ctx, cardId, project, tags, at)),
-    draw: guard((at: string) => timer.draw(ctx, at)),
+    // 抽卡（ADR 0021 第 2 条）：只读，结果给翻卡；〔换一张〕写板子的 seen，〔开始〕走 start
+    draw: guard((at: string) => deal.drawFromPlan(ctx, at)),
+    skipCard: guard((cardId: string, at: string) => plan.skipCard(ctx, cardId, at)),
     // 计时条（homeService，N3 接线草案）
     beginPending: guard((at: string) => timer.beginPending(ctx, at)),
     cancelPending: guard((pendingId: string, at: string) => timer.cancelPending(ctx, pendingId, at)),

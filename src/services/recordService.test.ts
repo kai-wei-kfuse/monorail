@@ -16,8 +16,9 @@ it('A4 reconciles a blocker, its record link, selection and deadline plan in one
   const transact = vi.spyOn(f.ctx.repos, 'transact');
   expect(await reconcile(f.ctx)).toBe(1); expect(transact).toHaveBeenCalledTimes(1);
   expect((await f.ctx.repos.records.get(entry.id))!.value.card_id).toBe(id);
-  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: 'a', seen: [], refusals: [] });
-  expect(f.publish.mock.calls.at(-1)![0]).toMatchObject({ cards: expect.arrayContaining([expect.objectContaining({ id })]), home: { card: { id: 'a' } } });
+  // 0.3.1：整理记录不改首页（不出卡）；待机中的 seed 卡 a 不是进行中，所以首页是空卡区
+  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: null, home_mode: 'blank', refusals: [] });
+  expect(f.publish.mock.calls.at(-1)![0]).toMatchObject({ cards: expect.arrayContaining([expect.objectContaining({ id })]), home: { mode: 'blank' } });
   expect(f.update.mock.calls.at(-1)![0]).toContainEqual(expect.objectContaining({ at: Date.parse(at(30)), body: entry.text }));
   expect(await reconcile(f.ctx)).toBe(0);
   expect(await f.ctx.repos.cards.list()).toHaveLength(2);

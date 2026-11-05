@@ -131,6 +131,18 @@ export const contextInput = z.strictObject({
   sections: z.array(contextSection).optional().describe('可选：按需请求 timer、pending_actions、options 分区；默认返回全部三个分区'),
 });
 export const emptyInput = z.strictObject({});
+/** 今日任务板（只读，ADR 0021 第 12 条）：agent 由此知道今天排了什么。任务模式关掉时为 null。 */
+export const todayPlanSchema = z.strictObject({
+  day: z.string().describe('活动日 YYYY-MM-DD'),
+  skip_until_planned: z.boolean().describe('用户选了「今天先不排」'),
+  carry_pending: z.boolean().describe('有从前一天带过来、用户还没确认的项'),
+  items: z.array(z.strictObject({
+    card_id: nonEmpty, title: z.string(), track: z.enum(['主线', '支线']), priority: z.enum(['普通', '高']),
+    today_minutes: z.number().int().positive().nullable().describe('时间盒：今天的量（分钟）；结果卡为 null'),
+    minutes_today: z.number().int().nonnegative().describe('今天已计（分钟）'),
+    achieved: z.boolean(), running: z.boolean(), carried: z.boolean(), due_today: z.boolean(),
+  })),
+});
 export const contextResult = z.strictObject({
   status: z.literal('ready'),
   operation_id: operationId,
@@ -139,6 +151,7 @@ export const contextResult = z.strictObject({
   timer: timerContextSchema.optional(),
   pending_actions: z.array(pendingActionSchema).optional(),
   options: contextOptionsSchema.optional(),
+  today_plan: todayPlanSchema.nullable().optional(),
 });
 
 function createDurationMapSchema() {

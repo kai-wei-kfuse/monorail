@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed, entries } from './serviceFixture';
-import { start, complete, checkComplete, shrink, redraw, pass, leaveTo, editContent } from './cardService';
+import { start, complete, checkComplete, shrink, pass, leaveTo, editContent } from './cardService';
 import { insert, backfillRange } from './homeService';
 import { cardMilliseconds } from '../domain/timeline/stats';
 
@@ -33,17 +33,16 @@ it('rejects blank content and missing cards without committing, then allows anot
   expect(await getCard(f, 'a')).toEqual({ ...before, content: '新标题', skip_count: 0 });
 });
 
-it.each(['complete', 'shrink', 'redraw'] as const)('A2 %s ends the insert at the click and clears its return target', async action => {
+it.each(['complete', 'shrink'] as const)('A2 %s ends the insert at the click and clears its return target', async action => {
   const f = fixture(); await seed(f, [card('a'), card('b', { order: 2 })]);
   await start(f.ctx, 'a', at());
   f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
   f.clock(at(20));
   if (action === 'complete') await complete(f.ctx, 'a', at(20), '进度');
   if (action === 'shrink') await shrink(f.ctx, 'a', smaller, at(20));
-  if (action === 'redraw') await redraw(f.ctx, 'a', at(20), '再做');
   expect(entries(f).find(s => s.kind === '插入')).toMatchObject({ ended_at: at(20) });
   expect(open(f)).toMatchObject({ kind: '普通', started_at: at(20) });
-  expect((await getCard(f, 'a')).status).toBe(action === 'complete' ? '已完成' : action === 'shrink' ? '已缩小' : '待做');
+  expect((await getCard(f, 'a')).status).toBe(action === 'complete' ? '已完成' : '已缩小');
   expect(cardMilliseconds(entries(f), 'a', at(20))).toBe(10 * 60000);
   if (action === 'shrink') expect((await getCard(f, open(f).card_id!)).status).toBe('进行中');
   else expect(open(f).project).toBe('待机');
@@ -72,7 +71,8 @@ it('creates one independent continuation and repeated completion cannot create a
   const cards = (await f.ctx.repos.cards.list()).map(e => e.value), next = cards.find(c => c.id !== 'a')!;
   expect(cards).toHaveLength(2);
   expect(next).toMatchObject({ status: '待做', continued_from: 'a', blocking: true, due_at: at(60), task_id: 'main', progress_note: '当前进度' });
-  expect((await f.ctx.repos.state.read()).current_card).toBe(next.id);
+  // 0.3.1：完成后不自动出卡；「接着做」改成同一张卡由 G5 实现，这里先锁定旧的续卡仍正确生成
+  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: null, home_mode: 'blank' });
   expect(open(f).project).toBe('待机');
 });
 it('A6 completes a two-level chain restoring only the immediate parent and its progress', async () => {
@@ -91,6 +91,7 @@ it('A6 PASS restores the parent, allows replacement at the same level, and forbi
   const b = await shrink(f.ctx, 'a', smaller, at()), c = await shrink(f.ctx, b, smaller, at());
   await expect(pass(f.ctx, 'a', at())).rejects.toThrow('先处理');
   await pass(f.ctx, c, at());
+  await start(f.ctx, b, at());
   const replacement = await shrink(f.ctx, b, smaller, at());
   expect(await getCard(f, replacement)).toMatchObject({ shrink_level: 2, shrunk_from: b });
   await pass(f.ctx, replacement, at()); await pass(f.ctx, b, at());
@@ -101,16 +102,6 @@ it('leaveTo releases the running card while switching to the chosen activity', a
   await leaveTo(f.ctx, 'wc', at());
   expect((await getCard(f, 'a')).status).toBe('待做');
   expect(open(f)).toMatchObject({ description: '厕所', card_id: null, kind: '普通' });
-});
-it('the third redraw emits one skip signal, and shrinking clears skip counts', async () => {
-  const f = fixture(); f.ctx.settings.refusalThreshold = 10; await seed(f, [card('a')]);
-  for (let i = 0; i < 4; i++) {
-    await redraw(f.ctx, 'a', at());
-    expect(f.publish.mock.calls.at(-1)![0].notices.filter(n => n.kind === 'skipSignal')).toHaveLength(i === 2 ? 1 : 0);
-  }
-  const child = await shrink(f.ctx, 'a', smaller, at());
-  expect((await getCard(f, 'a')).skip_count).toBe(0);
-  expect((await getCard(f, child)).skip_count).toBe(0);
 });
 it('a rejected shrink changes neither card, timer nor refusal count and the next action still works', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());

@@ -1,88 +1,63 @@
-import { expect, it, vi } from 'vitest';
+import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed } from './serviceFixture';
-import { refresh, refreshInTx, draw } from './dealService';
-import { start, redraw } from './cardService';
+import { refresh, drawFromPlan } from './dealService';
+import { start } from './cardService';
 import { insert } from './homeService';
+import * as plan from './planService';
 import { run } from './commit';
 
-it('a new blocker does not replace a pending card until explicitly drawn', async () => {
+// 0.3.1：refreshInTx 只整理首页状态，不再出卡；抽卡只读、只从今天的板子里抽（ADR 0021 第 2 条）
+
+it('refresh 不出卡：没有进行中的卡就是空卡区；0.3.0 留下的 review / guide 归一成 blank', async () => {
   const f = fixture(); await seed(f, [card('a')]);
-  await run(f.ctx, async tx => { tx.saveCard(card('block', { blocking: true })); }, undefined, { action: 'test.direct' });
+  await run(f.ctx, async tx => { tx.state.home_mode = 'review'; tx.state.current_card = 'a'; }, undefined, { action: 'test.direct' });
   await refresh(f.ctx, at());
-  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: 'a', seen: [], refusals: [] });
+  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: null, home_mode: 'blank' });
   expect(await getCard(f, 'a')).toMatchObject({ status: '待做', skip_count: 0 });
 });
-it.each([false, true])('new blockers never interrupt a running card, including inserted activities (%s)', async inserted => {
+
+it.each([false, true])('refresh 不打断进行中的卡，插入中也一样 (%s)', async inserted => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
   if (inserted) { f.clock(at(1)); await insert(f.ctx, 'wc', at(1)); }
   const before = open(f);
-  await run(f.ctx, async tx => { tx.saveCard(card('block', { blocking: true })); }, undefined, { action: 'test.direct' });
-  await refresh(f.ctx, at());
+  await refresh(f.ctx, at(1));
   expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: 'a', home_mode: 'task' });
   expect(open(f)).toEqual(before);
 });
-it('refresh preserves the pending selection during rest', async () => {
-  const f = fixture(); await seed(f, [card('a'), card('block', { blocking: true })]);
-  await run(f.ctx, async tx => { tx.state.rest = { started_at: at(), suggestion: '走走' }; }, undefined, { action: 'test.direct' });
+
+it('refresh 照写 first_used_day 与本周回顾行（第 2 轮 B1）', async () => {
+  const f = fixture(); await seed(f, []);
+  await run(f.ctx, async tx => { tx.state.first_used_day = null; }, undefined, { action: 'test.direct' });
   await refresh(f.ctx, at());
-  expect(await f.ctx.repos.state.read()).toMatchObject({ current_card: 'a', home_mode: 'rest' });
+  expect((await f.ctx.repos.state.read()).first_used_day).not.toBeNull();
 });
-it('exhausting a round clears exclusions and keeps dealing instead of showing an empty guide', async () => {
-  const f = fixture(); await seed(f, [card('a'), card('b', { order: 2 })]);
-  await redraw(f.ctx, 'a', at()); expect(f.home().card?.id).toBe('b');
-  await redraw(f.ctx, 'b', at()); expect(f.home().card?.id).toBe('a');
-  expect((await f.ctx.repos.state.read()).seen).toEqual([]);
+
+it('drawFromPlan 只读：不写盘、不改首页状态、不记历史', async () => {
+  const f = fixture(); await seed(f, [card('a', { task_id: 't' })], [task('t')]);
+  await plan.add(f.ctx, 'today', { cardId: 'a', priority: '普通' }, at(1));
+  const state = await f.ctx.repos.state.read(), history = (await f.ctx.repos.history.listAll()).length;
+  const result = await drawFromPlan(f.ctx, at(2));
+  expect(result).toMatchObject({ kind: 'task', card: { id: 'a' } });
+  expect(await f.ctx.repos.state.read()).toEqual(state);
+  expect((await f.ctx.repos.history.listAll()).length).toBe(history);
 });
-it.each([[0, 'm'], [0.599999, 'm'], [0.6, 's'], [0.999999, 's']] as const)('after both baselines, random %s respects the 1.5:1 main weight', async (random, selected) => {
-  const f = fixture(); f.random.mockReturnValue(random);
-  await seed(f, [card('m', { task_id: 'main', order: 1 }), card('s', { order: 2 }),
-    card('done-m', { status: '已完成', completed_day: '2026-10-27', completed_track: '主线' }),
-    card('done-s', { status: '已完成', completed_day: '2026-10-27', completed_track: '支线' })], [task('main')]);
-  await draw(f.ctx, at()); expect(f.home().card?.id).toBe(selected);
+
+it('drawFromPlan：今天没排先问；插入中不能抽', async () => {
+  const f = fixture(); await seed(f, [card('a', { task_id: 't' })], [task('t')]);
+  expect(await drawFromPlan(f.ctx, at())).toEqual({ kind: 'plan' });
+  await start(f.ctx, 'a', at()); f.clock(at(1)); await insert(f.ctx, 'wc', at(1));
+  expect(await drawFromPlan(f.ctx, at(1))).toEqual({ kind: 'blocked', reason: 'inserting' });
 });
-it('the next activity day recomputes the main baseline rather than using yesterday’s completion', async () => {
-  const f = fixture(); await seed(f, [card('m', { task_id: 'main' }), card('s', { order: 2 }),
-    card('done', { status: '已完成', completed_day: '2026-10-27', completed_track: '主线' })], [task('main')]);
-  await draw(f.ctx, at()); expect(f.home().card?.id).toBe('s');
-  const next = new Date(2026, 9, 28, 4).toISOString(); f.clock(next); await draw(f.ctx, next);
-  expect(f.home().card?.id).toBe('m');
-});
-it.each(['firstTask', 'setMain', 'splitMain', 'allDone'] as const)('tasks the %s guide only with no candidate', async guide => {
-  const f = fixture();
-  const tasks = guide === 'firstTask' ? [] : [task('p', guide === 'setMain' ? '支线' : '主线')];
-  const cards = guide === 'allDone' ? [card('done', { task_id: 'p', status: '已完成' })] : [];
-  await seed(f, cards, tasks); await draw(f.ctx, at());
-  expect(f.home()).toMatchObject({ mode: 'guide', guideKind: guide, card: null });
-});
-it('a loose candidate still deals without a main task and displays the main hint', async () => {
-  const f = fixture(); await seed(f, [card('a')]); await refresh(f.ctx, at());
-  expect(f.home()).toMatchObject({ mode: 'task', noMainHint: true, baseline: { main: null, side: false } });
-});
-it('persists a due review, carries it across weeks, and replaces it atomically when the next period becomes due', async () => {
-  const f = fixture(); await seed(f, []);
-  await run(f.ctx, async tx => { tx.state.first_used_day = '2026-10-27'; }, undefined, { action: 'test.direct' });
-  f.clock(new Date(2026, 10, 8, 4).toISOString()); await refresh(f.ctx, f.ctx.now());
-  expect((await f.ctx.repos.reviews.get('2026-W45'))!.value.status).toBe('未开始');
-  await run(f.ctx, async tx => { tx.saveReview({ ...tx.reviews[0], status: '进行中', step: 'arena' }); }, undefined, { action: 'test.direct' });
-  f.clock(new Date(2026, 10, 9, 4).toISOString()); await refresh(f.ctx, f.ctx.now());
-  expect(f.home()).toMatchObject({ review: { period: '2026-W45', resumeStep: 'arena' } });
-  const transact = vi.spyOn(f.ctx.repos, 'transact'), write = vi.spyOn(f.ctx.repos.reviews, 'write');
-  f.clock(new Date(2026, 10, 15, 4).toISOString());
-  await run(f.ctx, async tx => { refreshInTx(tx); refreshInTx(tx); }, undefined, { action: 'test.direct' });
-  expect(transact).toHaveBeenCalledTimes(1); expect(write).toHaveBeenCalledTimes(2);
-  expect((await f.ctx.repos.reviews.get('2026-W45'))!.value).toMatchObject({ status: '已被取代', step: 'arena' });
-  expect(f.home()).toMatchObject({ review: { period: '2026-W46', resumeStep: 'recap' } });
-  write.mockClear(); await refresh(f.ctx, f.ctx.now()); expect(write).not.toHaveBeenCalled();
-});
-it('same-transaction review edits merge before commit and a completed period does not return', async () => {
-  const f = fixture(); await seed(f, []);
-  f.clock(new Date(2026, 10, 8, 4).toISOString());
-  const write = vi.spyOn(f.ctx.repos.reviews, 'write');
-  await run(f.ctx, async tx => {
-    tx.state.first_used_day = '2026-10-27'; refreshInTx(tx);
-    tx.saveReview({ ...tx.reviews[0], status: '已完成', step: 'done' }); refreshInTx(tx);
-  }, undefined, { action: 'test.direct' });
-  expect(write).toHaveBeenCalledTimes(1);
-  expect((await f.ctx.repos.reviews.get('2026-W45'))!.value.status).toBe('已完成');
-  expect(f.home().mode).toBe('guide');
+
+it('〔换一张〕写进板子的 seen；全跳过了在写事务里重开一轮', async () => {
+  const f = fixture(); await seed(f, [card('a', { task_id: 't', order: 1 }), card('b', { task_id: 't', order: 2 })], [task('t')]);
+  await plan.add(f.ctx, 'today', { cardId: 'a', priority: '普通' }, at(1));
+  await plan.add(f.ctx, 'today', { cardId: 'b', priority: '普通' }, at(1));
+  const day = (await f.ctx.repos.plans.days())[0];
+  await plan.skipCard(f.ctx, 'a', at(2));
+  expect((await f.ctx.repos.plans.read(day)).value.seen).toEqual(['a']);
+  expect(await drawFromPlan(f.ctx, at(2))).toMatchObject({ card: { id: 'b' } });
+  await plan.skipCard(f.ctx, 'b', at(3));
+  expect((await f.ctx.repos.plans.read(day)).value.seen).toEqual(['b']);
+  expect(await getCard(f, 'a')).toMatchObject({ skip_count: 0 });
 });
