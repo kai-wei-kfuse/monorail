@@ -1,7 +1,8 @@
 import './marks.css';
 
 /** idle = 待机（强调色），focus = 专注（mint，闪烁），away = 离开 / 快捷活动（cyan）。 */
-export type LedKind = 'idle' | 'focus' | 'away';
+/** off：宽松模式下没在计时，灰灯（ADR 0021 第 13 条） */
+export type LedKind = 'idle' | 'focus' | 'away' | 'off';
 
 export function StatusLed({ kind }: { kind: LedKind }) {
   return <i className="st-led" data-kind={kind} aria-hidden="true" />;

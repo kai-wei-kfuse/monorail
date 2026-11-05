@@ -31,7 +31,7 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
   const E = useEntry(view, actions, () => setWrite(false)), { running, kind, isFrozen } = E, { entry, pending, paused } = view;
   const s = fusedState(view, card, write), showCard = s.show === 'card' && !!card && !!cardView;
   const endMs = pending ? now : entry?.endedAt ? Date.parse(entry.endedAt) : now;
-  const elapsed = Math.max(0, endMs - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
+  const elapsed = view.looseIdle && !pending ? 0 : Math.max(0, endMs - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
   const writeOther = () => { setWrite(true); E.next(); };
   // 回到卡：卡在做时放弃「＋」开的待确认；卡还没开始，待确认留着，点〔开始〕就算这张卡
   const back = () => { if (pending && card?.status === '进行中') actions.cancelPending(pending.id); setWrite(false); };
@@ -70,7 +70,7 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
   const awayFreeze = !!view.away && !E.deciding;
   const label = E.deciding ? '待确认' : !running ? (paused ? '已暂停' : '现在做什么') : '正在做';
   const state = (E.deciding ? ['待确认 · 已在计时', 'PENDING']
-    : !running ? (paused ? ['已暂停', 'PAUSED'] : ['待机', 'IDLE'])
+    : !running ? (paused ? ['已暂停', 'PAUSED'] : view.looseIdle ? ['没在计时', 'NOT TIMING'] : ['待机', 'IDLE'])
     : awayFreeze || kind === 'away' ? ['进行中（暂停）', 'PAUSED']
     : ['进行中', 'RUNNING']) as [string, string];
   const progress = cardProgress(elapsed, null, (!!running || E.deciding) && !awayFreeze, awayFreeze || kind === 'away' || (kind === 'idle' && !!paused));

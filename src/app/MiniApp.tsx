@@ -147,9 +147,9 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const c = card && (running?.cardId === card.id || (pending && card.status === '待做')) ? card : null;
   const pend = pending ? now - Date.parse(pending.startedAt) : 0;
   const total = c ? snap.closedEffectiveMs + (snap.currentSegStartedAt ? now - Date.parse(snap.currentSegStartedAt) : 0) + (c.status === '待做' ? pend : 0)
-    : pending ? pend : entry ? now - Date.parse(entry.startedAt) : 0;
+    : pending ? pend : snap.looseIdle ? 0 : entry ? now - Date.parse(entry.startedAt) : 0;
   const progress = cardProgress(total, c?.goalMinutes ?? null, !!running, away);
-  const title = c ? c.content : pending ? '待确认' : running ? running.description : resumeDescription ? `已暂停：${resumeDescription}` : '待机';
+  const title = c ? c.content : pending ? '待确认' : running ? running.description : resumeDescription ? `已暂停：${resumeDescription}` : snap.looseIdle ? '没在计时' : '待机';
   const currentProject = c?.project ?? running?.project ?? '未分类';
   // 分类：写新事件时是先选的那个；否则是正在计的这一条（是卡时改的是卡）。待机且不在写时没有
   const catValue = writingNew ? edit!.project : c || running ? currentProject : null;
@@ -169,7 +169,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const cat = catValue !== null && <button type="button" className="mini-cat" id="mini-cat" aria-haspopup="listbox" aria-expanded={catOpen}
     title={`分类：${catValue}（点开切换）`} onMouseDown={toggleCat}><i style={{ background: color(catValue) }} /><span>{catValue}</span></button>;
   const overText = progress.overMs > 0 ? `+${formatReadout(progress.overMs, 'mmss')}` : null;
-  const stateEn = pending ? 'PENDING' : !running ? (resumeDescription ? 'PAUSED' : 'IDLE') : away ? 'AWAY' : overText ?? 'RUNNING';
+  const stateEn = pending ? 'PENDING' : !running ? (resumeDescription ? 'PAUSED' : snap.looseIdle ? 'NOT TIMING' : 'IDLE') : away ? 'AWAY' : overText ?? 'RUNNING';
 
   // 点名字就地变成透明输入框：待机时和点主窗口输入框一样，从这一刻起计时（待确认）
   const openEdit = () => {
@@ -232,7 +232,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     : null;
 
   return <div ref={root}>
-    <MiniWindow mode={mode} strip={c ? '卡' : '—'} meta={meta} cat={cat || undefined} title={title} stateEn={stateEn} miniFilled={progress.miniFilled} running={!!running} topoDepth={0}
+    <MiniWindow mode={mode} strip={c ? '卡' : '—'} meta={meta} cat={cat || undefined} title={title} stateEn={stateEn} miniFilled={progress.miniFilled} running={!!running} off={!!snap.looseIdle && !pending} topoDepth={0}
       paused={!running} canResume={!!resumeDescription}
       onPause={() => act({ type: 'pause' })} onResume={() => act({ type: 'resume' })}
       onComplete={c && c.status === '进行中' ? () => act({ type: 'complete', cardId: c.id }) : undefined}

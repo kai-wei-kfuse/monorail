@@ -15,11 +15,13 @@ import * as edit from '../../services/timeEditService';
 import type { Ctx } from '../../services/commit';
 import type { Actions } from '../actions';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
+import { StatusBlock } from '../shell/StatusBlock';
 
 /**
  * 首页接线预览（只在开发时用）：内存文件系统 + 真的仓库和 service，发布到真的 appStore，首页用真的 actions。
  * 一个主线任务带两张卡，两个收藏，今天上午两条记录。下面列出条目和待确认，方便截图核对。刷新页面数据就清空。
  * &view=calendar / list 换成日历页、列表页（真的 CalendarScreen / ListScreen）。&layout=fused 用融合布局。
+ * &mode=loose 用宽松计时模式（ADR 0021 第 13 条）；&title 在上面加标题栏状态块（看灰灯）。
  */
 export function LivePreview() {
   const [actions, setActions] = useState<Actions | null>(null), [ctx, setCtx] = useState<Ctx | null>(null), [errors, setErrors] = useState<string[]>([]);
@@ -31,6 +33,7 @@ export function LivePreview() {
     const settings = structuredClone(defaults);
     settings.lists.projects = PREVIEW_PROJECTS; settings.lists.tags = PREVIEW_TAGS;
     if (layout === 'split' || layout === 'fused') settings.homeLayout = layout;
+    if (query.get('mode') === 'loose') settings.trackingMode = 'loose';
     settings.lists.presets = [{ id: 'f1', name: '学 408', project: '学习', tags: ['408'], mode: '切换', place: '计时条' },
       { id: 'f2', name: '回消息', project: '工作', tags: [], mode: '切换', place: '计时条' },
       { id: 'q1', name: '上厕所', project: '生活', tags: [], mode: '插入', place: '弹层' },
@@ -60,7 +63,9 @@ export function LivePreview() {
       <ol>{entries.map(e => <li key={e.id}>{e.description} [{e.project}{e.tags.map(t => ' #' + t).join('')}] {new Date(e.started_at).toTimeString().slice(0, 5)}–{e.ended_at ? new Date(e.ended_at).toTimeString().slice(0, 5) : '现在'}</li>)}</ol></div>
   </div>;
   const hms = (iso: string) => new Date(iso).toTimeString().slice(0, 8);
-  return <div style={{ height: '100vh', display: 'grid', gridTemplateRows: 'minmax(0, 1fr) auto', padding: '14px 16px', gap: 8 }}>
+  return <div style={{ height: '100vh', display: 'grid', gridTemplateRows: query.has('title') ? 'auto minmax(0, 1fr) auto' : 'minmax(0, 1fr) auto', padding: '14px 16px', gap: 8 }}>
+    {query.has('title') && <div style={{ display: 'flex', justifyContent: 'flex-end' }}><StatusBlock kind={home.looseIdle ? 'off' : home.activity.kind}
+      label={home.looseIdle ? '没在计时' : home.activity.label || '待机'} startedAt={home.looseIdle ? null : home.activity.startedAt} onClick={() => {}} /></div>}
     <HomePage actions={actions} intro={null} completeAt={null} onCompleteConsumed={() => {}} shrinkFor={null} onShrinkConsumed={() => {}}
       look={{ titleScale: 1, topoMode: 'off', topoDepth: 0, timeboxDefault: 30 }} onGuide={() => {}} onOpenReview={() => {}} />
     <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)', maxHeight: 120, overflow: 'auto' }}>

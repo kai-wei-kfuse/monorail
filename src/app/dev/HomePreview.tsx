@@ -37,6 +37,7 @@ function notices(o: string | null): Notice[] {
     backfill: { id: 'd2', kind: 'backfill', data: { activities: ACTS, now: iso(0) } },
     timeboxShort: { id: 'd3', kind: 'timeboxShort', data: { cardId: 'c', remainingMinutes: 15, at: iso(0) } },
     restReturn: { id: 'd4', kind: 'restReturn', data: { suggestion: '眺望窗外' } },
+    idleAsk: { id: 'd5', kind: 'idleAsk', data: { entryId: 'idle', from: iso(min(75)), to: iso(min(35)), minutes: 40, activities: ACTS } },
   };
   return o === 'toasts' ? toasts : o && dialogs[o] ? [dialogs[o]] : [];
 }

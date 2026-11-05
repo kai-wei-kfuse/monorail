@@ -24,7 +24,7 @@ export function projectMini(snapshot: Snapshot, epoch: number): MiniSnapshot {
     pending_id: home.pending?.id ?? null, entry: home.entry, pending: home.pending, resumeDescription: home.resumeDescription,
     card: card && home.card ? { id: card.id, content: card.content, status: home.card.status, project: card.project, tags: card.tags,
       goalMinutes: home.card.goalMinutes } : null,
-    closedEffectiveMs: home.closedEffectiveMs, currentSegStartedAt: home.currentSegStartedAt, awayActivity: home.awayActivity,
+    closedEffectiveMs: home.closedEffectiveMs, currentSegStartedAt: home.currentSegStartedAt, awayActivity: home.awayActivity, looseIdle: home.looseIdle,
     projects: snapshot.backpack.pool.projects, knownTags: home.knownTags, accent: settings.accent, miniMode: settings.miniMode,
     suggest: miniSuggest(snapshot) });
 }

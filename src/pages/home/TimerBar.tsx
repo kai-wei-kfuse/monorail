@@ -26,6 +26,8 @@ export interface TimerView {
   away?: TimerEntry | null;
   /** 正在计的是待机。 */
   idle: boolean;
+  /** 宽松模式下什么都没在做（ADR 0021 第 13 条）：读数不走、写「没在计时」；数据里照样开着待机 */
+  looseIdle?: boolean;
   /** 待确认：从 startedAt 起在计时，还没写盘；id 标识这一轮，放弃时带上。 */
   pending: { id: string; startedAt: string } | null;
   /** 暂停中、点「继续」会接着计的那件事（回到目标）的描述；没有就是 null。 */
@@ -83,12 +85,13 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
   useEffect(() => { onDraft?.(draft); }, [draft, onDraft]);
 
   const endMs = pending ? now : entry?.endedAt ? Date.parse(entry.endedAt) : now;
-  const elapsed = Math.max(0, endMs - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
+  // 宽松模式空闲：读数停在 0，不走
+  const elapsed = view.looseIdle && !pending ? 0 : Math.max(0, endMs - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
   const canEditTime = !!pending || (!!running && !view.away);
   const readoutText = formatReadout(elapsed, 'mmss'), splitAt = readoutText.lastIndexOf(':');
   const headDigits = readoutText.slice(0, splitAt), tailSec = readoutText.slice(splitAt);
   const label = {
-    pending: ['WAIT', 'PENDING', '待确认'], idle: paused ? ['PAUSE', 'PAUSED', '暂停中'] : ['IDLE', 'IDLE', '待机'],
+    pending: ['WAIT', 'PENDING', '待确认'], idle: paused ? ['PAUSE', 'PAUSED', '暂停中'] : view.looseIdle ? ['OFF', 'NOT TIMING', '没在计时'] : ['IDLE', 'IDLE', '待机'],
     away: running?.kind === '暂停' ? ['PAUSE', 'PAUSED', '暂停中'] : ['AWAY', 'AWAY', '离开中'], focus: ['NOW', 'ELAPSED', '这一条'],
   }[kind];
 
@@ -99,7 +102,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
     </div>
     {mode === 'manual' ? manual : <>
       <div className="tbar-row">
-        <div className="tbar-tag" data-kind={kind}><StatusLed kind={kind === 'pending' ? 'idle' : kind} /><span>{label[0]}</span></div>
+        <div className="tbar-tag" data-kind={kind}><StatusLed kind={kind === 'pending' ? 'idle' : view.looseIdle && kind === 'idle' ? 'off' : kind} /><span>{label[0]}</span></div>
         <div className="tbar-group" {...E.groupProps}>
           <div className="tbar-input">
             <input id="what" className={paused ? 'paused' : ''} aria-label="在做什么" autoComplete="off" {...E.inputProps}

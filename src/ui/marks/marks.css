@@ -50,6 +50,7 @@ button.status:hover { box-shadow: inset 0 -3px 0 var(--yellow); }
 .st-led { flex: none; width: 7px; height: 7px; background: var(--yellow); }
 .st-led[data-kind="focus"] { background: var(--mint); animation: blink 2s steps(1) infinite; }
 .st-led[data-kind="away"] { background: var(--yellow); }
+.st-led[data-kind="off"] { background: var(--mute-2); }
 .st-label { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 520 13px/1 var(--f-cn); letter-spacing: .04em; }
 .st-time { min-width: 3.2em; text-align: right; font: 600 15px/1 var(--f-en); color: #fff; font-variant-numeric: tabular-nums; }
 

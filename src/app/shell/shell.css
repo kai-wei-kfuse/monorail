@@ -56,6 +56,7 @@
 .mini-read { display: grid; gap: 7px; margin-right: 8px; }
 .mini-read .k { font-size: 8px; color: #8a8a86; }
 .mini-time { font: 600 expanded 26px/1 var(--f-en); color: var(--yellow); font-variant-numeric: tabular-nums; }
+.mini-time.off { color: var(--mute-2); }
 .mini-btn { width: 34px; height: 34px; display: grid; place-items: center; background: #2e2e2d; color: #e8e8e4; transition: transform .09s, background .15s; }
 .mini-btn:hover { background: #3c3c3a; }
 .mini-btn:active { transform: translateY(2px); }

@@ -27,6 +27,8 @@ export function MiniPreview() {
     };
     // ?idle：从待机开始（点名字就是写新事件）；?long：正在计的这一条分类名很长
     if (params.has('idle')) s = { ...s, entry: { ...s.entry!, id: 'idle', description: '待机', project: '待机' }, entryId: 'idle' };
+    // &loose：宽松模式没在计时（ADR 0021 第 13 条）
+    if (params.has('loose')) s = { ...s, card: null, cardId: null, entry: { ...s.entry!, id: 'idle', description: '待机', project: '待机', cardId: null }, entryId: 'idle', looseIdle: true };
     if (params.has('long')) s = { ...s, entry: { ...s.entry!, project: '英语口语练习打卡计划' } };
     let onSnap: ((v: MiniSnapshot) => void) | null = null, onReply: ((r: MiniReply) => void) | null = null;
     const push = (next: Partial<MiniSnapshot>) => { s = { ...s, ...next, revision: s.revision + 1 }; s.entryId = s.entry?.id ?? null; onSnap?.(s); };

@@ -15,10 +15,10 @@ import './shell.css';
  * 名称点一下就地变成透明输入框（titleInput）；读数 digits 由外面传（就地编辑的 TimeField）。空白处可以拖动窗口。
  * pop：贴着小窗本体、与窗口同宽的弹层（自动完成、分类下拉，0.3.0-beta.4 D1）；popUp 时放在本体上面。
  */
-export function MiniWindow({ mode = 'mini', strip, meta, title, titleInput, cat, stateEn, digits, miniFilled, running, topoDepth, paused, canResume,
+export function MiniWindow({ mode = 'mini', strip, meta, title, titleInput, cat, stateEn, digits, miniFilled, running, off = false, topoDepth, paused, canResume,
   onPause, onResume, onComplete, onClose, onTitle, caption, pop, popUp, popStyle }:
   { mode?: 'mini' | 'tiny'; strip: string; meta: ReactNode; title: string; titleInput?: ReactNode; cat?: ReactNode; stateEn: string; digits: ReactNode;
-    miniFilled: number; running: boolean; topoDepth: number;
+    miniFilled: number; running: boolean; /** 宽松模式没在计时：读数变灰（ADR 0021 第 13 条） */ off?: boolean; topoDepth: number;
     paused: boolean; canResume: boolean; onPause: () => void; onResume: () => void; onComplete?: () => void; onClose: () => void; onTitle: () => void;
     caption?: ReactNode; pop?: ReactNode; popUp?: boolean; popStyle?: CSSProperties }) {
   const tiny = mode === 'tiny';
@@ -35,7 +35,7 @@ export function MiniWindow({ mode = 'mini', strip, meta, title, titleInput, cat,
         {!tiny && <MiniBars filled={miniFilled} />}
       </div>
       <div className="mini-r" data-tauri-drag-region>
-        <div className="mini-read">{!tiny && <span className="k">{stateEn}</span>}<span className="mini-time">{digits}</span></div>
+        <div className="mini-read">{!tiny && <span className="k">{stateEn}</span>}<span className={`mini-time${off ? ' off' : ''}`}>{digits}</span></div>
         {paused
           ? <button type="button" className="mini-btn go" aria-label="继续" title="继续" disabled={!canResume} onClick={onResume}><Icon name="play" /></button>
           : <button type="button" className="mini-btn go" aria-label="暂停" title="暂停" onClick={onPause}><Icon name="pause" /></button>}

@@ -149,7 +149,7 @@ export function EntryLine({ view, note }: { view: TimerView; note: ReadoutNote |
   return <>
     {pending ? <span>从 <b>{hms(pending.startedAt)}</b> 起已在计时，还没写盘。{view.waitingCard ? '点卡上的〔开始〕' : '写下在做什么'}（或选收藏），这段时间就算在那件事上{running ? `；「${running.description}」算到 ${hms(pending.startedAt)} 为止` : ''}</span>
       : running ? <span>开始于 <b>{hm(running.startedAt)}</b> · 记到项目「{running.project}」{running.tags.length ? ' · ' + running.tags.map(t => '#' + t).join(' ') : ''}</span>
-      : paused ? <span>已暂停：「{paused}」，点「继续」接着计</span> : <span>没在做事，正在计待机</span>}
+      : paused ? <span>已暂停：「{paused}」，点「继续」接着计</span> : view.looseIdle ? <span>没在计时。写下在做什么，或者点〔开始〕</span> : <span>没在做事，正在计待机</span>}
     {note && <HitNote note={note} />}
   </>;
 }

@@ -39,6 +39,8 @@ export interface MiniSnapshot {
   pending: { id: string; startedAt: string } | null; resumeDescription: string | null;
   card: { id: string; content: string; status: '待做' | '进行中'; project: string | null; tags: string[]; goalMinutes: number | null } | null;
   closedEffectiveMs: number; currentSegStartedAt: string | null; awayActivity: string | null;
+  /** 宽松模式下什么都没在做：写「没在计时」，读数不走（ADR 0021 第 13 条）。旧主窗口不发，按 false */
+  looseIdle?: boolean;
   projects: { name: string; color: string }[]; knownTags: string[];
   /** 写新事件时的自动完成（0.3.0-beta.4 D1）：收藏、待做的卡、最近的记录（已去重，最多 100 条） */
   suggest: SuggestData;
