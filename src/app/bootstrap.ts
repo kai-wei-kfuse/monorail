@@ -11,9 +11,8 @@ import { nativeSettingsPlatform } from '../platform/settings';
 import { applyPlatform } from '../services/settingsService';
 import { inBackpack } from '../domain/task/task';
 import type { ReminderPlan } from '../domain/reminders';
-import { createContext, run } from '../services/commit';
-import { refreshInTx } from '../services/dealService';
-import { expireInTx } from '../services/ideaService';
+import { createContext } from '../services/commit';
+import { newDay as dayChange } from '../services/dayChange';
 import type { Ctx } from '../services/commit';
 import { reconcile } from '../services/recordService';
 import { cleanup as historyCleanup } from '../services/historyService';
@@ -80,9 +79,8 @@ export async function bootstrap(root: string) {
     await reconcile(ctx);
     booting = false;
     if (dirty) await reconcile(ctx);
-    // A new activity day archives stale ideas and re-deals the home card in one transaction; also once at startup.
-    const newDay = () => run(ctx, async tx => { expireInTx(tx); refreshInTx(tx); }, ctx.now(),
-      { action: 'system.dayChange', source: { kind: 'system', trigger: 'dayChange' } });
+    // 换日（ADR 0021 第 6 条）：想法过期、今日任务板带过去、刷新首页状态，一个事务；启动时也做一次（每个活动日只带一次）
+    const newDay = () => dayChange(ctx);
     // 操作历史保留 180 天（E8d）：启动完成 journal 恢复后、每次换日之后各清理一次；失败只记日志，不打扰提交
     const cleanHistory = () => void historyCleanup(ctx).then(r => ctx.log(`history-cleanup:${JSON.stringify(r)}`),
       error => ctx.log(`history-cleanup-failed:${error instanceof Error ? error.message : String(error)}`)).catch(() => {});

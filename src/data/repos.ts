@@ -18,6 +18,8 @@ import { cardSchema, recordSchema, taskSchema, reviewSchema } from './schemas';
 import { migrateV2 } from './migrations/v2';
 import { ReceiptRepo } from './receiptRepo';
 import { HistoryRepo } from './historyRepo';
+import { PlanRepo } from './planRepo';
+export type { PlanFile } from './planRepo';
 export type { HistoryWrite } from './historyRepo';
 import type { OperationReceipt } from '../shared/operation';
 
@@ -33,6 +35,8 @@ export interface EntityRepo<T> {
 export interface Repositories {
   receipts: { get(id: string): Promise<OperationReceipt | null>; write(receipt: OperationReceipt): Promise<Write> };
   history: HistoryRepo;
+  /** 今日任务板（ADR 0021 第 1 条） */
+  plans: PlanRepo;
   records: EntityRepo<RecordEntry>;
   cards: EntityRepo<Card>;
   tasks: EntityRepo<Task>;
@@ -54,7 +58,7 @@ export interface Repositories {
 export function createRepos(fs: FileSystem): Repositories {
   const journal = new Journal(fs), times = new TimelogV2Repo(fs);
   return {
-    receipts: new ReceiptRepo(fs), history: new HistoryRepo(fs),
+    receipts: new ReceiptRepo(fs), history: new HistoryRepo(fs), plans: new PlanRepo(fs),
     records: new MdRepo(fs, 'records', recordSchema), cards: new MdRepo(fs, 'cards', cardSchema),
     tasks: new MdRepo(fs, 'tasks', taskSchema), reviews: new MdRepo(fs, 'reviews', reviewSchema),
     state: new StateRepo(fs), times, settings: new SettingsRepo(fs),

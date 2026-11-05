@@ -34,7 +34,12 @@ export const settingDefinitions = {
   mainHotkey: { type: 'string', default: 'Ctrl+Alt+Shift+M', unit: 'shortcut' },
   autostart: { type: 'boolean', default: true, unit: 'boolean' },
   alwaysOnTop: { type: 'boolean', default: false, unit: 'boolean' },
-  miniMode: { type: 'enum', default: 'mini', options: ['mini', 'tiny'], unit: 'mode' },
+  miniMode: { type: 'enum', default: 'mini', options: ['mini', 'tiny'], unit: 'mode', defaultWhenMissing: true },
+  // 0.3.1（ADR 0021 第 9、13 条）：旧的 settings.yaml 没有这几个键，读的时候用默认值（defaultWhenMissing）；0.3.0 原样保留
+  insertBackPlace: { type: 'enum', default: 'bottom', options: ['bottom', 'top'], unit: 'place', defaultWhenMissing: true },
+  taskMode: { type: 'boolean', default: true, unit: 'boolean', defaultWhenMissing: true },
+  trackingMode: { type: 'enum', default: 'strict', options: ['strict', 'loose'], unit: 'mode', defaultWhenMissing: true },
+  idleAskMinutes: { type: 'number', default: 30, min: 5, max: 240, step: 5, unit: 'minutes', defaultWhenMissing: true },
 } as const;
 
 export type SettingKey = keyof typeof settingDefinitions;

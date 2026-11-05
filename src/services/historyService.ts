@@ -31,7 +31,10 @@ export function list(ctx: Ctx, days: number, at = ctx.now()): Promise<HistoryPag
 export function cleanup(ctx: Ctx): Promise<{ removed: number; failed: number; cutoff: string }> {
   return whenCommitsOpen(ctx, () => maintain(ctx, async () => {
     const cutoff = shiftDay(today(ctx), -(HISTORY_RETENTION_DAYS - 1)), skip = historyMergePath(ctx);
-    return { ...await ctx.repos.history.removeBefore(cutoff, new Set(skip ? [skip] : [])), cutoff };
+    const result = await ctx.repos.history.removeBefore(cutoff, new Set(skip ? [skip] : []));
+    // 今日任务板同样保留 180 天（ADR 0021 第 1 条）：逐个删，失败计数
+    for (const d of (await ctx.repos.plans.days()).filter(d => d < cutoff)) { try { await ctx.repos.plans.remove(d); result.removed++; } catch { result.failed++; } }
+    return { ...result, cutoff };
   }));
 }
 

@@ -7,6 +7,7 @@ import type { Review } from '../review/schedule';
 import type { RecordEntry } from '../record/record';
 import { ideaStatus } from '../idea/pool';
 import type { TimeEntry } from '../timeline/entry';
+import type { DayPlan, PlanItem } from '../plan/plan';
 import type { HistoryChange, HistoryObjectType, HistorySubject } from '../../shared/history';
 import { SETTING_LABELS } from '../../shared/history';
 
@@ -17,6 +18,8 @@ export interface CompareInput {
   entries: { before: TimeEntry[]; after: TimeEntry[] };
   state: { before: Record<string, unknown>; after: Record<string, unknown> };
   settings: { before: Record<string, unknown>; after: Record<string, unknown> };
+  /** 今日任务板：本事务改过的那几天，改前、改后（ADR 0021 第 11 条）；没有就是空数组 */
+  plans?: { before: DayPlan; after: DayPlan; today: string }[];
   /** 显示用：任务、卡片、条目的名字（改前改后合起来，删掉的也在） */
   names: { tasks: ReadonlyMap<string, string>; cards: ReadonlyMap<string, string>; entries: ReadonlyMap<string, string> };
 }
@@ -120,7 +123,36 @@ export function compareAll(input: CompareInput): HistoryChange[] {
     ...objectChanges('review', input.reviews, REVIEW, r => r.period, input.names),
     ...state,
     ...settingsChanges(input.settings.before, input.settings.after),
+    ...planChanges(input.plans ?? [], input.names),
   ];
+}
+
+/**
+ * 今日任务板的改动（ADR 0021 第 11 条）：不加 change type 枚举值（0.3.0 的历史 schema 是严格枚举），
+ * 板子上某张卡的变化记成 card、字段「今日任务板 / 今天的量 / 优先级 / 换一张」；「今天先不排」记成 state。
+ * rolled_over、carried_from、carried_confirmed 是簿记；带过来的项在用户确认时（carried 从 true 变 false）记一条「今日任务板」。
+ */
+function planChanges(plans: NonNullable<CompareInput['plans']>, names: CompareInput['names']): HistoryChange[] {
+  const out: HistoryChange[] = [];
+  for (const { before, after, today } of plans) {
+    const which = after.day === today ? '今天' : after.day > today ? '明天' : after.day;
+    const b = new Map(before.items.map(i => [i.card_id, i])), a = new Map(after.items.map(i => [i.card_id, i]));
+    const show = (i: PlanItem | undefined) => i ? (i.carried ? `${which}（带过来，待确认）` : which) : '—';
+    for (const id of [...new Set([...b.keys(), ...a.keys()])].sort()) {
+      const x = b.get(id), y = a.get(id), name = cut(names.cards.get(id) ?? '（已删除的卡）', 40);
+      if (show(x) !== show(y)) out.push({ type: 'card', id, name, field: '今日任务板', before: show(x), after: show(y) });
+      if (x && y) {
+        const m = (i: PlanItem) => i.today_minutes === null ? '（不填）' : `${i.today_minutes} 分钟`;
+        if (m(x) !== m(y)) out.push({ type: 'card', id, name, field: '今天的量', before: m(x), after: m(y) });
+        if (x.priority !== y.priority) out.push({ type: 'card', id, name, field: '优先级', before: x.priority, after: y.priority });
+      }
+    }
+    for (const id of after.seen.filter(id => !before.seen.includes(id)))
+      out.push({ type: 'card', id, name: cut(names.cards.get(id) ?? '（已删除的卡）', 40), field: '换一张', before: null, after: '这一轮跳过' });
+    if (before.skip_until_planned !== after.skip_until_planned)
+      out.push({ type: 'state', id: `plan:${after.day}`, name: '今日任务板', field: '今天先不排', before: text(before.skip_until_planned), after: text(after.skip_until_planned) });
+  }
+  return out;
 }
 
 /**

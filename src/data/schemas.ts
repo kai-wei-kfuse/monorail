@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { settingEntries } from '../shared/settings';
-import type { SettingKey, SettingValues } from '../shared/settings';
+import type { SettingEntry, SettingKey, SettingValues } from '../shared/settings';
 import { safeRelative } from './fs';
 
 const iso = z.iso.datetime({ offset: true });
@@ -56,13 +56,13 @@ const listsSchema = z.object({
     restPool: z.array(namedItem).refine(uniqueIds, '休息项 id 重复'),
     idleName: z.string().min(1),
 }).passthrough();
+// 标了 defaultWhenMissing 的键：旧文件缺这个键时用默认值（ADR 0021 第 9 条；CLAUDE.md「settings.yaml 是当前配置来源」的例外）
+const withDefault = (entry: SettingEntry, schema: z.ZodType) =>
+  'defaultWhenMissing' in entry && entry.defaultWhenMissing ? (schema as z.ZodType & { default(v: unknown): z.ZodType }).default(entry.default) : schema;
 const settingShape = Object.fromEntries(settingEntries.map(entry => {
-  if (entry.type === 'number') return [entry.key, z.number().int().min(entry.min).max(entry.max).refine(value => (value - entry.min) % entry.step === 0, '不符合设置步长')];
-  if (entry.type === 'enum') {
-    const schema = z.enum(entry.options);
-    return [entry.key, entry.key === 'miniMode' ? schema.default(entry.default) : schema];
-  }
-  return [entry.key, entry.type === 'boolean' ? z.boolean() : z.string().min(1)];
+  if (entry.type === 'number') return [entry.key, withDefault(entry, z.number().int().min(entry.min).max(entry.max).refine(value => (value - entry.min) % entry.step === 0, '不符合设置步长'))];
+  if (entry.type === 'enum') return [entry.key, withDefault(entry, z.enum(entry.options))];
+  return [entry.key, withDefault(entry, entry.type === 'boolean' ? z.boolean() : z.string().min(1))];
 })) as { [K in SettingKey]: z.ZodType<SettingValues[K]> };
 export const settingsSchema = z.object({ ...settingShape, schemaVersion: z.literal(2), lists: listsSchema }).passthrough();
 

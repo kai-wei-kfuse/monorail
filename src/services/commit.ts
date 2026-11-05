@@ -5,7 +5,8 @@ import { activityDay } from '../domain/timeline/day';
 import { planReminders } from '../domain/reminders';
 import type { Settings } from '../shared/settings';
 import type { Reminders } from '../platform/reminders';
-import type { AppState, Repositories, Write } from '../data/repos';
+import type { AppState, PlanFile, Repositories, Write } from '../data/repos';
+import type { DayPlan } from '../domain/plan/plan';
 import type { RecordEntry } from '../domain/record/record';
 import type { Task } from '../domain/task/task';
 import type { Review } from '../domain/review/schedule';
@@ -13,6 +14,10 @@ import type { Notice } from '../shared/notices';
 import type { HomeSlice } from '../store/homeSlice';
 import { projectHome } from './homeProjection';
 import { projectBackpack } from './backpackProjection';
+import { projectPlan } from './planProjection';
+import type { PlanSlice } from '../store/planSlice';
+import { shiftDay } from '../domain/plan/plan';
+import { activeRefInTx } from './tracking/api';
 import type { BackpackSlice } from '../store/backpackSlice';
 import { entityChanges } from './entityChanges';
 import type { SettingsPlatform } from '../platform/settings';
@@ -29,6 +34,8 @@ import type { MergePointer, PendingHistory } from './historyCapture';
 export interface Snapshot {
   state: AppState; cards: Card[]; tasks: Task[]; records: RecordEntry[]; reviews: Review[];
   entries: TimeEntry[]; home: HomeSlice; backpack: BackpackSlice; review: ReviewSlice; settings: Settings; notices: Notice[];
+  /** 今日任务板（今天、明天两块；ADR 0021 第 1 条） */
+  plan: PlanSlice;
 }
 export interface ContextOptions {
   repos: Repositories; settings: Settings; reminders: Reminders;
@@ -56,6 +63,11 @@ export interface Transaction {
   random(): number; saveCard(card: Card): void; saveReview(review: Review): void;
   saveTask(task: Task): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
   saveSettings(settings: Settings): Promise<void>;
+  /** 今日任务板（ADR 0021 第 1 条）：今天那份在建事务时预读（同步的 InTx 可用）；「今天」按 tx.at 算。 */
+  readonly todayPlan: DayPlan;
+  /** 别的日子懒读（同一事务内缓存）；只有 async 的 InTx 能调用。 */
+  plan(day: string): Promise<DayPlan>;
+  savePlan(plan: DayPlan): void;
 }
 interface Queue { tail: Promise<unknown>; failure?: unknown; snapshotFailure?: unknown; version: number; paused?: { resumed: Promise<void>; release(): void };
   /** closeMaintenance 之后：不再接纳维护任务，已排队还没开始的取消 */
@@ -238,6 +250,16 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       !original || record.text !== original.value.text ? record.text : undefined);
     let settings = structuredClone(ctx.settings);
     let settingsWrite: Write | undefined;
+    // 今日任务板：载入时的原文留着做 journal 的 before；改过的才写（ADR 0021 第 1 条）
+    const todayKey = activityDay(commandAt, settings.dayBoundaryHour);
+    const plans = new Map<string, { file: PlanFile; value: DayPlan; dirty: boolean }>();
+    const loadPlan = async (day: string) => {
+      let slot = plans.get(day);
+      if (!slot) { const file = await ctx.repos.plans.read(day); slot = { file, value: structuredClone(file.value), dirty: false }; plans.set(day, slot); }
+      return slot;
+    };
+    await loadPlan(todayKey);
+    await loadPlan(shiftDay(todayKey, 1));   // 投影要显示明天那块；不改就不写
     const tx: Transaction = {
       scope: 'transaction', revision: queue.version, repos: ctx.repos, get settings() { return settings; },
       at: commandAt, id: ctx.id, now: ctx.now, log: ctx.log,
@@ -252,6 +274,13 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       }, saveReview: review => reviews.save(review),
       saveTask: task => tasks.save(task), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
       async saveSettings(value) { settingsWrite = await ctx.repos.settings.write(value); settings = structuredClone(value); },
+      get todayPlan() { return plans.get(todayKey)!.value; },
+      async plan(day) { return (await loadPlan(day)).value; },
+      savePlan(plan) {
+        const slot = plans.get(plan.day);
+        if (!slot) throw new Error(`今日任务板 ${plan.day} 没有在这个事务里读过`);
+        slot.value = structuredClone(plan); slot.dirty = true;
+      },
     };
     // 先补记、再消费（ADR 0019 第 5 条）：快速记录条存的、还没写过历史的记录，在执行动作之前先吸收
     const absorbed = absorbQuickbarInTx(tx, { cards, tasks, reviews, records }, ctx.repos, ctx.id, record => {
@@ -269,6 +298,7 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
     tx.writes.push(...await ctx.repos.times.writes(tx.entries, ctx.now(), tx.settings.dayBoundaryHour));
     if (settingsWrite) tx.writes.push(settingsWrite);
     tx.writes.push(...await cards.writes(), ...await tasks.writes(), ...await reviews.writes(), ...await records.writes());
+    for (const slot of plans.values()) if (slot.dirty) tx.writes.push(ctx.repos.plans.write(slot.value, slot.file));
     tx.writes.push(await ctx.repos.state.write(tx.state));
     const committedAt = ctx.now();
     if (operation) tx.writes.push(await ctx.repos.receipts.write({
@@ -285,7 +315,8 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
         before: { state: beforeState as unknown as Record<string, unknown>, settings: beforeSettings },
         after: { state: tx.state as unknown as Record<string, unknown>, settings: tx.settings, cards: tx.cards, tasks: tx.tasks, entries: tx.entries },
         changed: { cards: cards.changed(), tasks: tasks.changed(), reviews: reviews.changed(), records: records.changed(),
-          days: ctx.repos.times.changedDays(tx.entries, tx.settings.dayBoundaryHour) },
+          days: ctx.repos.times.changedDays(tx.entries, tx.settings.dayBoundaryHour),
+          plans: [...plans.values()].filter(slot => slot.dirty).map(slot => ({ before: slot.file.value, after: slot.value })) },
       }, mergePointers.get(ctx) ?? null, Date.parse(committedAt));
       if (history) tx.writes.push(history.write.write);
     }
@@ -305,6 +336,8 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: entriesSnapshot, at: ctx.now(), version: ++queue.version });
       const backpack = projectBackpack(tx.cards, tx.tasks, tx.records, entriesSnapshot, ctx.settings, ctx.now());
       const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, entries: entriesSnapshot, state: tx.state, settings: ctx.settings, at: ctx.now() });
+      const plan = projectPlan({ today: plans.get(todayKey)!.value, tomorrow: plans.get(shiftDay(todayKey, 1))!.value, cards: tx.cards, tasks: tx.tasks,
+        entries: entriesSnapshot, runningCard: activeRefInTx(tx), boundaryHour: ctx.settings.dayBoundaryHour, at: ctx.now() });
       ctx.publish({
         state: structuredClone(tx.state),
         cards: structuredClone(tx.cards),
@@ -315,6 +348,7 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
         home,
         backpack,
         review,
+        plan,
         settings: structuredClone(ctx.settings),
         notices: structuredClone(tx.notices),
       });

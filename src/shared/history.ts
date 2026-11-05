@@ -65,6 +65,12 @@ export const historyActions = {
   'backpack.saveCard': A('保存事项', 'card'), 'backpack.reorderQueue': A('调整事项顺序', 'card'),
   // 出卡、降级
   'deal.refresh': A('重新出卡', 'card'), 'deal.draw': A('抽卡', 'card'), 'degrade.returnFromRest': A('休息回来', 'state'),
+  // 今日任务板、插入、拆分（0.3.1，ADR 0021 第 11 条）。换日的带过去记在 system.dayChange 里，不单独成条
+  'plan.add': A('排进板子', 'card'), 'plan.remove': A('移出板子', 'card'), 'plan.edit': A('改今天的量或优先级', 'card'),
+  'plan.skip': A('今天先不排', 'state'), 'plan.skipCard': A('换一张', 'card'), 'plan.carry': A('确认昨天带过来的'),
+  'home.endOriginal': A('结束原任务', 'card'), 'home.pauseInsert': A('暂停插入的事', 'entry'), 'home.continueInsert': A('继续插入的事', 'entry'),
+  'home.rest': A('休息一下', 'entry'), 'home.answerIdle': A('说明空闲时段', 'entry'),
+  'card.split': A('缩小（拆成两项）', 'card'), 'card.keepGoing': A('接着做', 'card'),
   // 想法（ideaService）
   'idea.convertToTask': A('想法转任务', 'task'), 'idea.convert': A('想法转卡片', 'card'), 'idea.delete': A('删除想法', 'record'),
   'idea.edit': A('改想法', 'record'), 'idea.expire': A('想法进冷库', 'record'), 'idea.revive': A('从冷库捞回', 'record'), 'idea.resolveDuel': A('想法对决', 'record'),
@@ -97,13 +103,13 @@ export const historyActions = {
 
 /** 系统来源的「为什么会改」（ADR 0019 第 5 条）。 */
 export const SYSTEM_WHY: Record<SystemTrigger, string> = {
-  dayChange: '到了新的活动日：过期的想法进冷库、到回顾日生成本周回顾、首页重新出卡',
+  dayChange: '到了新的活动日：过期的想法进冷库、到回顾日生成本周回顾、昨天没做完的带到今天的板子',
   resume: '电脑休眠或关机后恢复：补记离线时段，截断当时正在计的那一条',
   reconcile: '启动或唤回主窗口时整理记录：补齐快速记录条存下的待办和想法',
 };
 /** 手动来源缺省的页面：按动作前缀推导（日历 / 列表共用的入口由调用页面传入）。 */
 export const PAGE_OF_PREFIX: Record<string, string> = {
-  home: 'home', card: 'home', deal: 'home', degrade: 'home', mini: 'mini', backpack: 'backpack', idea: 'backpack', preset: 'settings',
+  home: 'home', card: 'home', deal: 'home', plan: 'backpack', degrade: 'home', mini: 'mini', backpack: 'backpack', idea: 'backpack', preset: 'settings',
   record: 'home', review: 'review', settings: 'settings', entry: 'calendar', quickbar: 'quickbar',
 };
 
@@ -165,5 +171,6 @@ export const SETTING_LABELS: Record<string, string> = {
   deadlineLeadMinutes: '截止提前提醒', offlineAskMinMinutes: '离线追问门槛', accent: '强调色', titleScale: '标题字号', topoMode: '等高线',
   topoDepth: '等高线深度', motion: '动效', quickbarHotkey: '快速记录条快捷键', mainHotkey: '主窗口快捷键', autostart: '开机自启',
   alwaysOnTop: '置顶', miniMode: '小窗口样式',
+  insertBackPlace: '回去区域位置', taskMode: '任务模式', trackingMode: '计时模式', idleAskMinutes: '空闲多久后追问',
   'lists.presets': '收藏与快捷活动', 'lists.projects': '项目', 'lists.tags': '标签', 'lists.restPool': '休息池', 'lists.idleName': '待机名称',
 };

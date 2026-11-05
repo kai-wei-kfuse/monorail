@@ -22,11 +22,12 @@
 - reviewService → backpackService/ideaService 的 InTx（主线与回顾进度同事务）；任何 service 不得反向调用 reviewService。
 - tracking 内部 service 互不调用；卡侧只经 tracking/api；计时不读取卡/任务。degrade 的「回来」只调 tracking/api。
 - picker 只由 dealService 调用；其余跨 service 调用禁止，评审检查方向。
+- planService（今日任务板，ADR 0021）只依赖 domain 与 tracking/api 的只读查询，不调别的 service；dealService 读它，homeService / cardService 调它的 InTx，换日 dayChange 调 rolloverInTx。卡离开背包不写板子，读的时候过滤。
 - Write 对 services 不透明：只能收集仓库生成的对象，不拼路径、不构造 Write。
 - seq/effective 仅保留在 data/migrations/v1；运行时条目跨日不切片，所有修改经 place。
 - 启动先封住原生记录条写入、恢复 journal、迁移、扫描条目、校验 open_entry/resume_entry_id，成功后开放保存。
 - 普通事务使用启动索引，只读取并重写发生变化的活动日文件；改计时的入口在同一事务对齐卡状态。
-- settings.yaml 是当前配置来源；只有缺文件的新目录使用 shared 默认值，坏文件必须报错。
+- settings.yaml 是当前配置来源；只有缺文件的新目录使用 shared 默认值，坏文件必须报错。新加的设置键可以在设置定义里标 `defaultWhenMissing`，读旧文件缺这个键时用默认值（ADR 0021 第 9 条）。
 
 ## 术语
 - record：输入记录；card：任务卡；task/backpack：任务/背包；project：计时项目。

@@ -12,6 +12,7 @@ import type { DayChange, HistoryWrite, Repositories } from '../data/repos';
 import { HISTORY_PARAMS_LIMIT, HISTORY_RETENTION_DAYS, PAGE_OF_PREFIX, SYSTEM_WHY, historyActions } from '../shared/history';
 import type { HistoryChange, HistoryIntent, HistoryObjectType, HistoryRecord, HistorySource, HistoryActionSpec } from '../shared/history';
 import type { Settings } from '../shared/settings';
+import type { DayPlan } from '../domain/plan/plan';
 
 export interface CaptureInput {
   intent: HistoryIntent; value: unknown;
@@ -20,7 +21,9 @@ export interface CaptureInput {
   at: string; boundaryHour: number; id: () => string;
   before: { state: Record<string, unknown>; settings: Settings };
   after: { state: Record<string, unknown>; settings: Settings; cards: readonly Card[]; tasks: readonly Task[]; entries: readonly TimeEntry[] };
-  changed: { cards: Captured<Card>[]; tasks: Captured<Task>[]; reviews: Captured<Review>[]; records: Captured<RecordEntry>[]; days: DayChange[] };
+  changed: { cards: Captured<Card>[]; tasks: Captured<Task>[]; reviews: Captured<Review>[]; records: Captured<RecordEntry>[]; days: DayChange[];
+    /** 今日任务板：本事务写过的那几天（ADR 0021 第 11 条） */
+    plans?: { before: DayPlan; after: DayPlan }[] };
 }
 
 /** 设置合并要记住的上一条（只在 transact 成功后更新；提交失败或重载后清空）。 */
@@ -67,7 +70,8 @@ export function captureHistory(repos: Pick<Repositories, 'history'>, input: Capt
   };
   const all = compareAll({ cards: input.changed.cards, tasks: input.changed.tasks, reviews: input.changed.reviews, records: input.changed.records,
     entries: { before: dayBefore, after: dayAfter }, state: { before: input.before.state, after: input.after.state },
-    settings: { before: input.before.settings as unknown as Record<string, unknown>, after: input.after.settings as unknown as Record<string, unknown> }, names });
+    settings: { before: input.before.settings as unknown as Record<string, unknown>, after: input.after.settings as unknown as Record<string, unknown> },
+    plans: (input.changed.plans ?? []).map(p => ({ ...p, today: activityDay(input.at, input.boundaryHour) })), names });
   if (!all.length) return null;
   const page = PAGE_OF_PREFIX[input.intent.action.split('.')[0]];
   const source = input.intent.source ?? (input.operation ? DEFAULT_AUTOMATION : page ? { ...DEFAULT_MANUAL, page } : DEFAULT_MANUAL);
