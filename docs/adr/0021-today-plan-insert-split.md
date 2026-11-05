@@ -1,6 +1,6 @@
 # ADR 0021：今日任务板、插入、缩小拆分、接着做的存法与规则
 
-状态：Proposed（修订 3）· 2026-11-06 · 第 1 轮审核 `evidence/0.3.1-plan-review-round1.md`、第 2 轮复核 `evidence/0.3.1-plan-review-round2.md`（pro-b-4）的处理见文末「审核记录」；第 2 轮说改完只看改动的段落即可开工。修订 3 另加用户新定的插入暂停 / 继续（第 3 条）和宽松 / 紧凑模式（第 13 条）。需求来源 `docs/stages/0.3.1.md` v0.31（已定 0–59）、流程图 `docs/stages/0.3.1-flows.md` v0.10、界面 `../UI风格规范.md` §11.14 / §11.15。路径相对 `app/`。
+状态：Accepted（修订 4）· 2026-11-06 · 三轮审核 `evidence/0.3.1-plan-review-round1.md` / `round2.md` / `round3.md`（pro-b-4）的处理见文末「审核记录」；第 3 轮结论：阻塞和应改改成方案文字后 G1 可以开工，不再全文复核。修订 3 另加用户新定的插入暂停 / 继续（第 3 条）和宽松 / 紧凑模式（第 13 条）。需求来源 `docs/stages/0.3.1.md` v0.31（已定 0–59）、流程图 `docs/stages/0.3.1-flows.md` v0.10、界面 `../UI风格规范.md` §11.14 / §11.15。路径相对 `app/`。
 
 ## 背景
 
@@ -53,7 +53,7 @@ items:
 5. 去掉：阻塞先出（已定 12）、回顾卡（13）、快到期先出（15）、每日底线（已定 2）。`baseline` 其余用处（`homeProjection`、`homeSlice`、`entityChanges`）开工时逐个核对，没人读了再删。
 6. **结果只给界面，不写 `state.current_card` / `home_mode`**（审核 B3）：`dealService.drawFromPlan(ctx)` 是只读排队（`readSerial`），返回 `{ card, candidates }`，翻卡用 `candidates` 背面朝上摊开。界面上：
    - 〔开始〕= `startCard(card.id)`（同抽屉里的〔开始〕，一个写事务，历史 `home.startCard`，来源 `{ kind: 'manual', via: 'main', page: '抽卡' }`）。起点是点〔开始〕的那一刻：翻卡只有两三秒，不再像 0.3.0 那样抽卡时先开待确认（第 2 轮 N2）。
-   - 〔换一张〕= `planService.skipCard(card.id, resetRound)`：把卡 id 写进今天板子的 `seen`（`resetRound` 时写成 `[这张]`，不追加），再抽一次。不再走 `cardService.redraw`、不要求 `requireCurrent`、**不累计 `skip_count`**、不推送「拆小或 PASS」提示（审核 N6：「跳过信号」属于降级机制，已定 48 去掉了，`skipSignalCount` 设置一并去掉）。
+   - 〔换一张〕= `planService.skipCard(card.id)`：在写事务里重新算一次——把这张加进 `seen` 后，如果剩下的候选全都在 `seen` 里，就写成 `[这张]`，否则追加；不用界面传来的 `resetRound`，因为翻卡到点〔换一张〕之间状态可能变了（第 3 轮 N4）。再抽一次。不再走 `cardService.redraw`、不要求 `requireCurrent`、**不累计 `skip_count`**、不推送「拆小或 PASS」提示（审核 N6：「跳过信号」属于降级机制，已定 48 去掉了，`skipSignalCount` 设置一并去掉）。
    - 关闭翻卡（Esc / 点遮罩）不写盘。
    - `state.seen` 不再使用（0.3.0 用的），0.3.1 不读也不写；`plans/` 里的 `seen` 是按天的，换日自然清空（审核 S3 最后一点）。
 7. **删掉所有 `drawInTx` 调用**：`cardService.complete`、`pass`、`redraw`、`homeService.draw`（第 2 轮 S5）；完成、PASS 后 `home_mode = 'blank'`、`current_card = null`。`refreshInTx` **保留** `first_used_day ??= day` 和 `reviewUpdates`（回顾行的建立和取代只在 `drawInTx` / `refreshInTx` 里写，`dealService.ts:13-14,30-31`；删了新数据目录的回顾就进不去，第 2 轮 B1），只删出卡相关的部分。
@@ -73,7 +73,13 @@ items:
 | 卡暂停中（现有） | 待机 | `暂停` | 卡那一条 | 首页卡暂停 |
 | 不在插入 | 其他 | `普通` | 任意 | — |
 
-- **插入的事暂停 / 继续**（已定 56、57）：〔暂停〕= 开一条 `待机 / 插入`（`startSystemInTx(tx, '待机', '插入')`，`resume_entry_id` 不动）。〔继续〕= 找紧挨在这条待机前面结束的那条插入（`ended_at === 待机.started_at` 且 `kind === '插入'`），照它的描述、项目、标签再开一段 `插入`（日历里是新的一段，同 Toggl 的继续），`resume_entry_id` 不动；找不到（例如在 0.3.0 里改过）就灰掉〔继续〕。**没有〔停止〕**：不想继续就〔回到任务〕、〔结束原任务〕或开始别的事。历史 `home.pauseInsert` / `home.continueInsert`。
+- **插入的事暂停 / 继续**（已定 56、57）：〔暂停〕= 开一条 `待机 / 插入`（`startSystemInTx(tx, '待机', '插入')`，`resume_entry_id` 不动）；插入在同一毫秒内刚开始就暂停时什么都不做（`startInTx` 会把它删掉而不是截断，`timerService.ts:13`）。〔继续〕= 在 `resume_entry_id` 那条结束以后、最后结束的那条 `插入`（`ended_at ≤ 待机.started_at`，且两者之间没有别的非待机条目——日历里拖出空隙也能找到，第 3 轮 N1），照它的描述、项目、标签再开一段 `插入`（日历里是新的一段，同 Toggl 的继续），`resume_entry_id` 不动；找不到就灰掉〔继续〕。**没有〔停止〕**：不想继续就〔回到任务〕、〔结束原任务〕或开始别的事。历史 `home.pauseInsert` / `home.continueInsert`。
+- **现有暂停 / 继续入口的分流**（第 3 轮 B1，判断放进 InTx 内部，调用方不用逐个改）：
+  - `tracking.pauseInTx` 开头看 `insertState`：插入中 → 转 `pauseInsertInTx`；插入的事已暂停 → noop。首页 `home.pause`、小窗 `pause` 命令、MCP `pause_timer` 都走它，自然分流。
+  - **「继续」和「回到任务」分成两个操作**：`homeService.resumeInTx` 只做回到任务（〔回到任务〕、上沿那一条、底栏〔↩ 等你回来〕、MCP `return_from_break`、小窗〔↩ 回到 …〕）。新增 `homeService.continueInTx`：插入的事暂停时 → `continueInsertInTx`；否则按现有 `resumeInTx`（卡暂停、自由记录暂停）。首页〔继续〕、小窗〔继续〕、MCP `resume_timer` 改调它。
+  - 小窗 `windowBus` 的 `resume` 命令定成「继续」（走 `continueInTx`），另加 `backToTask` 命令给〔↩ 回到 …〕（走 `resumeInTx`）；两个都带 `revision` / `pending_id` 校验，同现有命令。
+  - **`stopInTx` 在插入状态下抛 `IN_AWAY_ACTIVITY`**（第 3 轮 N2）：界面上插入中已经没有〔停止〕（首页、计时条、融合卡里插入中的停止按钮 `TimerBar.tsx:137`、`FusedCard.tsx:45`、`FreeCard.tsx:61` 一起去掉），和 MCP `stop_timer` 的拒绝一致，免得以后有入口接回来悄悄结束原任务。
+  - 单测：每个入口在「插入中」「插入的事暂停了」两种状态下各一行，断言开着的条目是 `待机 / 插入`、`resume_entry_id` 不变；`resumeInTx` 仍回到任务。
 - 「待机 / 插入」在 0.3.0 下的表现第 2 轮已逐处核对：卡保持进行中（`activeRefInTx`）、首页显示临时活动「待机」、〔回来〕回到原来那张卡、MCP 进 `away`、0.3.0 的停止等于结束原任务、回看按项目名算待机。`assertEntries` 只要求待机不和别的条目重叠，与 `kind` 无关。
 - **入口规则**（已定 21、22、25），判断放进 InTx 函数内部（第 1 轮 S4），调用方不用逐个改：
 
@@ -91,13 +97,13 @@ items:
 | 方法 | 插入中 | 插入的事暂停了 |
 |---|---|---|
 | `start_timer`、`start_break` | 替换插入的事 | 替换插入的事 |
-| `pause_timer` | 暂停插入的事 | noop `already_paused` |
-| `resume_timer` | noop `already_running` | 继续插入的事 |
+| `pause_timer`（→ `pauseInTx`） | 暂停插入的事 | noop `already_paused` |
+| `resume_timer`（→ `continueInTx`） | noop `already_running` | 继续插入的事 |
 | `stop_timer` | 拒绝 `IN_AWAY_ACTIVITY`（先 `return_from_break`，或在界面结束原任务） | 同左 |
-| `return_from_break` | 回到任务 | 回到任务 |
+| `return_from_break`（→ `resumeInTx`） | 回到任务 | 回到任务 |
 | `start_task_item` | 拒绝 `IN_AWAY_ACTIVITY` | 同左 |
 
-  `checkNormalPreconditions`（`homeService.ts:217`）、`allowed` 表（`applicationController.ts:94-118`）和第 243 行提示按这张表改；`mcp/compatibility.test.ts`、`cli/cli.test.ts` 加两种状态的用例。
+  `get_context` 的 `timer` 加只读字段 `away_paused: boolean`（第 3 轮 N3，`timerContextSchema` 是 `strictObject`，算输出约定扩展，和 `today_plan` 一起进兼容测试），agent 不用从 `open_entry.project` 推断。`checkNormalPreconditions`（`homeService.ts:217`）、`allowed` 表（`applicationController.ts:94-118`）和第 243 行提示按这张表改；`mcp/compatibility.test.ts`、`cli/cli.test.ts` 加两种状态的用例。
 - **回到任务** = 现有 `resumeInTx`。
 - **结束原任务** = `homeService.endOriginalInTx`：调 tracking 新导出 `promoteInsertInTx(tx)`（审核 S5，`timerService` 内部把开着的那条 `kind` 改成 `普通`、清 `resume_entry_id`，走 `place` / `acceptInTx`；插入的事暂停时开着的是待机，改成 `待机 / 普通`），然后 `alignInTx` 自然把原来那张卡放回待做（仍在今天的板子上，进度不变，已定 19、26）。自由计时时同样，只是没有卡。历史 `home.endOriginal`，主体是原来那张卡。
 - **插入中不能抽卡、也不能直接开始另一张卡**（已定 20；计划 v0.7 第 6 条「直接开始另一张卡改成不允许」；审核 B2）：抽屉里卡上的〔开始〕、详情里的〔开始〕、板子行的〔开始〕在三种插入状态下都灰掉，提示「先回到任务或结束原任务」。MCP `start_task_item` 在插入中报 `IN_AWAY_ACTIVITY`（沿用现有错误码），不在 `away` 的 `allowed` 里。插入中也不能完成原来那张卡：首页被插入卡盖住，小窗插入时只显示〔↩ 回到 …〕不显示〔完成〕，先回到任务再完成（第 2 轮 N4）。
@@ -127,7 +133,7 @@ items:
 ### 6. 换日与带过去（已定 4、49 提议 6、7；审核 S3）
 
 - 放进启动和换日共用的 `newDay()`（`bootstrap.ts:84-89`），在 `expireInTx` 之后调 `planService.rolloverInTx(tx)`；`scheduler` 已经在换日时调 `newDay()`，两路都覆盖，不另挂调度器。
-- `rolloverInTx` **每个活动日只做一次**（第 2 轮 B2）：读今天的文件（没有就建空的；前一晚排过「明天」的话文件已经在了），`rolled_over === true` 就什么都不做。否则找「今天之前最近的一份」作来源（隔了几天才打开也只带最近那份），把来源里未达成、卡仍在背包、今天还没排的项加进今天，`carried: true`、保留优先级、`today_minutes = min(来源填的, 剩下的时长)`；带到了就写 `carried_from = 来源日`、`carried_confirmed = false`；最后不管带没带到都写 `rolled_over: true`。同一天第二次 `newDay()`（重启）什么都不改；来源那天的计时后来被日历改过，也不会补带。
+- `rolloverInTx` **每个活动日只做一次**（第 2 轮 B2）：读今天的文件（没有就建空的；前一晚排过「明天」的话文件已经在了），`rolled_over === true` 就什么都不做。否则找「今天之前最近的一份」作来源（隔了几天才打开也只带最近那份），把来源里未达成、卡仍在背包、今天还没排的项加进今天，`carried: true`、保留优先级、`today_minutes = min(来源填的, 剩下的时长)`；带到了就写 `carried_from = 来源日`、`carried_confirmed = false`；最后不管带没带到都写 `rolled_over: true`。任务模式关掉时整个带过去跳过、不建文件（第 3 轮 N5）。同一天第二次 `newDay()`（重启）什么都不改；来源那天的计时后来被日历改过，也不会补带。
 - 换日时**还在计的卡**直接加进今天（`carried: false`，已定 49 提议 6），**插入中**先结束原任务。这两条都只在开着的那一条（插入状态下看原来那一条）**开始于今天活动日的起点之前**时才做，也就是真的跨过了换日时间。同一天重启、从抽屉直接开始一张没排的卡再重启，都不会把它加进板子（已定 11、49 提议 4）。
 - 确认：抽屉打开时今日任务板顶上一条「昨天还有 N 项没做完」，列出带过来的项，默认都勾着，〔确认〕〔全部去掉〕，逐项可去勾（已定 4：预先勾好，用户确认或去掉）。没确认前这些项不进候选，〔抽一张〕先弹这条（第 2 条第 2 点）。首页不另问。历史 `plan.carry`（用户确认）；换日自动建、带都在 `newDay()` 这一个 `run` 里，记成 `system.dayChange`，不单独成条（第 2 轮 N5）。
 - 0.3.0 遗留的 `state.rest`（用户在 0.3.0 降级休息中升级）：启动后的第一个事务（`newDay()` 里）按 0.3.0 的〔回来〕处理一次（`returnFromRest` 的条目部分，不问回答、不计数），然后清空，历史 `system.dayChange` 的连带改动（审核问答第 4 条）。
@@ -180,10 +186,15 @@ items:
 | 首页没在做事 | 读数不走，写「没在计时」；标题栏状态灯灰 | 「待机」读数照走 |
 | 日历、列表 | 不显示待机条目（`calendarShowIdle` 不读，设置项隐藏） | 按 `calendarShowIdle` |
 | 回看 | 待机不计；「含待机 / 睡眠」开关改成「含睡眠」 | 不变 |
-| 关机、休眠后（`settleOfflineInTx`） | 不追问；这段记成 `待机`（不是「离线」），原来那条照样在离线开始处截断 | 记成「离线」并追问（不变） |
-| 待机、暂停超过 `idleAskMinutes` 后开始下一件事 | 不问 | 弹一条和离线追问同样的通知「刚才这 N 分钟在做什么」，填一项活动或忽略；填了就把那段待机改成这项（经 `timeEditService.patch`，历史 `home.answerIdle`） |
-| 长时间提醒、插入、主动休息、抽卡 | 照旧 | 照旧 |
+| 关机、休眠后（`settleOfflineInTx`） | 不追问；这段记成 `project: 待机`、**`source: 离线追问`**（去重照旧靠 `source` 和开始时间，`homeService.ts:104`；`buildPendingActions` 只看 `project === '离线'`，不误报，第 3 轮 S3），原来那条照样在离线开始处截断 | 记成「离线」并追问（不变） |
+| 待机、暂停（含插入的事暂停）超过 `idleAskMinutes` 后开始下一件事 | 不问 | 弹一条和离线追问同样的通知「刚才这 N 分钟在做什么」，填一项活动或忽略；填了就把那段待机改成这项（见下），历史 `home.answerIdle` |
+| 长时间提醒（`planReminders`） | 开着的是待机时不排「还在做吗」（第 3 轮 S4） | 照旧 |
+| 小窗、快速记录条上下文 | 空闲时小窗写「没在计时」、读数不走（`MiniApp.tsx:145` 现在按 `project !== '待机'` 判断）；`quickbarContext` 同首页 | 照旧 |
+| 插入、主动休息、抽卡 | 照旧 | 照旧 |
 
+- **「没在计时」只在真正什么都没在做时显示**（第 3 轮 S5）：插入状态（含插入的事暂停）显示插入卡，卡暂停中显示卡暂停；只有不在插入状态、也没有回到目标时，宽松模式才写「没在计时」。
+- **空闲追问在提交时统一判断**（第 3 轮 S2）：`commit.ts` 生成快照之前比较一次——事务开始时开着的是待机（`普通` / `暂停` / `插入` 都算），提交后开着的不是待机，且这段待机**在本次事务结束时的实际长度**（用户可能用待确认起点把一部分划给了新的事）大于 `idleAskMinutes`，就推一条 `idleAsk` 通知。不挂在各个「开始」入口里，MCP 发起的开始也覆盖。通知经 `buildPendingActions`（`applicationController.ts:168-174`）交给 agent，`describeNotice` 加 `idleAsk`。
+- **回答空闲追问**（第 3 轮 S1）：用 tracking 的通用内部函数 `retypeEntryInTx(tx, id, { kind, project, description, tags })`（和 `promoteInsertInTx` 共用，在 `timerService` 内部经 `place` / `acceptInTx`）同时改 `kind`：卡暂停或自由记录暂停的那段改成 `普通`；插入的事暂停的那段改成 `插入`（回看算临时离开）。不留下「学习 / 暂停」这样的条目。
 - MCP / CLI 不变：数据一样，`list_time_entries` 照旧返回待机条目。
 - 宽松模式首页空闲的样子、紧凑模式的空闲追问通知没有原型，G7 开工前用 gallery 截图给用户看过再做（版本开发流程第 3 节第 2 条）。
 
@@ -244,3 +255,19 @@ items:
 | N4 插入中完成原来那张 | 不允许，先回到任务 | 第 3 条 |
 | N5 历史动作名 | 采纳：带过去记在 `system.dayChange`；抽卡用 `page: '抽卡'` | 第 2、6、11 条 |
 | N6 MCP 在插入状态 | 采纳，用户已定插入要暂停、不要停止，按新状态列了方法表 | 第 3 条 |
+
+### 第 3 轮（pro-b-4，`evidence/0.3.1-plan-review-round3.md`，只看改动段落）
+
+| 编号 | 处理 | 落在哪 |
+|---|---|---|
+| B1 现有暂停 / 继续入口没改道，小窗 `resume` 两种意思 | 采纳：`pauseInTx` 内部分流；「继续」`continueInTx` 与「回到任务」`resumeInTx` 分开；小窗 `resume` = 继续、加 `backToTask`；插入中的停止按钮去掉 | 第 3 条 |
+| S1 回答追问要改 `kind`；函数名不存在 | 采纳：`retypeEntryInTx` | 第 13 条 |
+| S2 空闲追问在提交时统一判断 | 采纳 | 第 13 条 |
+| S3 宽松离线结算去重 | 采纳：`source: 离线追问` | 第 13 条表 |
+| S4 长时间提醒、小窗、快速记录条 | 采纳 | 第 13 条表 |
+| S5 插入状态与宽松模式同时出现 | 采纳 | 第 13 条 |
+| N1 〔继续〕找前一段 | 采纳 | 第 3 条 |
+| N2 插入状态下 `stopInTx` | 采纳：抛 `IN_AWAY_ACTIVITY` | 第 3 条 |
+| N3 MCP 看不出插入暂停 | 采纳：`timer.away_paused` | 第 3 条 |
+| N4 `skipCard` 不用界面的 `resetRound` | 采纳 | 第 2 条第 6 点 |
+| N5 任务模式关掉时跳过带过去 | 采纳 | 第 6 条 |
