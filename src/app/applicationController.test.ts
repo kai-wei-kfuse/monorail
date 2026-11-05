@@ -8,6 +8,7 @@ import { createProject } from '../services/presetService';
 import {
   addTimeEntryResult,
   captureTodoResult,
+  completeIdeaResult,
   contextResult,
   findItemsResult,
   listTimeEntriesResult,
@@ -434,4 +435,39 @@ it('R2: refuses stale context when committed projection generation fails, while 
   await run(f.ctx, async () => {}, undefined, { action: 'test.direct' });
   const found = findItemsResult.parse(await handleApplicationRequest(f.ctx, { method: 'find_items', arguments: { kind: 'idea', query: '已落盘，快照生成失败' } }));
   expect(found.ideas).toHaveLength(1);
+});
+
+// ===== 0.3.0-beta.4 D2：complete_idea（ADR 0020 第 4 条） =====
+it('complete_idea marks an active idea done, records the caller, replays by operation_id and reports noop on a second mark', async () => {
+  const f = fixture(); await seed(f, []);
+  const ctx1 = contextResult.parse(await handleApplicationRequest(f.ctx, { method: 'get_context', arguments: {} }));
+  const saved = saveIdeaResult.parse(await handleApplicationRequest(f.ctx, saveIdeaReq({ operation_id: ctx1.operation_id, text: '试试新开的咖啡店' })));
+  const origin = { kind: 'cli' as const, agent: { name: 'Claude Code', detected_by: 'env' as const } };
+  const req = { method: 'complete_idea', arguments: { operation_id: saved.next_operation_id, idea_id: saved.data.id.toUpperCase() }, origin };
+  const done = completeIdeaResult.parse(await handleApplicationRequest(f.ctx, req));
+  expect(done.data).toMatchObject({ id: saved.data.id, status: '已完成', noop: false });
+  const record = (await f.ctx.repos.records.get(saved.data.id))!.value;
+  expect(record).toMatchObject({ pool: '冷库', completed_at: done.data.completed_at, completed_by: { kind: 'cli', agent: 'Claude Code' } });
+  expect(f.ctx.snapshot()!.backpack.doneIdeas.map(i => i.id)).toEqual([saved.data.id]);
+  const replay = completeIdeaResult.parse(await handleApplicationRequest(f.ctx, req));
+  expect(replay.replayed).toBe(true);
+  const again = completeIdeaResult.parse(await handleApplicationRequest(f.ctx, { method: 'complete_idea', arguments: { operation_id: done.next_operation_id, idea_id: saved.data.id } }));
+  expect(again.data.noop).toBe(true);
+  // find_items：默认只列活跃池；include_archived 时状态是「已完成」
+  const active = findItemsResult.parse(await handleApplicationRequest(f.ctx, { method: 'find_items', arguments: { kind: 'idea' } }));
+  expect(active.ideas).toEqual([]);
+  const all = findItemsResult.parse(await handleApplicationRequest(f.ctx, { method: 'find_items', arguments: { kind: 'idea', include_archived: true } }));
+  expect(all.ideas.map(i => i.pool)).toEqual(['已完成']);
+});
+it('complete_idea rejects unknown ideas and ideas outside the pool without writing', async () => {
+  const f = fixture(); await seed(f, []);
+  const ctx1 = contextResult.parse(await handleApplicationRequest(f.ctx, { method: 'get_context', arguments: {} }));
+  await expect(handleApplicationRequest(f.ctx, { method: 'complete_idea', arguments: { operation_id: ctx1.operation_id, idea_id: crypto.randomUUID() } }))
+    .rejects.toMatchObject({ failure: { code: 'IDEA_NOT_FOUND', category: 'not_executed' } });
+  const saved = saveIdeaResult.parse(await handleApplicationRequest(f.ctx, saveIdeaReq({ operation_id: crypto.randomUUID(), text: '冷库里的想法' })));
+  await run(f.ctx, async tx => { const r = tx.records.find(x => x.id === saved.data.id)!; tx.saveRecord({ ...r, pool: '冷库', cold_since: tx.at }); }, undefined, { action: 'test.direct' });
+  const transact = vi.spyOn(f.ctx.repos, 'transact');
+  await expect(handleApplicationRequest(f.ctx, { method: 'complete_idea', arguments: { operation_id: crypto.randomUUID(), idea_id: saved.data.id } }))
+    .rejects.toMatchObject({ failure: { code: 'IDEA_NOT_ACTIVE' } });
+  expect(transact).not.toHaveBeenCalled();
 });

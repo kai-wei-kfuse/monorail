@@ -4,6 +4,8 @@ import {
   addTimeEntryResult,
   captureTodoInput,
   captureTodoResult,
+  completeIdeaInput,
+  completeIdeaResult,
   contextInput,
   contextResult,
   findItemsInput,
@@ -171,6 +173,14 @@ export function createServer(client: ApplicationClient) {
     outputSchema: withError(addTimeEntryResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, async (args, ctx) => call('add_time_entry', args, ctx));
+
+  server.registerTool('complete_idea', {
+    title: '把想法标记为已完成',
+    description: '当用户说某个想法已经做到了、不用再转成任务时调用：想法离开想法池，进入「已完成」列表（用户可在单轨里撤销）。先用 find_items（kind=idea）查到准确的 idea_id；只有想法池里的想法能标记，已完成的再标记返回 noop=true。operation_id 复制自 get_context 或上次结果的 next_operation_id；重试沿用原 ID。',
+    inputSchema: completeIdeaInput,
+    outputSchema: withError(completeIdeaResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('complete_idea', args, ctx));
 
   return server;
 }

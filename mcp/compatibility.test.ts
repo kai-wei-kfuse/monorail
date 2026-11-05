@@ -44,6 +44,7 @@ const toolNames = [
   'start_break',
   'return_from_break',
   'add_time_entry',
+  'complete_idea',
 ];
 
 // Controlled desktop peer: real Node streams and Windows pipe, no production fallback.

@@ -67,6 +67,14 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
     ],
   },
   {
+    usage: 'monorail idea done <idea-id> [--operation-id <uuid>] [--json]',
+    method: 'complete_idea',
+    summary: '把想法池里的一个想法标记为已完成（先用 monorail find --kind idea 查到 ID；已完成的再标记不报错）',
+    examples: [
+      'monorail idea done <idea-id>',
+    ],
+  },
+  {
     usage: 'monorail todo add [<text>] [--text-file <path> | --stdin] [--task-id <id>] [--due-at <iso>] [--blocking] [--operation-id <uuid>] [--json]',
     method: 'capture_todo',
     summary: '捕捉待办事项并原子入包（可归入指定任务或自动建单事项支线任务）',
@@ -265,6 +273,15 @@ export function renderHumanSuccess(
         ...formatWarnings(r.warnings),
       ];
       return lines.join('\n');
+    }
+
+    case 'complete_idea': {
+      const r = result as ApplicationOutput<'complete_idea'>;
+      return [
+        `${r.data.noop ? '想法本来就已完成' : '已标记想法完成'} [${r.data.id}] (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id}`,
+        `正文: ${r.data.text} | 完成于: ${r.data.completed_at}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
     }
 
     case 'capture_todo': {

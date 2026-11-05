@@ -26,7 +26,7 @@
 
 ---
 
-## 2. CLI 命令对照表（13 个子命令 → 15 个应用方法）
+## 2. CLI 命令对照表（14 个子命令 → 16 个应用方法）
 
 运行方式：
 - 开发源码：`node cli/main.ts <command> ...`（或 `npm run cli -- <command> ...`）
@@ -36,6 +36,7 @@
 |---|---|---|
 | `monorail context` | `get_context` | 可选重复 `--section timer\|pending_actions\|options` |
 | `monorail idea add [<text>]` | `save_idea` | 正文三选一（`<text>` / `--text-file <path>` / `--stdin`），可选 `--needs <text>`、`--operation-id <uuid>` |
+| `monorail idea done <idea-id>` | `complete_idea` | 必填 `<idea-id>`（UUID，通过 `find --kind idea` 获取）；可选 `--operation-id <uuid>`。只有想法池里的想法能标记；已完成的再标记返回 `noop: true`（0.3.0-beta.4，ADR 0020） |
 | `monorail todo add [<text>]` | `capture_todo` | 正文三选一，可选 `--task-id <id>`、`--due-at <iso>`、`--blocking`、`--operation-id <uuid>` |
 | `monorail find [<query>]` | `find_items` | 可选 `--kind idea\|todo_card\|task\|all`、`--include-archived` |
 | `monorail time summary` | `get_time_summary` | 可选 `--day today\|yesterday\|this_week\|YYYY-MM-DD`、`--day-mode activity\|calendar` |

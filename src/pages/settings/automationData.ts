@@ -94,7 +94,7 @@ const CLI_EXAMPLE_SPECS: ReadonlyArray<{ id: string; title: string; desc: string
   {
     id: 'help',
     title: '查看命令行帮助',
-    desc: '查看全部 13 个子命令与参数说明；本地帮助查询不会连接或拉起单轨后台进程。',
+    desc: '查看全部 14 个子命令与参数说明；本地帮助查询不会连接或拉起单轨后台进程。',
     args: ['--help'],
   },
 ];
@@ -115,8 +115,8 @@ export const CAPABILITY_CATEGORIES: ReadonlyArray<{ title: string; methods: stri
   },
   {
     title: '想法与待办管理',
-    methods: 'save_idea · capture_todo · find_items',
-    summary: '保存想法至想法池；捕获待办记录并生成事项卡片（缺省归入单事项支线任务）；按关键词与类别（idea / todo_card / task / all）检索现有条目。',
+    methods: 'save_idea · complete_idea · capture_todo · find_items',
+    summary: '保存想法至想法池；把做到了的想法标记为已完成（进入想法池的「已完成」列表，可在单轨里撤销）；捕获待办记录并生成事项卡片（缺省归入单事项支线任务）；按关键词与类别（idea / todo_card / task / all）检索现有条目。',
   },
   {
     title: '计时与临时离开控制',

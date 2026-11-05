@@ -72,6 +72,13 @@ type ParsedCommandBody =
   | {
       kind: 'call';
       json: boolean;
+      method: 'complete_idea';
+      ideaId: string;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
       method: 'capture_todo';
       text: string;
       taskId?: string;
@@ -488,9 +495,19 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
 
   if (cmd === 'idea') {
     const [sub, ...args] = subTokens;
+    if (sub === 'done') {
+      // 0.3.0-beta.4 D2（ADR 0020）：把想法池里的一个想法标记为已完成
+      const raw = parseTokens(args, { booleanFlags: new Set(), singleFlags: new Set(['--operation-id']), multiFlags: new Set() });
+      if (raw.positionals.length !== 1) {
+        throw new CliUsageError(`USAGE_ERROR：idea done 需要且只接受 1 个想法 ID（收到 ${raw.positionals.length} 个）；先用 monorail find --kind idea 查到 ID`);
+      }
+      const ideaId = z.uuid().safeParse(raw.positionals[0]);
+      if (!ideaId.success) throw new CliUsageError(`USAGE_ERROR：想法 ID 必须是 UUID（收到 "${raw.positionals[0]}"）`);
+      return { kind: 'call', json, method: 'complete_idea', ideaId: ideaId.data, operationId: validateOperationId(raw.singles.get('--operation-id')) };
+    }
     if (sub !== 'add') {
       throw new CliUsageError(
-        `USAGE_ERROR：未知子命令 "idea ${sub ?? ''}".trim()；请使用 monorail idea add <text>`,
+        `USAGE_ERROR：未知子命令 "idea ${sub ?? ''}".trim()；请使用 monorail idea add <text> 或 monorail idea done <idea_id>`,
       );
     }
     const raw = parseTokens(args, {

@@ -3,6 +3,8 @@ import {
   addTimeEntryResult,
   applicationRequest,
   captureTodoResult,
+  completeIdeaData,
+  completeIdeaResult,
   contextResult,
   findItemsResult,
   ideaResult,
@@ -17,6 +19,8 @@ import {
 } from '../shared/application';
 import type { z } from 'zod';
 import { captureTodoInTx, saveRecordInTx } from '../services/recordService';
+import { completeIdeaInTx, completedBy } from '../services/ideaService';
+import { ideaStatus } from '../domain/idea/pool';
 import {
   addTimeEntryCheckedInTx,
   pauseTimerCheckedInTx,
@@ -372,7 +376,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
               const m = matchesQuery(query, [r.text, r.needs, ...r.tags]);
               return m.matched ? [{
                 id: r.id, text: r.text, tags: [...r.tags], needs: r.needs,
-                pool: r.pool!, created_at: r.created_at, exact_match: m.exact,
+                pool: ideaStatus(r)!, created_at: r.created_at, exact_match: m.exact,
               }] : [];
             })
             .sort((a, b) => Number(b.exact_match) - Number(a.exact_match) || b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))
@@ -637,6 +641,20 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
           });
         }, undefined, signal, { action: 'auto.add_time_entry', source });
         return addTimeEntryResult.parse({ ...result, next_operation_id: ctx.id() });
+      }
+
+      case 'complete_idea': {
+        const args = request.arguments;
+        const normalized = { idea_id: args.idea_id.toLowerCase() };
+        const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
+          const idea = tx.records.find(r => r.id.toLowerCase() === normalized.idea_id);
+          if (!idea || idea.kind !== '想法') throw new Error(`IDEA_NOT_FOUND：找不到这个想法（${args.idea_id}），请先用 find_items 查到准确 ID`);
+          const status = ideaStatus(idea);
+          if (status !== '活跃池' && status !== '已完成') throw new Error(`IDEA_NOT_ACTIVE：这个想法当前是「${status}」，只有想法池里的想法能标记完成`);
+          const { record, noop } = completeIdeaInTx(tx, idea.id, completedBy(source));
+          return completeIdeaData.parse({ id: record.id, text: record.text, status: '已完成', completed_at: record.completed_at, noop });
+        }, undefined, signal, { action: 'auto.complete_idea', subject: { type: 'record', id: normalized.idea_id }, source });
+        return completeIdeaResult.parse({ ...result, next_operation_id: ctx.id() });
       }
     }
   } catch (error) {

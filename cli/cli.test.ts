@@ -12,6 +12,7 @@ import {
   addTimeEntryResult,
   applicationRequest,
   captureTodoResult,
+  completeIdeaResult,
   contextResult,
   findItemsResult,
   listTimeEntriesResult,
@@ -39,7 +40,7 @@ interface FakeReceipt {
 }
 
 /**
- * Stateful application peer fixture supporting all 15 application methods,
+ * Stateful application peer fixture supporting all 16 application methods,
  * canonical receipt idempotency & conflict checks, expected_state transitions,
  * and cross-entrypoint testing over either in-memory transport or a Windows Named Pipe.
  */
@@ -66,7 +67,7 @@ function createStatefulPeer() {
     text: string;
     tags: string[];
     needs: string | null;
-    pool: '活跃池' | '冷库' | '已转任务';
+    pool: '活跃池' | '冷库' | '已转任务' | '已完成';
     created_at: string;
   }> = [];
   const cards: Array<{
@@ -269,6 +270,20 @@ function createStatefulPeer() {
           };
           ideas.push({ ...item, needs: req.arguments.needs ?? null });
           return item;
+        });
+      }
+
+      case 'complete_idea': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'complete_idea', rest, () => {
+          const idea = ideas.find(i => i.id === req.arguments.idea_id);
+          if (!idea) {
+            throw new ApplicationError({ status: 'error', code: 'IDEA_NOT_FOUND', category: 'not_executed',
+              message: 'IDEA_NOT_FOUND：找不到这个想法', next_step: '先用 find_items 查到准确 ID' });
+          }
+          const noop = idea.pool === '已完成';
+          idea.pool = '已完成';
+          return { id: idea.id, text: idea.text, status: '已完成' as const, completed_at: now, noop };
         });
       }
 
@@ -812,7 +827,7 @@ test('CLI usage validation rejects unknown commands, unknown/duplicate flags, co
   assert.equal(clientCreated, false);
 });
 
-test('CLI reaches all 15 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin', async () => {
+test('CLI reaches all 16 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin', async () => {
   const peer = createStatefulPeer();
 
   // 1. context (get_context) - read-only, 1 call
@@ -931,6 +946,19 @@ test('CLI reaches all 15 application methods and preserves multiline Chinese tex
   );
   assert.equal(entriesRes.exitCode, 0);
   assert.equal(listTimeEntriesResult.parse(JSON.parse(entriesRes.stdout).result).entries.length, 1);
+
+  // 16. idea done (complete_idea, 0.3.0-beta.4 D2)：第一次改动，第二次 noop；不是 UUID 的 ID 在本地就被拒绝
+  const doneRes = await execCli(['idea', 'done', savedIdea.data.id, '--json'], peer);
+  assert.equal(doneRes.exitCode, 0);
+  const done = completeIdeaResult.parse(JSON.parse(doneRes.stdout).result);
+  assert.deepEqual([done.data.status, done.data.noop], ['已完成', false]);
+  const againRes = await execCli(['idea', 'done', savedIdea.data.id], peer);
+  assert.equal(againRes.exitCode, 0);
+  assert.match(againRes.stdout, /想法本来就已完成/);
+  const callsBeforeBad = peer.calls.length;
+  const badRes = await execCli(['idea', 'done', 'not-a-uuid'], peer);
+  assert.equal(badRes.exitCode, 2);
+  assert.equal(peer.calls.length, callsBeforeBad);
 
   // 15. operation get (get_operation_result)
   const opGetRes = await execCli(['operation', 'get', savedIdea.operation_id, '--json'], peer);

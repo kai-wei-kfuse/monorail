@@ -28,6 +28,17 @@ export const ideaResult = z.strictObject({
 });
 export const saveIdeaResult = committedEnvelope(ideaResult);
 
+/** 0.3.0-beta.4 D2（ADR 0020 第 4 条）：把想法池里的一个想法标记为已完成。 */
+export const completeIdeaInput = z.strictObject({
+  operation_id: operationId.describe('复制 get_context 或上一次成功结果中的 next_operation_id；重试沿用原 ID'),
+  idea_id: z.uuid().describe('要标记完成的想法 ID（用 find_items 按关键词查到）；只有想法池（活跃池）里的想法能标记'),
+});
+export const completeIdeaData = z.strictObject({
+  id: z.uuid(), text: z.string(), status: z.literal('已完成'), completed_at: iso,
+  noop: z.boolean().describe('true 表示这个想法本来就已完成，这次没有改动'),
+});
+export const completeIdeaResult = committedEnvelope(completeIdeaData);
+
 export const captureTodoInput = z.strictObject({
   operation_id: operationId.describe('复制 get_context 或上一次成功结果中的 next_operation_id；重试沿用原 ID'),
   text: z.string().trim().min(1, '待办内容不能为空').describe('要捕捉的待办事项内容，支持 #标签'),
@@ -52,7 +63,7 @@ export const captureTodoResult = committedEnvelope(todoResult);
 export const findItemsInput = z.strictObject({
   kind: z.enum(['idea', 'todo_card', 'task', 'all']).optional().describe('搜索类别：idea（想法）、todo_card（待办事项卡）、task（背包任务）或 all（全部）'),
   query: z.string().optional().describe('关键词过滤（匹配标题、正文、项目或标签）；省略时返回当前活跃列表'),
-  include_archived: z.boolean().optional().describe('是否包含冷库/已转任务想法、已完成/已放弃卡片与冷藏/已完成任务'),
+  include_archived: z.boolean().optional().describe('是否包含冷库/已转任务/已完成想法、已完成/已放弃卡片与冷藏/已完成任务'),
 });
 export const findItemsResult = z.strictObject({
   as_of: iso,
@@ -60,7 +71,7 @@ export const findItemsResult = z.strictObject({
   ambiguous: z.boolean().describe('当非空查询命中多项候选时为 true，调用方应让用户确认或按精确 ID 选择'),
   ideas: z.array(z.strictObject({
     id: z.uuid(), text: z.string(), tags: z.array(z.string()), needs: z.string().nullable(),
-    pool: z.enum(['活跃池', '冷库', '已转任务']), created_at: iso, exact_match: z.boolean(),
+    pool: z.enum(['活跃池', '冷库', '已转任务', '已完成']).describe('想法状态；已完成 = 用户或调用方标记做到了（ADR 0020）'), created_at: iso, exact_match: z.boolean(),
   })),
   todo_cards: z.array(z.strictObject({
     id: nonEmpty, content: z.string(), status: z.enum(['待做', '进行中', '已完成', '已缩小', '已放弃']),
@@ -290,6 +301,7 @@ export const applicationContracts = {
   start_break: { input: startBreakInput, output: timerMutationResult, readOnly: false },
   return_from_break: { input: timerControlInput, output: timerMutationResult, readOnly: false },
   add_time_entry: { input: addTimeEntryInput, output: addTimeEntryResult, readOnly: false },
+  complete_idea: { input: completeIdeaInput, output: completeIdeaResult, readOnly: false },
 } as const;
 
 export type ApplicationMethod = keyof typeof applicationContracts;
@@ -333,6 +345,7 @@ export const applicationRequest = z.discriminatedUnion('method', [
   z.strictObject({ method: z.literal('start_break'), arguments: startBreakInput, origin }),
   z.strictObject({ method: z.literal('return_from_break'), arguments: timerControlInput, origin }),
   z.strictObject({ method: z.literal('add_time_entry'), arguments: addTimeEntryInput, origin }),
+  z.strictObject({ method: z.literal('complete_idea'), arguments: completeIdeaInput, origin }),
   z.strictObject({ method: z.literal('get_operation_result'), arguments: lookupInput, origin }),
 ]);
 export type ApplicationRequest = z.infer<typeof applicationRequest>;

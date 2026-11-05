@@ -269,6 +269,21 @@ export async function executeCliCommand(
       }
     }
 
+    case 'complete_idea': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'complete_idea',
+        operationId: cmd.operationId,
+        needsExpectedState: false,
+        signal,
+      });
+      try {
+        const result = await client.call('complete_idea', { operation_id: meta.operationId, idea_id: cmd.ideaId }, { signal });
+        return { kind: 'ok', json: cmd.json, method: 'complete_idea', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'complete_idea', operationId: meta.operationId });
+      }
+    }
+
     case 'capture_todo': {
       const meta = await resolveWriteMeta(client, {
         method: 'capture_todo',
