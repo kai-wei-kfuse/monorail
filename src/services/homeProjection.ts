@@ -1,4 +1,7 @@
 import type { Card } from '../domain/card/card';
+import { defaultTodayMinutes, minutesOnDay, totalMinutes } from '../domain/plan/plan';
+import type { DayPlan } from '../domain/plan/plan';
+import { minTodayMinutes } from '../domain/card/shrink';
 import { cardTiming } from '../domain/card/edit';
 import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
@@ -14,7 +17,14 @@ import { LOOSE } from '../shared/backpack';
 import type { HomeSlice } from '../store/homeSlice';
 import { knownTags } from '../domain/timeline/tags';
 
-export interface ProjectionInput { cards: Card[]; tasks: Task[]; reviews: Review[]; entries: TimeEntry[]; state: AppState; settings: Settings; at: string; version: number }
+export interface ProjectionInput { cards: Card[]; tasks: Task[]; reviews: Review[]; entries: TimeEntry[]; state: AppState; settings: Settings; at: string; version: number;
+  /** 今天的板子（缩小对话框的今天的量） */
+  planToday?: DayPlan | null }
+function splitNumbers(card: Card, plan: DayPlan | null, entries: TimeEntry[], day: string, boundary: number, at: string) {
+  const planned = plan?.items.find(item => item.card_id === card.id)?.today_minutes ?? null;
+  return { todayGoal: planned ?? defaultTodayMinutes(card, totalMinutes(entries, card.id, at)) ?? 5,
+    minToday: minTodayMinutes(minutesOnDay(entries, card.id, day, boundary, at)) };
+}
 export function projectHome(input: ProjectionInput): HomeSlice {
   const { cards, tasks, reviews, entries, state, settings, at, version } = input;
   const day = activityDay(at, settings.dayBoundaryHour), active = tasks.filter(inBackpack);
@@ -30,7 +40,7 @@ export function projectHome(input: ProjectionInput): HomeSlice {
     id: selected.id, slotNo: task?.slot_index ? String(task.slot_index).padStart(2, '0') : LOOSE.slot, slotOf: `/${String(settings.sideTasks + settings.mainTasks).padStart(2, '0')}`,
     task: task?.name ?? LOOSE.name, type: selected.type, goalMinutes: selected.type === '时间盒卡' ? selected.timebox_minutes : null,
     content: selected.content, progressNote: selected.progress_note, status: selected.status,
-    shrink: selected.no_shrink ? 'locked' as const : selected.shrink_level >= settings.shrinkMaxLevel ? 'max' as const : 'ok' as const,
+    split: selected.type === '时间盒卡' ? splitNumbers(selected, input.planToday ?? null, entries, day, settings.dayBoundaryHour, at) : null,
   } : null;
   const mode = state.home_mode;
   const resume = entries.find(entry => entry.id === state.resume_entry_id);
@@ -42,6 +52,7 @@ export function projectHome(input: ProjectionInput): HomeSlice {
     rest: state.rest ? { suggestion: state.rest.suggestion } : null,
     review: state.first_used_day ? dueReview(day, state.first_used_day, settings.reviewWeekday, reviews, mains.some(main => main.bet_ends_at !== null && Date.parse(main.bet_ends_at) <= Date.parse(at))) : null,
     activity: { kind: current?.kind === '插入' ? 'away' : current?.project !== '待机' ? 'focus' : 'idle', label: current?.description ?? settings.lists.idleName, startedAt: current?.started_at ?? null },
+    looseIdle: settings.trackingMode === 'loose' && current?.project === '待机' && current.kind !== '插入' && !state.resume_entry_id,
     entry: current ? { id: current.id, description: current.description, project: current.project, tags: current.tags,
       startedAt: current.started_at, cardId: current.card_id, paused: current.kind === '暂停', kind: current.kind } : null,
     resumeEntry: resume ? { id: resume.id, description: resume.description, project: resume.project, tags: resume.tags,

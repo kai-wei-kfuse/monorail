@@ -1,5 +1,8 @@
 import type { Card } from './card';
 
+/** 拆分时今天这份至少多少分钟：今天已计向上取到 5（至少 5）。服务端和缩小对话框共用这一个公式（G5 审核 N1）。 */
+export const minTodayMinutes = (minutesToday: number) => Math.max(5, Math.ceil(minutesToday / 5) * 5);
+
 /**
  * 缩小 = 把一张卡拆成两张（ADR 0021 第 4 条，已定 50、54）。不设级数上限，不再产生「已缩小」状态。
  * - today：原来那张卡，id 不变（计时条目、板子上的项、正在计的状态都不动），改成「今天做的」内容和时长；
@@ -29,7 +32,7 @@ export function splitCard(card: Card, input: SplitInput): { today: Card; rest: S
     if (goal === null || b === null || !Number.isInteger(b)) throw new Error('时间盒要分今天做多少、剩下多少');
     const a = goal - b;
     if (b < 5) throw new Error('剩下的至少 5 分钟');
-    if (a < Math.ceil(input.minutesToday / 5) * 5 || a <= 0) throw new Error('今天做的不能少于今天已经计的时间');
+    if (a < minTodayMinutes(input.minutesToday)) throw new Error('今天做的不能少于今天已经计的时间');
     total = (card.timebox_minutes ?? goal) - b;
     if (total < input.minutesTotal) throw new Error('今天这份的时长不能少于这张卡已经计的时间');
     todayMinutes = a; restMinutes = b;

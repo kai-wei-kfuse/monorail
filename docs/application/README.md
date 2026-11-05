@@ -37,7 +37,7 @@
 | `monorail context` | `get_context` | 可选重复 `--section timer\|pending_actions\|options` |
 | `monorail idea add [<text>]` | `save_idea` | 正文三选一（`<text>` / `--text-file <path>` / `--stdin`），可选 `--needs <text>`、`--operation-id <uuid>` |
 | `monorail idea done <idea-id>` | `complete_idea` | 必填 `<idea-id>`（UUID，通过 `find --kind idea` 获取）；可选 `--operation-id <uuid>`。只有想法池里的想法能标记；已完成的再标记返回 `noop: true`（0.3.0-beta.4，ADR 0020） |
-| `monorail todo add [<text>]` | `capture_todo` | 正文三选一，可选 `--task-id <id>`、`--due-at <iso>`、`--blocking`、`--operation-id <uuid>` |
+| `monorail todo add [<text>]` | `capture_todo` | 正文三选一，可选 `--task-id <id>`、`--due-at <iso>`、`--operation-id <uuid>`；`--blocking` 0.3.1 起不起作用（删除阻塞机制），仍接受以兼容旧脚本 |
 | `monorail find [<query>]` | `find_items` | 可选 `--kind idea\|todo_card\|task\|all`、`--include-archived` |
 | `monorail time summary` | `get_time_summary` | 可选 `--day today\|yesterday\|this_week\|YYYY-MM-DD`、`--day-mode activity\|calendar` |
 | `monorail time entries` | `list_time_entries` | 必填 `--from <iso>`、`--to <iso>`（带时区偏移） |
@@ -66,7 +66,7 @@
    ```
 3. **标准输入（`--stdin`）**：
    ```powershell
-   Get-Content -Raw -Encoding utf8 ./note.txt | node dist-cli/monorail-cli.mjs todo add --stdin --blocking --json
+   Get-Content -Raw -Encoding utf8 ./note.txt | node dist-cli/monorail-cli.mjs todo add --stdin --json
    ```
 
 CLI 内部直接通过结构化 JSON 管道发送请求，从不对用户文本执行 shell 拼接或 `eval`。

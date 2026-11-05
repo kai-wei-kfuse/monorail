@@ -197,6 +197,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     const at = (r as { at: string }).at;
     switch (n.kind) {
       case 'offlineAsk': { const d = n.data as Notice<'offlineAsk'>['data']; void actions.answerOffline(d.from, d.to, (r as NoticeResult['offlineAsk']).activity, at); break; }
+      case 'idleAsk': { const d = n.data as Notice<'idleAsk'>['data']; void actions.answerIdle(d.entryId, (r as NoticeResult['idleAsk']).activity, at); break; }
       case 'longActivity': if (!(r as NoticeResult['longActivity']).still) setBackfill(true); break;
       case 'skipSignal': {
         const choice = (r as NoticeResult['skipSignal']).choice, cardId = (n.data as Notice<'skipSignal'>['data']).cardId;
@@ -243,7 +244,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
       <div ref={stage} className="page">
         {page === 'home' && <HomePage actions={actions} intro={intro} completeAt={completeAt} onCompleteConsumed={() => setCompleteAt(null)}
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
-          look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, shrinkMaxLevel: settings.shrinkMaxLevel, timeboxDefault: settings.timeboxDefaultMinutes }}
+          look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, timeboxDefault: settings.timeboxDefaultMinutes }}
           onGuide={onGuide} onOpenReview={() => setPage('review')} />}
         {page === 'calendar' && <CalendarScreen ctx={ctx} report={report} focusDay={dayFocus} />}
         {page === 'list' && <ListScreen ctx={ctx} report={report} view={listView} onView={setListView} historyFocus={historyFocus}

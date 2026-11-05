@@ -4,7 +4,9 @@ import type { SettingKey } from '../../shared/settings';
 
 /** 一行设置：引用一个设置项；或者是自定义组件（列表编辑器、数据目录、AI 与自动化、关于）。 */
 export type SettingRow =
-  | { key: SettingKey; cn: string; desc?: string; control?: 'slider' | 'dropdown'; labels?: Record<string, string> }
+  | { key: SettingKey; cn: string; desc?: string; control?: 'slider' | 'dropdown'; labels?: Record<string, string>;
+      /** 只在某种计时模式下显示（ADR 0021 第 13 条） */
+      onlyIn?: 'strict' | 'loose' }
   | { custom: 'idleName' | 'favorites' | 'presets' | 'restPool' | 'dataDir' | 'automation' | 'about'; cn: string; desc?: string };
 
 export interface SettingGroup { cn: string; en: string; rows: SettingRow[] }
@@ -14,46 +16,42 @@ const hours = Object.fromEntries(Array.from({ length: 9 }, (_, h) => [String(h),
 const weekdays = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' };
 
 export const SECTIONS: SettingSection[] = [
-  { id: 'deal', no: '01', cn: '出卡', en: 'DEAL', desc: '任务池的上限、主线押多久、什么算快到期。选卡的优先级是固定的：阻塞 > 回顾 > 快到期 > 主线 > 支线 > 随机。', groups: [
+  { id: 'deal', no: '01', cn: '任务', en: 'QUESTS', desc: '任务池的上限、主线押多久。抽卡只从今日任务板里抽，按优先级（普通 1、高 3）和主线 1.5 倍的权重随机。', groups: [
     { cn: '任务池', en: 'TASK POOL', rows: [
       { key: 'mainTasks', cn: '主线任务最多几个', desc: '同时押注的主线任务数。调低时，已有的任务和事项不会被移出，只是不能再加新的' },
-      { key: 'mainItems', cn: '每个主线任务下最多几项', desc: '缩小出来的卡、「还要接着做」的续卡也算在里面' },
+      { key: 'mainItems', cn: '每个主线任务下最多几项', desc: '新建、加一项时按这个数限制；缩小拆出来的不受限' },
       { key: 'sideTasks', cn: '支线任务最多几个', desc: '普通待办也是支线任务。满了要先做完、冷藏或放弃一个' },
       { key: 'betWeeks', cn: '主线押注期', desc: '到期那一周的回顾里加入主线复盘' } ] },
-    { cn: '出卡', en: 'CARDS', rows: [
-      { key: 'dueSoonHours', cn: '快到期阈值', desc: '期限在这个时长以内的卡，排在主线和支线前面' },
+    { cn: '卡', en: 'CARDS', rows: [
       { key: 'timeboxDefaultMinutes', cn: '时间盒默认时长', desc: '新卡改成时间盒卡时的目标时长' } ] } ] },
-  { id: 'degrade', no: '02', cn: '降级', en: 'DEGRADE', desc: '不想做眼前的事时，系统逐层降低要求。拒绝次数是状态探测器，不是惩罚。', groups: [
-    { cn: '缩小', en: 'SHRINK', rows: [{ key: 'shrinkMaxLevel', cn: '缩小级数上限', desc: '按整条缩小链算。调低时已有的深层卡保留' }] },
-    { cn: '休息', en: 'REST', rows: [
-      { key: 'refusalThreshold', cn: '进入休息的拒绝次数', desc: '缩小和再抽一张合并计数' },
-      { key: 'refusalWindowMinutes', cn: '计数窗口', desc: '在这段时间内累计到阈值就进入休息' },
-      { key: 'refusalResetMinutes', cn: '计数清零', desc: '这段时间内没有再拒绝，计数清零' },
-      { key: 'inputHintWindowMinutes', cn: '输入模式提醒', desc: '休息结束后这段时间内又达到阈值，就提醒换成输入' } ] },
-    { cn: '信号', en: 'SIGNALS', rows: [
-      { key: 'skipSignalCount', cn: '跳过信号', desc: '同一张卡被再抽一张跳过几次后提示拆小或 PASS' },
-      { key: 'subconsciousCount', cn: '潜意识探测', desc: '同一个休息回答出现几次后，建议放进支线格' } ] } ] },
+  // 0.3.1：原来的 02 降级只剩缩小（不设上限）和主动休息（不计数），没有设置项了；这一节改放任务模式（ADR 0021 第 10 条），编号不变
+  { id: 'quest', no: '02', cn: '任务模式', en: 'QUEST MODE', desc: '按任务卡的方式过一天：前一晚或早上把事排进今日任务板，犹豫时抽一张。不想要这一套，可以只用计时。', groups: [
+    { cn: '任务模式', en: 'QUEST MODE', rows: [
+      { key: 'taskMode', cn: '任务模式', desc: '关掉后只用计时：没有今日任务板、抽卡和背包里的任务，回顾里不押注主线。数据都留着，打开就回来' } ] } ] },
   { id: 'ideas', no: '03', cn: '想法与回顾', en: 'IDEAS', desc: '想法默认会「死」，死的意思是进冷库，不是删除。', groups: [
     { cn: '想法池', en: 'POOL', rows: [
       { key: 'ideaPoolLimit', cn: '想法池上限', desc: '平时可以暂时超出，回顾时用擂台压回' },
       { key: 'ideaExpireDays', cn: '自动进冷库', desc: '这么多天没动过的想法自动进冷库' } ] },
-    { cn: '回顾', en: 'REVIEW', rows: [{ key: 'reviewWeekday', cn: '回顾日', desc: '这一天的活动日开始时，首页出回顾卡', control: 'dropdown', labels: weekdays }] } ] },
-  { id: 'timer', no: '04', cn: '计时', en: 'TIMER', desc: '计时一直开着，任何时刻只有一项活动在计时。', groups: [
+    { cn: '回顾', en: 'REVIEW', rows: [{ key: 'reviewWeekday', cn: '回顾日', desc: '这一天开始，顶栏「回顾」可以开始本周回顾', control: 'dropdown', labels: weekdays }] } ] },
+  { id: 'timer', no: '04', cn: '计时', en: 'TIMER', desc: '任何时刻只有一项活动在计时；没在做事时记成待机。两种计时模式记的数据一样，只是显示和追问不同。', groups: [
     { cn: '基本', en: 'BASIC', rows: [
+      { key: 'trackingMode', cn: '计时模式', desc: '紧凑：每一分钟都知道在做什么，待机照常显示，关机后追问。宽松：想记什么记什么，待机不显示，不追问',
+        labels: { strict: '紧凑', loose: '宽松' } },
+      { key: 'idleAskMinutes', cn: '空闲多久后追问', desc: '紧凑模式下，待机或暂停超过这个时长后开始下一件事，问一句刚才在做什么', onlyIn: 'strict' },
       { custom: 'idleName', cn: '待机名称', desc: '亮卡到点开始之间记成这个名字' },
       { key: 'dayBoundaryHour', cn: '日边界', desc: '几点算新的一天。凌晨完成的卡算前一天', control: 'dropdown', labels: hours } ] },
     { cn: '提醒', en: 'ALERTS', rows: [
       { key: 'longActivityMinutes', cn: '长时间提醒', desc: '同一活动超过这个时长，轻提醒确认一下' },
       { key: 'deadlineLeadMinutes', cn: '期限提醒提前量', desc: '带期限的待办，到期前多久提醒' },
-      { key: 'offlineAskMinMinutes', cn: '离线追问最小间隔', desc: '关机或休眠短于这个时长，不追问，直接算在原来的活动上' } ] } ] },
-  { id: 'lists', no: '05', cn: '预设与休息池', en: 'LISTS', desc: '收藏和快捷活动都是预设：描述、项目、标签，加上开始的方式。软件不预置，都由你自己添加。', groups: [
-    { cn: '收藏', en: 'FAVORITES', rows: [{ custom: 'favorites', cn: '收藏', desc: '计时条下面一行，输入框没有焦点时按数字键 1–9 启动。默认切换：开始它，正在计的那条结束。计时条上点图钉、日历和列表里「设为收藏」也会加到这里' }] },
-    { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'presets', cn: '快捷活动', desc: '底栏弹层里一键开始。默认插入：做完点「回来」，回到原来的事' }] },
-    { cn: '休息池', en: 'REST POOL', rows: [{ custom: 'restPool', cn: '休息池', desc: '进入休息时从这里派一件事。只是建议，不打勾、不计数' }] } ] },
+      { key: 'offlineAskMinMinutes', cn: '离线追问最小间隔', desc: '关机或休眠短于这个时长，不追问，直接算在原来的活动上', onlyIn: 'strict' } ] } ] },
+  { id: 'lists', no: '05', cn: '收藏与快捷活动', en: 'LISTS', desc: '收藏和快捷活动都是预设：描述、项目、标签。软件不预置，都由你自己添加。', groups: [
+    { cn: '收藏', en: 'FAVORITES', rows: [{ custom: 'favorites', cn: '收藏', desc: '计时条下面一行，输入框没有焦点时按数字键 1–9 启动。做卡时点它是插入（卡等你回来），自由计时时是切换。计时条上点图钉、日历和列表里「设为收藏」也会加到这里' }] },
+    { cn: '快捷活动', en: 'QUICK ACTIVITY', rows: [{ custom: 'presets', cn: '快捷活动', desc: '底栏弹层里一键开始。永远是插入：做完回到原来的事' }] } ] },
   { id: 'look', no: '06', cn: '外观', en: 'APPEARANCE', desc: '视觉风格固定，这里只调首页布局、强调色、字号和动效。', groups: [
     { cn: '首页', en: 'HOME', rows: [
       { key: 'homeLayout', cn: '首页布局', desc: '分开：上面一条计时条，下面是大卡。融合：计时条并进大卡，标题区就是输入框，项目和标签在卡的顶行，所有按钮在卡底部一排',
-        labels: { split: '分开', fused: '融合' } } ] },
+        labels: { split: '分开', fused: '融合' } },
+      { key: 'insertBackPlace', cn: '插入卡的回去区域', desc: '做卡时插进别的事，插入卡边上那条「回到任务 / 结束原任务」放在哪一边', labels: { bottom: '底边', top: '顶边' } } ] },
     { cn: '颜色与字号', en: 'COLOR & TYPE', rows: [
       { key: 'accent', cn: '强调色', labels: { '#fffa00': '信号黄', '#00f5a0': '薄荷绿', '#20b8ff': '天青', '#ff7a1a': '警示橙' } },
       { key: 'titleScale', cn: '首页标题字号', desc: '在能放下的最大字号上再乘这个比例' } ] },

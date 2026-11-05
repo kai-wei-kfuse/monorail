@@ -100,14 +100,15 @@ export function renameRefInTx(tx: TrackingTransaction, ref: string, description:
   const open = openInTx(tx);
   if (open?.card_id === ref) acceptInTx(tx, editEntry(tx.entries, open.id, { description }, tx.at, tx.id));
 }
-export function settleOfflineInTx(tx: TrackingTransaction, gap: { start: string; end: string }): TimeEntry {
+export function settleOfflineInTx(tx: TrackingTransaction, gap: { start: string; end: string }, loose = false): TimeEntry {
   const current = openInTx(tx);
   if (current && Date.parse(current.started_at) <= Date.parse(gap.end)) {
     const atGap = { ...tx, at: gap.end };
     startSystemInTx(atGap, '待机');
     tx.entries = atGap.entries; tx.state.resume_entry_id = null;
   }
-  const entry: TimeEntry = { id: tx.id(), started_at: gap.start, ended_at: gap.end, description: '离线', project: '离线',
+  const entry: TimeEntry = { id: tx.id(), started_at: gap.start, ended_at: gap.end,
+    ...(loose ? { description: tx.settings.lists.idleName, project: '待机' } : { description: '离线', project: '离线' }),
     tags: [], card_id: null, kind: '普通', source: '离线追问', updated_at: tx.at };
   acceptInTx(tx, place(tx.entries, entry, 'switch', tx.now(), tx.id));
   return entry;

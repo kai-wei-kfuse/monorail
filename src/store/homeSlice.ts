@@ -1,7 +1,9 @@
 export interface HomeCard {
   id: string; slotNo: string; slotOf: string; task: string;
   type: '结果卡' | '时间盒卡'; goalMinutes: number | null; content: string; progressNote: string;
-  status: '待做' | '进行中'; shrink: 'ok' | 'max' | 'locked';
+  status: '待做' | '进行中';
+  /** 缩小对话框用（ADR 0021 第 4 条）：时间盒今天的量（板子上填的；不在板子上取剩下的时长）、今天这份的下限；结果卡为 null */
+  split: { todayGoal: number; minToday: number } | null;
   /** Resolved timing project, card tags, and whether the card explicitly overrides its task. */
   project: string; tags: string[]; projectOverridden: boolean;
 }
@@ -18,10 +20,12 @@ export interface HomeSlice {
   noMainHint: boolean; rest: { suggestion: string | null } | null;
   review: { period: string; resumeStep: string; betDue: boolean } | null;
   activity: { kind: 'idle' | 'focus' | 'away'; label: string; startedAt: string | null };
+  /** 宽松模式下真正什么都没在做（不在插入、没有回到目标、开着的是待机）：首页写「没在计时」、读数不走（ADR 0021 第 13 条） */
+  looseIdle: boolean;
   dataVersion: number;
 }
 export const initialHome: HomeSlice = {
   mode: 'blank', entry: null, resumeEntry: null, pending: null, resumeDescription: null, knownTags: [], guideKind: 'firstTask', card: null, closedEffectiveMs: 0, currentSegStartedAt: null,
   awayActivity: null, baseline: { main: null, side: false }, noMainHint: false, rest: null, review: null,
-  activity: { kind: 'idle', label: '', startedAt: null }, dataVersion: 0,
+  activity: { kind: 'idle', label: '', startedAt: null }, looseIdle: false, dataVersion: 0,
 };

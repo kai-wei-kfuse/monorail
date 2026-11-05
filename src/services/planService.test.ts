@@ -175,3 +175,10 @@ describe('换日带过去（ADR 0021 第 6 条，第 2 轮 B2）', () => {
     expect(await f.ctx.repos.plans.days()).toEqual([day(at(), f)]);
   });
 });
+
+describe('PlanRepo', () => {
+  it('plans/ 目录不存在时 days() 返回空列表（G5 审核 N5）', async () => {
+    const f = fixture();
+    expect(await f.ctx.repos.plans.days()).toEqual([]);
+  });
+});

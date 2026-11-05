@@ -66,7 +66,7 @@ export interface HomeActions {
   createProject(name: string, at: string): Promise<unknown>;
   createTag(tag: string, at: string): Promise<unknown>;
 }
-export interface HomeLook { titleScale: number; topoMode: TopoMode; topoDepth: number; shrinkMaxLevel: number; timeboxDefault: number }
+export interface HomeLook { titleScale: number; topoMode: TopoMode; topoDepth: number; timeboxDefault: number }
 
 /** 首页卡片的显示数据：closedEffectiveMs + (现在 − 当前段开始)。小窗也用它。 */
 export function cardView(home: HomeSlice, now: number): TaskCardView | null {
@@ -100,7 +100,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   { actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: { cardId: string; at: string } | null; onCompleteConsumed: () => void;
     shrinkFor: string | null; onShrinkConsumed: () => void;
     onGuide: (kind: GuideKind) => void; onOpenReview: () => void }) {
-  const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards), planToday = useStore(appStore, s => s.plan.today);
+  const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), projects = useStore(appStore, s => s.backpack.pool.projects), settings = useStore(appStore, s => s.settings);
   const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer'), [prefill, setPrefill] = useState<EntryValue | null>(null);
   // 首页布局（设置 → 外观）：分开 = 上面计时条、下面卡区；融合 = 计时条并进大卡（UI 规范 §11.3）
@@ -141,7 +141,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   useEffect(() => {
     if (!shrinkFor) return;
     onShrinkConsumed();
-    if (home.card?.id === shrinkFor && home.card.shrink === 'ok') setDialog({ kind: 'shrink', cardId: shrinkFor });
+    if (home.card?.id === shrinkFor) setDialog({ kind: 'shrink', cardId: shrinkFor });
   }, [shrinkFor]);
 
   // 抽卡（ADR 0021 第 2 条）：只读拿到结果；抽到就开始那一张。板子空着、带过来的待确认等情况由 G7 的抽屉处理
@@ -192,7 +192,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
         onCreate={tag => void actions.createTag(tag, now_())} />
     </span>,
     onEditContent: frozen || wipe ? undefined : (cardId: string, content: string) => void act(() => actions.editContent(cardId, content, new Date().toISOString())),
-    actions: <CardActions running={c.status === '进行中'} shrink={c.shrink} busy={busy || !!wipe}
+    actions: <CardActions running={c.status === '进行中'} busy={busy || !!wipe}
       onStart={at => void act(() => actions.start(c.id, at))}
       onComplete={at => void beginComplete(c.id, at)}
       onShrink={() => setDialog({ kind: 'shrink', cardId: c.id })} />,
@@ -239,13 +239,9 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at, fromMini: dialog.fromMini } : null)} />}
     {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.complete(dialog.cardId, r.at, r.note, r.continueCard, dialog.fromMini)); }} />}
-    {dialog?.kind === 'shrink' && full && (() => {
-      // 今天的量：板子上填的；不在板子上时取剩下的时长（ADR 0021 第 4 条）
-      const row = planToday.rows.find(r => r.cardId === full.id), spentMs = entries.filter(e => e.card_id === full.id).reduce((s, e) => s + Date.parse(e.ended_at ?? new Date(now).toISOString()) - Date.parse(e.started_at), 0);
-      const goal = full.type === '时间盒卡' ? row?.todayMinutes ?? Math.max(5, Math.ceil(((full.timebox_minutes ?? 0) - spentMs / 60000) / 5) * 5) : null;
-      return <ShrinkDialog original={full.content} type={full.type} todayGoal={goal} minutesToday={row?.minutesToday ?? 0} onCancel={() => setDialog(null)}
-        onConfirm={r => { setDialog(null); void act(() => actions.split(dialog.cardId, { todayContent: r.todayContent, restContent: r.restContent, restMinutes: r.restMinutes }, r.at)); }} />;
-    })()}
+    {dialog?.kind === 'shrink' && full && home.card?.id === full.id && <ShrinkDialog original={full.content} type={full.type}
+      todayGoal={home.card.split?.todayGoal ?? null} minToday={home.card.split?.minToday ?? 5} onCancel={() => setDialog(null)}
+      onConfirm={r => { setDialog(null); void act(() => actions.split(dialog.cardId, { todayContent: r.todayContent, restContent: r.restContent, restMinutes: r.restMinutes }, r.at)); }} />}
     </div>
   </div>;
 }

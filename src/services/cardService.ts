@@ -2,7 +2,7 @@ import type { Card } from '../domain/card/card';
 import { editCardContent, cardTiming } from '../domain/card/edit';
 import { startCard, completeCard, releaseCard, abandonCard } from '../domain/card/transitions';
 import { splitCard, restoreParent } from '../domain/card/shrink';
-import { minutesOnDay, totalMinutes } from '../domain/plan/plan';
+import { defaultTodayMinutes, minutesOnDay, totalMinutes } from '../domain/plan/plan';
 import { setTodayMinutesInTx } from './planService';
 import { inBackpack, trackOf } from '../domain/task/task';
 import { activityDay } from '../domain/timeline/day';
@@ -125,27 +125,22 @@ export interface SplitCommand { todayContent: string; restContent: string; restM
 export const split = (ctx: Ctx, cardId: string, input: SplitCommand, at: string) => run(ctx, async tx => {
   const card = getCard(tx, cardId);
   requireCurrent(tx, card);
+  if (insertStateInTx(tx)) throw new Error('IN_AWAY_ACTIVITY：正在插入别的事，先回到任务再缩小');
   const day = activityDay(tx.at, tx.settings.dayBoundaryHour);
   const minutesToday = minutesOnDay(tx.entries, cardId, day, tx.settings.dayBoundaryHour, tx.at), minutesTotal = totalMinutes(tx.entries, cardId, tx.at);
   const planned = tx.todayPlan.items.find(item => item.card_id === cardId)?.today_minutes ?? null;
-  const todayGoal = card.type === '时间盒卡' ? planned ?? Math.max(5, Math.ceil(((card.timebox_minutes ?? 0) - minutesTotal) / 5) * 5) : null;
-  const result = splitCard(card, { ...input, id: tx.id(), at, order: card.order + 0.5, todayGoal, minutesToday, minutesTotal });
+  const todayGoal = card.type === '时间盒卡' ? planned ?? defaultTodayMinutes(card, minutesTotal) : null;
+  const next = Math.min(...tx.cards.filter(c => c.order > card.order).map(c => c.order), card.order + 1);
+  const result = splitCard(card, { ...input, id: tx.id(), at, order: (card.order + next) / 2, todayGoal, minutesToday, minutesTotal });
   // 原卡内容改了：经 editContentInTx，开着的那条计时描述跟着改（之前的条目保留旧描述）；再写时长和级数
   editContentInTx(tx, cardId, result.today.content);
   tx.saveCard({ ...getCard(tx, cardId), timebox_minutes: result.today.timebox_minutes, shrink_level: result.today.shrink_level, skip_count: 0 });
   tx.saveCard(result.rest);
-  renumberTaskInTx(tx, card.task_id);
   if (result.todayMinutes !== null) setTodayMinutesInTx(tx, cardId, result.todayMinutes);
   alignInTx(tx);
   return result.rest.id;
 }, at, { action: 'card.split', subject: { type: 'card', id: cardId } });
-/** 同一任务里的卡按 order 重新编成 1、2、3……，拆出来的 rest 正好落在原卡后面。 */
-function renumberTaskInTx(tx: Transaction, taskId: string | null): void {
-  const list = tx.cards.filter(c => c.task_id === taskId && c.task_id !== null).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
-  if (taskId === null) return;
-  const base = Math.min(...list.map(c => c.order));
-  list.forEach((c, i) => { const order = Math.floor(base) + i; if (c.order !== order) tx.saveCard({ ...c, order }); });
-}
+
 
 export const pass = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx => {
   const card = getCard(tx, cardId);

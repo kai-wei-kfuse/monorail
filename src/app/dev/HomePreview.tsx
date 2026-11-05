@@ -64,7 +64,7 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
     <div ref={stage} style={{ display: 'grid', minHeight: 0 }} onDoubleClick={e => { if (!(e.target as HTMLElement).closest('.title, .title-edit')) setWipe(true); }}>
       {(page === 'card' || page === 'over') && <TaskCard view={view} look={look} titleScale={65} onEditContent={(_, text) => setContent(text)}
         corner={<span className="c-hint">还没有主线</span>}
-        actions={<CardActions running shrink={page === 'over' ? 'max' : 'ok'} onStart={() => {}} onComplete={() => {}} onShrink={() => {}} />}
+        actions={<CardActions running onStart={() => {}} onComplete={() => {}} onShrink={() => {}} />}
         fx={wipe && <Wipe no="支" meta="支线 · 结果卡" title="查一下几台服务器有没有被攻击" onCovered={() => {}} onDone={() => { setWipe(false); playAfterWipe(stage.current!); }} />} />}
       {page === 'guide' && <GuideCard kind="setMain" look={look} onAction={() => {}} />}
       {page === 'review' && <ReviewCard period="2026-W44" resumeStep="擂台对决" betDue look={look} onOpen={() => {}} />}
@@ -72,6 +72,6 @@ export function HomePreview({ page, overlay }: { page: string; overlay: string |
   </Frame>
   <NoticeHost notices={notices(overlay)} onResolve={(n, r) => console.log(n.kind, r)} onDismiss={() => {}} />
   {overlay === 'complete' && <CompleteDialog at={iso(0)} onConfirm={() => {}} onCancel={() => {}} />}
-  {overlay === 'shrink' && <ShrinkDialog original={view.content} type={view.type} todayGoal={view.type === '时间盒卡' ? 60 : null} minutesToday={18} onConfirm={() => {}} onCancel={() => {}} />}
+  {overlay === 'shrink' && <ShrinkDialog original={view.content} type={view.type} todayGoal={view.type === '时间盒卡' ? 60 : null} minToday={20} onConfirm={() => {}} onCancel={() => {}} />}
   </div>;
 }

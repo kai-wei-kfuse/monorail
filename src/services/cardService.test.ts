@@ -145,3 +145,25 @@ it('拆分被拒绝时卡、计时都不变，之后的操作照常', async () =
   await complete(f.ctx, 'a', at(), '完成');
   expect((await getCard(f, 'a')).status).toBe('已完成');
 });
+
+it('缩小不设上限：同一张卡连拆 3 次都行，首页投影里一直能缩小（G5 审核 B1，已定 54）', async () => {
+  const f = fixture(); await seed(f, [card('a', { task_id: 'main' })], [task('main')]); await start(f.ctx, 'a', at());
+  for (let i = 0; i < 3; i++) await split(f.ctx, 'a', { todayContent: `第 ${i + 1} 次`, restContent: `剩 ${i + 1}`, restMinutes: null }, at());
+  expect(await getCard(f, 'a')).toMatchObject({ shrink_level: 3, content: '第 3 次' });
+  expect(f.home().card).toMatchObject({ id: 'a' });
+  expect(f.home().card).not.toHaveProperty('shrink');
+});
+it('插入中不能拆分原来那张（G5 审核 S1）', async () => {
+  const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
+  f.clock(at(5)); await insert(f.ctx, 'wc', at(5));
+  await expect(split(f.ctx, 'a', halves, at(6))).rejects.toThrow('IN_AWAY_ACTIVITY');
+});
+it('拆出来的 rest 落在原卡和后一张之间，不改别的卡的顺序（G5 审核 S2）', async () => {
+  const f = fixture();
+  await seed(f, [card('a', { task_id: 'main', order: 3 }), card('x', { order: 4 }), card('b', { task_id: 'main', order: 7 })], [task('main')]);
+  await start(f.ctx, 'a', at());
+  const rest = await split(f.ctx, 'a', halves, at());
+  const orders = Object.fromEntries((await f.ctx.repos.cards.list()).map(e => [e.value.id, e.value.order]));
+  expect(orders).toMatchObject({ a: 3, x: 4, b: 7 });
+  expect(orders[rest]).toBeGreaterThan(3); expect(orders[rest]).toBeLessThan(4);
+});

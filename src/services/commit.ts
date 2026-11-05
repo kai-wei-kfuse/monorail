@@ -1,7 +1,7 @@
 import type { Card } from '../domain/card/card';
 import type { TimeEntry } from '../domain/timeline/entry';
 import { startSystemInTx } from './tracking/api';
-import { activityDay } from '../domain/timeline/day';
+import { activityDay, activityDayStartOf } from '../domain/timeline/day';
 import { planReminders } from '../domain/reminders';
 import type { Settings } from '../shared/settings';
 import type { Reminders } from '../platform/reminders';
@@ -291,7 +291,16 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
     // （吸收过的对象从吸收之后算）。没有进行中条目时自动开始待机放在这之后，所以它在用户动作里作为连带出现。
     const beforeState = structuredClone(tx.state), beforeSettings = structuredClone(ctx.settings);
     if (!tx.state.open_entry) startSystemInTx(tx, '待机');
+    const idleBefore = tx.entries.find(e => e.id === tx.state.open_entry && e.ended_at === null && e.project === '待机')?.id ?? null;
     const value = await work(tx);
+    // 空闲追问（紧凑模式）：事务开始时开着待机，提交后开着的不是待机，那段待机在这次结束时的实际长度超过阈值就问一句
+    if (idleBefore && tx.settings.trackingMode === 'strict') {
+      const idle = tx.entries.find(e => e.id === idleBefore), now = tx.entries.find(e => e.id === tx.state.open_entry && e.ended_at === null);
+      const minutes = idle?.ended_at ? (Date.parse(idle.ended_at) - Date.parse(idle.started_at)) / 60_000 : 0;
+      if (idle && now && now.project !== '待机' && minutes > tx.settings.idleAskMinutes)
+        tx.notices.push({ id: tx.id(), kind: 'idleAsk', data: { entryId: idle.id, from: idle.started_at, to: idle.ended_at!, minutes: Math.round(minutes),
+          activities: tx.settings.lists.presets.map(item => ({ id: item.id, name: item.name })) } });
+    }
     const open = tx.entries.filter(entry => entry.ended_at === null);
     if (open.length !== 1 || open[0].id !== tx.state.open_entry) throw new Error('当前计时条目与运行指针不一致');
     tx.state.open_entry_day = activityDay(open[0].started_at, tx.settings.dayBoundaryHour);
@@ -333,7 +342,8 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
     }
     await postCommit('projection', () => {
       const entriesSnapshot = ctx.repos.times.snapshot();
-      const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: entriesSnapshot, at: ctx.now(), version: ++queue.version });
+      const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: entriesSnapshot, at: ctx.now(), version: ++queue.version,
+        planToday: plans.get(todayKey)!.value });
       const backpack = projectBackpack(tx.cards, tx.tasks, tx.records, entriesSnapshot, ctx.settings, ctx.now());
       const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, entries: entriesSnapshot, state: tx.state, settings: ctx.settings, at: ctx.now() });
       const plan = projectPlan({ today: plans.get(todayKey)!.value, tomorrow: plans.get(shiftDay(todayKey, 1))!.value, cards: tx.cards, tasks: tx.tasks,
@@ -356,8 +366,9 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
     const openNow = tx.entries.find(seg => seg.id === tx.state.open_entry && seg.ended_at === null) ?? null;
     const goalItem = openNow?.card_id ? plans.get(todayKey)!.value.items.find(item => item.card_id === openNow.card_id && item.today_minutes !== null) : undefined;
     const todayGoal = openNow && goalItem ? { cardId: goalItem.card_id, day: todayKey, todayMinutes: goalItem.today_minutes!,
-      minutesToday: minutesOnDay(tx.entries.filter(e => e.id !== openNow.id), goalItem.card_id, todayKey, ctx.settings.dayBoundaryHour, ctx.now()) } : null;
-    await postCommit('reminders', () => ctx.reminders.update(planReminders({ cards: tx.cards, open: openNow, todayGoal,
+      minutesToday: minutesOnDay(tx.entries.filter(e => e.id !== openNow.id), goalItem.card_id, todayKey, ctx.settings.dayBoundaryHour, ctx.now()),
+      dayStart: activityDayStartOf(todayKey, ctx.settings.dayBoundaryHour) } : null;
+    await postCommit('reminders', () => ctx.reminders.update(planReminders({ cards: tx.cards, open: openNow, todayGoal, loose: ctx.settings.trackingMode === 'loose',
       deadlineLeadMinutes: ctx.settings.deadlineLeadMinutes, longActivityMinutes: ctx.settings.longActivityMinutes })), warnings);
     if (warnings.length) await postCommit('logging', () => ctx.log(`post-commit-warning:${JSON.stringify(warnings)}`), warnings);
     return { data: value, committed_at: committedAt, replayed: false, warnings };

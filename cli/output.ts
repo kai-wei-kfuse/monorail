@@ -75,7 +75,7 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
     ],
   },
   {
-    usage: 'monorail todo add [<text>] [--text-file <path> | --stdin] [--task-id <id>] [--due-at <iso>] [--operation-id <uuid>] [--json]',
+    usage: 'monorail todo add [<text>] [--text-file <path> | --stdin] [--task-id <id>] [--due-at <iso>] [--operation-id <uuid>] [--json]   （--blocking 0.3.1 起不起作用，仍接受）',
     method: 'capture_todo',
     summary: '捕捉待办事项并原子入包（可归入指定任务或自动建单事项支线任务）',
     examples: [

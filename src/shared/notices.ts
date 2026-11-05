@@ -7,6 +7,8 @@ export interface ActivityOption { id: string; name: string }
 export interface NoticeData {
   /** 关机、休眠、崩溃后追问「从 X 到 Y 在做什么」。系统已经按「离线」记下，这里只是修改。 */
   offlineAsk: { from: string; to: string; activities: ActivityOption[] };
+  /** 紧凑模式：待机 / 暂停超过 idleAskMinutes 后开始下一件事，问那一段在做什么（ADR 0021 第 13 条） */
+  idleAsk: { entryId: string; from: string; to: string; minutes: number; activities: ActivityOption[] };
   /** 补记（用户从状态块主动打开）。now 用来限制补记不能超过现在。 */
   backfill: { activities: ActivityOption[]; now: string };
   /** 同一活动持续太久的轻提醒。 */
@@ -29,6 +31,7 @@ export type BackfillResult =
 
 export interface NoticeResult {
   offlineAsk: { activity: string; at: string };
+  idleAsk: { activity: string; at: string };
   backfill: BackfillResult;
   longActivity: { still: true; at: string } | { still: false; at: string };
   skipSignal: { choice: 'split' | 'pass' | 'ignore'; at: string };

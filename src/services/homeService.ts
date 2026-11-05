@@ -124,11 +124,19 @@ export const backfillSwitch = (ctx: Ctx, minutes: number, activity: string, at: 
 export async function settleOfflineInTx(tx: Transaction, gap: Range) {
   if (Date.parse(gap.end) - Date.parse(gap.start) < tx.settings.offlineAskMinMinutes * 60000) return null;
   if (tx.entries.some(entry => entry.source === '离线追问' && Date.parse(entry.started_at) === Date.parse(gap.start))) return null;
-  const entry = tracking.settleOfflineInTx(tx, gap); alignInTx(tx);
-  tx.notices.push({ id: tx.id(), kind: 'offlineAsk', data: { from: gap.start, to: gap.end, activities: tx.settings.lists.presets.map(item => ({ id: item.id, name: item.name })) } });
+  const loose = tx.settings.trackingMode === 'loose';
+  const entry = tracking.settleOfflineInTx(tx, gap, loose); alignInTx(tx);
+  if (!loose) tx.notices.push({ id: tx.id(), kind: 'offlineAsk', data: { from: gap.start, to: gap.end, activities: tx.settings.lists.presets.map(item => ({ id: item.id, name: item.name })) } });
   return entry;
 }
 export const settleOffline = (ctx: Ctx, gap: Range) => action(ctx, gap.end, tx => settleOfflineInTx(tx, gap), { action: 'system.resume', source: { kind: 'system', trigger: 'resume' } });
+/** 回答空闲追问（ADR 0021 第 13 条，第 3 轮 S1）：那段待机改成这项活动，并改掉 kind，不留下「学习 / 暂停」这种条目。 */
+export const answerIdle = (ctx: Ctx, entryId: string, activity: string, at: string) => action(ctx, at, tx => {
+  const entry = tx.entries.find(e => e.id === entryId);
+  if (!entry || entry.project !== '待机' || entry.ended_at === null) throw new Error('那一段已经改过了');
+  const value = template(tx, activity);
+  tracking.retypeEntryInTx(tx, entryId, { description: value.description, project: value.project, tags: value.tags, kind: entry.kind === '插入' ? '插入' : '普通' });
+}, { action: 'home.answerIdle' });
 export const answerOffline = (ctx: Ctx, gap: Range, activity: string, at: string) => action(ctx, at, tx => {
   const entry = tx.entries.find(entry => entry.source === '离线追问' && entry.started_at === gap.start && entry.ended_at === gap.end);
   if (!entry) throw new Error('离线条目不存在');

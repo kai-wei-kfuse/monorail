@@ -85,7 +85,7 @@ export function SettingsPage({ section, onSection, settings, onChange, onListsCh
       : sec.id === 'automation' ? <AutomationGuide hostState={automationHost} onRefreshHost={onRefreshAutomationHost} onCopyText={onCopyText}
         recent={automationRecent} recentRight={automationRecentRight} />
       : sec.groups.map(g => <Group key={g.cn} cn={g.cn} en={g.en}>
-        {g.rows.map(r => {
+        {g.rows.filter(r => !('onlyIn' in r) || !r.onlyIn || r.onlyIn === settings.trackingMode).map(r => {
           const id = 'custom' in r ? r.custom : r.key;
           const err = 'key' in r ? errors[r.key] : undefined;
           const block = 'custom' in r && (r.custom === 'favorites' || r.custom === 'presets' || r.custom === 'restPool');

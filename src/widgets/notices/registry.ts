@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type { ToastBody } from './toast';
 import type { NoticeKind, NoticeProps } from './types';
 import { OfflineAsk } from './OfflineAsk';
+import { IdleAsk } from './IdleAsk';
 import { Backfill } from './Backfill';
 import { TimeboxShort } from './TimeboxShort';
 import { RestReturn } from './RestReturn';
@@ -18,6 +19,7 @@ export type NoticeEntry<K extends NoticeKind> =
 /** kind → 组件。以后加新提示：在 types.ts 里加一种 kind，再在这里登记一项。 */
 export const NOTICES: { [K in NoticeKind]: NoticeEntry<K> } = {
   offlineAsk: { mode: 'dialog', Component: OfflineAsk },
+  idleAsk: { mode: 'dialog', Component: IdleAsk },
   backfill: { mode: 'dialog', Component: Backfill },
   timeboxShort: { mode: 'dialog', Component: TimeboxShort },
   restReturn: { mode: 'dialog', Component: RestReturn },

@@ -148,6 +148,10 @@ function describeNotice(notice: Notice): string {
       const d = notice.data as Notice<'offlineAsk'>['data'];
       return `存在离线区间待确认（${d.from} 至 ${d.to}）`;
     }
+    case 'idleAsk': {
+      const d = notice.data as Notice<'idleAsk'>['data'];
+      return `有一段待机待用户说明在做什么（${d.from} 至 ${d.to}，${d.minutes} 分钟）；请提示用户在单轨界面回答`;
+    }
     case 'longActivity': {
       const d = notice.data as Notice<'longActivity'>['data'];
       return `「${d.activity}」已持续超过 ${d.hours} 小时`;
@@ -248,7 +252,7 @@ function nextStepForCode(code: string): string {
     case 'IN_AWAY_ACTIVITY':
       return '当前正在插入别的事（做卡途中插进来的事，或临时活动）；可以用 start_timer / start_break 换成另一件事、pause_timer / resume_timer 暂停或继续插入的事，或调用 return_from_break 回到原来的任务；停止计时、开始另一张卡要先回到任务或在单轨界面结束原任务';
     case 'IN_DEGRADE_REST':
-      return '当前处于降级休息状态；请提示用户在单轨界面完成休息返回后再开始计时';
+      return '单轨还停在 0.3.0 留下的降级休息状态；请提示用户重启单轨（启动时会自动结束这段休息）';
     case 'NO_RESUME_TARGET':
       return '当前没有可恢复的暂停活动；请改用 start_timer 或 start_task_item 开始新计时';
     case 'NOT_IN_BREAK':

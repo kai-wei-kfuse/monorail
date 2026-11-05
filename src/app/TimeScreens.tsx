@@ -48,7 +48,8 @@ function useEntryActions(ctx: Ctx, report: (error: unknown) => void, source: His
 function useShared() {
   const projects = useStore(appStore, s => s.backpack.pool.projects), knownTags = useStore(appStore, s => s.home.knownTags);
   const version = useStore(appStore, s => s.home.dataVersion), settings = useStore(appStore, s => s.settings);
-  return { projects, knownTags, version, boundaryHour: settings.dayBoundaryHour, showIdle: settings.calendarShowIdle };
+  // 宽松模式（ADR 0021 第 13 条）：日历、列表不显示待机，calendarShowIdle 不读
+  return { projects, knownTags, version, boundaryHour: settings.dayBoundaryHour, showIdle: settings.trackingMode === 'loose' ? false : settings.calendarShowIdle };
 }
 
 /** 日历页的接线：按页面在看的那几天查条目。focusDay：从操作历史 ◎ 定位过来要看的那一天。 */

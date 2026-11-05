@@ -3,7 +3,6 @@ import { Dialog } from '../ui/overlay/Dialog';
 import { Button } from '../ui/controls/Button';
 import { Segmented } from '../ui/controls/Segmented';
 import { Slider } from '../ui/controls/Slider';
-import { Switch } from '../ui/controls/Switch';
 import { TextArea } from '../ui/controls/TextArea';
 import { DateTimeInput } from '../ui/controls/DateTimeInput';
 import { Dropdown } from '../ui/controls/Dropdown';
@@ -61,7 +60,6 @@ export function CardEditor({ initial, isNew, tasks, defaultTimebox, passBlocked,
       <div className="fm-f"><span>期限</span><div className="fm-row">
         <DateTimeInput label="期限" value={f.dueAt} onChange={dueAt => set({ dueAt })} />
       </div></div>
-      <div className="fm-check"><div><b>不可缩小</b><p>本身很短的任务用，例如找 3 个 JD。</p></div><Switch label="不可缩小" checked={f.noShrink} onChange={noShrink => set({ noShrink })} /></div>
       {!isNew && onPass && <div className="fm-danger">
         <Button tone="danger" disabled={!!passBlocked} onClick={() => onPass(new Date().toISOString())}>PASS</Button>
         <span>{passBlocked ?? '放弃这张卡。它不会再出现在首页。'}</span>
