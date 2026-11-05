@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fit-mini-window"
+description = "Enables the fit_mini_window command without any pre-configured scope."
+commands.allow = ["fit_mini_window"]
+
+[[permission]]
+identifier = "deny-fit-mini-window"
+description = "Denies the fit_mini_window command without any pre-configured scope."
+commands.deny = ["fit_mini_window"]
