@@ -32,6 +32,8 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
     /** 外壳给的抽卡请求（首页〔今日任务板〕旁的抽卡、板子底部〔抽一张〕）：每次变成新值就抽一次 */ drawAt: string | null; onDrawn: () => void;
     report: (error: unknown) => void; onInfo?: (title: string, text: string) => void; children: ReactNode }) {
   const view = useStore(appStore, s => s.backpack), planView = useStore(appStore, s => s.plan), home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
+  // 设置从 store 读：改了设置就跟着重新渲染（不靠别的投影顺带刷新）
+  const settings = useStore(appStore, s => s.settings);
   const [ask, setAsk] = useState<Ask>(null), [flip, setFlip] = useState<{ pick: FlipCard; pool: FlipCard[]; from: DOMRect | null; key: string } | null>(null);
   const [lastDraw, setLastDraw] = useState<string | null>(null);
   const now = () => new Date().toISOString();
@@ -62,8 +64,8 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
   const running = home.insert ? null : home.card?.status === '进行中' && home.entry?.cardId === home.card.id ? home.entry : home.entry && home.entry.project !== '待机' ? home.entry : null;
   const data: BagData = {
     pool: view.pool, tasks: view.tasks, queue: view.queue, ideas: view.ideas, doneIdeas: view.doneIdeas, plan: planView,
-    ideaLimit: ctx.settings.ideaPoolLimit, defaultTimebox: ctx.settings.timeboxDefaultMinutes, knownTags: view.pool.knownTags,
-    drawable: planView.today.drawable.length, inserting: !!home.insert, taskMode: ctx.settings.taskMode,
+    ideaLimit: settings.ideaPoolLimit, defaultTimebox: settings.timeboxDefaultMinutes, knownTags: view.pool.knownTags,
+    drawable: planView.today.drawable.length, inserting: !!home.insert, taskMode: settings.taskMode,
     now: home.insert ? { title: home.insert.name, startedAt: home.insert.startedAt ?? new Date().toISOString() }
       : running ? { title: home.card?.status === '进行中' ? home.card.content : running.description, startedAt: running.startedAt } : null,
   };
