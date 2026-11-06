@@ -223,8 +223,13 @@ export function commitReadoutInTx(tx: Transaction, request: HomeReadoutRequest, 
     const resume = tx.state.resume_entry_id ? tx.entries.find(e => e.id === tx.state.resume_entry_id) : undefined;
     if (!open || open.id !== request.target.id || open.kind !== '插入' || !resume || tracking.insertStateInTx(tx) !== 'inserting') throw new Error('已经换成别的事了');
     if (!Number.isFinite(request.milliseconds) || request.milliseconds < 0) throw new Error('读数不能小于 0');
-    const closed = insertClosedMs(tx.entries, open, resume);
+    const run = insertRunSegments(tx.entries, open, resume), closed = insertClosedMs(tx.entries, open, resume);
     if (request.milliseconds < closed) throw new Error(`最少 ${Math.ceil(closed / 60000)} 分钟（这件事暂停前已计 ${Math.round(closed / 60000)} 分钟；要改前面几段请在日历里改）`);
+    // 前面几段不动（已定 69）：开着这一段最多往前挪到上一段结束的地方，否则会盖掉前面那段、累计算错（G7 收尾复核）
+    if (run.length) {
+      const max = closed + Date.parse(request.at) - Date.parse(run[0].ended_at!);
+      if (request.milliseconds > max) throw new Error(`最多 ${Math.floor(max / 60000)} 分钟（再多会盖掉这件事前面那一段；要改前面几段请在日历里改）`);
+    }
     const result = tracking.setReadoutInTx(tx, { entryId: open.id, mode: 'entry', at: request.at, milliseconds: request.milliseconds - closed }, seen);
     return result.kind === 'confirm' ? { kind: 'confirm' as const, plan: result.plan, hit: result.plan.hit } : { kind: 'done' as const, hit: result.plan.hit };
   }

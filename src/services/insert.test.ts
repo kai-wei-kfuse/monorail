@@ -218,6 +218,16 @@ describe('插入累计读数的编辑（G7 收尾审核 P2-1、P2-2）', () => {
     await expect(setMini(f, 'insertRun', 60_000)).rejects.toThrow('最少 2 分钟');
     expect(shown(f)).toBe(3 * 60_000);
   });
+  it('累计读数写得太多、会盖掉这件事前面那段（G7 收尾复核）：拒绝，前面那段不动；正好挪到前段结束处可以', async () => {
+    const f = await resumedInsert();
+    await expect(setMini(f, 'insertRun', 8 * 60_000)).rejects.toThrow('最多 6 分钟');
+    expect(shown(f)).toBe(3 * 60_000);
+    expect(entries(f).find(e => e.kind === '插入' && e.started_at === at(10))).toMatchObject({ ended_at: at(12) });
+    expect((await setMini(f, 'insertRun', 6 * 60_000)).kind).toBe('done');
+    expect(shown(f)).toBe(6 * 60_000);
+    expect(open(f).started_at).toBe(at(12));
+    expect(entries(f).find(e => e.kind === '插入' && e.started_at === at(10))).toMatchObject({ ended_at: at(12) });
+  });
   it.each([{ description: '厕所（改名）' }, { project: '工作' }])('改名 / 改项目 = 整件事一起改，累计不丢：%j', async patch => {
     const f = await resumedInsert();
     const cardBefore = entries(f).find(e => e.card_id === 'c1')!;
