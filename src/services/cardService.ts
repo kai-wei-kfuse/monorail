@@ -87,13 +87,13 @@ export async function checkComplete(ctx: Ctx, cardId: string, at: string): Promi
  * 打开缩小对话框时现算今天的量和今天这份的下限（只读，同 checkComplete；G6 审核 S2）。
  * 结果卡 todayGoal 为 null。和 split 同一个 splitInputs，点〔缩小〕时滑块的下限就是服务端会接受的下限。
  */
-export function checkSplit(ctx: Ctx, cardId: string, at: string): Promise<{ todayGoal: number | null; minToday: number }> {
+export function checkSplit(ctx: Ctx, cardId: string, at: string): Promise<{ todayGoal: number | null; minToday: number; minutesToday: number }> {
   return readSerial(ctx, async () => {
     const entity = await ctx.repos.cards.get(cardId);
     if (!entity) throw new Error('卡片不存在');
     const plan = await ctx.repos.plans.read(activityDay(at, ctx.settings.dayBoundaryHour));
     const { todayGoal, minutesToday } = splitInputs(entity.value, plan.value, ctx.repos.times.snapshot(), ctx.settings.dayBoundaryHour, at);
-    return { todayGoal, minToday: minTodayMinutes(minutesToday) };
+    return { todayGoal, minToday: minTodayMinutes(minutesToday), minutesToday };
   });
 }
 

@@ -40,7 +40,7 @@ export interface HomeActions {
   start(cardId: string, at: string): Promise<unknown>;
   checkComplete(cardId: string, at: string): Promise<{ remainingMinutes: number; at: string } | undefined>;
   /** 打开缩小对话框时现算今天的量和下限（G6 审核 S2） */
-  checkSplit(cardId: string, at: string): Promise<{ todayGoal: number | null; minToday: number } | undefined>;
+  checkSplit(cardId: string, at: string): Promise<{ todayGoal: number | null; minToday: number; minutesToday: number } | undefined>;
   /** fromMini：小窗点的完成（两段式），操作历史的来源记小窗 */
   complete(cardId: string, at: string, note: string, keepGoing: boolean, fromMini?: boolean): Promise<unknown>;
   /** 缩小 = 拆成两项（ADR 0021 第 4 条） */
@@ -95,7 +95,7 @@ export function useNow(): number {
 }
 
 type DialogState = { kind: 'short'; cardId: string; remaining: number; at: string; fromMini?: boolean }
-  | { kind: 'complete'; cardId: string; at: string; fromMini?: boolean } | { kind: 'shrink'; cardId: string; todayGoal: number | null; minToday: number }
+  | { kind: 'complete'; cardId: string; at: string; fromMini?: boolean } | { kind: 'shrink'; cardId: string; todayGoal: number | null; minToday: number; minutesToday: number }
   | { kind: 'manual' } | { kind: 'rest'; at: string } | null;
 
 /**
@@ -268,7 +268,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.complete(dialog.cardId, r.at, r.note, r.continueCard, dialog.fromMini)); }} />}
     {dialog?.kind === 'shrink' && full && home.card?.id === full.id && <ShrinkDialog original={full.content} type={full.type}
-      todayGoal={dialog.todayGoal} minToday={dialog.minToday} onCancel={() => setDialog(null)}
+      todayGoal={dialog.todayGoal} minToday={dialog.minToday} minutesToday={dialog.minutesToday} onCancel={() => setDialog(null)}
       onConfirm={r => { setDialog(null); void act(() => actions.split(dialog.cardId, { todayContent: r.todayContent, restContent: r.restContent, restMinutes: r.restMinutes }, r.at)); }} />}
     </div>
   </div>;

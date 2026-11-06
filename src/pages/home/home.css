@@ -105,3 +105,23 @@
 
 /* 右上角临时活动下拉抽屉（ADR 0006）：沿用首页浅色简约卡片语言，随舞台缩放且不遮挡下方进度条与读数 */
 /* 背景与切角单独放一层：外层 --ink 14px 切角 + 内层 --paper-2 同心切角，使右/底/45°斜边严丝合缝且同为 1px，同时不裁切下拉弹层 */
+
+/* 缩小对话框（UI 规范 §11.15，原型 bag-prototype.html .bp-shr） */
+.shr { display: grid; gap: 14px; }
+.dlg.wide:has(.shr) { width: min(660px, calc(100vw - 48px)); }
+.shr .k { font: 600 expanded 8px/1 var(--f-en); letter-spacing: .24em; color: var(--mute); }
+.shr-orig { display: grid; gap: 6px; padding: 10px 12px; background: var(--paper); border-left: 3px solid var(--ink-3); }
+.shr-orig b { font: 630 15px/1.35 var(--f-cn); }
+.shr-orig small { font: 330 12px/1.4 var(--f-cn); color: var(--mute); }
+.shr-bar { position: relative; height: 26px; display: flex; background: var(--line); }
+.shr-bar .done { height: 100%; background: var(--ink-3); }
+.shr-bar .a { height: 100%; background: var(--yellow); box-shadow: inset 0 0 0 1px var(--ink); display: grid; place-items: center; font: 600 11px/1 var(--f-en); color: var(--ink); white-space: nowrap; overflow: hidden; transition: width .15s; }
+.shr-bar .b { flex: 1; height: 100%; display: grid; place-items: center; font: 600 11px/1 var(--f-en); color: var(--ink-3); background-image: repeating-linear-gradient(-45deg, rgb(22 22 22 / .1) 0 1px, transparent 1px 6px); }
+.shr-range { display: grid; gap: 6px; font: 520 12px/1 var(--f-cn); }
+.shr-range input { accent-color: var(--ink); }
+.shr-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.shr-half { display: grid; gap: 8px; align-content: start; padding: 12px; border: 1px solid var(--line-2); background: var(--paper-2); }
+.shr-half.a { border-color: var(--ink); box-shadow: inset 0 3px 0 var(--yellow); }
+.shr-half .min { display: flex; align-items: center; gap: 6px; font: 330 12px/1 var(--f-cn); color: var(--mute); }
+.shr-half .min b { font: 600 13px/1 var(--f-en); color: var(--ink); }
+.shr-note { margin: 0; font: 330 11px/1.5 var(--f-cn); color: var(--mute); }

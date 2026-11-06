@@ -139,10 +139,10 @@ it('打开缩小时现算下限和今天的量：开始卡 25 分钟内没有别
   const f = fixture(); await seed(f, [card('a', { task_id: 'main', type: '时间盒卡', timebox_minutes: 120 }), card('r', { task_id: 'main' })], [task('main')]);
   await start(f.ctx, 'a', at()); f.clock(at(25));
   // 不在板子上：今天的量取剩下的时长（120 − 25 = 95）
-  expect(await checkSplit(f.ctx, 'a', at(25))).toEqual({ todayGoal: 95, minToday: 25 });
+  expect(await checkSplit(f.ctx, 'a', at(25))).toEqual({ todayGoal: 95, minToday: 25, minutesToday: 25 });
   await expect(split(f.ctx, 'a', { todayContent: '前半', restContent: '后半', restMinutes: 95 - 20 }, at(25))).rejects.toThrow('不能少于今天已经计的时间');
   await split(f.ctx, 'a', { todayContent: '前半', restContent: '后半', restMinutes: 95 - 25 }, at(25));
-  expect(await checkSplit(f.ctx, 'r', at(25))).toEqual({ todayGoal: null, minToday: 5 });
+  expect(await checkSplit(f.ctx, 'r', at(25))).toEqual({ todayGoal: null, minToday: 5, minutesToday: 0 });
 });
 it('拆分被拒绝时卡、计时都不变，之后的操作照常', async () => {
   const f = fixture(); await seed(f, [card('a')]); await start(f.ctx, 'a', at());
