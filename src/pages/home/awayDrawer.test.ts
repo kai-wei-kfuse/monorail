@@ -76,7 +76,7 @@ const awayEntry = (more: Partial<TimerEntry> = {}): TimerEntry => ({
 function makeActions(): TimerActions {
   return {
     beginPending: vi.fn(), cancelPending: vi.fn(), startFree: vi.fn(), editOpen: vi.fn(),
-    pause: vi.fn(), stop: vi.fn(), resume: vi.fn(), continueTimer: vi.fn(), draw: vi.fn(), startFavorite: vi.fn(),
+    pause: vi.fn(), stop: vi.fn(), resume: vi.fn(), continueTimer: vi.fn(), draw: vi.fn(), openBoard: vi.fn(), startFavorite: vi.fn(),
     startCard: vi.fn(), continueEntry: vi.fn(), favorite: vi.fn(),
     readout: vi.fn(async () => ({ kind: 'done' as const, hit: [] })),
     createProject: vi.fn(), createTag: vi.fn(),

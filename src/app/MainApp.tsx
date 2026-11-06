@@ -26,7 +26,8 @@ import { bootstrap } from './bootstrap';
 import { createActions } from './actions';
 import type { Actions } from './actions';
 import { readyRoutes } from './routes';
-import { BackpackScreen } from './BackpackScreen';
+import { BagScreen } from './BagScreen';
+import { BagToggle, WaitingChip } from './shell/BagToggle';
 import { CalendarScreen, ListScreen } from './TimeScreens';
 import type { DayFocus, HistoryFocus } from './TimeScreens';
 import type { ListView } from '../pages/list/ViewToggle';
@@ -107,6 +108,9 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const [page, setPage] = useState<Route['id']>('home');
   const [miniOpen, setMiniOpen] = useState<boolean | null>(null), [pinned, setPinned] = useState(false), [maximized, setMaximized] = useState(false);
   const [backfill, setBackfill] = useState(false);
+  // 背包抽屉（ADR 0021 第 2 条）：底栏〔背包〕开关；在别的页面点了先切回首页再拉开（审核 N5）
+  const [bagOpen, setBagOpen] = useState(false), [dealAt, setDealAt] = useState<string | null>(null);
+  const openBag = () => { setPage('home'); setBagOpen(true); };
   const [completeAt, setCompleteAt] = useState<{ cardId: string; at: string } | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
   // 操作历史的跳转与定位（执行方案 E8c 第 4 条）：列表看的是哪一种、从设置 09 要打开哪一条、◎ 要看哪一天
@@ -175,7 +179,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   function onGuide(kind: GuideKind) {
     // 建项目、设主线、给主线拆卡都在背包页做；卡都做完了就去写一条
     if (kind === 'allDone') { void actions.showQuickbar(); return; }
-    setPage('backpack');
+    openBag();
   }
   // 设置 09 → 列表 · 操作历史 · 仅自动化，展开那一条（null 是「查看全部」）
   function openHistory(record: HistoryRecord | null) {
@@ -185,7 +189,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   // ◎：条目去日历 / 列表那一天（条目还在就按它的开始时刻算活动日，删了就用历史记录的活动日），其余去对应的页
   function locate(record: HistoryRecord) {
     const target = locateOf(record);
-    if (!('day' in target)) { setPage(target.page); return; }
+    // 0.3.1：背包是首页的抽屉，◎ 定位到卡 / 任务 / 记录时切回首页拉开抽屉
+    if (!('day' in target)) { if (target.page === 'backpack') openBag(); else setPage(target.page); return; }
     const entry = target.entryId ? ctx.repos.times.snapshot().find(e => e.id === target.entryId) : undefined;
     const [y, m, d] = target.day.split('-').map(Number);
     const day = activityDayStart(entry ? Date.parse(entry.started_at) : new Date(y, m - 1, d, 12).getTime(), settings.dayBoundaryHour);
@@ -205,7 +210,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
         else if (choice === 'split') { setPage('home'); setShrinkFor(cardId); }
         break;
       }
-      case 'subconscious': if ((r as NoticeResult['subconscious']).accept) setPage('backpack'); break;
+      case 'subconscious': if ((r as NoticeResult['subconscious']).accept) openBag(); break;
       case 'backfill': void actions.backfill(r as NoticeResult['backfill']); break;
       default: break;
     }
@@ -239,7 +244,9 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
       <button type="button" className="dock-toggle mini-toggle" title={`打开快速记录条（Q / ${settings.quickbarHotkey}）`} onClick={() => void actions.showQuickbar()}>
         <span className="chev"><Icon name="plus" /></span><span className="t-cn">快速记录</span>
       </button>
-      <MiniToggle on={miniOpen} onClick={() => void toggleMini()} /></>}
+      <MiniToggle on={miniOpen} onClick={() => void toggleMini()} />
+      <BagToggle open={bagOpen && page === 'home'} onToggle={() => (bagOpen && page === 'home' ? setBagOpen(false) : openBag())} />
+      <WaitingChip onBack={() => { setPage('home'); void actions.resume(new Date().toISOString()); }} /></>}
     right={page === 'settings' ? <SavedBadge saves={saves} /> : undefined} />;
 
   return <>
@@ -248,14 +255,16 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
         {page === 'home' && <HomePage actions={actions} intro={intro} completeAt={completeAt} onCompleteConsumed={() => setCompleteAt(null)}
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, timeboxDefault: settings.timeboxDefaultMinutes }}
-          onGuide={onGuide} onOpenReview={() => setPage('review')} />}
+          onGuide={onGuide} onOpenReview={() => setPage('review')}
+          onDraw={at => { setBagOpen(false); setDealAt(at); }} onOpenBag={openBag}
+          drawer={stageContent => <BagScreen ctx={ctx} open={bagOpen} onOpen={() => setBagOpen(true)} onClose={() => setBagOpen(false)} drawAt={dealAt} onDrawn={() => setDealAt(null)}
+            report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} onInfo={info}>{stageContent}</BagScreen>} />}
         {page === 'calendar' && <CalendarScreen ctx={ctx} report={report} focusDay={dayFocus} />}
         {page === 'list' && <ListScreen ctx={ctx} report={report} view={listView} onView={setListView} historyFocus={historyFocus}
           focusDay={dayFocus} onLocate={locate} onCopied={id => info('已复制 operation_id', id)} />}
         {page === 'review' && <ReviewScreen ctx={ctx} report={report} />}
         {page === 'settings' && <SettingsScreen ctx={ctx} root={root} initialErrors={platformErrors} onSaved={() => setSaves(n => n + 1)} report={report} updates={updates}
           section={settingsSection} onOpenHistory={record => { setSettingsSection('automation'); openHistory(record); }} />}
-        {page === 'backpack' && <BackpackScreen ctx={ctx} report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} onInfo={info} />}
       </div>
     </Frame>
     <NoticeHost notices={notices} onResolve={onResolve} onDismiss={n => dismissNotice(n.id)} extra={[...errors, ...toasts]}

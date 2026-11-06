@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Icon } from '../../ui/icons/Icon';
 import { useStore } from 'zustand';
 import { appStore } from '../../store/appStore';
@@ -102,8 +103,11 @@ type DialogState = { kind: 'short'; cardId: string; remaining: number; at: strin
  * completeAt：小窗里点了完成、主窗口还原以后，由外壳传进来，接着走完成流程（架构 §5.5）。
  * shrinkFor：跳过信号里选了「拆小」，由外壳传进来卡 id，打开缩小对话框。
  */
-export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview }:
-  { actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: { cardId: string; at: string } | null; onCompleteConsumed: () => void;
+export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview, drawer, onDraw, onOpenBag }:
+  { /** 背包抽屉（外壳给，ADR 0021 第 2 条）：把首页的卡包进去，拉开时卡退后一点 */ drawer?: (stage: ReactNode) => ReactNode;
+    /** 抽卡交给外壳（翻卡在抽屉那一层演）；没给就照旧抽到直接开始 */ onDraw?: (at: string) => void;
+    /** 〔今日任务板〕：拉开背包抽屉 */ onOpenBag?: () => void;
+    actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: { cardId: string; at: string } | null; onCompleteConsumed: () => void;
     shrinkFor: string | null; onShrinkConsumed: () => void;
     onGuide: (kind: GuideKind) => void; onOpenReview: () => void }) {
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
@@ -156,6 +160,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
 
   // 抽卡（ADR 0021 第 2 条）：只读拿到结果；抽到就开始那一张。板子空着、带过来的待确认等情况由 G7 的抽屉处理
   async function drawAndStart(at: string) {
+    if (onDraw) { onDraw(at); return; }
     const result = await actions.draw(at);
     if (result?.kind === 'task' && result.card) await actions.start(result.card.id, at);
   }
@@ -178,6 +183,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     resume: () => void act(() => actions.resume(now_())),
     continueTimer: () => void act(() => actions.continueTimer(now_())),
     draw: () => void act(() => drawAndStart(now_())),
+    openBoard: () => onOpenBag?.(),
     startFavorite,
     startCard: id => void act(() => actions.start(id, now_())),
     continueEntry: id => void actions.continueEntry(id, now_()),
@@ -218,8 +224,8 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     over={home.card?.status === '待做' ? { id: home.card.id, content: home.card.content } : null} />;
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
   else if (home.mode === 'blank') body = <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
-    <div /><div className="alt-hero"><h1>现在做什么？</h1><p>抽一张卡，开始下一件事。</p></div><div />
-    <div className="foot"><ActivityActions className="actions" disabled={!!tv.away}><ActionButton primary cn="抽卡" en="DRAW" icon="play" onClick={() => void act(() => drawAndStart(new Date().toISOString()))} /></ActivityActions></div>
+    <div /><div className="alt-hero"><h1>现在做什么？</h1><p>从今日任务板上抽一张，开始下一件事。</p></div><div />
+    <div className="foot"><ActivityActions className="actions" disabled={!!tv.away}><ActionButton primary cn="今日任务板" en="TODAY" icon="cards" onClick={() => onOpenBag?.()} /></ActivityActions></div>
   </CardFrame>;
   else if (home.mode === 'task' && view && task) {
     const corner = <>
@@ -248,12 +254,12 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {/* 分开布局插入时，计时条写正在计的那件事（插入的事），可以改名字、项目、标签（用户 2026-11-06）；插入卡下面照常 */}
     {!fused && <TimerBar view={home.insert && tv.away ? { ...tv, entry: tv.away, away: null, idle: tv.away.project === '待机', paused: home.insert.paused ? home.insert.name : null } : tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
     <div ref={stage} className="home-stage">
-    {home.insert
+    {(drawer ?? (x => x))(home.insert
       ? <InsertCard key={home.insert.over.kind === 'card' ? home.insert.over.cardId : 'free'} insert={home.insert} now={now} look={cardLook} titleScale={look.titleScale}
           place={settings.insertBackPlace} onBack={() => act(() => actions.resume(new Date().toISOString()))}
           onEndOriginal={() => act(() => actions.endOriginal(new Date().toISOString()))}
           onPause={() => void actions.pause(new Date().toISOString())} onContinue={() => void act(() => actions.continueTimer(new Date().toISOString()))}>{body}</InsertCard>
-      : body}
+      : body)}
     {dialog?.kind === 'rest' && <RestDialog projects={projects} onCancel={() => setDialog(null)}
       onConfirm={project => { const at = dialog.at; setDialog(null); void act(() => actions.rest(at, project)); }} />}
     {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}

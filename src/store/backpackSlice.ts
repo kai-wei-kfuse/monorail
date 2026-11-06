@@ -4,8 +4,11 @@ import { defaults } from '../shared/settings';
 export interface PoolItem {
   id: string; content: string; type: '结果卡' | '时间盒卡'; timeboxMinutes: number | null; elapsedMs: number; running: boolean;
   blocking: boolean; dueAt: string | null; shrinkLevel: number; project: string | null; tags: string[];
+  /** 0.3.1 抽屉：做完的项（灰显留着，完成日 YYYY-MM-DD）；拆分出来的哪一份；鼠标提示「从哪一项缩小来的」 */
+  done?: string | null; split?: 'today' | 'rest' | null; splitFrom?: string | null;
 }
-export interface PoolTask { id: string; name: string; track: '主线' | '支线'; items: PoolItem[]; defaultProject: string; overLimit: boolean }
+export interface PoolTask { id: string; name: string; track: '主线' | '支线'; items: PoolItem[]; defaultProject: string; overLimit: boolean;
+  /** 押注到期（主线），YYYY-MM-DD；做完的项（抽屉详情里灰显） */ betEndsAt?: string | null; doneItems?: PoolItem[] }
 export interface PoolView {
   mains: PoolTask[]; sides: PoolTask[]; parked: { id: string; name: string; track: '主线' | '支线'; itemCount: number }[];
   doneSides: string[]; mainMax: number; sideMax: number; mainItems: number;

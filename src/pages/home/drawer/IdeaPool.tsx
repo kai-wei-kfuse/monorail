@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Button } from '../../ui/controls/Button';
-import { Chip } from '../../ui/controls/Chip';
-import { TextInput } from '../../ui/controls/TextInput';
-import { Icon } from '../../ui/icons/Icon';
+import { Button } from '../../../ui/controls/Button';
+import { Chip } from '../../../ui/controls/Chip';
+import { TextInput } from '../../../ui/controls/TextInput';
+import { Icon } from '../../../ui/icons/Icon';
 import type { DoneIdeaView, IdeaView } from './types';
 import './backpack.css';
 

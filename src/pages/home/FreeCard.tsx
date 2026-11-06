@@ -62,6 +62,6 @@ export function FreeCard({ view, draft, over, now, look, titleScale, actions }:
       </>
         : !running ? <ActionButton primary cn="继续" en="RESUME" icon="play" onClick={actions.continueTimer} />
         : <ActionButton primary data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" onClick={actions.pause} />}
-      <ActionButton primary={!!pending} cn="抽一张卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />
+      <ActionButton primary={!!pending} cn="今日任务板" en="TODAY" icon="cards" onClick={actions.openBoard} />
     </>} />;
 }

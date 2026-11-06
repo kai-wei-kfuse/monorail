@@ -19,14 +19,22 @@ export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEnt
     shrinkLevel: card.shrink_level, skipCount: card.skip_count, progressNote: card.progress_note || null });
   const queue = (id: string | null) => active.filter(card => card.task_id === id).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id)).map(queueCard);
   const orderedTasks = [...tasks].sort((a, b) => (a.slot_index ?? Infinity) - (b.slot_index ?? Infinity) || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
-  const poolTask = (task: Task): PoolTask => {
-    const items = active.filter(card => card.task_id === task.id).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id)).map(card => ({
-      id: card.id, content: card.content, type: card.type, timeboxMinutes: card.timebox_minutes,
+  const byId = new Map(cards.map(card => [card.id, card]));
+  const itemOf = (card: Card) => {
+    const from = card.shrunk_from ? byId.get(card.shrunk_from) : undefined, note = (card as Card & { split_note?: string }).split_note;
+    // 拆分出来的：rest 带 split_note；原卡（today）是被拆的那张——有别的卡的 shrunk_from 指向它、它自己不是「已缩小」
+    const isRest = !!note && !!from && from.status !== '已缩小', isToday = !isRest && cards.some(c => c.shrunk_from === card.id && (c as Card & { split_note?: string }).split_note);
+    return { id: card.id, content: card.content, type: card.type, timeboxMinutes: card.timebox_minutes,
       elapsedMs: refElapsedInTx({ entries, at }, card.id), running: entries.some(entry => entry.card_id === card.id && entry.ended_at === null),
       blocking: card.blocking, dueAt: card.due_at, shrinkLevel: card.shrink_level, project: card.project, tags: card.tags,
-    }));
+      done: card.status === '已完成' ? card.completed_day : null, split: isRest ? 'rest' as const : isToday ? 'today' as const : null, splitFrom: isRest ? note! : null };
+  };
+  const poolTask = (task: Task): PoolTask => {
+    const ordered = cards.filter(card => card.task_id === task.id).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+    const items = ordered.filter(card => card.status === '待做' || card.status === '进行中').map(itemOf);
     return { id: task.id, name: task.name, track: task.slot, defaultProject: task.default_project ?? '未分类', items,
-      overLimit: task.slot === '主线' && items.length > settings.mainItems };
+      overLimit: task.slot === '主线' && items.length > settings.mainItems,
+      betEndsAt: task.bet_ends_at ? task.bet_ends_at.slice(0, 10) : null, doneItems: ordered.filter(card => card.status === '已完成').map(itemOf) };
   };
   const sides = orderedTasks.filter(task => inBackpack(task) && task.slot === '支线').map(poolTask);
   return {

@@ -16,14 +16,16 @@ import type { Ctx } from '../../services/commit';
 import type { Actions } from '../actions';
 import { PREVIEW_PROJECTS, PREVIEW_TAGS } from './CalendarPreview';
 import { StatusBlock } from '../shell/StatusBlock';
+import { BagScreen } from '../BagScreen';
 
 /**
  * 首页接线预览（只在开发时用）：内存文件系统 + 真的仓库和 service，发布到真的 appStore，首页用真的 actions。
  * 一个主线任务带两张卡，两个收藏，今天上午两条记录。下面列出条目和待确认，方便截图核对。刷新页面数据就清空。
  * &view=calendar / list 换成日历页、列表页（真的 CalendarScreen / ListScreen）。&layout=fused 用融合布局。
- * &mode=loose 用宽松计时模式（ADR 0021 第 13 条）；&title 在上面加标题栏状态块（看灰灯）。
+ * &mode=loose 用宽松计时模式（ADR 0021 第 13 条）；&title 在上面加标题栏状态块（看灰灯）；&bag 一开始就拉开背包抽屉。
  */
 export function LivePreview() {
+  const [bagOpen, setBagOpen] = useState(() => new URLSearchParams(location.search).has('bagOpen')), [dealAt, setDealAt] = useState<string | null>(null);
   const [actions, setActions] = useState<Actions | null>(null), [ctx, setCtx] = useState<Ctx | null>(null), [errors, setErrors] = useState<string[]>([]);
   const query = new URLSearchParams(location.search), view = query.get('view'), layout = query.get('layout');
   const entries = useStore(appStore, s => s.entries), home = useStore(appStore, s => s.home);
@@ -67,9 +69,12 @@ export function LivePreview() {
     {query.has('title') && <div style={{ display: 'flex', justifyContent: 'flex-end' }}><StatusBlock kind={home.looseIdle ? 'off' : home.activity.kind}
       label={home.looseIdle ? '没在计时' : home.activity.label || '待机'} startedAt={home.looseIdle ? null : home.activity.startedAt} onClick={() => {}} /></div>}
     <HomePage actions={actions} intro={null} completeAt={null} onCompleteConsumed={() => {}} shrinkFor={null} onShrinkConsumed={() => {}}
-      look={{ titleScale: 1, topoMode: 'off', topoDepth: 0, timeboxDefault: 30 }} onGuide={() => {}} onOpenReview={() => {}} />
+      look={{ titleScale: 1, topoMode: 'off', topoDepth: 0, timeboxDefault: 30 }} onGuide={() => {}} onOpenReview={() => {}}
+      onDraw={query.has('bag') ? at => { setBagOpen(false); setDealAt(at); } : undefined} onOpenBag={() => setBagOpen(true)}
+      drawer={query.has('bag') ? stage => <BagScreen ctx={ctx} open={bagOpen} onOpen={() => setBagOpen(true)} onClose={() => setBagOpen(false)} drawAt={dealAt} onDrawn={() => setDealAt(null)} report={report}>{stage}</BagScreen> : undefined} />
     <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)', maxHeight: 120, overflow: 'auto' }}>
       <div>mode={home.mode} · 待确认：{home.pending ? hms(home.pending.startedAt) : '无'} · 卡：{home.card ? `${home.card.content}（${home.card.status}）` : '无'}{errors.length > 0 && ` · 出错：${errors.join(' / ')}`}
+        {' · '}<button type="button" id="dev-open-bag" onClick={() => setBagOpen(o => !o)}>背包</button>
         {' · '}<button type="button" id="dev-start-card" onClick={() => void actions.start('card0', new Date().toISOString())}>开始第一张卡</button>
         {' · '}<button type="button" id="dev-away-wc" onClick={() => void actions.startPreset('q1', new Date().toISOString())}>插入：上厕所</button>
         {' '}<button type="button" id="dev-away-parcel" onClick={() => void actions.startPreset('q2', new Date().toISOString())}>插入：拿快递</button>

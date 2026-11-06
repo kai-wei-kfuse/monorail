@@ -40,7 +40,8 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
   const total = showCard ? cardView.elapsedMs + (s.pendingOnCard ? elapsed : 0) : elapsed;
   const digits = <TimeField id="f-elapsed" kind="mmss" shown={total} disabled={!s.target} target={() => s.target} submit={actions.readout} onNote={E.setNote}>
     {formatReadout(total, 'mmss')}</TimeField>;
-  const draw = (primary: boolean) => <ActionButton primary={primary} cn="抽一张卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />;
+  // 0.3.1：抽卡只在今日任务板上（已定 41）；首页这个位置是〔今日任务板〕，点了拉开抽屉
+  const draw = (primary: boolean) => <ActionButton primary={primary} cn="今日任务板" en="TODAY" icon="cards" onClick={actions.openBoard} />;
   const plus = <button type="button" className="tbar-new" aria-label="开始想下一件事" title="开始想下一件事" onClick={writeOther}><Icon name="plus" /></button>;
   const stop = <StopButton onClick={actions.stop} />;
   const manual = <button type="button" className="c-link" title="补一段过去做过的事" onClick={onManual}>手动补录</button>;

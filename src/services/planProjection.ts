@@ -6,6 +6,7 @@ import type { TimeEntry } from '../domain/timeline/entry';
 import { achieved, dueOn, minutesOnDay, visibleItems } from '../domain/plan/plan';
 import type { DayPlan } from '../domain/plan/plan';
 import type { PlanBoard, PlanSlice } from '../store/planSlice';
+import { drawableOnPlan } from '../domain/picker/pick';
 
 export interface PlanProjectionInput {
   today: DayPlan; tomorrow: DayPlan; cards: readonly Card[]; tasks: readonly Task[];
@@ -26,7 +27,8 @@ function board(plan: DayPlan, input: PlanProjectionInput, isToday: boolean): Pla
     };
   });
   return { day: plan.day, rows, achieved: rows.filter(row => row.achieved).length, total: rows.length,
-    skipUntilPlanned: plan.skip_until_planned, carryPending: !plan.carried_confirmed && rows.some(row => row.carried), carriedFrom: plan.carried_from };
+    skipUntilPlanned: plan.skip_until_planned, carryPending: !plan.carried_confirmed && rows.some(row => row.carried), carriedFrom: plan.carried_from,
+    drawable: isToday ? drawableOnPlan({ plan, cards: input.cards, tasks: input.tasks, entries: input.entries, boundaryHour: input.boundaryHour, at: input.at, activeCard: input.runningCard }).map(c => c.card.id) : [] };
 }
 
 export function projectPlan(input: PlanProjectionInput): PlanSlice {

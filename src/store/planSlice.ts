@@ -19,7 +19,9 @@ export interface PlanBoard {
   skipUntilPlanned: boolean;
   /** 有带过来、还没确认的 */
   carryPending: boolean; carriedFrom: string | null;
+  /** 现在能抽的项（翻卡的背面就是这几张，最多 6 张由界面截）：不含正在做的、已达成的、待确认的带过来项（同 drawableOnPlan） */
+  drawable: string[];
 }
 export interface PlanSlice { today: PlanBoard; tomorrow: PlanBoard }
-const empty = (day: string): PlanBoard => ({ day, rows: [], achieved: 0, total: 0, skipUntilPlanned: false, carryPending: false, carriedFrom: null });
+const empty = (day: string): PlanBoard => ({ day, rows: [], achieved: 0, total: 0, skipUntilPlanned: false, carryPending: false, carriedFrom: null, drawable: [] });
 export const initialPlan: PlanSlice = { today: empty(''), tomorrow: empty('') };

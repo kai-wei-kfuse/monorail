@@ -56,6 +56,8 @@ export interface TimerActions {
   /** 〔继续〕（ADR 0021 第 3 条：插入的事暂停时继续插入的事） */
   continueTimer: () => void;
   draw: () => void;
+  /** 〔今日任务板〕：拉开背包抽屉（0.3.1 取代首页的〔抽一张卡〕） */
+  openBoard: () => void;
   startFavorite: (presetId: string) => void;
   startCard: (cardId: string) => void;
   continueEntry: (entryId: string) => void;
@@ -143,7 +145,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
           {/* 插入中没有〔停止〕（已定 57）：不想继续插入的事就回到任务、结束原任务或开始别的事 */}
           {running && !deciding && running.kind !== '插入' && !view.away && <StopButton onClick={actions.stop} />}
           {(!running || !!view.away) && !deciding && <button type="button" className="tbar-new" disabled={!!pending} aria-label="开始想下一件事" title="开始想下一件事" onClick={E.next}><Icon name="plus" /></button>}
-          <ActionButton compact cn="抽卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />
+          <ActionButton compact cn="今日任务板" en="TODAY" icon="cards" onClick={actions.openBoard} />
         </ActivityActions>
       </div>
       <div className="tbar-sub"><EntryLine view={view} note={E.note} /></div>

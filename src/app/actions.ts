@@ -38,6 +38,14 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     // 抽卡（ADR 0021 第 2 条）：只读，结果给翻卡；〔换一张〕写板子的 seen，〔开始〕走 start
     draw: guard((at: string) => deal.drawFromPlan(ctx, at)),
     skipCard: guard((cardId: string, at: string) => plan.skipCard(ctx, cardId, at)),
+    // 今日任务板（ADR 0021 第 1、2、6 条）：排进今天 / 明天、移出、改量和优先级、这次先不排、确认带过来的
+    planAdd: guard((which: 'today' | 'tomorrow', cardId: string, priority: '普通' | '高', todayMinutes: number | null, at: string) =>
+      plan.add(ctx, which, { cardId, priority, todayMinutes }, at)),
+    planRemove: guard((which: 'today' | 'tomorrow', cardId: string, at: string) => plan.remove(ctx, which, cardId, at)),
+    planEdit: guard((which: 'today' | 'tomorrow', cardId: string, patch: { priority?: '普通' | '高'; todayMinutes?: number }, at: string) =>
+      plan.edit(ctx, which, { cardId, ...patch }, at)),
+    skipToday: guard((at: string) => plan.skipToday(ctx, at)),
+    confirmCarry: guard((keep: readonly string[], at: string) => plan.confirmCarry(ctx, keep, at)),
     // 计时条（homeService，N3 接线草案）
     beginPending: guard((at: string) => timer.beginPending(ctx, at)),
     cancelPending: guard((pendingId: string, at: string) => timer.cancelPending(ctx, pendingId, at)),

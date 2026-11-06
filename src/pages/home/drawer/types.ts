@@ -1,4 +1,4 @@
-import type { CardFields } from '../../widgets/CardEditor';
+import type { CardFields } from '../../../widgets/CardEditor';
 
 /** 背包页要显示的数据。由调用方从 store / service 查询结果组装，页面只读。 */
 export interface TaskView {

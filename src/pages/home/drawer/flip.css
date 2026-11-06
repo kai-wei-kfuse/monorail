@@ -1,0 +1,25 @@
+/* 翻卡（UI 规范 §11.15，原型 bag-prototype.html v0.25–v0.26）：遮罩 .55；背面朝上的卡从〔抽一张〕飞出来摊成一排，洗一下，抽中的翻面放大，其余往下收走。不写概率。 */
+.fd-deal { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: rgb(22 22 22 / 0); transition: background .25s; perspective: 1100px; }
+.fd-deal.on { background: rgb(22 22 22 / .55); }
+.fd-card { position: absolute; left: 50%; top: 40%; width: 150px; height: 208px; margin: -104px 0 0 -75px; }
+.fd-card > div { position: absolute; inset: 0; display: grid; }
+.fd-card .face { display: none; }
+.fd-card.open .back { display: none; }
+.fd-card.open .face { display: grid; }
+.fd-card .back { background: #f3f3ee; border: 1px solid rgb(22 22 22 / .22); box-shadow: 0 10px 24px -10px rgb(0 0 0 / .45);
+  background-image: repeating-linear-gradient(45deg, rgb(22 22 22 / .07) 0 1px, transparent 1px 9px), repeating-linear-gradient(-45deg, rgb(22 22 22 / .07) 0 1px, transparent 1px 9px); place-items: center; }
+.fd-card .back::before { content: ""; width: 40px; height: 40px; background: var(--yellow); box-shadow: inset 0 0 0 1.5px var(--ink); transform: rotate(45deg); }
+.fd-card .back::after { content: "单轨"; position: absolute; bottom: 12px; font: 630 11px/1 var(--f-cn); letter-spacing: .3em; color: var(--mute); }
+.fd-card .face { align-content: start; gap: 8px; padding: 14px 14px 12px; background: #fbfbf8; border: 1px solid var(--ink); box-shadow: inset 0 4px 0 var(--yellow), 0 18px 40px -10px rgb(0 0 0 / .5); }
+.fd-card.main .face { background: color-mix(in srgb, var(--yellow) 14%, #fbfbf8); }
+.fd-card .face .chip2 { justify-self: start; font: 630 11px/1 var(--f-cn); letter-spacing: .1em; color: var(--mute); }
+.fd-card.main .face .chip2 { color: var(--ink); box-shadow: inset 0 -3px 0 var(--yellow); }
+.fd-card .face b { font: 630 17px/1.3 var(--f-cn); overflow-wrap: anywhere; }
+.fd-card .face small { font: 330 11px/1.4 var(--f-cn); color: var(--mute); }
+.fd-card .face .pri { margin-top: auto; font: 330 10px/1 var(--f-cn); color: var(--mute); }
+.fd-card.pick .face { outline: 2px solid var(--ink); outline-offset: 3px; }
+.fd-cap { position: absolute; left: 0; right: 0; top: calc(40% + 136px); text-align: center; font: 520 13px/1.5 var(--f-cn); color: #fff; letter-spacing: .06em; opacity: 0; transition: opacity .2s; text-shadow: 0 1px 6px rgb(0 0 0 / .4); }
+.fd-cap.on { opacity: 1; }
+.fd-cap button { margin: 10px 5px 0; height: 36px; padding: 0 18px; border: 1px solid rgb(255 255 255 / .6); background: transparent; color: #fff; font: 520 14px/1 var(--f-cn); letter-spacing: .06em; cursor: pointer; }
+.fd-cap button:hover { border-color: #fff; }
+.fd-cap button.go { background: #fbfbf8; border-color: #fbfbf8; color: var(--ink); box-shadow: inset 0 -3px 0 var(--yellow); }
