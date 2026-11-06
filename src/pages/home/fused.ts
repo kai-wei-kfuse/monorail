@@ -14,7 +14,7 @@ export interface FusedState {
 }
 
 /**
- * 没卡、点了「写别的」（write），或正在计一件自己写的事而卡还没开始（比如刷新后待确认丢了）：标题区是输入框；否则显示卡。
+ * 没卡、点了〔插入事件〕（write），或正在计一件自己写的事而卡还没开始（比如刷新后待确认丢了）：标题区是输入框；否则显示卡。
  * 读数：待确认时改起点；显示卡且计时在卡上，改这张卡的「已用」；输入框时改正在计的这一条；暂停中、离开中、待机都不能点。
  */
 export function fusedState(view: Pick<TimerView, 'entry' | 'away' | 'idle' | 'pending' | 'paused'>, card: { id: string; status: '待做' | '进行中' } | null, write: boolean): FusedState {

@@ -59,7 +59,7 @@ describe('fusedState', () => {
 
     const runningHtml = renderToStaticMarkup(createElement(FusedCard, {
       view: baseView, card: null, cardView: null, now: Date.parse('2026-10-28T08:00:02Z'),
-      look, titleScale: 65, actions: noopActions, onManual: vi.fn(),
+      look, titleScale: 65, actions: noopActions,
     }));
     // 进行中的自由记录：保留 .f-input + useEntry 架构，同时加上 compact 类紧贴文字宽度并传入 --ts:62px
     expect(runningHtml).toContain('class="f-input compact" style="--ts:62px"');
@@ -69,7 +69,7 @@ describe('fusedState', () => {
     // 待确认空白输入状态：保留完整宽度 .f-input（无 compact）并带 --ts:62px
     const pendingHtml = renderToStaticMarkup(createElement(FusedCard, {
       view: { ...baseView, pending }, card: null, cardView: null, now: Date.parse('2026-10-28T08:00:02Z'),
-      look, titleScale: 65, actions: noopActions, onManual: vi.fn(),
+      look, titleScale: 65, actions: noopActions,
     }));
     expect(pendingHtml).toContain('class="f-input" style="--ts:62px"');
     expect(pendingHtml).not.toContain('f-input compact');
@@ -124,7 +124,7 @@ describe('fusedState', () => {
     // 1. 融合布局：保留原按钮布局，整组禁用。
     const fusedHtml = renderToStaticMarkup(createElement(FusedCard, {
       view: awayView, card: null, cardView: null, now,
-      look, titleScale: 65, actions, onManual: vi.fn(),
+      look, titleScale: 65, actions,
     }));
     expect(fusedHtml).toContain('value="学 408"');
     expect(fusedHtml).toContain('readOnly=""');
@@ -165,7 +165,7 @@ describe('fusedState', () => {
       for (const away of [awayWc, null]) {
         const view = { ...awayView, pending, away, canDraw: false };
         for (const component of [
-          createElement(FusedCard, { view, card: null, cardView: null, now, look, titleScale: 65, actions, onManual: vi.fn() }),
+          createElement(FusedCard, { view, card: null, cardView: null, now, look, titleScale: 65, actions }),
           createElement(TimerBar, { view, actions, mode: 'timer', onMode: vi.fn() }),
           createElement(FreeCard, { view, draft: null, over: null, now, look, titleScale: 65, actions }),
         ]) {

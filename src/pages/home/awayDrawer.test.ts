@@ -140,7 +140,7 @@ describe('插入中的 useEntry 与计时条交互', () => {
 
     // 1. 检查 FusedCard、TimerBar、FreeCard 在 pending + away 并存时均同时渲染「放弃」「暂停」「停止」
     const fusedHtml = renderToStaticMarkup(createElement(FusedCard, {
-      view, card: null, cardView: null, now, look, titleScale: 65, actions, onManual: vi.fn(),
+      view, card: null, cardView: null, now, look, titleScale: 65, actions,
     }));
     expect(fusedHtml).toContain('<b>放弃</b>');
     expect(fusedHtml).toContain('<b>暂停</b>');

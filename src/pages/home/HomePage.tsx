@@ -32,7 +32,6 @@ import { cardArea } from './cardArea';
 import { FreeCard } from './FreeCard';
 import { FusedCard } from './FusedCard';
 import { ActivityActions } from './ActivityActions';
-import { Dialog } from '../../ui/overlay/Dialog';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
 import { TagPicker } from '../../ui/controls/TagPicker';
 
@@ -100,7 +99,7 @@ export function useNow(): number {
 
 type DialogState = { kind: 'short'; cardId: string; remaining: number; at: string; fromMini?: boolean }
   | { kind: 'complete'; cardId: string; at: string; fromMini?: boolean } | { kind: 'shrink'; cardId: string; todayGoal: number | null; minToday: number; minutesToday: number }
-  | { kind: 'manual' } | { kind: 'rest'; at: string } | null;
+  | { kind: 'rest'; at: string } | null;
 
 /**
  * 首页：只显示一件事。按 home.mode 显示任务卡、引导卡、休息卡或回顾卡。
@@ -175,7 +174,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   const startFavorite = (id: string) => {
     const f = favs.find(x => x.id === id);
     if (!f) return;
-    if (fused ? dialog?.kind === 'manual' : timerMode === 'manual') setPrefill({ description: f.name, project: f.project, tags: f.tags }); else void actions.startPreset(id, now_());
+    if (!fused && timerMode === 'manual') setPrefill({ description: f.name, project: f.project, tags: f.tags }); else void actions.startPreset(id, now_());
   };
   const timerActions: TimerActions = {
     beginPending: () => void actions.beginPending(now_()),
@@ -255,7 +254,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   const guide = home.mode === 'guide' ? GUIDES[home.guideKind] : null;
   if (fused && home.mode !== 'rest') body = <FusedCard key={home.card?.id ?? 'none'} view={tv} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
     card={home.mode === 'task' && home.card ? home.card : null} cardView={home.mode === 'task' ? view : null}
-    cardPicks={task?.picks} cardActions={task?.actions} onEditContent={task?.onEditContent} fx={task?.fx} onManual={() => setDialog({ kind: 'manual' })}
+    cardPicks={task?.picks} cardActions={task?.actions} onEditContent={task?.onEditContent} fx={task?.fx}
     corner={<>
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
       {home.mode === 'task' && restButton}
@@ -277,7 +276,6 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       : body)}
     {dialog?.kind === 'rest' && <RestDialog projects={projects} onCancel={() => setDialog(null)}
       onConfirm={project => { const at = dialog.at; setDialog(null); void act(() => actions.rest(at, project)); }} />}
-    {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}
       resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at, fromMini: dialog.fromMini } : null)} />}
     {dialog?.kind === 'complete' && <CompleteDialog at={dialog.at} onCancel={() => setDialog(null)}

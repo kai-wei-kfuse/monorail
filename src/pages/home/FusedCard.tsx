@@ -19,14 +19,14 @@ import { EntryLine, useEntry } from './useEntry';
 
 /**
  * 融合布局的大卡（UI 规范 §11.3，原型 stage.js 的 FusedCard）：计时条并进卡里，首页只有这一张。
- * 标题区就是输入框；抽到卡时显示卡的标题，点「写别的」换回输入框。项目、标签在卡头「记到」那一行：显示卡时改卡（cardPicks），
+ * 标题区就是输入框；抽到卡时显示卡的标题，点〔插入事件〕换回输入框，写一件事回车 = 插入。项目、标签在卡头「记到」那一行：显示卡时改卡（cardPicks），
  * 输入框时和输入框算一组。放弃、抽卡、暂停、停止 / ＋（正在计时显示停止，不在计时显示 ＋）和卡的按钮（cardActions）在底部一排；读数点一下就地改。
- * card / cardView 是首页抽到的卡；换卡时由首页按 card.id 重建，「写别的」随之复位。corner 是卡头右边另加的提示。
+ * card / cardView 是首页抽到的卡；换卡时由首页按 card.id 重建，〔插入事件〕随之复位。corner 是卡头右边另加的提示。
  */
-export function FusedCard({ view, card, cardView, now, look, titleScale, actions, cardPicks, cardActions, onEditContent, fx, corner, onManual }:
+export function FusedCard({ view, card, cardView, now, look, titleScale, actions, cardPicks, cardActions, onEditContent, fx, corner }:
   { view: TimerView; card: { id: string; status: '待做' | '进行中'; content: string } | null; cardView: TaskCardView | null; now: number;
     look: CardLook; titleScale: number; actions: TimerActions; cardPicks?: ReactNode; cardActions?: ReactNode;
-    onEditContent?: (cardId: string, content: string) => void; fx?: ReactNode; corner?: ReactNode; onManual: () => void }) {
+    onEditContent?: (cardId: string, content: string) => void; fx?: ReactNode; corner?: ReactNode }) {
   const [write, setWrite] = useState(false);
   const E = useEntry(view, actions, () => setWrite(false)), { running, kind, isFrozen } = E, { entry, pending, paused } = view;
   const s = fusedState(view, card, write), showCard = s.show === 'card' && !!card && !!cardView;
@@ -44,7 +44,6 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
   const draw = (primary: boolean) => view.taskMode === false ? null : <ActionButton primary={primary} cn="今日任务板" en="TODAY" icon="cards" onClick={actions.openBoard} />;
   const plus = <button type="button" className="tbar-new" aria-label="开始想下一件事" title="开始想下一件事" onClick={writeOther}><Icon name="plus" /></button>;
   const stop = <StopButton onClick={actions.stop} />;
-  const manual = <button type="button" className="c-link" title="补一段过去做过的事" onClick={onManual}>手动补录</button>;
   const line = <p className="f-sub"><EntryLine view={view} note={E.note} /></p>;
 
   if (showCard) {
@@ -55,8 +54,9 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
       note={<>{cardView.progressNote && <p className="c-note"><b>上次做到</b>{cardView.progressNote}</p>}{line}</>}
       corner={<>
         {s.paused && <button type="button" className="c-link" onClick={actions.continueTimer}>继续计这张卡</button>}
-        <button type="button" className="c-link" title="不做这张卡，自己写一件别的事" onClick={writeOther}>写别的</button>
-        {corner}{manual}
+        {/* 〔插入事件〕（用户 2026-11-06）：同〔休息一下〕的样式；写一件事回车 = 插入，卡等你回来 */}
+        <button type="button" className="c-rest" title="写一件别的事，回车开始；这张卡等你回来" onClick={writeOther}><Icon name="plus" />插入事件</button>
+        {corner}
       </>}
       actions={<>
         {cardActions}
@@ -100,7 +100,7 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
       {card && write && <button type="button" className="c-link" title="不写了，回到抽到的卡" onClick={back}>回到卡</button>}
       {free && <><span className="c-hint">抽到的「{plainText(card.content)}」还没开始</span>
         <button type="button" className="c-link" onClick={() => actions.startCard(card.id)}>开始这张卡</button></>}
-      {corner}{manual}
+      {corner}
     </>}
     actions={E.deciding ? <>
         {draw(!card)}
