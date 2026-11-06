@@ -46,4 +46,22 @@ describe('插入卡', () => {
     expect(html).toContain('自由记录 · 写周报');
     expect(html).toContain('data-up="top"');
   });
+  it('〔插入事件〕刚点下（draft）：标题位置是空输入框，「记到」可选项目（缺省未分类）；没有〔暂停〕和〔结束原任务〕，〔回到任务〕还在；读数从点下那一刻走', () => {
+    const html = renderToStaticMarkup(createElement(InsertCard, {
+      insert: { ...base, entryId: '', name: '', project: '未分类' }, now: Date.parse('2026-11-06T02:00:07Z'), look, titleScale: 65, place: 'bottom',
+      onBack: vi.fn(async () => true), onEndOriginal: vi.fn(async () => {}), onPause: vi.fn(), onContinue: vi.fn(),
+      draft: { projects: [{ name: '未分类', color: '#999' }, { name: '工作', color: '#f00' }], onSubmit: vi.fn(async () => true) },
+      children: createElement('section', { className: 'card' }, 'UNDER'),
+    }));
+    expect(html).toMatch(/<input[^>]*id="ins-what"[^>]*value=""/);
+    expect(html).toContain('placeholder="在做什么？写好回车"');
+    expect(html).toContain('未分类');
+    expect(html).toContain('Esc 或〔回到任务〕撤回，这段不记');
+    expect(html).toContain('aria-label="回到任务"');
+    expect(html).not.toContain('结束原任务');
+    expect(html).not.toContain('<b>暂停</b>');
+    expect(html).not.toContain('（没有名字）');
+    expect(html).toContain('>00:07<');
+    expect(html).toContain('UNDER');
+  });
 });

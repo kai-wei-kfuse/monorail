@@ -19,14 +19,16 @@ import { EntryLine, useEntry } from './useEntry';
 
 /**
  * 融合布局的大卡（UI 规范 §11.3，原型 stage.js 的 FusedCard）：计时条并进卡里，首页只有这一张。
- * 标题区就是输入框；抽到卡时显示卡的标题，点〔插入事件〕换回输入框，写一件事回车 = 插入。项目、标签在卡头「记到」那一行：显示卡时改卡（cardPicks），
+ * 标题区就是输入框；抽到卡时显示卡的标题，〔＋〕换回输入框，写一件事回车。卡头〔插入事件〕交给首页（onInsertEvent）：插入卡马上落下，在插入卡上写。项目、标签在卡头「记到」那一行：显示卡时改卡（cardPicks），
  * 输入框时和输入框算一组。放弃、抽卡、暂停、停止 / ＋（正在计时显示停止，不在计时显示 ＋）和卡的按钮（cardActions）在底部一排；读数点一下就地改。
- * card / cardView 是首页抽到的卡；换卡时由首页按 card.id 重建，〔插入事件〕随之复位。corner 是卡头右边另加的提示。
+ * card / cardView 是首页抽到的卡；换卡时由首页按 card.id 重建，输入框状态随之复位。corner 是卡头右边另加的提示。
  */
-export function FusedCard({ view, card, cardView, now, look, titleScale, actions, cardPicks, cardActions, onEditContent, fx, corner }:
+export function FusedCard({ view, card, cardView, now, look, titleScale, actions, cardPicks, cardActions, onEditContent, onInsertEvent, fx, corner }:
   { view: TimerView; card: { id: string; status: '待做' | '进行中'; content: string } | null; cardView: TaskCardView | null; now: number;
     look: CardLook; titleScale: number; actions: TimerActions; cardPicks?: ReactNode; cardActions?: ReactNode;
-    onEditContent?: (cardId: string, content: string) => void; fx?: ReactNode; corner?: ReactNode }) {
+    onEditContent?: (cardId: string, content: string) => void;
+    /** 卡头〔插入事件〕（用户 2026-11-06）：首页马上落下插入卡、在插入卡上写；没给就照旧换回输入框 */ onInsertEvent?: () => void;
+    fx?: ReactNode; corner?: ReactNode }) {
   const [write, setWrite] = useState(false);
   const E = useEntry(view, actions, () => setWrite(false)), { running, kind, isFrozen } = E, { entry, pending, paused } = view;
   const s = fusedState(view, card, write), showCard = s.show === 'card' && !!card && !!cardView;
@@ -54,8 +56,8 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
       note={<>{cardView.progressNote && <p className="c-note"><b>上次做到</b>{cardView.progressNote}</p>}{line}</>}
       corner={<>
         {s.paused && <button type="button" className="c-link" onClick={actions.continueTimer}>继续计这张卡</button>}
-        {/* 〔插入事件〕（用户 2026-11-06）：同〔休息一下〕的样式；写一件事回车 = 插入，卡等你回来 */}
-        <button type="button" className="c-rest" title="写一件别的事，回车开始；这张卡等你回来" onClick={writeOther}><Icon name="plus" />插入事件</button>
+        {/* 〔插入事件〕（用户 2026-11-06）：同〔休息一下〕的样式；点下插入卡马上落下，在插入卡上写名字，回车记下，卡等你回来 */}
+        <button type="button" className="c-rest" title="插一件别的事：插入卡马上落下，在上面写名字；这张卡等你回来" onClick={onInsertEvent ?? writeOther}><Icon name="plus" />插入事件</button>
         {corner}
       </>}
       actions={<>

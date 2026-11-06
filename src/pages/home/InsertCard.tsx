@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import { ActionButton } from '../../ui/controls/Button';
 import { Button } from '../../ui/controls/Button';
+import { ProjectPicker } from '../../ui/controls/ProjectPicker';
+import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import { Dialog } from '../../ui/overlay/Dialog';
 import { Icon } from '../../ui/icons/Icon';
 import { MiniBars, VBars } from '../../ui/marks/VBars';
@@ -29,13 +31,18 @@ const todayText = (o: Insert['over']) => o.kind === 'card'
  * children 是原来那张卡（任务卡或自由记录卡），退到后面、上沿露出一条，点它 =〔回到任务〕。
  * 插入卡盖在上面：读数走插入这一段；按钮只有〔暂停〕/〔继续〕；回去区域左边〔回到任务〕、右边〔结束原任务〕（先确认）。
  * place 是设置 06「插入卡的回去区域」：bottom / top。动效「完整」：落下、抬起、回去收走；「简化」淡入淡出；「关闭」直接切换。
+ * draft：卡头〔插入事件〕刚点下、还没写名字（用户 2026-11-06 确认的流程）。插入卡马上落下，标题位置是空输入框、光标在里面，计时从点下那一刻起；
+ * 「记到」可选项目（缺省「未分类」）；回车交给 onSubmit 记下（之后同一张插入卡接着计，不再落下）；Esc 或〔回到任务〕撤回，什么都不记。
  */
-export function InsertCard({ insert, now, look, titleScale, place, onBack, onEndOriginal, onPause, onContinue, exiting = false, onExited, children }:
+export function InsertCard({ insert, now, look, titleScale, place, onBack, onEndOriginal, onPause, onContinue, exiting = false, onExited, draft, children }:
   { insert: Insert; now: number; look: CardLook; titleScale: number; place: 'bottom' | 'top';
     /** 插入已经结束（不是在这张卡上点的，例如快捷活动再点一次、底栏、小窗）：演完收走再交给 onExited 拿掉（用户 2026-11-06） */
     exiting?: boolean; onExited?: () => void;
+    /** 还没写名字的插入（只在界面上，没写盘）。onSubmit 交回 false 表示没记上（输入框留着，可以再试或 Esc） */
+    draft?: { projects: ProjectOption[]; onSubmit: (value: { description: string; project: string }) => Promise<boolean>; onCreateProject?: (name: string) => void };
     /** 交回 false 表示没成功（插入卡复位） */ onBack: () => Promise<unknown>; onEndOriginal: () => Promise<unknown>; onPause: () => void; onContinue: () => void; children: ReactNode }) {
   const stack = useRef<HTMLDivElement>(null), topRef = useRef<HTMLElement>(null), [asking, setAsking] = useState(false), [leaving, setLeaving] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null), [name, setName] = useState(''), [project, setProject] = useState('未分类'), [saving, setSaving] = useState(false);
   /** 正在演 / 演过的收走动画（在这张卡上点的〔回到任务〕）：插入在提交后结束时等它们演完再拿掉 */
   const leaveAnims = useRef<Animation[] | null>(null);
   const o = insert.over, onTask = o.kind === 'card';
@@ -94,7 +101,7 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
   // 回到任务：点下去就提交（不等动画），同时演出——插入卡往上收走，原来那张回到前面、颜色恢复、上沿那条收起。
   // 写盘通常比动画慢（真窗口量到 0.8–1 秒），先演再提交会在动画后停一段（用户 2026-11-06）；两件事一起做，提交一到就换成正常的卡
   const back = async () => {
-    if (leaving || exiting) return;
+    if (leaving || exiting || saving) return;
     setLeaving(true);
     const commit = onBack();
     const anims = playLeave();
@@ -105,6 +112,21 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
     } finally { setLeaving(false); }
   };
   const end = async () => { setAsking(false); setLeaving(true); try { await onEndOriginal(); } finally { setLeaving(false); } };
+  // 还没写名字：一出现光标就在标题位置（落下动画同时进行）
+  useEffect(() => { if (draft) nameRef.current?.focus({ preventScroll: true }); }, []);
+  /** 回车记下：没写字不动；输入法还在选字时的回车不算 */
+  const submit = async () => {
+    const description = name.trim();
+    if (!draft || !description || saving || leaving || exiting) return;
+    setSaving(true);
+    try { if (!await draft.onSubmit({ description, project })) nameRef.current?.focus({ preventScroll: true }); }
+    finally { setSaving(false); }
+  };
+  const nameKeys = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) return;
+    if (e.key === 'Enter') { e.preventDefault(); void submit(); }
+    else if (e.key === 'Escape') { e.preventDefault(); void back(); }
+  };
 
   const where = <span className="ins-where">插在「<b>{short(o.title)}</b>」中间</span>;
   return <div className="ins-stack" ref={stack}>
@@ -115,29 +137,40 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
         <i className="ins-stripe" aria-hidden="true" />
         <div className="ins-up" role="group" aria-label="回去">
           <button type="button" className="ins-up-back" aria-label={onTask ? '回到任务' : '回到原来的事'} title={onTask ? `回到「${plainText(o.title)}」，接着计` : `回到「${plainText(o.title)}」`}
-            onPointerEnter={() => lift(true)} onPointerLeave={() => lift(false)} onClick={() => void back()} disabled={leaving}>
+            onPointerEnter={() => lift(true)} onPointerLeave={() => lift(false)} onClick={() => void back()} disabled={leaving || saving}>
             <span className="ins-arrow"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 3 37 21H27v24H13V21H3z" /></svg></span>
             <span className="ins-up-x"><span className="ins-up-t"><b className="ins-up-cn">{onTask ? '回到任务' : '回到原来的事'}</b><i className="ins-up-en">{onTask ? 'BACK TO QUEST' : 'BACK'}</i></span>
               <span className="ins-up-s">{short(o.title)} · <b>{todayText(o)}</b></span></span>
           </button>
-          <button type="button" className="ins-up-end" aria-label={`结束「${plainText(o.title)}」。${onTask ? '若未完成，则重新放入背包' : '这条自由记录到此为止'}`}
+          {/* 还没写名字时没有插入的那一条可以接着计，不给〔结束原任务〕 */}
+          {!draft && <button type="button" className="ins-up-end" aria-label={`结束「${plainText(o.title)}」。${onTask ? '若未完成，则重新放入背包' : '这条自由记录到此为止'}`}
             onClick={() => setAsking(true)} disabled={leaving}>
             <i className="ins-end-bg" aria-hidden="true" /><span className="ins-end-k">{onTask ? '结束原任务' : '结束原来的事'}</span>
-          </button>
+          </button>}
         </div>
       </>}>
       <div className="c-head">
         <span className="ins-badge" /><b>插入</b>
-        <span className="c-meta c-picks">记到 {insert.project}</span>
+        {draft
+          ? <span className="c-meta c-picks">记到
+              <ProjectPicker flat id="ins-project" value={project} options={draft.projects} onChange={setProject} onCreate={draft.onCreateProject} disabled={saving} />
+            </span>
+          : <span className="c-meta c-picks">记到 {insert.project}</span>}
         <span className="c-corner">{where}</span>
       </div>
       <div className="hero">
-        <Corners><h1 className="title" style={{ '--ts': `${ts}px` } as CSSProperties}><MarkedText content={insert.name || '（没有名字）'} /></h1></Corners>
-        <p className="f-sub">{insert.startedAt && <>开始于 <b>{new Date(insert.startedAt).toTimeString().slice(0, 5)}</b></>}<span>这一段不算进「{short(o.title)}」</span></p>
+        <Corners>{draft
+          ? <div className="f-input" style={{ '--ts': `${ts}px` } as CSSProperties}>
+              <input ref={nameRef} id="ins-what" className="f-title" aria-label="插入的事" autoComplete="off" placeholder="在做什么？写好回车"
+                value={name} onChange={e => setName(e.target.value)} onKeyDown={nameKeys} readOnly={saving} />
+            </div>
+          : <h1 className="title" style={{ '--ts': `${ts}px` } as CSSProperties}><MarkedText content={insert.name || '（没有名字）'} /></h1>}</Corners>
+        <p className="f-sub">{insert.startedAt && <>开始于 <b>{new Date(insert.startedAt).toTimeString().slice(0, 5)}</b></>}
+          <span>{draft ? '回车记下；Esc 或〔回到任务〕撤回，这段不记' : `这一段不算进「${short(o.title)}」`}</span></p>
       </div>
       <VBars filled={progress.filled} state={progress.state} />
       <div className="foot">
-        <ActivityActions className="actions">{insert.paused
+        <ActivityActions className="actions">{draft ? null : insert.paused
           ? <ActionButton primary cn="继续" en="RESUME" icon="play" disabled={!insert.canContinue || leaving} title={insert.canContinue ? `继续「${plainText(insert.name)}」` : '找不到前一段，没法接着继续'} onClick={onContinue} />
           : <ActionButton cn="暂停" en="PAUSE" icon="pause" disabled={leaving} onClick={onPause} />}</ActivityActions>
         <Readout state={progress.state} en="INSERT" cn="插入计时" stateCn={insert.paused ? '已暂停 · 还在等你回去' : '插入中'} stateEn={insert.paused ? 'PAUSED' : 'INSERTING'}
