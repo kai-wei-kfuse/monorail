@@ -1,0 +1,1 @@
+{"node":"v24.13.1","boardItems":50,"entries":2000,"samples":30,"medianMs":43.771499999999946,"p95Ms":75.59109999999998,"maxMs":102.73449999999997,"scope":"pure projection only, excludes transaction IO and native rendering"}
