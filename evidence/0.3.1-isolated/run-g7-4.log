@@ -1,0 +1,4 @@
+PASS reopen
+PASS taskModeOff
+PASS readoutAfterSplit
+PASS finish

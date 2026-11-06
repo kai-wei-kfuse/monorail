@@ -1,0 +1,20 @@
+{
+  "tag": "aafbbee7baea",
+  "version": "0.3.1-beta.1",
+  "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v031-aafbbee7baea",
+  "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v031-aafbbee7baea\\data",
+  "identifier": "local.pixelrecord.v031test.taafbbee7baea",
+  "productName": "单轨0.3.1隔离测试",
+  "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.v031test.taafbbee7baea",
+  "webview": "C:\\Users\\kai_wei\\AppData\\Local\\local.pixelrecord.v031test.taafbbee7baea",
+  "pipe": "\\\\.\\pipe\\local.pixelrecord.v031test.taafbbee7baea.mcp",
+  "config": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v031-aafbbee7baea\\tauri.isolated.json",
+  "exe": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v031-aafbbee7baea\\Monorail-0.3.1-isolated.exe",
+  "mcp": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v031-aafbbee7baea\\monorail-mcp.mjs",
+  "cli": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v031-aafbbee7baea\\monorail-cli.mjs"
+}
+        Info Looking up installed tauri packages to check mismatched versions...
+   Compiling pixel-record v0.3.1-beta.1 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 36.81s
+       Built application at: C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\debug\pixel-record.exe
+BUILT C:\Users\kai_wei\AppData\Local\Temp\monorail-v031-aafbbee7baea\Monorail-0.3.1-isolated.exe

@@ -1,0 +1,7 @@
+PASS boot
+PASS drawer
+FAIL flip Error: timeout: flip done
+FAIL insert AssertionError [ERR_ASSERTION]: insert card
+FAIL shrink Error: press: .abtn 缩小
+FAIL taskModeOff AssertionError [ERR_ASSERTION]: no board when off
+PASS finish

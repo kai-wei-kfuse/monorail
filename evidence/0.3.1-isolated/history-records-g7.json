@@ -1,0 +1,1513 @@
+[
+  {
+    "version": 1,
+    "id": "5ecbc790-eb3d-4b53-856c-ae86116182b4",
+    "at": "2026-11-06T03:52:05.561Z",
+    "day": "2026-11-06",
+    "action": "system.reconcile",
+    "label": "整理记录",
+    "source": {
+      "kind": "system",
+      "trigger": "reconcile"
+    },
+    "why": "启动或唤回主窗口时整理记录：补齐快速记录条存下的待办和想法",
+    "subject": null,
+    "changes": [
+      {
+        "type": "state",
+        "id": "home_mode",
+        "name": "计时状态",
+        "field": "首页",
+        "before": "引导",
+        "after": "空卡区"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "ef47d7ea-c563-4b20-ac9e-5cd73a1b098b",
+    "at": "2026-11-06T03:52:22.712Z",
+    "day": "2026-11-06",
+    "action": "backpack.createTask",
+    "label": "新建任务",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "backpack"
+    },
+    "subject": {
+      "type": "task",
+      "id": "aa83cc61-b912-4634-871b-0615feb94b88",
+      "text": "隔离测试：读龙书",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "task",
+        "id": "aa83cc61-b912-4634-871b-0615feb94b88",
+        "name": "隔离测试：读龙书",
+        "field": "名称",
+        "before": null,
+        "after": "隔离测试：读龙书"
+      },
+      {
+        "type": "task",
+        "id": "aa83cc61-b912-4634-871b-0615feb94b88",
+        "name": "隔离测试：读龙书",
+        "field": "状态",
+        "before": null,
+        "after": "进行中"
+      },
+      {
+        "type": "task",
+        "id": "aa83cc61-b912-4634-871b-0615feb94b88",
+        "name": "隔离测试：读龙书",
+        "field": "槽位",
+        "before": null,
+        "after": "主线"
+      },
+      {
+        "type": "task",
+        "id": "aa83cc61-b912-4634-871b-0615feb94b88",
+        "name": "隔离测试：读龙书",
+        "field": "押注到期",
+        "before": null,
+        "after": "12.04"
+      },
+      {
+        "type": "task",
+        "id": "aa83cc61-b912-4634-871b-0615feb94b88",
+        "name": "隔离测试：读龙书",
+        "field": "默认项目",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "内容",
+        "before": null,
+        "after": "第 3 章"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "状态",
+        "before": null,
+        "after": "待做"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "任务",
+        "before": null,
+        "after": "隔离测试：读龙书"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "项目",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "类型",
+        "before": null,
+        "after": "时间盒卡"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "时间盒",
+        "before": null,
+        "after": "60 分钟"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "做到哪了",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "缩小级数",
+        "before": null,
+        "after": "0"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "跳过次数",
+        "before": null,
+        "after": "0"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "内容",
+        "before": null,
+        "after": "写读书笔记"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "状态",
+        "before": null,
+        "after": "待做"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "任务",
+        "before": null,
+        "after": "隔离测试：读龙书"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "项目",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "类型",
+        "before": null,
+        "after": "结果卡"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "时间盒",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "做到哪了",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "缩小级数",
+        "before": null,
+        "after": "0"
+      },
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "跳过次数",
+        "before": null,
+        "after": "0"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "92f9ded9-9053-43d7-9a09-2e1301106908",
+    "at": "2026-11-06T03:52:24.908Z",
+    "day": "2026-11-06",
+    "action": "plan.add",
+    "label": "排进板子",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "backpack"
+    },
+    "subject": {
+      "type": "card",
+      "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+      "text": "第 3 章",
+      "meta": "隔离测试：读龙书"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "今日任务板",
+        "before": "—",
+        "after": "今天"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "787ab698-7425-46a9-ab02-4e1e2ea5fce0",
+    "at": "2026-11-06T03:52:28.308Z",
+    "day": "2026-11-06",
+    "action": "plan.add",
+    "label": "排进板子",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "backpack"
+    },
+    "subject": {
+      "type": "card",
+      "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+      "text": "写读书笔记",
+      "meta": "隔离测试：读龙书"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "今日任务板",
+        "before": "—",
+        "after": "今天"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "c0b8e1d6-f98a-4102-95bd-555cf983dec3",
+    "at": "2026-11-06T03:52:51.552Z",
+    "day": "2026-11-06",
+    "action": "settings.change",
+    "label": "改设置",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "settings"
+    },
+    "subject": {
+      "type": "settings",
+      "id": "taskMode",
+      "text": "任务模式",
+      "meta": ""
+    },
+    "changes": [],
+    "effects": [],
+    "merged": 2,
+    "reverted": true
+  },
+  {
+    "version": 1,
+    "id": "49b109da-ad98-4eef-a561-1941875b067a",
+    "at": "2026-11-06T03:54:04.322Z",
+    "day": "2026-11-06",
+    "action": "home.startCard",
+    "label": "开始卡片",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "home"
+    },
+    "subject": {
+      "type": "card",
+      "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+      "text": "第 3 章",
+      "meta": "隔离测试：读龙书"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "第 3 章",
+        "field": "状态",
+        "before": "待做",
+        "after": "进行中"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "描述",
+        "before": null,
+        "after": "第 3 章"
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 11:54–至今"
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "卡",
+        "before": null,
+        "after": "第 3 章"
+      },
+      {
+        "type": "entry",
+        "id": "af9774be-52e4-428d-a8db-ea8cb3cf4b1e",
+        "name": "待机",
+        "field": "时间",
+        "before": "11.06 11:52–至今",
+        "after": "11.06 11:52–11:54"
+      },
+      {
+        "type": "state",
+        "id": "current_card",
+        "name": "计时状态",
+        "field": "当前卡",
+        "before": "（无）",
+        "after": "第 3 章"
+      },
+      {
+        "type": "state",
+        "id": "home_mode",
+        "name": "计时状态",
+        "field": "首页",
+        "before": "空卡区",
+        "after": "任务卡"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "a6765c85-ac25-4371-814a-a550ec2d2d3d",
+    "at": "2026-11-06T03:54:07.247Z",
+    "day": "2026-11-06",
+    "action": "home.startPreset",
+    "label": "开始收藏",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "home"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "8889c84c-bfdc-493a-af20-69272f485639",
+      "text": "第 3 章",
+      "meta": "未分类 · 11.06 11:54–11:54"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "时间",
+        "before": "11.06 11:54–至今",
+        "after": "11.06 11:54–11:54"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "描述",
+        "before": null,
+        "after": "上厕所"
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "项目",
+        "before": null,
+        "after": "工作"
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 11:54–至今"
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "类型",
+        "before": null,
+        "after": "插入"
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "state",
+        "id": "resume_entry_id",
+        "name": "计时状态",
+        "field": "回到",
+        "before": "（无）",
+        "after": "回到「第 3 章」"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "e52360e8-1e4c-41c5-b6f3-314eea06d72b",
+    "at": "2026-11-06T03:54:12.295Z",
+    "day": "2026-11-06",
+    "action": "home.pause",
+    "label": "暂停",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "home"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+      "text": "待机",
+      "meta": "待机 · 11.06 11:54–至今"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "描述",
+        "before": null,
+        "after": "待机"
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "项目",
+        "before": null,
+        "after": "待机"
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 11:54–至今"
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "类型",
+        "before": null,
+        "after": "插入"
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "时间",
+        "before": "11.06 11:54–至今",
+        "after": "11.06 11:54–11:54"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "9673a8bb-d53f-46f6-97af-4c21863e8c6b",
+    "at": "2026-11-06T03:54:14.002Z",
+    "day": "2026-11-06",
+    "action": "home.continueInsert",
+    "label": "继续插入的事",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "home"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+      "text": "待机",
+      "meta": "待机 · 11.06 11:54–11:54"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "时间",
+        "before": "11.06 11:54–至今",
+        "after": "11.06 11:54–11:54"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "描述",
+        "before": null,
+        "after": "上厕所"
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "项目",
+        "before": null,
+        "after": "工作"
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 11:54–至今"
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "类型",
+        "before": null,
+        "after": "插入"
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "e0240e92-7b3f-445c-8311-ca4bbe356d2e",
+    "at": "2026-11-06T03:54:15.428Z",
+    "day": "2026-11-06",
+    "action": "home.resume",
+    "label": "继续",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "home"
+    },
+    "subject": {
+      "type": "entry",
+      "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+      "text": "第 3 章",
+      "meta": "未分类 · 11.06 11:54–至今"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "第 3 章",
+        "field": "描述",
+        "before": null,
+        "after": "第 3 章"
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "第 3 章",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "第 3 章",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "第 3 章",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 11:54–至今"
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "第 3 章",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "第 3 章",
+        "field": "卡",
+        "before": null,
+        "after": "第 3 章"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "时间",
+        "before": "11.06 11:54–至今",
+        "after": "11.06 11:54–11:54"
+      },
+      {
+        "type": "state",
+        "id": "resume_entry_id",
+        "name": "计时状态",
+        "field": "回到",
+        "before": "回到「第 3 章」",
+        "after": "（无）"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "03c7087b-5896-4beb-8a64-582a30f9dc5e",
+    "at": "2026-11-06T03:54:18.676Z",
+    "day": "2026-11-06",
+    "action": "card.split",
+    "label": "缩小（拆成两项）",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "home"
+    },
+    "subject": {
+      "type": "card",
+      "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+      "text": "3.1–3.3",
+      "meta": "隔离测试：读龙书"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "3.1–3.3",
+        "field": "内容",
+        "before": "第 3 章",
+        "after": "3.1–3.3"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "3.1–3.3",
+        "field": "时间盒",
+        "before": "60 分钟",
+        "after": "35 分钟"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "3.1–3.3",
+        "field": "缩小级数",
+        "before": "0",
+        "after": "1"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "3.1–3.3",
+        "field": "今天的量",
+        "before": "60 分钟",
+        "after": "35 分钟"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "3.1–3.3",
+        "field": "描述",
+        "before": "第 3 章",
+        "after": "3.1–3.3"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "内容",
+        "before": null,
+        "after": "第 3 章"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "状态",
+        "before": null,
+        "after": "待做"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "任务",
+        "before": null,
+        "after": "隔离测试：读龙书"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "项目",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "截止",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "类型",
+        "before": null,
+        "after": "时间盒卡"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "时间盒",
+        "before": null,
+        "after": "25 分钟"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "做到哪了",
+        "before": null,
+        "after": "（空）"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "缩小级数",
+        "before": null,
+        "after": "1"
+      },
+      {
+        "type": "card",
+        "id": "dc8089a5-c41e-43d7-b2ec-c211f2dd1729",
+        "name": "第 3 章",
+        "field": "跳过次数",
+        "before": null,
+        "after": "0"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "3e18335e-9f3b-4856-b58f-6a30d83b2260",
+    "at": "2026-11-06T03:54:29.781Z",
+    "day": "2026-11-06",
+    "action": "settings.change",
+    "label": "改设置",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "settings"
+    },
+    "subject": {
+      "type": "settings",
+      "id": "taskMode",
+      "text": "任务模式",
+      "meta": ""
+    },
+    "changes": [],
+    "effects": [],
+    "merged": 2,
+    "reverted": true
+  },
+  {
+    "version": 1,
+    "id": "161c1455-befb-4e9c-a49b-377640d8fae3",
+    "at": "2026-11-06T04:13:26.815Z",
+    "day": "2026-11-06",
+    "action": "system.resume",
+    "label": "补记离线时段",
+    "source": {
+      "kind": "system",
+      "trigger": "resume"
+    },
+    "why": "电脑休眠或关机后恢复：补记离线时段，截断当时正在计的那一条",
+    "subject": {
+      "type": "entry",
+      "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+      "text": "待机",
+      "meta": "待机 · 11.06 11:54–11:54"
+    },
+    "changes": [
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "描述",
+        "before": "待机",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "项目",
+        "before": "待机",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "时间",
+        "before": "11.06 11:54–11:54",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "类型",
+        "before": "插入",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "6390ac14-9b87-46eb-bc79-487e3766dce6",
+        "name": "待机",
+        "field": "卡",
+        "before": "（无）",
+        "after": null
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "描述",
+        "before": "第 3 章",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "项目",
+        "before": "未分类",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "时间",
+        "before": "11.06 11:54–11:54",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "类型",
+        "before": "普通",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "8889c84c-bfdc-493a-af20-69272f485639",
+        "name": "第 3 章",
+        "field": "卡",
+        "before": "3.1–3.3",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "3.1–3.3",
+        "field": "描述",
+        "before": "3.1–3.3",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "3.1–3.3",
+        "field": "项目",
+        "before": "未分类",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "3.1–3.3",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "3.1–3.3",
+        "field": "时间",
+        "before": "11.06 11:54–至今",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "3.1–3.3",
+        "field": "类型",
+        "before": "普通",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "9e59e1dd-0213-4fff-b570-307e89886317",
+        "name": "3.1–3.3",
+        "field": "卡",
+        "before": "3.1–3.3",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "描述",
+        "before": "上厕所",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "项目",
+        "before": "工作",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "时间",
+        "before": "11.06 11:54–11:54",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "类型",
+        "before": "插入",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "a778c454-29f1-4ad8-ac27-d1d7144ce787",
+        "name": "上厕所",
+        "field": "卡",
+        "before": "（无）",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "af9774be-52e4-428d-a8db-ea8cb3cf4b1e",
+        "name": "待机",
+        "field": "时间",
+        "before": "11.06 11:52–11:54",
+        "after": "11.06 11:52–11:53"
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "描述",
+        "before": "上厕所",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "项目",
+        "before": "工作",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "标签",
+        "before": "（无标签）",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "时间",
+        "before": "11.06 11:54–11:54",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "类型",
+        "before": "插入",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "dfb629ce-681d-4cce-b612-6a3a124ee6f3",
+        "name": "上厕所",
+        "field": "卡",
+        "before": "（无）",
+        "after": null
+      },
+      {
+        "type": "entry",
+        "id": "dfdc8ae3-08fa-41fb-be32-0310c2b25509",
+        "name": "待机",
+        "field": "描述",
+        "before": null,
+        "after": "待机"
+      },
+      {
+        "type": "entry",
+        "id": "dfdc8ae3-08fa-41fb-be32-0310c2b25509",
+        "name": "待机",
+        "field": "项目",
+        "before": null,
+        "after": "待机"
+      },
+      {
+        "type": "entry",
+        "id": "dfdc8ae3-08fa-41fb-be32-0310c2b25509",
+        "name": "待机",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "dfdc8ae3-08fa-41fb-be32-0310c2b25509",
+        "name": "待机",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 12:13–至今"
+      },
+      {
+        "type": "entry",
+        "id": "dfdc8ae3-08fa-41fb-be32-0310c2b25509",
+        "name": "待机",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "dfdc8ae3-08fa-41fb-be32-0310c2b25509",
+        "name": "待机",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "entry",
+        "id": "fa7961c2-bc88-4e57-93a1-e3dab841e657",
+        "name": "离线",
+        "field": "描述",
+        "before": null,
+        "after": "离线"
+      },
+      {
+        "type": "entry",
+        "id": "fa7961c2-bc88-4e57-93a1-e3dab841e657",
+        "name": "离线",
+        "field": "项目",
+        "before": null,
+        "after": "离线"
+      },
+      {
+        "type": "entry",
+        "id": "fa7961c2-bc88-4e57-93a1-e3dab841e657",
+        "name": "离线",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "fa7961c2-bc88-4e57-93a1-e3dab841e657",
+        "name": "离线",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 11:53–12:13"
+      },
+      {
+        "type": "entry",
+        "id": "fa7961c2-bc88-4e57-93a1-e3dab841e657",
+        "name": "离线",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "fa7961c2-bc88-4e57-93a1-e3dab841e657",
+        "name": "离线",
+        "field": "卡",
+        "before": null,
+        "after": "（无）"
+      },
+      {
+        "type": "card",
+        "id": "a54885ef-2783-451b-8bd2-0d4c71dfba50",
+        "name": "3.1–3.3",
+        "field": "状态",
+        "before": "进行中",
+        "after": "待做"
+      },
+      {
+        "type": "state",
+        "id": "current_card",
+        "name": "计时状态",
+        "field": "当前卡",
+        "before": "3.1–3.3",
+        "after": "（无）"
+      },
+      {
+        "type": "state",
+        "id": "home_mode",
+        "name": "计时状态",
+        "field": "首页",
+        "before": "任务卡",
+        "after": "空卡区"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "a1ac9c1f-7112-446d-9052-261fce069484",
+    "at": "2026-11-06T04:13:38.945Z",
+    "day": "2026-11-06",
+    "action": "auto.start_task_item",
+    "label": "开始事项",
+    "source": {
+      "kind": "cli",
+      "agent": {
+        "name": null,
+        "detected_by": "none"
+      }
+    },
+    "subject": {
+      "type": "card",
+      "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+      "text": "写读书笔记",
+      "meta": "隔离测试：读龙书"
+    },
+    "changes": [
+      {
+        "type": "card",
+        "id": "974ee76b-43e5-4ec3-bdc5-0fa79217b3e4",
+        "name": "写读书笔记",
+        "field": "状态",
+        "before": "待做",
+        "after": "进行中"
+      }
+    ],
+    "effects": [
+      {
+        "type": "entry",
+        "id": "1fea16cb-f17d-4d1f-9a90-ef421abbfd74",
+        "name": "写读书笔记",
+        "field": "描述",
+        "before": null,
+        "after": "写读书笔记"
+      },
+      {
+        "type": "entry",
+        "id": "1fea16cb-f17d-4d1f-9a90-ef421abbfd74",
+        "name": "写读书笔记",
+        "field": "项目",
+        "before": null,
+        "after": "未分类"
+      },
+      {
+        "type": "entry",
+        "id": "1fea16cb-f17d-4d1f-9a90-ef421abbfd74",
+        "name": "写读书笔记",
+        "field": "标签",
+        "before": null,
+        "after": "（无标签）"
+      },
+      {
+        "type": "entry",
+        "id": "1fea16cb-f17d-4d1f-9a90-ef421abbfd74",
+        "name": "写读书笔记",
+        "field": "时间",
+        "before": null,
+        "after": "11.06 12:13–至今"
+      },
+      {
+        "type": "entry",
+        "id": "1fea16cb-f17d-4d1f-9a90-ef421abbfd74",
+        "name": "写读书笔记",
+        "field": "类型",
+        "before": null,
+        "after": "普通"
+      },
+      {
+        "type": "entry",
+        "id": "1fea16cb-f17d-4d1f-9a90-ef421abbfd74",
+        "name": "写读书笔记",
+        "field": "卡",
+        "before": null,
+        "after": "写读书笔记"
+      },
+      {
+        "type": "entry",
+        "id": "dfdc8ae3-08fa-41fb-be32-0310c2b25509",
+        "name": "待机",
+        "field": "时间",
+        "before": "11.06 12:13–至今",
+        "after": "11.06 12:13–12:13"
+      },
+      {
+        "type": "state",
+        "id": "current_card",
+        "name": "计时状态",
+        "field": "当前卡",
+        "before": "（无）",
+        "after": "写读书笔记"
+      },
+      {
+        "type": "state",
+        "id": "home_mode",
+        "name": "计时状态",
+        "field": "首页",
+        "before": "空卡区",
+        "after": "任务卡"
+      }
+    ],
+    "call": {
+      "method": "start_task_item",
+      "operation_id": "c98ea14a-708d-4075-9fa8-89177489ec4b",
+      "params": "{\"card_id\":\"974ee76b-43e5-4ec3-bdc5-0fa79217b3e4\",\"expected_state\":\"ts1:dfdc8ae3-08fa-41fb-be32-0310c2b25509|2026-11-06T04:13:26.815Z|普通|待机|-|-|-|-|-|-|-\"}",
+      "truncated": false
+    }
+  },
+  {
+    "version": 1,
+    "id": "142e0e53-5be0-495f-abb3-f0f3903694c0",
+    "at": "2026-11-06T04:13:40.465Z",
+    "day": "2026-11-06",
+    "action": "settings.change",
+    "label": "改设置",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "settings"
+    },
+    "subject": {
+      "type": "settings",
+      "id": "taskMode",
+      "text": "任务模式",
+      "meta": ""
+    },
+    "changes": [
+      {
+        "type": "settings",
+        "id": "taskMode",
+        "name": "任务模式",
+        "field": "任务模式",
+        "before": "开",
+        "after": "关"
+      }
+    ],
+    "effects": []
+  },
+  {
+    "version": 1,
+    "id": "e9d9d3f1-e1a4-4bdc-93d9-49bfa1634b1d",
+    "at": "2026-11-06T04:16:48.119Z",
+    "day": "2026-11-06",
+    "action": "settings.change",
+    "label": "改设置",
+    "source": {
+      "kind": "manual",
+      "via": "main",
+      "page": "settings"
+    },
+    "subject": {
+      "type": "settings",
+      "id": "taskMode",
+      "text": "任务模式",
+      "meta": ""
+    },
+    "changes": [],
+    "effects": [],
+    "merged": 2,
+    "reverted": true
+  }
+]

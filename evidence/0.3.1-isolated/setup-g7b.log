@@ -1,0 +1,5 @@
+        Info Looking up installed tauri packages to check mismatched versions...
+   Compiling pixel-record v0.3.1-beta.1 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 16.57s
+       Built application at: C:\Users\kai_wei\Documents\1026(4)\app\src-tauri\target\debug\pixel-record.exe
+REBUILT C:\Users\kai_wei\AppData\Local\Temp\monorail-v031-aafbbee7baea\Monorail-0.3.1-isolated.exe

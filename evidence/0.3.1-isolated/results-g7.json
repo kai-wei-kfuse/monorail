@@ -1,0 +1,102 @@
+{
+  "boot": {
+    "ok": true,
+    "tabs": [
+      "首页HOME",
+      "日历CALENDAR",
+      "列表LIST",
+      "回顾REVIEW",
+      "设置SETTINGS"
+    ],
+    "processes": 1,
+    "ms": 18166
+  },
+  "drawer": {
+    "ok": true,
+    "cards": [
+      "隔离测试：读龙书"
+    ],
+    "popText": "PLAN · 排进今天 隔离测试：读龙书：第 3 章 优先 标「高」的抽到概率是普通的 3 倍 普通 高 今天做 分钟 默认是剩下的时长（1:00）。今天计够了就不再抽它，总进度照常累计。 取消 排进今天",
+    "boardText": "今日任务板 00/01 今天 明天 MAIN隔离测试：读龙书：第 3 章 0:00 / 1:00 开始 移出 抽一张 DRAW FROM TODAY 从板子上没达成的 1 项里抽，标「高」的抽到概率更高。",
+    "planItems": [
+      {
+        "card": "a54885ef",
+        "today_minutes": 60
+      },
+      {
+        "card": "974ee76b",
+        "today_minutes": null
+      }
+    ],
+    "defaultMinutes": "60",
+    "ms": 12134
+  },
+  "flip": {
+    "ok": true,
+    "deal": "主线 第 3 章 隔离测试：读龙书 · 今天 60 分钟 今天就做这个 换一张开始",
+    "currentCard": "a54885ef",
+    "home": "SLOT 01 /11 隔离测试：读龙书 时间盒 今天 60 分钟 记到 休息一下 第 3 章 累计 0:00 / 1:00 完成 缩小 进行中 00:01",
+    "ms": 5103
+  },
+  "insert": {
+    "ok": true,
+    "chip": "第 3 章 等你回来",
+    "paused": "已暂停 · 还在等你回去 00:00",
+    "resumed": "插入中 00:01",
+    "history": [
+      "home.startPreset",
+      "home.pause",
+      "home.continueInsert",
+      "home.resume"
+    ],
+    "ms": 11405
+  },
+  "shrink": {
+    "ok": true,
+    "detail": "主线 MAIN QUEST · 押注到 12/04 隔离测试：读龙书 0/3 项 计时 0:00 / 1:00 3.1–3.3 SHRINK时间盒 · 记到 未分类 0:00 / 0:35 今天已排 ✓ 进行中 第 3 章 SHRINK时间盒 · 记到 未分类 0:00 / 0:25 排进今天 开始 写读书笔记 结果卡 · 记到 未分类 — 今天已排 ✓ 开始 ＋ 添加子任务 LOG TO 计时记到 未分类 冷藏 放弃",
+    "ms": 5359
+  },
+  "taskModeOff": {
+    "ok": true,
+    "drawer": "背包 BACKPACK 写读书笔记 03:06 ESC 收起 想法池 IDEAS 任务模式关着：背包里只有想法池。在设置 02 打开任务模式，任务和今日任务板都会回来 想法池IDEAS0 已完成DONE0 0/ 10 还没有想法。在快速记录条里写一行，不选类型就是想法。",
+    "todayPlanWhenOff": null,
+    "startItem": "TASK_MODE_OFF",
+    "ms": 8368
+  },
+  "finish": {
+    "ok": true,
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyPid": [
+      46120,
+      46120
+    ],
+    "historyCount": 16,
+    "actions": [
+      "system.reconcile",
+      "backpack.createTask",
+      "plan.add",
+      "settings.change",
+      "home.startCard",
+      "home.startPreset",
+      "home.pause",
+      "home.continueInsert",
+      "home.resume",
+      "card.split",
+      "system.resume",
+      "auto.start_task_item"
+    ],
+    "ms": 4416
+  },
+  "reopen": {
+    "ok": true,
+    "processes": 1,
+    "ms": 8951
+  },
+  "readoutAfterSplit": {
+    "ok": true,
+    "read": "03:13 | 累计 0:03",
+    "ms": 2996
+  }
+}

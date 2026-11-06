@@ -1,0 +1,6 @@
+PASS reopen
+PASS flip
+PASS insert
+PASS shrink
+FAIL taskModeOff AssertionError [ERR_ASSERTION]: no board when off
+PASS finish
