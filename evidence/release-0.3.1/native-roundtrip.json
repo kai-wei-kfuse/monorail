@@ -1,0 +1,112 @@
+{
+  "before": {
+    "runHash": "1bcccd84bbaf1d83139f478e69adfb8eef9546fa584bdfec6a6f25628866eba1",
+    "daily": {
+      "pid": 46120,
+      "exe": "3dd8873756a04bf9d90bad83ff099bf8e34523c5516d6a95aaa5ad6c62246c4f",
+      "config": "4a004ccdb7bb6ebb76c88d13acf268ee0d89a2a822751982521554cd07eb4b05"
+    }
+  },
+  "versions": [
+    {
+      "version": "0.3.0",
+      "ok": true,
+      "initial": {
+        "plans": {
+          "2026-11-06": "88901add28921fdbe6fccdf896a91dff3671eb57d9b04dd4e0182b92c1eadd5e",
+          "2026-11-07": "f50df1c25c027fa62a4ebbe7da872f72be19edd646de40c9c73eb65af2c39e8e"
+        },
+        "rest": "---\nid: 171d5362-0858-4517-ba67-7d2357291192\nsource_record_id: c112a3c5-1875-4032-8b94-e974c3abc481\ncontent: 4.4 以后和练习\ncreated_at: 2026-11-06T01:35:00.000Z\ndue_at: null\nblocking: false\ntask_id: t-rust\nproject: 学习\ntags: []\nstatus: 待做\ntype: 时间盒卡\norder: 1.5\ntimebox_minutes: 10\nno_shrink: false\nshrunk_from: c-read\nshrink_level: 1\ncontinued_from: null\nskip_count: 0\ncompleted_at: null\ncompleted_day: null\ncompleted_track: null\nprogress_note: \"\"\nprogress_noted_at: null\nsplit_note: 读第 4 章并做完练习\n---\n",
+        "titleScale": 65,
+        "four": {
+          "taskMode": false,
+          "trackingMode": "loose",
+          "insertBackPlace": "top",
+          "idleAskMinutes": 45
+        }
+      },
+      "written": {
+        "plans": {
+          "2026-11-06": "88901add28921fdbe6fccdf896a91dff3671eb57d9b04dd4e0182b92c1eadd5e",
+          "2026-11-07": "f50df1c25c027fa62a4ebbe7da872f72be19edd646de40c9c73eb65af2c39e8e"
+        },
+        "rest": "---\nid: 171d5362-0858-4517-ba67-7d2357291192\nsource_record_id: c112a3c5-1875-4032-8b94-e974c3abc481\ncontent: 4.4 以后和练习\ncreated_at: 2026-11-06T01:35:00.000Z\ndue_at: null\nblocking: false\ntask_id: t-rust\nproject: 学习\ntags: []\nstatus: 待做\ntype: 时间盒卡\norder: 1.5\ntimebox_minutes: 10\nno_shrink: false\nshrunk_from: c-read\nshrink_level: 1\ncontinued_from: null\nskip_count: 0\ncompleted_at: null\ncompleted_day: null\ncompleted_track: null\nprogress_note: \"\"\nprogress_noted_at: null\nsplit_note: 读第 4 章并做完练习\n---\n",
+        "titleScale": 66,
+        "four": {
+          "taskMode": false,
+          "trackingMode": "loose",
+          "insertBackPlace": "top",
+          "idleAskMinutes": 45
+        }
+      },
+      "returned": {
+        "plans": {
+          "2026-11-06": "88901add28921fdbe6fccdf896a91dff3671eb57d9b04dd4e0182b92c1eadd5e",
+          "2026-11-07": "f50df1c25c027fa62a4ebbe7da872f72be19edd646de40c9c73eb65af2c39e8e"
+        },
+        "rest": "---\nid: 171d5362-0858-4517-ba67-7d2357291192\nsource_record_id: c112a3c5-1875-4032-8b94-e974c3abc481\ncontent: 4.4 以后和练习\ncreated_at: 2026-11-06T01:35:00.000Z\ndue_at: null\nblocking: false\ntask_id: t-rust\nproject: 学习\ntags: []\nstatus: 待做\ntype: 时间盒卡\norder: 1.5\ntimebox_minutes: 10\nno_shrink: false\nshrunk_from: c-read\nshrink_level: 1\ncontinued_from: null\nskip_count: 0\ncompleted_at: null\ncompleted_day: null\ncompleted_track: null\nprogress_note: \"\"\nprogress_noted_at: null\nsplit_note: 读第 4 章并做完练习\n---\n",
+        "titleScale": 67,
+        "four": {
+          "taskMode": false,
+          "trackingMode": "loose",
+          "insertBackPlace": "top",
+          "idleAskMinutes": 45
+        }
+      }
+    },
+    {
+      "version": "0.2.5",
+      "ok": true,
+      "initial": {
+        "plans": {
+          "2026-11-06": "88901add28921fdbe6fccdf896a91dff3671eb57d9b04dd4e0182b92c1eadd5e",
+          "2026-11-07": "f50df1c25c027fa62a4ebbe7da872f72be19edd646de40c9c73eb65af2c39e8e"
+        },
+        "rest": "---\nid: 171d5362-0858-4517-ba67-7d2357291192\nsource_record_id: c112a3c5-1875-4032-8b94-e974c3abc481\ncontent: 4.4 以后和练习\ncreated_at: 2026-11-06T01:35:00.000Z\ndue_at: null\nblocking: false\ntask_id: t-rust\nproject: 学习\ntags: []\nstatus: 待做\ntype: 时间盒卡\norder: 1.5\ntimebox_minutes: 10\nno_shrink: false\nshrunk_from: c-read\nshrink_level: 1\ncontinued_from: null\nskip_count: 0\ncompleted_at: null\ncompleted_day: null\ncompleted_track: null\nprogress_note: \"\"\nprogress_noted_at: null\nsplit_note: 读第 4 章并做完练习\n---\n",
+        "titleScale": 65,
+        "four": {
+          "taskMode": false,
+          "trackingMode": "loose",
+          "insertBackPlace": "top",
+          "idleAskMinutes": 45
+        }
+      },
+      "written": {
+        "plans": {
+          "2026-11-06": "88901add28921fdbe6fccdf896a91dff3671eb57d9b04dd4e0182b92c1eadd5e",
+          "2026-11-07": "f50df1c25c027fa62a4ebbe7da872f72be19edd646de40c9c73eb65af2c39e8e"
+        },
+        "rest": "---\nid: 171d5362-0858-4517-ba67-7d2357291192\nsource_record_id: c112a3c5-1875-4032-8b94-e974c3abc481\ncontent: 4.4 以后和练习\ncreated_at: 2026-11-06T01:35:00.000Z\ndue_at: null\nblocking: false\ntask_id: t-rust\nproject: 学习\ntags: []\nstatus: 待做\ntype: 时间盒卡\norder: 1.5\ntimebox_minutes: 10\nno_shrink: false\nshrunk_from: c-read\nshrink_level: 1\ncontinued_from: null\nskip_count: 0\ncompleted_at: null\ncompleted_day: null\ncompleted_track: null\nprogress_note: \"\"\nprogress_noted_at: null\nsplit_note: 读第 4 章并做完练习\n---\n",
+        "titleScale": 66,
+        "four": {
+          "taskMode": false,
+          "trackingMode": "loose",
+          "insertBackPlace": "top",
+          "idleAskMinutes": 45
+        }
+      },
+      "returned": {
+        "plans": {
+          "2026-11-06": "88901add28921fdbe6fccdf896a91dff3671eb57d9b04dd4e0182b92c1eadd5e",
+          "2026-11-07": "f50df1c25c027fa62a4ebbe7da872f72be19edd646de40c9c73eb65af2c39e8e"
+        },
+        "rest": "---\nid: 171d5362-0858-4517-ba67-7d2357291192\nsource_record_id: c112a3c5-1875-4032-8b94-e974c3abc481\ncontent: 4.4 以后和练习\ncreated_at: 2026-11-06T01:35:00.000Z\ndue_at: null\nblocking: false\ntask_id: t-rust\nproject: 学习\ntags: []\nstatus: 待做\ntype: 时间盒卡\norder: 1.5\ntimebox_minutes: 10\nno_shrink: false\nshrunk_from: c-read\nshrink_level: 1\ncontinued_from: null\nskip_count: 0\ncompleted_at: null\ncompleted_day: null\ncompleted_track: null\nprogress_note: \"\"\nprogress_noted_at: null\nsplit_note: 读第 4 章并做完练习\n---\n",
+        "titleScale": 67,
+        "four": {
+          "taskMode": false,
+          "trackingMode": "loose",
+          "insertBackPlace": "top",
+          "idleAskMinutes": 45
+        }
+      }
+    }
+  ],
+  "after": {
+    "runHash": "1bcccd84bbaf1d83139f478e69adfb8eef9546fa584bdfec6a6f25628866eba1",
+    "daily": {
+      "pid": 46120,
+      "exe": "3dd8873756a04bf9d90bad83ff099bf8e34523c5516d6a95aaa5ad6c62246c4f",
+      "config": "4a004ccdb7bb6ebb76c88d13acf268ee0d89a2a822751982521554cd07eb4b05"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "sourceDay": "2026-11-05",
+  "initialItems": 2,
+  "confirmedItems": 1,
+  "unchecked": "学 Rust：只读 4.1–4.3",
+  "originalEnded": true,
+  "secondBootPlanUnchanged": true,
+  "method": "yesterday fixture -> native startup; no system clock changes"
+}

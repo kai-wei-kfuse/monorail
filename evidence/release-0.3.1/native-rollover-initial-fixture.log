@@ -1,0 +1,9 @@
+file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/0.3.1-isolated/lib.mjs:76
+      for (;;) { const v = await page.eval(expression).catch(() => null); if (v) return v; if (Date.now() > end) throw new Error(`timeout: ${label}`); await sleep(150); }
+                                                                                                                       ^
+
+Error: timeout: !!document.querySelector('.bp-carry input')
+    at Object.waitFor (file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/0.3.1-isolated/lib.mjs:76:120)
+    at async file:///C:/Users/kai_wei/Documents/1026(4)/app/evidence/release-0.3.1/native-rollover.mjs:33:3
+
+Node.js v24.13.1

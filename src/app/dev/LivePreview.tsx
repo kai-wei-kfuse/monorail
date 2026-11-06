@@ -69,7 +69,7 @@ export function LivePreview() {
     {query.has('title') && <div style={{ display: 'flex', justifyContent: 'flex-end' }}><StatusBlock kind={home.looseIdle ? 'off' : home.activity.kind}
       label={home.looseIdle ? '没在计时' : home.activity.label || '待机'} startedAt={home.looseIdle ? null : home.activity.startedAt} onClick={() => {}} /></div>}
     <HomePage actions={actions} intro={null} completeAt={null} onCompleteConsumed={() => {}} shrinkFor={null} onShrinkConsumed={() => {}}
-      look={{ titleScale: 1, topoMode: 'off', topoDepth: 0, timeboxDefault: 30 }} onGuide={() => {}} onOpenReview={() => {}}
+      look={{ titleScale: ctx.settings.titleScale, topoMode: 'off', topoDepth: 0, timeboxDefault: ctx.settings.timeboxDefaultMinutes }} onGuide={() => {}} onOpenReview={() => {}}
       onDraw={query.has('bag') ? at => { setBagOpen(false); setDealAt(at); } : undefined} onOpenBag={() => setBagOpen(true)}
       drawer={query.has('bag') ? stage => <BagScreen ctx={ctx} open={bagOpen} onOpen={() => setBagOpen(true)} onClose={() => setBagOpen(false)} drawAt={dealAt} onDrawn={() => setDealAt(null)} report={report}>{stage}</BagScreen> : undefined} />
     <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)', maxHeight: 120, overflow: 'auto' }}>

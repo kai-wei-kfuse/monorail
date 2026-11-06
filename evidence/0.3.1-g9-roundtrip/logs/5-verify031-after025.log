@@ -1,0 +1,11 @@
+# step=5-verify031-after025 tree=C:\Users\kai_wei\AppData\Local\Temp\monorail-rt-031 commit=63f7f2c data=C:\Users\kai_wei\AppData\Local\Temp\monorail-rt-data\e-031after025 base=C:\Users\kai_wei\Documents\1026(4)\app\evidence\0.3.1-g9-roundtrip\results\1-produce031.json,C:\Users\kai_wei\Documents\1026(4)\app\evidence\0.3.1-g9-roundtrip\results\4-consume025.json node=v24.13.1 tz=China Standard Time
+
+ RUN  v5.0.5 C:/Users/kai_wei/AppData/Local/Temp/monorail-rt-031
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:44:58
+   Duration  1.79s (import 37%, tests 35%, transform 27%, worker 1%)
+
+# exit=0

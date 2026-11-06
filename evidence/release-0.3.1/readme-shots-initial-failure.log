@@ -1,0 +1,10 @@
+file:///C:/Users/kai_wei/Documents/1026(4)/app/docs/assets/readme-shots.mjs:44
+  if (!ok) throw new Error(`找不到按钮「${text}」（${sel}）`);
+                 ^
+
+Error: 找不到按钮「今日任务板」（button）
+    at clickText (file:///C:/Users/kai_wei/Documents/1026(4)/app/docs/assets/readme-shots.mjs:44:18)
+    at async planToday (file:///C:/Users/kai_wei/Documents/1026(4)/app/docs/assets/readme-shots.mjs:65:3)
+    at async file:///C:/Users/kai_wei/Documents/1026(4)/app/docs/assets/readme-shots.mjs:87:9
+
+Node.js v24.13.1

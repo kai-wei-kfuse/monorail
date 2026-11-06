@@ -229,8 +229,10 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
 
   const titleBar = <TitleBar name="单轨" tabs={routes.map(r => ({ id: r.id, cn: r.cn, en: r.en }))} active={page} onTab={id => setPage(id as Route['id'])}>
     {/* 宽松模式没在计时：灰灯、「没在计时」、不走表（ADR 0021 第 13 条） */}
-    <StatusBlock kind={home.looseIdle ? 'off' : home.activity.kind} label={home.looseIdle ? '没在计时' : home.activity.label || settings.lists.idleName}
-      startedAt={home.looseIdle ? null : home.activity.startedAt} offsetMs={home.insert && !home.insert.paused ? home.insert.closedMs ?? 0 : 0} onClick={() => setBackfill(true)} />
+    <StatusBlock kind={home.looseIdle || home.insert?.paused ? 'off' : home.activity.kind}
+      label={home.insert?.paused ? `已暂停：${home.insert.name}` : home.looseIdle ? '没在计时' : home.activity.label || settings.lists.idleName}
+      startedAt={home.insert ? home.insert.startedAt : home.looseIdle ? null : home.activity.startedAt}
+      offsetMs={home.insert?.closedMs} onClick={() => setBackfill(true)} />
     <WindowButtons pinned={pinned} maximized={maximized}
       onPin={() => void windowControls.setPinned(!pinned).then(() => setPinned(!pinned))} onMinimize={() => void windowControls.minimize()}
       onMaximize={() => void windowControls.toggleMaximize().then(() => windowControls.isMaximized()).then(setMaximized)}

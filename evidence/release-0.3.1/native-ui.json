@@ -1,0 +1,30 @@
+{
+  "before": {
+    "runHash": "1bcccd84bbaf1d83139f478e69adfb8eef9546fa584bdfec6a6f25628866eba1",
+    "daily": {
+      "pid": 46120,
+      "exe": "3dd8873756a04bf9d90bad83ff099bf8e34523c5516d6a95aaa5ad6c62246c4f",
+      "config": "4a004ccdb7bb6ebb76c88d13acf268ee0d89a2a822751982521554cd07eb4b05"
+    }
+  },
+  "readouts": {
+    "initial": "15:00",
+    "pausedAfterResume": "15:03",
+    "renamedSegments": 3
+  },
+  "viewport": {
+    "viewport": 960,
+    "width": 960,
+    "drawer": 944
+  },
+  "escapeClosedDrawer": true,
+  "ok": true,
+  "after": {
+    "runHash": "1bcccd84bbaf1d83139f478e69adfb8eef9546fa584bdfec6a6f25628866eba1",
+    "daily": {
+      "pid": 46120,
+      "exe": "3dd8873756a04bf9d90bad83ff099bf8e34523c5516d6a95aaa5ad6c62246c4f",
+      "config": "4a004ccdb7bb6ebb76c88d13acf268ee0d89a2a822751982521554cd07eb4b05"
+    }
+  }
+}

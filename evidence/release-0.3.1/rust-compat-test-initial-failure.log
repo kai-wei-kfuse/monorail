@@ -1,0 +1,16 @@
+   Compiling pixel-record v0.3.1 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+error[E0425]: cannot find value `legacy_025_manifest` in this scope
+   --> src\private_release.rs:987:14
+    |
+987 |             &legacy_025_manifest,
+    |              ^^^^^^^^^^^^^^^^^^^
+    |
+help: a local variable with a similar name exists
+    |
+987 -             &legacy_025_manifest,
+987 +             &legacy_024_manifest,
+    |
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `pixel-record` (lib test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

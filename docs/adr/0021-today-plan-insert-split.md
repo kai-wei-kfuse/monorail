@@ -158,6 +158,8 @@ items:
 
 `AUDITED_COMPATIBLE_STABLE_VERSIONS` 保留 0.3.0；0.2.5 在执行方案 G9 第 5 条实测后决定去留。
 
+2026-11-06 G9 验证补记：0.3.0 与 0.2.5 的源码读写往返、隔离原生 EXE 打开并改设置后回到 0.3.1 继续写入均通过，保留两版。新增 0.3.0 到代码表并覆盖无兼容元数据的精确版本测试；有限实测范围及边界见 `evidence/0.3.1-summary.md`，原生结果见 `evidence/release-0.3.1/native-roundtrip.json`。
+
 ### 9. 新设置键（已定 34、6；审核 S8）
 
 - `insertBackPlace: 'bottom' | 'top'`，默认 `bottom`，设置 06 外观。`taskMode: boolean`，默认 `true`，设置 02。`trackingMode`、`idleAskMinutes` 见第 13 条。四个键都标 `defaultWhenMissing`。

@@ -13,7 +13,8 @@ use super::update_channel::{Channel, UpdateIntent};
 use super::update_state::{Candidate, CompatibilityInfo, ReleaseInfo, Step, TargetPermit};
 
 pub const CURRENT_DATA_SCHEMA_VERSION: u32 = 2;
-pub const AUDITED_COMPATIBLE_STABLE_VERSIONS: &[(&str, u32)] = &[("0.2.5", 2)];
+// 0.3.1 round-trip evidence: evidence/0.3.1-g9-roundtrip and release-0.3.1.
+pub const AUDITED_COMPATIBLE_STABLE_VERSIONS: &[(&str, u32)] = &[("0.2.5", 2), ("0.3.0", 2)];
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -877,32 +878,34 @@ mod tests {
     fn manifest_validation_checks_version_match_channel_contradiction_and_legacy_compatibility_table() {
         let repository = "owner/project";
         let current_beta = parse_product_version("0.3.0-beta.2").unwrap();
-        let target_v025 = parse_product_version("0.2.5").unwrap();
         let target_v024 = parse_product_version("0.2.4").unwrap();
         let target_b2 = parse_product_version("0.3.0-beta.2").unwrap();
 
-        // 1. Legacy v0.2.5 without monorail namespace is admitted via explicit audited table.
-        let legacy_025_manifest = serde_json::to_vec(&serde_json::json!({
-            "version": "0.2.5",
-            "notes": "0.2.5 notes",
-            "platforms": {
-                "windows-x86_64": {
-                    "url": "https://api.github.com/repos/owner/project/releases/assets/42",
-                    "signature": "sig-content"
+        // 1. Audited stable releases without metadata are admitted by exact version.
+        for version in ["0.2.5", "0.3.0"] {
+            let target = parse_product_version(version).unwrap();
+            let legacy_manifest = serde_json::to_vec(&serde_json::json!({
+                "version": version,
+                "notes": "audited stable notes",
+                "platforms": {
+                    "windows-x86_64": {
+                        "url": "https://api.github.com/repos/owner/project/releases/assets/42",
+                        "signature": "sig-content"
+                    }
                 }
-            }
-        }))
-        .unwrap();
-        let (_, compat_025) = validate_manifest_and_compatibility(
-            &legacy_025_manifest,
-            &target_v025,
-            false,
-            repository,
-            &current_beta,
-        )
-        .unwrap();
-        assert!(compat_025.compatible);
-        assert_eq!(compat_025.source, "auditedTable");
+            }))
+            .unwrap();
+            let (_, compatibility) = validate_manifest_and_compatibility(
+                &legacy_manifest,
+                &target,
+                false,
+                repository,
+                &current_beta,
+            )
+            .unwrap();
+            assert!(compatibility.compatible);
+            assert_eq!(compatibility.source, "auditedTable");
+        }
 
         // 2. Unaudited legacy v0.2.4 without monorail namespace is blocked from downgrade.
         let legacy_024_manifest = serde_json::to_vec(&serde_json::json!({
@@ -926,8 +929,8 @@ mod tests {
         assert!(!compat_024.compatible);
         assert_eq!(compat_024.source, "unverifiedMissingMetadata");
 
-        // 2b. Future higher stable (0.3.0) or higher beta (0.3.0-beta.3) missing monorail metadata must ALSO be marked unverified and incompatible (R5).
-        for higher_raw in ["0.3.0", "0.3.0-beta.3", "0.4.0"] {
+        // 2b. Unaudited higher releases still require metadata (R5).
+        for higher_raw in ["0.3.1", "0.3.0-beta.3", "0.4.0"] {
             let target_higher = parse_product_version(higher_raw).unwrap();
             let missing_meta_higher = serde_json::to_vec(&serde_json::json!({
                 "version": higher_raw,
@@ -981,8 +984,8 @@ mod tests {
 
         // 4. Mismatched manifest.version vs tag is rejected.
         assert!(validate_manifest_and_compatibility(
-            &legacy_025_manifest,
-            &target_v024,
+            &legacy_024_manifest,
+            &target_b2,
             false,
             repository,
             &current_beta

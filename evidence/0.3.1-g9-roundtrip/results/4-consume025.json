@@ -1,0 +1,283 @@
+{
+  "version": "0.2.5 (tag v0.2.5)",
+  "now": "2026-11-06T03:00:00.000Z",
+  "boot": {
+    "recovered": 0,
+    "migration": {
+      "migrated": false,
+      "backup": null,
+      "changes": []
+    }
+  },
+  "reconcile": 0,
+  "stateAfterBoot": {
+    "schemaVersion": 2,
+    "current_card": "c-read",
+    "open_entry": "4c955e2a-e209-42cd-b6ac-81921e86cfad",
+    "seen": [],
+    "open_entry_day": "2026-11-06",
+    "resume_entry_id": "8ae64242-18f3-49f5-8e6c-01fc05ac5d19",
+    "pending_at": null,
+    "pending_id": null,
+    "home_mode": "task",
+    "first_used_day": "2026-11-06",
+    "review_period": null,
+    "refusals": [],
+    "last_rest_ended_at": null,
+    "rest_answers": {},
+    "rest": null
+  },
+  "homeAfterBoot": {
+    "mode": "task",
+    "card": {
+      "project": "学习",
+      "tags": [],
+      "projectOverridden": true,
+      "id": "c-read",
+      "slotNo": "01",
+      "slotOf": "/11",
+      "task": "学 Rust",
+      "type": "时间盒卡",
+      "goalMinutes": 50,
+      "content": "只读 4.1–4.3",
+      "progressNote": "",
+      "status": "进行中",
+      "shrink": "ok"
+    },
+    "guideKind": "allDone",
+    "closedEffectiveMs": 2100000,
+    "currentSegStartedAt": null,
+    "awayActivity": "待机",
+    "baseline": {
+      "main": false,
+      "side": false
+    },
+    "noMainHint": false,
+    "rest": null,
+    "review": null,
+    "activity": {
+      "kind": "away",
+      "label": "待机",
+      "startedAt": "2026-11-06T02:00:00.000Z"
+    },
+    "entry": {
+      "id": "4c955e2a-e209-42cd-b6ac-81921e86cfad",
+      "description": "待机",
+      "project": "待机",
+      "tags": [],
+      "startedAt": "2026-11-06T02:00:00.000Z",
+      "cardId": null,
+      "paused": false,
+      "kind": "插入"
+    },
+    "resumeEntry": {
+      "id": "8ae64242-18f3-49f5-8e6c-01fc05ac5d19",
+      "description": "只读 4.1–4.3",
+      "project": "学习",
+      "tags": [],
+      "startedAt": "2026-11-06T01:05:00.000Z",
+      "endedAt": "2026-11-06T01:40:00.000Z",
+      "cardId": "c-read",
+      "kind": "普通"
+    },
+    "pending": null,
+    "resumeDescription": "只读 4.1–4.3",
+    "knownTags": [],
+    "dataVersion": 2
+  },
+  "writesDuringBoot": [
+    ".journal/8b99a2a2-2707-41e2-a1cd-18281f885b12.json",
+    ".journal/e1f5d6eb-4fa5-476c-9591-4ea397d08fe8.json"
+  ],
+  "restAsSeenBy025": {
+    "id": "171d5362-0858-4517-ba67-7d2357291192",
+    "source_record_id": "c112a3c5-1875-4032-8b94-e974c3abc481",
+    "content": "4.4 以后和练习",
+    "created_at": "2026-11-06T01:35:00.000Z",
+    "due_at": null,
+    "blocking": false,
+    "task_id": "t-rust",
+    "project": "学习",
+    "tags": [],
+    "status": "待做",
+    "type": "时间盒卡",
+    "order": 1.5,
+    "timebox_minutes": 10,
+    "no_shrink": false,
+    "shrunk_from": "c-read",
+    "shrink_level": 1,
+    "continued_from": null,
+    "skip_count": 0,
+    "completed_at": null,
+    "completed_day": null,
+    "completed_track": null,
+    "progress_note": "",
+    "progress_noted_at": null,
+    "split_note": "读第 4 章并做完练习"
+  },
+  "settingsAsSeenBy025": {
+    "taskMode": false,
+    "trackingMode": "loose",
+    "insertBackPlace": "top",
+    "idleAskMinutes": 45
+  },
+  "openEntryAsSeenBy025": {
+    "id": "4c955e2a-e209-42cd-b6ac-81921e86cfad",
+    "started_at": "2026-11-06T02:00:00.000Z",
+    "ended_at": null,
+    "description": "待机",
+    "project": "待机",
+    "tags": [],
+    "card_id": null,
+    "kind": "插入",
+    "source": "自动",
+    "updated_at": "2026-11-06T02:00:00.000Z"
+  },
+  "manualId": "14bb63ac-fc22-46dc-a43f-68af5d56e45f",
+  "settingChange": {
+    "ok": true
+  },
+  "writesByOperations": [
+    ".journal/abf76dcb-b398-46ca-9610-d0840b7e2cf6.json",
+    "timelog/2026-11-06.md",
+    ".journal/88539b11-e0a5-46a4-b5dd-a39256ad27c4.json",
+    "cards/171d5362-0858-4517-ba67-7d2357291192.md",
+    ".journal/33c87663-9383-4b4b-b37b-72f6474d794d.json",
+    "settings.yaml"
+  ],
+  "rebootOk": true,
+  "rebootSettings4": {
+    "taskMode": false,
+    "trackingMode": "loose",
+    "insertBackPlace": "top",
+    "idleAskMinutes": 45,
+    "calendarShowIdle": false
+  },
+  "restAfterEdit": {
+    "id": "171d5362-0858-4517-ba67-7d2357291192",
+    "source_record_id": "c112a3c5-1875-4032-8b94-e974c3abc481",
+    "content": "4.4 以后和练习（0.2.5 改）",
+    "created_at": "2026-11-06T01:35:00.000Z",
+    "due_at": null,
+    "blocking": false,
+    "task_id": "t-rust",
+    "project": "学习",
+    "tags": [],
+    "status": "待做",
+    "type": "时间盒卡",
+    "order": 1.5,
+    "timebox_minutes": 10,
+    "no_shrink": false,
+    "shrunk_from": "c-read",
+    "shrink_level": 1,
+    "continued_from": null,
+    "skip_count": 0,
+    "completed_at": null,
+    "completed_day": null,
+    "completed_track": null,
+    "progress_note": "",
+    "progress_noted_at": null,
+    "split_note": "读第 4 章并做完练习"
+  },
+  "logs": [
+    "reconcile:0"
+  ],
+  "manifest": {
+    "backup/v1-2026-11-06T01-00-00-000Z-46e4903d-9667-45cb-8582-0bc820c13fbe/迁移记录.md": {
+      "sha": "43e6ae4ff6a6ed85",
+      "size": 50
+    },
+    "cards/171d5362-0858-4517-ba67-7d2357291192.md": {
+      "sha": "04a7d33b27dfba0b",
+      "size": 551
+    },
+    "cards/c-read.md": {
+      "sha": "2e372b9f34c02594",
+      "size": 438
+    },
+    "cards/c-run.md": {
+      "sha": "c54b84acf90ad613",
+      "size": 427
+    },
+    "history/2026-11-06/090000000-62128280-3bc2-44b9-8475-1603a3b6e816.json": {
+      "sha": "0abeaef525b81a0d",
+      "size": 604
+    },
+    "history/2026-11-06/090000000-6fafb4a0-69c5-4cae-bda4-e71059fdcd4e.json": {
+      "sha": "ad361a28f8bfad36",
+      "size": 568
+    },
+    "history/2026-11-06/090000000-830000b9-92e7-4cb5-b085-0a3470a31d33.json": {
+      "sha": "48be2b16e2454d51",
+      "size": 608
+    },
+    "history/2026-11-06/090000000-b1d89c4c-3c92-41d2-844f-d60e9e5414fd.json": {
+      "sha": "3add88612af701b2",
+      "size": 576
+    },
+    "history/2026-11-06/090500000-021aed19-c693-4c7d-b4a3-afa983128414.json": {
+      "sha": "f031f63fbfcff511",
+      "size": 2469
+    },
+    "history/2026-11-06/093500000-1e822780-fdca-4e18-9c57-951ccdaba3b0.json": {
+      "sha": "af627e37d69f761a",
+      "size": 3557
+    },
+    "history/2026-11-06/094000000-d7726c80-28ad-4dff-bc3d-0ab10ef86a73.json": {
+      "sha": "6937d7336d3092ac",
+      "size": 2074
+    },
+    "history/2026-11-06/095000000-2d55cbe3-17da-4318-a40b-0edfc588afb6.json": {
+      "sha": "dde274a16ea05eb9",
+      "size": 1799
+    },
+    "history/2026-11-06/095500000-dd39aa49-9d54-4ef5-8980-b0137858e7b9.json": {
+      "sha": "ea5c807749f9bd8e",
+      "size": 1875
+    },
+    "history/2026-11-06/100000000-0e052600-f831-43a6-852f-a8afdd988281.json": {
+      "sha": "b0b1fdabf234fcd0",
+      "size": 1791
+    },
+    "history/2026-11-06/100100000-247c3a95-76d9-434d-8130-07d4b678e5c0.json": {
+      "sha": "cabe20c359d7cd33",
+      "size": 613
+    },
+    "history/2026-11-06/100100000-9557abaa-cf78-4ae5-a8c6-ba8fac0cea0b.json": {
+      "sha": "f4d892bd9c467879",
+      "size": 611
+    },
+    "history/2026-11-06/100100000-a9947d57-f974-4c65-a444-75e252739885.json": {
+      "sha": "a5ad638ca0b2ed7c",
+      "size": 589
+    },
+    "history/2026-11-06/100100000-ed08f519-b0ea-4da1-858f-599d5ddbbb1e.json": {
+      "sha": "6f4630c86e05f334",
+      "size": 576
+    },
+    "plans/2026-11-06.yaml": {
+      "sha": "88901add28921fdb",
+      "size": 254
+    },
+    "plans/2026-11-07.yaml": {
+      "sha": "f50df1c25c027fa6",
+      "size": 259
+    },
+    "settings.yaml": {
+      "sha": "211af9be7173186c",
+      "size": 947
+    },
+    "state.yaml": {
+      "sha": "dec899346b0dbfad",
+      "size": 340
+    },
+    "tasks/t-rust.md": {
+      "sha": "657aeae59e368899",
+      "size": 156
+    },
+    "timelog/2026-11-06.md": {
+      "sha": "243f19c1ec5d0379",
+      "size": 1824
+    }
+  }
+}

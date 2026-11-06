@@ -1,0 +1,64 @@
+   Compiling pixel-record v0.3.1 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 32.59s
+     Running unittests src\lib.rs (src-tauri\target\debug\deps\pixel_record_lib-8be53f9341d84766.exe)
+
+running 45 tests
+test mcp_bridge::tests::read_only_methods_are_distinguished_from_writes ... ok
+test mini_window::tests::clamp_to_work_area_keeps_window_above_taskbar_and_inside_monitor ... ok
+test mcp_bridge::tests::phase_updates_persist_before_any_subscriber_attaches ... ok
+test mini_visibility::tests::failed_attachment_releases_the_callback ... ok
+test mcp_bridge::tests::clean_reconnect_advances_generation_and_isolates_stale_replies ... ok
+test mcp_bridge::tests::reload_or_destroy_during_active_write_locks_host_lost_and_reports_unknown ... ok
+test mini_window::tests::resize_border_child_cannot_start_a_vertical_resize ... ok
+test mini_window::tests::resize_hits_disable_vertical_edges_and_keep_corners_horizontal ... ok
+test mini_window::tests::popup_opens_down_when_it_fits_and_flips_up_only_when_above_is_roomier ... ok
+test main_session::tests::epochs_are_positive_and_strictly_increasing_even_across_threads ... ok
+test private_release::tests::single_target_comparator_allows_downgrade_only_for_permitted_compatible_stable_target ... ok
+test private_release::tests::semver_ordering_ranks_beta_10_above_beta_9_and_stable_above_same_base_beta ... ok
+test private_release::tests::credentials_only_go_to_the_configured_https_asset_api ... ok
+test private_release::tests::paginated_unordered_releases_filter_drafts_test_tags_and_contradictory_flags ... ok
+test private_release::tests::manifest_validation_checks_version_match_channel_contradiction_and_legacy_compatibility_table ... ok
+test quick_save::tests::migration_blocks_new_saves_and_preserves_existing_sessions ... ok
+test reminders::tests::delivered_ids_are_not_due_again ... ok
+test reminders::tests::prune_keeps_only_planned_ids ... ok
+test attachments::tests::rejects_bad_record_ids_and_empty_names ... ok
+test update_backup::tests::sha256_matches_nist_vectors ... ok
+test mini_window::tests::geometry_round_trip_and_corruption_are_explicit ... ok
+test recap_view::tests::missing_file_reads_as_defaults_without_a_notice ... ok
+test attachments::tests::names_cannot_escape_and_are_deduplicated ... ok
+test recap_view::tests::corrupt_file_reads_as_defaults_and_is_reported ... ok
+test update_state::tests::busy_phases_reject_channel_switch_and_preserve_active_operation ... ok
+test update_backup::tests::unrecovered_journal_file_blocks_backup_and_install ... ok
+test update_channel::tests::corrupted_channel_file_reports_explicit_error_instead_of_silently_resetting ... ok
+test update_channel::tests::missing_channel_file_defaults_to_stable_without_auto_enrolling_beta_builds ... ok
+test update_state::tests::switching_channel_clears_available_or_ready_candidates_and_bytes ... ok
+test windows::tests::failed_auto_hide_install_releases_the_callback ... ok
+test windows::tests::other_registration_errors_keep_their_details ... ok
+test update_state::tests::downgrade_requires_matching_explicit_stable_return_permit_and_invalidates_on_channel_change ... ok
+test windows::tests::normalization_only_replaces_whole_modifier_tokens ... ok
+test windows::tests::registration_conflict_preserves_the_displayed_win_name ... ok
+test windows::tests::win_modifier_matches_super ... ok
+test windows::tests::win_modifier_order_does_not_change_the_shortcut ... ok
+test power::tests::owner_locked_snapshot_remains_immutable_when_subsequent_heartbeat_or_power_events_write_to_disk ... ok
+test mini_visibility::tests::actual_hwnd_show_hide_and_destroy_notify_without_focus_or_polling ... ok
+test mcp_bridge::tests::resolve_and_read_host_metadata_verify_existing_files_without_guessing ... ok
+test recap_view::tests::round_trip_replaces_the_file_atomically_and_rejects_non_objects ... ok
+test update_channel::tests::channel_preference_persists_atomically_across_restarts ... ok
+test update_backup::tests::owner_locked_config_snapshots_isolate_backup_from_concurrent_disk_mutations_in_lifecycle_and_reminders ... ok
+test windows::tests::quickbar_stays_visible_during_drag_and_hides_only_on_deactivation ... ok
+test update_backup::tests::preserves_nested_directories_named_backups_inside_data_and_never_overwrites_same_timestamp_backup ... ok
+test update_backup::tests::creates_and_verifies_complete_backup_including_attachments_receipts_and_config_without_recursion ... ok
+
+test result: ok. 45 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running unittests src\main.rs (src-tauri\target\debug\deps\pixel_record-0466f24c52a2e511.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests pixel_record_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

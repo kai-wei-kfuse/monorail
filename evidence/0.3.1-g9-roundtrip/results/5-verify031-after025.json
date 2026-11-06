@@ -1,0 +1,334 @@
+{
+  "version": "0.3.1 (HEAD 63f7f2c)",
+  "after": "0.2.5 (tag v0.2.5)",
+  "now": "2026-11-06T03:32:00.000Z",
+  "checks": [
+    {
+      "name": "启动校验 restoreRepositories 通过（journal 恢复 / 迁移 / 计时条目一致）",
+      "ok": true,
+      "detail": {
+        "recovered": 0,
+        "migrated": false
+      }
+    },
+    {
+      "name": "操作历史可读，无坏记录",
+      "ok": true,
+      "detail": {
+        "count": 14,
+        "bad": 0,
+        "cleaned": {
+          "removed": 0,
+          "failed": 0,
+          "cutoff": "2026-05-11"
+        }
+      }
+    },
+    {
+      "name": "plans/ 两个文件与 0.3.1 写出时逐字节相同",
+      "ok": true,
+      "detail": [
+        [
+          "plans/2026-11-06.yaml",
+          "88901add28921fdb",
+          "88901add28921fdb"
+        ],
+        [
+          "plans/2026-11-07.yaml",
+          "f50df1c25c027fa6",
+          "f50df1c25c027fa6"
+        ]
+      ]
+    },
+    {
+      "name": "今日任务板读出与第 1 步一致",
+      "ok": true,
+      "detail": {
+        "schemaVersion": 1,
+        "day": "2026-11-06",
+        "skip_until_planned": false,
+        "carried_from": null,
+        "carried_confirmed": true,
+        "rolled_over": true,
+        "seen": [],
+        "items": [
+          {
+            "card_id": "c-read",
+            "priority": "高",
+            "today_minutes": 30,
+            "added_at": "2026-11-06T01:00:00.000Z",
+            "carried": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "明日任务板读出与第 1 步一致",
+      "ok": true,
+      "detail": {
+        "schemaVersion": 1,
+        "day": "2026-11-07",
+        "skip_until_planned": false,
+        "carried_from": null,
+        "carried_confirmed": true,
+        "rolled_over": false,
+        "seen": [],
+        "items": [
+          {
+            "card_id": "c-run",
+            "priority": "普通",
+            "today_minutes": null,
+            "added_at": "2026-11-06T01:00:00.000Z",
+            "carried": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "拆分卡 split_note 仍在",
+      "ok": true,
+      "detail": "读第 4 章并做完练习"
+    },
+    {
+      "name": "拆分卡 shrunk_from / shrink_level 仍在",
+      "ok": true,
+      "detail": {
+        "shrunk_from": "c-read",
+        "shrink_level": 1
+      }
+    },
+    {
+      "name": "旧版对拆分卡内容的修改可见",
+      "ok": true,
+      "detail": "4.4 以后和练习（0.2.5 改）"
+    },
+    {
+      "name": "原卡（今天做的）未被改坏",
+      "ok": true,
+      "detail": {
+        "content": "只读 4.1–4.3",
+        "status": "进行中"
+      }
+    },
+    {
+      "name": "两条「待机 / 插入」条目原样保留",
+      "ok": true,
+      "detail": [
+        [
+          "eb384529-4d6f-40e3-b3c6-21871c8cea85",
+          "2026-11-06T01:50:00.000Z",
+          "2026-11-06T01:55:00.000Z"
+        ],
+        [
+          "4c955e2a-e209-42cd-b6ac-81921e86cfad",
+          "2026-11-06T02:00:00.000Z",
+          null
+        ]
+      ]
+    },
+    {
+      "name": "第 1 步的全部时间条目都在且未变",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "旧版补记的时间条目可见",
+      "ok": true,
+      "detail": {
+        "id": "14bb63ac-fc22-46dc-a43f-68af5d56e45f",
+        "started_at": "2026-11-05T23:00:00.000Z",
+        "ended_at": "2026-11-05T23:30:00.000Z",
+        "description": "0.2.5 补记：晨读",
+        "project": "学习",
+        "tags": [],
+        "card_id": null,
+        "kind": "普通",
+        "source": "日历",
+        "updated_at": "2026-11-06T03:01:00.000Z"
+      }
+    },
+    {
+      "name": "state.yaml schemaVersion = 2",
+      "ok": true
+    },
+    {
+      "name": "state 的 open_entry / resume_entry_id / current_card 与第 1 步一致",
+      "ok": true,
+      "detail": {
+        "open_entry": "4c955e2a-e209-42cd-b6ac-81921e86cfad",
+        "resume_entry_id": "8ae64242-18f3-49f5-8e6c-01fc05ac5d19",
+        "current_card": "c-read"
+      }
+    },
+    {
+      "name": "settings.yaml schemaVersion = 2",
+      "ok": true
+    },
+    {
+      "name": "四个新设置键保持 0.3.1 写入的非默认值",
+      "ok": true,
+      "detail": {
+        "taskMode": false,
+        "trackingMode": "loose",
+        "insertBackPlace": "top",
+        "idleAskMinutes": 45
+      }
+    },
+    {
+      "name": "四个新设置键仍写在 settings.yaml 文件里（不是靠默认值补出来的）",
+      "ok": true,
+      "detail": [
+        [
+          "taskMode: false",
+          true
+        ],
+        [
+          "trackingMode: loose",
+          true
+        ],
+        [
+          "insertBackPlace: top",
+          true
+        ],
+        [
+          "idleAskMinutes: 45",
+          true
+        ]
+      ]
+    },
+    {
+      "name": "旧版改的设置可见（calendarShowIdle: false）",
+      "ok": true
+    },
+    {
+      "name": "启动时数据目录没有残留 .journal",
+      "ok": true
+    },
+    {
+      "name": "0.3.1 写入成功（改任务板量、继续插入），无 External edit",
+      "ok": true,
+      "detail": {
+        "today_minutes": 45,
+        "open": [
+          "回同事消息",
+          "工作",
+          "插入"
+        ]
+      }
+    },
+    {
+      "name": "0.3.1 写完后再开一次通过",
+      "ok": true
+    }
+  ],
+  "logs": [
+    "reconcile:0"
+  ],
+  "bootError": null,
+  "manifest": {
+    "backup/v1-2026-11-06T01-00-00-000Z-46e4903d-9667-45cb-8582-0bc820c13fbe/迁移记录.md": {
+      "sha": "43e6ae4ff6a6ed85",
+      "size": 50
+    },
+    "cards/171d5362-0858-4517-ba67-7d2357291192.md": {
+      "sha": "04a7d33b27dfba0b",
+      "size": 551
+    },
+    "cards/c-read.md": {
+      "sha": "2e372b9f34c02594",
+      "size": 438
+    },
+    "cards/c-run.md": {
+      "sha": "c54b84acf90ad613",
+      "size": 427
+    },
+    "history/2026-11-06/090000000-62128280-3bc2-44b9-8475-1603a3b6e816.json": {
+      "sha": "0abeaef525b81a0d",
+      "size": 604
+    },
+    "history/2026-11-06/090000000-6fafb4a0-69c5-4cae-bda4-e71059fdcd4e.json": {
+      "sha": "ad361a28f8bfad36",
+      "size": 568
+    },
+    "history/2026-11-06/090000000-830000b9-92e7-4cb5-b085-0a3470a31d33.json": {
+      "sha": "48be2b16e2454d51",
+      "size": 608
+    },
+    "history/2026-11-06/090000000-b1d89c4c-3c92-41d2-844f-d60e9e5414fd.json": {
+      "sha": "3add88612af701b2",
+      "size": 576
+    },
+    "history/2026-11-06/090500000-021aed19-c693-4c7d-b4a3-afa983128414.json": {
+      "sha": "f031f63fbfcff511",
+      "size": 2469
+    },
+    "history/2026-11-06/093500000-1e822780-fdca-4e18-9c57-951ccdaba3b0.json": {
+      "sha": "af627e37d69f761a",
+      "size": 3557
+    },
+    "history/2026-11-06/094000000-d7726c80-28ad-4dff-bc3d-0ab10ef86a73.json": {
+      "sha": "6937d7336d3092ac",
+      "size": 2074
+    },
+    "history/2026-11-06/095000000-2d55cbe3-17da-4318-a40b-0edfc588afb6.json": {
+      "sha": "dde274a16ea05eb9",
+      "size": 1799
+    },
+    "history/2026-11-06/095500000-dd39aa49-9d54-4ef5-8980-b0137858e7b9.json": {
+      "sha": "ea5c807749f9bd8e",
+      "size": 1875
+    },
+    "history/2026-11-06/100000000-0e052600-f831-43a6-852f-a8afdd988281.json": {
+      "sha": "b0b1fdabf234fcd0",
+      "size": 1791
+    },
+    "history/2026-11-06/100100000-247c3a95-76d9-434d-8130-07d4b678e5c0.json": {
+      "sha": "cabe20c359d7cd33",
+      "size": 613
+    },
+    "history/2026-11-06/100100000-9557abaa-cf78-4ae5-a8c6-ba8fac0cea0b.json": {
+      "sha": "f4d892bd9c467879",
+      "size": 611
+    },
+    "history/2026-11-06/100100000-a9947d57-f974-4c65-a444-75e252739885.json": {
+      "sha": "a5ad638ca0b2ed7c",
+      "size": 589
+    },
+    "history/2026-11-06/100100000-ed08f519-b0ea-4da1-858f-599d5ddbbb1e.json": {
+      "sha": "6f4630c86e05f334",
+      "size": 576
+    },
+    "history/2026-11-06/113100000-77853475-fe89-40ac-96c0-30f45acd8587.json": {
+      "sha": "976185c369087a1c",
+      "size": 604
+    },
+    "history/2026-11-06/113200000-73768053-bf06-49e3-95ee-e614b344739d.json": {
+      "sha": "827878c703698806",
+      "size": 1865
+    },
+    "plans/2026-11-06.yaml": {
+      "sha": "65a876e1db3e2f97",
+      "size": 254
+    },
+    "plans/2026-11-07.yaml": {
+      "sha": "f50df1c25c027fa6",
+      "size": 259
+    },
+    "settings.yaml": {
+      "sha": "211af9be7173186c",
+      "size": 947
+    },
+    "state.yaml": {
+      "sha": "897429ac9090f0a8",
+      "size": 340
+    },
+    "tasks/t-rust.md": {
+      "sha": "657aeae59e368899",
+      "size": 156
+    },
+    "timelog/2026-11-06.md": {
+      "sha": "3661a322173349e2",
+      "size": 2090
+    }
+  }
+}
