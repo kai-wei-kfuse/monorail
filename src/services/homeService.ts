@@ -4,7 +4,7 @@ import { askChoices } from '../shared/notices';
 import { run } from './commit';
 import type { HistoryIntent, HistorySource } from '../shared/history';
 import * as tracking from './tracking/api';
-import { entryAction } from '../domain/timeline/insert';
+import { entryAction, insertClosedMs, insertRunSegments } from '../domain/timeline/insert';
 import type { EntrySource } from '../domain/timeline/insert';
 import type { ReadoutRequest, ReadoutPlan, EntryTemplate, TimeEntry } from './tracking/api';
 import { alignInTx, startCardInTx, editContentInTx, editMetaInTx } from './cardService';
@@ -181,13 +181,21 @@ export const editMeta = (ctx: Ctx, cardId: string, project: string | null, tags:
 }, { action: 'home.editMeta' });
 export function editOpenInTx(tx: Transaction, entryId: string, patch: Partial<Pick<EntryTemplate, 'description' | 'project' | 'tags'>>): void {
   const open = tracking.openInTx(tx); if (!open || open.id !== entryId) throw new Error('已经换成别的事了');
-  if (!open.card_id) { tracking.editInTx(tx, entryId, patch); return; }
+  if (!open.card_id) {
+    // 插入的事改名 / 改项目 = 整件事一起改（用户 2026-11-06，G7 收尾审核 P2-2）：同一次插入里、只隔着暂停的前面几段跟着改，读数累计不丢
+    const resume = open.kind === '插入' && tx.state.resume_entry_id ? tx.entries.find(e => e.id === tx.state.resume_entry_id) : undefined;
+    const earlier = resume && (patch.description !== undefined || patch.project !== undefined || patch.tags !== undefined) ? insertRunSegments(tx.entries, open, resume) : [];
+    tracking.editInTx(tx, entryId, patch);
+    for (const seg of earlier) tracking.editInTx(tx, seg.id, patch);
+    return;
+  }
   const card = tx.cards.find(card => card.id === open.card_id)!;
   if (patch.description !== undefined) editContentInTx(tx, card.id, patch.description);
   if (patch.project !== undefined || patch.tags !== undefined) editMetaInTx(tx, card.id, patch.project ?? card.project, patch.tags ?? card.tags);
 }
 export const editOpen = (ctx: Ctx, entryId: string, patch: Partial<Pick<EntryTemplate, 'description' | 'project' | 'tags'>>, at: string) => action(ctx, at, tx => editOpenInTx(tx, entryId, patch), { action: 'home.editOpen' });
-export interface HomeReadoutRequest { target: { mode: 'idle' | 'pending' | 'entry' | 'ref' | 'refToday'; id: string }; milliseconds: number; at: string }
+/** insertRun：插入卡 / 小窗显示的是这件插入的事的累计（前面几段 + 开着这一段），改也按累计改（G7 收尾审核 P2-1） */
+export interface HomeReadoutRequest { target: { mode: 'idle' | 'pending' | 'entry' | 'ref' | 'refToday' | 'insertRun'; id: string }; milliseconds: number; at: string }
 export function commitReadoutInTx(tx: Transaction, request: HomeReadoutRequest, seen: ReadoutPlan | null) {
   if (request.target.mode === 'idle' || request.target.mode === 'pending') {
     const open = tracking.openInTx(tx);
@@ -210,6 +218,16 @@ export function commitReadoutInTx(tx: Transaction, request: HomeReadoutRequest, 
     return { kind: 'done' as const, hit };
   }
   const open = tracking.openInTx(tx);
+  if (request.target.mode === 'insertRun') {
+    // 显示什么就改什么：写的是这件事一共多久，减掉前面几段，剩下的才是开着这一段；前面几段不动
+    const resume = tx.state.resume_entry_id ? tx.entries.find(e => e.id === tx.state.resume_entry_id) : undefined;
+    if (!open || open.id !== request.target.id || open.kind !== '插入' || !resume || tracking.insertStateInTx(tx) !== 'inserting') throw new Error('已经换成别的事了');
+    if (!Number.isFinite(request.milliseconds) || request.milliseconds < 0) throw new Error('读数不能小于 0');
+    const closed = insertClosedMs(tx.entries, open, resume);
+    if (request.milliseconds < closed) throw new Error(`最少 ${Math.ceil(closed / 60000)} 分钟（这件事暂停前已计 ${Math.round(closed / 60000)} 分钟；要改前面几段请在日历里改）`);
+    const result = tracking.setReadoutInTx(tx, { entryId: open.id, mode: 'entry', at: request.at, milliseconds: request.milliseconds - closed }, seen);
+    return result.kind === 'confirm' ? { kind: 'confirm' as const, plan: result.plan, hit: result.plan.hit } : { kind: 'done' as const, hit: result.plan.hit };
+  }
   const byCard = request.target.mode === 'ref' || request.target.mode === 'refToday';
   if (!open || (byCard ? open.card_id : open.id) !== request.target.id) throw new Error('已经换成别的事了');
   const since = request.target.mode === 'refToday' ? new Date(activityDayStartOf(activityDay(request.at, tx.settings.dayBoundaryHour), tx.settings.dayBoundaryHour)).toISOString() : undefined;

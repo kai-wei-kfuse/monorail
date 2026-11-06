@@ -25,7 +25,7 @@ export const miniCommandSchema = z.discriminatedUnion('type', [
   z.object({ ...edit, type: z.literal('startCard'), pending_id: id.nullable(), targetCardId: id }).strict(),
   z.object({ ...edit, type: z.literal('continueEntry'), pending_id: id.nullable(), targetEntryId: id }).strict(),
   z.object({ ...edit, type: z.literal('setReadout'), pending_id: id.nullable(),
-    target: z.object({ mode: z.enum(['idle', 'pending', 'entry', 'ref', 'refToday']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
+    target: z.object({ mode: z.enum(['idle', 'pending', 'entry', 'ref', 'refToday', 'insertRun']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
 ]);
 export type MiniCommand = z.infer<typeof miniCommandSchema>;
 export type MiniReadoutPlan = z.infer<typeof plan>;

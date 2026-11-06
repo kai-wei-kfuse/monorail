@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, entries, seed } from './serviceFixture';
 import type { Fixture } from './serviceFixture';
 import { start } from './cardService';
-import { beginPending, commitReadout, continueEntry, continueTimer, dispatchMiniCommand, endOriginal, insert, pause, resume, rest, startCard, startFree, startPreset, stop } from './homeService';
+import { beginPending, commitReadout, continueEntry, continueTimer, dispatchMiniCommand, editOpen, endOriginal, insert, pause, resume, rest, startCard, startFree, startPreset, stop } from './homeService';
 import { canContinueInsert } from './tracking/api';
 import type { MiniCommand } from '../platform/windowBus';
 import { projectMini } from './miniProjection';
@@ -186,6 +186,49 @@ describe('插入卡的投影 home.insert（UI 规范 §11.14）', () => {
     expect(entries(f).filter(e => e.kind === '插入' && e.project === '生活').length).toBe(3);
     f.clock(at(18)); await startFree(f.ctx, { description: '回消息', project: '工作', tags: [] }, at(18));
     expect(home(f).insert).toMatchObject({ name: '回消息', closedMs: 0, startedAt: at(18) });
+  });
+});
+
+describe('插入累计读数的编辑（G7 收尾审核 P2-1、P2-2）', () => {
+  const home = (f: Fixture) => f.publish.mock.calls.at(-1)![0].home;
+  // 10 分插入「厕所」，12 分暂停，15 分继续，16 分时累计 3 分（前段 2 + 当前 1）
+  async function resumedInsert() {
+    const f = await working(); f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
+    f.clock(at(12)); await pause(f.ctx, at(12));
+    f.clock(at(15)); await continueTimer(f.ctx, at(15));
+    f.clock(at(16));
+    return f;
+  }
+  const shown = (f: Fixture) => { const i = home(f).insert!; return i.closedMs + Date.parse(at(16)) - Date.parse(i.startedAt!); };
+  const setMini = (f: Fixture, mode: 'insertRun' | 'entry', ms: number) => {
+    const s = projectMini(f.publish.mock.calls.at(-1)![0], 0);
+    return dispatchMiniCommand(f.ctx, { type: 'setReadout', requestId: crypto.randomUUID(), at: at(16), epoch: 0, entryId: s.entryId, cardId: s.cardId,
+      revision: s.revision, pending_id: s.pending_id, target: { mode, id: s.entry!.id }, milliseconds: ms, seen: null } as MiniCommand);
+  };
+  it('小窗改累计读数（insertRun）：写 4 分就是 4 分，只挪开着这一段的起点，前面那段不动', async () => {
+    const f = await resumedInsert();
+    expect(shown(f)).toBe(3 * 60_000);
+    expect((await setMini(f, 'insertRun', 4 * 60_000)).kind).toBe('done');
+    expect(shown(f)).toBe(4 * 60_000);
+    expect(open(f).started_at).toBe(at(14));
+    expect(entries(f).find(e => e.kind === '插入' && e.started_at === at(10))).toMatchObject({ ended_at: at(12) });
+  });
+  it('累计读数写得比前面几段还少：拒绝，提示去日历改', async () => {
+    const f = await resumedInsert();
+    await expect(setMini(f, 'insertRun', 60_000)).rejects.toThrow('最少 2 分钟');
+    expect(shown(f)).toBe(3 * 60_000);
+  });
+  it.each([{ description: '厕所（改名）' }, { project: '工作' }])('改名 / 改项目 = 整件事一起改，累计不丢：%j', async patch => {
+    const f = await resumedInsert();
+    const cardBefore = entries(f).find(e => e.card_id === 'c1')!;
+    await editOpen(f.ctx, open(f).id, patch, at(16));
+    expect(home(f).insert!.closedMs).toBe(2 * 60_000);
+    expect(shown(f)).toBe(3 * 60_000);
+    const segs = entries(f).filter(e => e.kind === '插入' && e.project !== '待机');
+    expect(segs).toHaveLength(2);
+    for (const s of segs) expect(s).toMatchObject(patch);
+    // 原来那张卡的记录不受影响
+    expect(entries(f).find(e => e.card_id === 'c1')).toMatchObject({ description: cardBefore.description, project: cardBefore.project });
   });
 });
 

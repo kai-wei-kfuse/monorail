@@ -229,7 +229,8 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const canEditTime = !!running || !!pending || (!!entry && !resumeDescription);
   const target = () => pending ? { mode: 'pending' as const, id: pending.id }
     : c && running ? { mode: snap.closedTodayMs !== undefined ? 'refToday' as const : 'ref' as const, id: c.id }
-    : running ? { mode: 'entry' as const, id: running.id }
+    // 插入的事：读数是累计，改也按累计改（G7 收尾审核 P2-1）
+    : running ? { mode: snap.inserting && !snap.inserting.paused ? 'insertRun' as const : 'entry' as const, id: running.id }
     : entry && !resumeDescription ? { mode: 'idle' as const, id: entry.id } : null;
 
   const pop = popKind === 'cat' && catValue !== null ? <CatList projects={snap.projects} value={catValue} onPick={pickProject} />

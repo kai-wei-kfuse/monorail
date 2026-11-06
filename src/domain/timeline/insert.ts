@@ -63,21 +63,24 @@ export function insertToContinue(entries: readonly TimeEntry[], open: TimeEntry,
 }
 
 /**
- * 这件插入的事前面已经计完的那几段之和（用户 2026-11-06：暂停不重置读数）。读数 = 这个 + 开着的那一段。
- * 从开着的那条往前找：插入的事暂停（待机 / 插入）跳过，同名同项目的插入段加上，碰到别的事就停。
+ * 这件插入的事前面已经计完的那几段（用户 2026-11-06：暂停不重置读数）。读数 = 这几段之和 + 开着的那一段。
+ * 从开着的那条往前找：插入的事暂停（待机 / 插入）跳过，同名同项目的插入段算进来，碰到别的事就停。
  * 只看回到目标那条之后的；不改数据，日历、列表里照旧是分开的几段。
+ * 改名 / 改项目时整件事一起改（用户 2026-11-06，G7 收尾审核 P2-2），所以同名同项目能一直认出是同一件事。
  */
-export function insertClosedMs(entries: readonly TimeEntry[], open: TimeEntry, resume: TimeEntry): number {
+export function insertRunSegments(entries: readonly TimeEntry[], open: TimeEntry, resume: TimeEntry): TimeEntry[] {
   const name = isIdle(open) ? insertToContinue(entries, open, resume) : open;
-  if (!name) return 0;
+  if (!name) return [];
   const after = Date.parse(resume.ended_at ?? resume.started_at), openStart = Date.parse(open.started_at);
   const closed = entries.filter(e => e.id !== open.id && e.ended_at !== null && Date.parse(e.started_at) >= after && Date.parse(e.ended_at) <= openStart)
     .sort((a, b) => Date.parse(b.ended_at!) - Date.parse(a.ended_at!));
-  let sum = 0;
+  const run: TimeEntry[] = [];
   for (const e of closed) {
     if (isIdle(e) && e.kind === '插入') continue;
     if (e.kind !== '插入' || isIdle(e) || e.description !== name.description || e.project !== name.project) break;
-    sum += Date.parse(e.ended_at!) - Date.parse(e.started_at);
+    run.push(e);
   }
-  return sum;
+  return run;
 }
+export const insertClosedMs = (entries: readonly TimeEntry[], open: TimeEntry, resume: TimeEntry): number =>
+  insertRunSegments(entries, open, resume).reduce((sum, e) => sum + Date.parse(e.ended_at!) - Date.parse(e.started_at), 0);

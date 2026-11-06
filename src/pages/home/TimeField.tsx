@@ -8,7 +8,7 @@ import './timer.css';
 /** 被盖掉的一条（计时系统读数预览的 hit）：from、to 是相交的那一段。 */
 export interface Cover { id: string; description: string; from: string; to: string }
 /** 改的是哪一条：待机直接改表进入待确认、待确认的起点、正在计的条目，或这张卡的「已用」（id 都是点开读数时的那一条）。 */
-export interface ReadoutTarget { mode: 'idle' | 'pending' | 'entry' | 'ref' | 'refToday'; id: string }
+export interface ReadoutTarget { mode: 'idle' | 'pending' | 'entry' | 'ref' | 'refToday' | 'insertRun'; id: string }
 /** 交给计时系统的请求。at 是按下回车的时刻，预览和确认以后的重算都按它算。 */
 export interface ReadoutRequest { target: ReadoutTarget; milliseconds: number; at: string }
 /**
