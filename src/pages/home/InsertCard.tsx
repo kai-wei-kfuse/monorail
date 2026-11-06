@@ -30,10 +30,14 @@ const todayText = (o: Insert['over']) => o.kind === 'card'
  * 插入卡盖在上面：读数走插入这一段；按钮只有〔暂停〕/〔继续〕；回去区域左边〔回到任务〕、右边〔结束原任务〕（先确认）。
  * place 是设置 06「插入卡的回去区域」：bottom / top。动效「完整」：落下、抬起、回去收走；「简化」淡入淡出；「关闭」直接切换。
  */
-export function InsertCard({ insert, now, look, titleScale, place, onBack, onEndOriginal, onPause, onContinue, children }:
+export function InsertCard({ insert, now, look, titleScale, place, onBack, onEndOriginal, onPause, onContinue, exiting = false, onExited, children }:
   { insert: Insert; now: number; look: CardLook; titleScale: number; place: 'bottom' | 'top';
+    /** 插入已经结束（不是在这张卡上点的，例如快捷活动再点一次、底栏、小窗）：演完收走再交给 onExited 拿掉（用户 2026-11-06） */
+    exiting?: boolean; onExited?: () => void;
     /** 交回 false 表示没成功（插入卡复位） */ onBack: () => Promise<unknown>; onEndOriginal: () => Promise<unknown>; onPause: () => void; onContinue: () => void; children: ReactNode }) {
   const stack = useRef<HTMLDivElement>(null), topRef = useRef<HTMLElement>(null), [asking, setAsking] = useState(false), [leaving, setLeaving] = useState(false);
+  /** 正在演 / 演过的收走动画（在这张卡上点的〔回到任务〕）：插入在提交后结束时等它们演完再拿掉 */
+  const leaveAnims = useRef<Animation[] | null>(null);
   const o = insert.over, onTask = o.kind === 'card';
   const elapsed = insert.startedAt ? now - Date.parse(insert.startedAt) : 0;
   const progress = cardProgress(elapsed, null, !insert.paused, insert.paused);
@@ -62,30 +66,42 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
     if (!t || leaving || motionLevel() !== 'full') return;
     t.animate([{ transform: on ? 'translateY(0)' : 'translateY(-14px)' }, { transform: on ? 'translateY(-14px)' : 'translateY(0)' }], { duration: 180, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
   };
-  // 回到任务：点下去就提交（不等动画），同时演出——插入卡往上收走，原来那张回到前面、颜色恢复、上沿那条收起。
-  // 写盘通常比动画慢（真窗口量到 0.8–1 秒），先演再提交会在动画后停一段（用户 2026-11-06）；两件事一起做，提交一到就换成正常的卡
-  const back = async () => {
-    if (leaving) return;
-    setLeaving(true);
-    const s = stack.current, t = topRef.current, under = s?.querySelector<HTMLElement>('.card:not(.ins-top)');
-    const commit = onBack();
-    const anims: Animation[] = [];
+  /** 收走：插入卡往上收走，原来那张回到前面、颜色恢复、上沿那条收起。交回这几段动画（失败时撤掉用） */
+  const playLeave = (): Animation[] => {
+    const s = stack.current, t = topRef.current, under = s?.querySelector<HTMLElement>('.card:not(.ins-top)'), anims: Animation[] = [];
     if (s && t && under && motionLevel() === 'full') {
       s.classList.add('clip');
       const from = getComputedStyle(t).transform;
       anims.push(t.animate([{ transform: from === 'none' ? 'translateY(0)' : from, opacity: 1 }, { offset: .6, opacity: 1 }, { transform: 'translateY(calc(-100% - 90px))', opacity: 0 }],
         { duration: 280, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' }));
       anims.push(under.animate([{ transform: 'translateY(var(--sink)) scale(var(--scale))' }, { transform: 'none' }], { duration: 280, delay: 60, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'forwards' }));
-      // 退后时变灰、变淡的那几层也一起恢复；上沿那条淡出（不等提交以后才变）
       under.querySelectorAll<HTMLElement>(':scope > .card-in, :scope > .vtab, :scope > .topo').forEach(el =>
         anims.push(el.animate([{ opacity: 'var(--dim)', filter: 'grayscale(1)' }, { opacity: 1, filter: 'grayscale(0)' }], { duration: 280, delay: 60, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'forwards' })));
       const peek = s.querySelector<HTMLElement>('.ins-peek');
       if (peek) anims.push(peek.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'linear', fill: 'forwards' }));
     } else if (t && motionLevel() === 'reduced') anims.push(t.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'linear', fill: 'forwards' }));
+    if (anims.length) leaveAnims.current = anims;
+    return anims;
+  };
+  // 插入在别处结束了：没演过收走就补演，演完再拿掉
+  useEffect(() => {
+    if (!exiting) return;
+    const anims = leaveAnims.current ?? playLeave();
+    if (!anims.length) { onExited?.(); return; }
+    void settled(anims).then(() => onExited?.());
+  }, [exiting]);
+
+  // 回到任务：点下去就提交（不等动画），同时演出——插入卡往上收走，原来那张回到前面、颜色恢复、上沿那条收起。
+  // 写盘通常比动画慢（真窗口量到 0.8–1 秒），先演再提交会在动画后停一段（用户 2026-11-06）；两件事一起做，提交一到就换成正常的卡
+  const back = async () => {
+    if (leaving || exiting) return;
+    setLeaving(true);
+    const commit = onBack();
+    const anims = playLeave();
     try {
       const ok = await commit;
       // 没有成功（状态变了、写盘出错）：撤掉收走的动画，插入卡和底下那张复位（G7 审核 S4）
-      if (ok === false) { anims.forEach(a => a.cancel()); s?.classList.remove('clip'); }
+      if (ok === false) { anims.forEach(a => a.cancel()); leaveAnims.current = null; stack.current?.classList.remove('clip'); }
     } finally { setLeaving(false); }
   };
   const end = async () => { setAsking(false); setLeaving(true); try { await onEndOriginal(); } finally { setLeaving(false); } };

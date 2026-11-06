@@ -7,7 +7,7 @@ import type { HomeSlice } from '../../store/homeSlice';
 // 插入卡（ADR 0021 第 3 条，UI 规范 §11.14）：静态渲染核对文字和按钮；动画、鼠标悬停交给无头截图
 const look = { topoMode: 'off' as const, topoDepth: 0, paused: false };
 const base: NonNullable<HomeSlice['insert']> = {
-  paused: false, canContinue: false, name: '上厕所', project: '生活', startedAt: '2026-11-06T02:00:00Z',
+  paused: false, canContinue: false, entryId: 'e-ins', name: '上厕所', project: '生活', startedAt: '2026-11-06T02:00:00Z',
   over: { kind: 'card', cardId: 'c1', title: '改 [简历] 第二版', track: '主线', todayMs: 25 * 60_000, todayGoal: 60 },
 };
 const render = (insert: NonNullable<HomeSlice['insert']>, place: 'bottom' | 'top' = 'bottom') => renderToStaticMarkup(createElement(InsertCard, {

@@ -30,6 +30,8 @@ export interface HomeSlice {
    */
   insert: {
     paused: boolean; canContinue: boolean;
+    /** 开着的那一条（插入的事，或插入的事暂停时的待机）：插入结束后看它还开着没有，分「回到任务」和「结束原任务」 */
+    entryId: string;
     /** 插入的那件事（暂停时是暂停前那一段） */
     name: string; project: string; startedAt: string | null;
     over: { kind: 'card'; cardId: string; title: string; track: '主线' | '支线'; todayMs: number; todayGoal: number | null }

@@ -74,6 +74,7 @@ export function LivePreview() {
       drawer={query.has('bag') ? stage => <BagScreen ctx={ctx} open={bagOpen} onOpen={() => setBagOpen(true)} onClose={() => setBagOpen(false)} drawAt={dealAt} onDrawn={() => setDealAt(null)} report={report}>{stage}</BagScreen> : undefined} />
     <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)', maxHeight: 120, overflow: 'auto' }}>
       <div>mode={home.mode} · 待确认：{home.pending ? hms(home.pending.startedAt) : '无'} · 卡：{home.card ? `${home.card.content}（${home.card.status}）` : '无'}{errors.length > 0 && ` · 出错：${errors.join(' / ')}`}
+        {' · '}<button type="button" id="dev-resume" onClick={() => void actions.resume(new Date().toISOString())}>回到任务（外壳）</button>
         {' · '}<button type="button" id="dev-open-bag" onClick={() => setBagOpen(o => !o)}>背包</button>
         {' · '}<button type="button" id="dev-start-card" onClick={() => void actions.start('card0', new Date().toISOString())}>开始第一张卡</button>
         {' · '}<button type="button" id="dev-away-wc" onClick={() => void actions.startPreset('q1', new Date().toISOString())}>插入：上厕所</button>

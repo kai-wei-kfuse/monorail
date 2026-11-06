@@ -33,7 +33,7 @@ function insertView(input: ProjectionInput, current: TimeEntry | undefined, resu
         todayMs: Math.round(minutesOnDay(entries, card.id, day, settings.dayBoundaryHour, at) * 60_000),
         todayGoal: card.type === '时间盒卡' ? input.planToday?.items.find(i => i.card_id === card.id)?.today_minutes ?? card.timebox_minutes : null }
     : { kind: 'free' as const, title: resume.description, elapsedMs: Math.max(0, Date.parse(resume.ended_at ?? at) - Date.parse(resume.started_at)) };
-  return { paused, canContinue: paused && prev !== null, name: shown?.description ?? '', project: shown?.project ?? '未分类',
+  return { paused, canContinue: paused && prev !== null, entryId: current.id, name: shown?.description ?? '', project: shown?.project ?? '未分类',
     startedAt: paused ? null : current.started_at, over };
 }
 export function projectHome(input: ProjectionInput): HomeSlice {

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { motionLevel } from '../../ui/effects/animate';
 import type { ReactNode } from 'react';
 import { Icon } from '../../ui/icons/Icon';
 import { useStore } from 'zustand';
@@ -219,6 +220,16 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />,
   };
   let body;
+  // 插入结束（从哪儿结束的都算）时，插入卡先演完收走再拿掉；同一帧里接着渲染，不让它先卸载再装回来（那样会重演落下）
+  const [lastInsert, setLastInsert] = useState(home.insert), [exitingInsert, setExitingInsert] = useState<typeof home.insert>(null);
+  if (home.insert !== lastInsert) {
+    const prev = lastInsert;
+    setLastInsert(home.insert);
+    // 结束原任务：插入那一条变普通、接着开着，不演收走
+    if (!home.insert && prev && motionLevel() !== 'off' && home.entry?.id !== prev.entryId) setExitingInsert(prev);
+    else if (home.insert) setExitingInsert(null);
+  }
+  const shownInsert = home.insert ?? exitingInsert;
   // 〔休息一下〕（已定 55、63）：做着卡、没在插入时显示；点下那一刻是开始时刻，先选项目
   const restButton = home.card?.status === '进行中' && !tv.away && !tv.pending
     ? <button type="button" className="c-rest" title="插一段休息，这张卡等你回来" onClick={() => setDialog({ kind: 'rest', at: new Date().toISOString() })}><Icon name="pause" />休息一下</button> : null;
@@ -257,9 +268,10 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     {/* 分开布局插入时，计时条写正在计的那件事（插入的事），可以改名字、项目、标签（用户 2026-11-06）；插入卡下面照常 */}
     {!fused && <TimerBar view={home.insert && tv.away ? { ...tv, entry: tv.away, away: null, idle: tv.away.project === '待机', paused: home.insert.paused ? home.insert.name : null } : tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
     <div ref={stage} className="home-stage">
-    {(drawer ?? (x => x))(home.insert
-      ? <InsertCard key={home.insert.over.kind === 'card' ? home.insert.over.cardId : 'free'} insert={home.insert} now={now} look={cardLook} titleScale={look.titleScale}
-          place={settings.insertBackPlace} onBack={async () => { let ok = false; await act(async () => { ok = (await actions.resume(new Date().toISOString())) !== undefined; }); return ok; }}
+    {(drawer ?? (x => x))(shownInsert
+      ? <InsertCard key={shownInsert.over.kind === 'card' ? shownInsert.over.cardId : 'free'} insert={shownInsert} now={now} look={cardLook} titleScale={look.titleScale}
+          exiting={!home.insert} onExited={() => setExitingInsert(null)}
+          place={settings.insertBackPlace} onBack={async () => { await act(() => actions.resume(new Date().toISOString())); return appStore.getState().home.insert === null; }}
           onEndOriginal={() => act(() => actions.endOriginal(new Date().toISOString()))}
           onPause={() => void actions.pause(new Date().toISOString())} onContinue={() => void act(() => actions.continueTimer(new Date().toISOString()))}>{body}</InsertCard>
       : body)}
