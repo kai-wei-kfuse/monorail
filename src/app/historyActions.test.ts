@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createActions } from './actions';
 import { handleApplicationRequest } from './applicationController';
-import { at, card, fixture, getCard, runTx, seed, task } from '../services/serviceFixture';
+import { at, card, fixture, getCard, open, runTx, seed, task } from '../services/serviceFixture';
 import type { Fixture } from '../services/serviceFixture';
 import { createContext } from '../services/commit';
 import { dispatchMiniCommand, settleOffline, startCard, startFree, timerStateTokenInTx } from '../services/homeService';
@@ -162,6 +162,16 @@ describe('来源', () => {
     await actions.tempActivity('拿外卖', true, at());
     expect((await of(f, 'settings.changeLists'))[0]).toMatchObject({ source: { kind: 'manual', via: 'main', page: 'home' }, subject: { type: 'settings' } });
     expect(await of(f, 'home.insert')).toHaveLength(1);
+  });
+  it('临时活动的项目（已定 62）：手写不选记「未分类」；选了项目就记它，存为快捷活动时也按它存', async () => {
+    const f = fixture(); await seed(f, []);
+    f.ctx.settings = { ...f.ctx.settings, lists: { ...f.ctx.settings.lists, projects: [{ name: '学习', color: '#1aa3ff' }] } };
+    const actions = createActions(f.ctx, vi.fn());
+    await actions.tempActivity('倒水', false, at());
+    expect(open(f)).toMatchObject({ description: '倒水', project: '未分类' });
+    f.clock(at(2)); await actions.tempActivity('查资料', true, at(2), '学习');
+    expect(open(f)).toMatchObject({ description: '查资料', project: '学习' });
+    expect(f.ctx.settings.lists.presets.find(p => p.name === '查资料')).toMatchObject({ project: '学习', place: '弹层' });
   });
   it('后台入口：有实质改动写「系统」并附原因，没有就不写', async () => {
     const f = fixture(); await seed(f, []);

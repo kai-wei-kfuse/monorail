@@ -83,8 +83,10 @@ export const startCard = (ctx: Ctx, cardId: string, at: string) => action(ctx, a
 export const pause = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.pauseInTx(tx), { action: 'home.pause' });
 // 停止计的是卡时，卡跟着 align 放回去
 export const stop = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.stopInTx(tx), { action: 'home.stop' });
-export const insert = (ctx: Ctx, activity: string, at: string) => action(ctx, at, tx => {
-  const value = template(tx, activity), preset = tx.settings.lists.presets.find(p => p.id === activity);
+export const insert = (ctx: Ctx, activity: string, at: string, project?: string) => action(ctx, at, tx => {
+  const preset = tx.settings.lists.presets.find(p => p.id === activity);
+  // 快捷活动、收藏用它自己的项目；手写的临时活动用选的项目，没选记「未分类」（已定 62）
+  const value = preset ? template(tx, activity) : answerTemplate(tx, activity, project);
   startOtherInTx(tx, value, preset?.place === '计时条' ? 'favorite' : preset ? 'quick' : 'temp');
 }, { action: 'home.insert' });
 export async function resumeInTx(tx: Transaction): Promise<void> {
@@ -109,8 +111,12 @@ export const endOriginal = (ctx: Ctx, at: string) => action(ctx, at, tx => {
   return resume?.card_id ?? null;
 }, { action: 'home.endOriginal' });
 /** 主动休息（已定 48、55）：等同快捷活动插入一条「休息」；回来就是〔回到任务〕，不问、不计数。 */
-export function restInTx(tx: Transaction): void { startOtherInTx(tx, { description: '休息', project: '休息', tags: [] }, 'quick'); }
-export const rest = (ctx: Ctx, at: string) => action(ctx, at, restInTx, { action: 'home.rest' });
+/** 〔休息一下〕（已定 55、63）：插入一条「休息」，原来那张卡等你回来。项目缺省系统项目「休息」，用户可以换成别的用户项目。 */
+export function restInTx(tx: Transaction, project?: string): void {
+  const name = project === undefined || project === '休息' ? '休息' : validateUserProject(tx.settings.lists.projects, project);
+  startOtherInTx(tx, { description: '休息', project: name, tags: [] }, 'quick');
+}
+export const rest = (ctx: Ctx, at: string, project?: string) => action(ctx, at, tx => restInTx(tx, project), { action: 'home.rest' });
 export const sleep = (ctx: Ctx, at: string) => action(ctx, at, tx => { clearPending(tx); tracking.startSystemInTx(tx, '睡眠'); tx.state.resume_entry_id = null; }, { action: 'home.sleep' });
 export const wake = (ctx: Ctx, at: string) => action(ctx, at, tx => tracking.startSystemInTx(tx, '待机'), { action: 'home.wake' });
 export const backfillRange = (ctx: Ctx, range: Range, activity: string, at: string) => action(ctx, at, tx => tracking.manualInTx(tx, template(tx, activity), range.start, range.end), { action: 'home.backfillRange' });

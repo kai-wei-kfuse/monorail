@@ -6,7 +6,8 @@ import { Segmented } from '../ui/controls/Segmented';
 import { TextInput } from '../ui/controls/TextInput';
 import { ProjectPicker } from '../ui/controls/ProjectPicker';
 import type { ProjectOption } from '../ui/controls/ProjectPicker';
-import { ItemsEditor } from '../ui/controls/ItemsEditor';
+import { TypedItemsEditor } from '../ui/controls/ItemsEditor';
+import type { EditorItem } from '../ui/controls/ItemsEditor';
 import './forms.css';
 
 export interface SlotTask { id: string; name: string; slot: BackpackSlot; slotIndex: number }
@@ -37,16 +38,21 @@ const SLOT_HINT: Record<BackpackSlot, string> = {
  * 选冷藏还是放弃交给调用方执行；这里只收集选择。
  * 下面要做的事（事项）不拆就是任务本身这一件事；主线每个任务最多 mainItems 项。计时项目是这个任务的事项开始计时时记到的项目。
  */
-export function TaskDialog({ mode, initialSlot, inBackpack, mainFree, sideFree, mainItems, projects, onCreateProject, onSave, onCancel }:
+export function TaskDialog({ mode, initialSlot, inBackpack, mainFree, sideFree, mainItems, defaultMinutes = 60, projects, onCreateProject, onSave, onCancel }:
   { mode: 'new' | 'setMain'; initialSlot?: BackpackSlot; inBackpack: SlotTask[]; mainFree: boolean; sideFree: boolean; mainItems: number;
+    /** 新加一项切成时间盒时的分钟数：设置 01「时间盒默认时长」（已定 64） */ defaultMinutes?: number;
     projects: ProjectOption[]; onCreateProject?: (name: string) => void; onSave: (draft: TaskDraft, at: string) => void; onCancel: () => void }) {
   const [name, setName] = useState(''), [slot, setSlot] = useState<TaskSlot>(mode === 'setMain' ? '主线' : initialSlot ?? (mainFree ? '主线' : sideFree ? '支线' : '不在背包'));
-  const [items, setItems] = useState<string[]>(mode === 'setMain' || initialSlot === '主线' ? [''] : []), [project, setProject] = useState('未分类');
-  const filled = items.map(s => s.trim()).filter(Boolean), maxItems = slot === '主线' ? mainItems : 99;
+  const blank = (): EditorItem => ({ text: '', type: '结果', minutes: defaultMinutes });
+  const [items, setItems] = useState<EditorItem[]>(mode === 'setMain' || initialSlot === '主线' ? [blank()] : []), [project, setProject] = useState('未分类');
+  const filled = items.filter(it => it.text.trim()), maxItems = slot === '主线' ? mainItems : 99;
+  const minutesOk = filled.every(it => it.type === '结果' || it.minutes >= 5);
   const [room, setRoom] = useState<MakeRoom | null>(null);
   const full = slot === '主线' ? !mainFree : slot === '支线' ? !sideFree : false;
-  const ok = name.trim().length > 0 && (!full || room !== null) && filled.length <= maxItems;
-  const save = () => { if (ok) onSave({ name: name.trim(), slot, makeRoom: full ? room : null, items: filled, defaultProject: project === '未分类' ? null : project }, new Date().toISOString()); };
+  const ok = name.trim().length > 0 && (!full || room !== null) && filled.length <= maxItems && minutesOk;
+  const save = () => { if (ok) onSave({ name: name.trim(), slot, makeRoom: full ? room : null,
+    items: filled.map(it => ({ content: it.text.trim(), type: it.type === '时间盒' ? '时间盒卡' as const : '结果卡' as const, minutes: it.type === '时间盒' ? it.minutes : null })),
+    defaultProject: project === '未分类' ? null : project }, new Date().toISOString()); };
   return <Dialog en={mode === 'setMain' ? 'SET MAINLINE' : 'NEW TASK'} title={mode === 'setMain' ? '设定主线任务' : '新建任务'} onClose={onCancel}
     footer={<><Button onClick={onCancel}>取消</Button><Button tone="ink" disabled={!ok} onClick={save}>{full ? '腾出位置并放入' : '放入'}</Button></>}>
     <div className="fm">
@@ -60,8 +66,9 @@ export function TaskDialog({ mode, initialSlot, inBackpack, mainFree, sideFree, 
         <small>{slot === '不在背包' ? '先建着，以后再放进背包；它的卡不会出现在首页。' : SLOT_HINT[slot]}</small>
       </div>}
       <div className="fm-f"><span>下面要做的事</span>
-        <ItemsEditor id="task-items" items={items} onChange={setItems} max={maxItems}
-          hint={slot === '主线' ? `最多 ${mainItems} 项；不拆就是任务本身这一件事` : '不拆就是一件事（比如「买一台服务器」）'} />
+        <TypedItemsEditor id="task-items" items={items} onChange={setItems} max={maxItems} defaultMinutes={defaultMinutes}
+          hint={`${slot === '主线' ? `最多 ${mainItems} 项；` : ''}不拆就是任务本身这一件事。结果卡做完算完成；时间盒计满分钟数算完成。`} />
+        {!minutesOk && <small className="fm-err">时间盒至少 5 分钟</small>}
       </div>
       <div className="fm-f"><span>计时项目</span><div className="fm-row">
         <ProjectPicker id="task-project" label="计时项目" value={project} options={projects} onChange={setProject} onCreate={onCreateProject} />

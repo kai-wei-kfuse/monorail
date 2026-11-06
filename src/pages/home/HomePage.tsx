@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Icon } from '../../ui/icons/Icon';
 import { useStore } from 'zustand';
 import { appStore } from '../../store/appStore';
 import type { HomeSlice } from '../../store/homeSlice';
@@ -13,6 +14,7 @@ import { TaskCard } from './TaskCard';
 import { CardActions } from './CardActions';
 import { CompleteDialog } from './CompleteDialog';
 import { ShrinkDialog } from './ShrinkDialog';
+import { RestDialog } from './RestDialog';
 import { GUIDES, GuideCard } from './GuideCard';
 import type { GuideKind } from './GuideCard';
 import { ReviewCard } from './ReviewCard';
@@ -49,8 +51,8 @@ export interface HomeActions {
   resume(at: string): Promise<unknown>;
   continueTimer(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
-  /** 主动休息（已定 48、55）：插入一条「休息」 */
-  rest(at: string): Promise<unknown>;
+  /** 主动休息（已定 48、55、63）：插入一条「休息」，项目缺省「休息」 */
+  rest(at: string, project?: string): Promise<unknown>;
   // 计时条
   beginPending(at: string): Promise<unknown>;
   cancelPending(pendingId: string, at: string): Promise<unknown>;
@@ -91,7 +93,7 @@ export function useNow(): number {
 
 type DialogState = { kind: 'short'; cardId: string; remaining: number; at: string; fromMini?: boolean }
   | { kind: 'complete'; cardId: string; at: string; fromMini?: boolean } | { kind: 'shrink'; cardId: string; todayGoal: number | null; minToday: number }
-  | { kind: 'manual' } | null;
+  | { kind: 'manual' } | { kind: 'rest'; at: string } | null;
 
 /**
  * 首页：只显示一件事。按 home.mode 显示任务卡、引导卡、休息卡或回顾卡。
@@ -206,6 +208,9 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />,
   };
   let body;
+  // 〔休息一下〕（已定 55、63）：做着卡、没在插入时显示；点下那一刻是开始时刻，先选项目
+  const restButton = home.card?.status === '进行中' && !tv.away && !tv.pending
+    ? <button type="button" className="c-rest" title="插一段休息，这张卡等你回来" onClick={() => setDialog({ kind: 'rest', at: new Date().toISOString() })}><Icon name="pause" />休息一下</button> : null;
   // 0.3.1：降级休息卡不再出现（0.3.0 遗留的 state.rest 由换日处理一次，ADR 0021 第 6、7 条）
   if (area === 'free') body = <FreeCard view={tv} draft={draft} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
     over={home.card?.status === '待做' ? { id: home.card.id, content: home.card.content } : null} />;
@@ -217,6 +222,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   else if (home.mode === 'task' && view && task) {
     const corner = <>
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
+      {restButton}
     </>;
     body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner} picks={task.picks} actionsDisabled={!!tv.away}
       stateText={tv.away && home.card?.status === '进行中' && !tv.pending ? ['进行中（暂停）', 'PAUSED'] : undefined}
@@ -230,6 +236,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     cardPicks={task?.picks} cardActions={task?.actions} onEditContent={task?.onEditContent} fx={task?.fx} onManual={() => setDialog({ kind: 'manual' })}
     corner={<>
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
+      {home.mode === 'task' && restButton}
       {guide && <><span className="c-hint">{guide.title}</span><button type="button" className="c-link" onClick={() => onGuide(home.guideKind)}>{guide.cn}</button></>}
       {home.mode === 'review' && home.review && <><span className="c-hint">每周回顾</span>
         <button type="button" className="c-link" onClick={onOpenReview}>{home.review.resumeStep ? '接着回顾' : '开始回顾'}</button></>}
@@ -240,6 +247,8 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     <div ref={stage} className="home-stage">
     {body}
     {tv.away && home.mode !== 'rest' && <AwayDrawer away={tv.away} now={now} look={cardLook} projects={projects} knownTags={home.knownTags} actions={timerActions} />}
+    {dialog?.kind === 'rest' && <RestDialog projects={projects} onCancel={() => setDialog(null)}
+      onConfirm={project => { const at = dialog.at; setDialog(null); void act(() => actions.rest(at, project)); }} />}
     {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}
       resolve={r => setDialog(r.choice === 'stop' ? { kind: 'complete', cardId: dialog.cardId, at: r.at, fromMini: dialog.fromMini } : null)} />}

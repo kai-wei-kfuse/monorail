@@ -210,7 +210,7 @@ describe('QuickActs immediate tray close (UI Option A)', () => {
     (form.props.onSubmit as (e: { preventDefault: () => void }) => void)({ preventDefault });
 
     expect(preventDefault).toHaveBeenCalledTimes(1);
-    expect(onTemp).toHaveBeenCalledWith('拿快递', true, '2026-11-01T12:00:00.000Z');
+    expect(onTemp).toHaveBeenCalledWith('拿快递', true, '2026-11-01T12:00:00.000Z', '未分类');
 
     view = renderTree({ onTemp });
     expect(view.toggle.props['aria-expanded']).toBe(false);

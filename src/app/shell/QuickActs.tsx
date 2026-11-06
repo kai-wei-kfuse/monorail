@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { ProjectPicker } from '../../ui/controls/ProjectPicker';
+import type { ProjectOption } from '../../ui/controls/ProjectPicker';
 import type { IconName } from '../../ui/icons/Icon';
 import { Icon } from '../../ui/icons/Icon';
 import { ActTile } from '../../ui/marks/ActTile';
@@ -18,9 +20,10 @@ const EN: Partial<Record<IconName, string>> = { wc: 'RESTROOM', parcel: 'PARCEL'
  * 选中一项会插入这项活动（结束后回到原来的卡），由 onPick 交给 timerService。
  * 最后一行是临时活动（给了 onTemp 才显示）：写名字回车就插入，打开「存为快捷活动」才写进列表。
  */
-export function QuickActs({ acts, current, onPick, onTemp }:
+export function QuickActs({ acts, current, onPick, onTemp, projects = [] }:
   { acts: QuickAct[]; current: string | null; onPick: (id: string, at: string) => void;
-    onTemp?: (name: string, keep: boolean, at: string) => void }) {
+    onTemp?: (name: string, keep: boolean, at: string, project: string) => void;
+    /** 临时活动的项目选择（已定 62）；第一项是「未分类」 */ projects?: ProjectOption[] }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -48,16 +51,18 @@ export function QuickActs({ acts, current, onPick, onTemp }:
         {acts.map((a, i) => <ActTile key={a.id} icon={a.icon} name={a.name} en={EN[a.icon]} keys={i < 9 ? String(i + 1) : undefined} pressed={a.id === current}
           onClick={() => { const at = new Date().toISOString(); pick(() => onPick(a.id, at)); }} />)}
       </div>
-      {onTemp && <TempRow onSubmit={(name, keep) => { const at = new Date().toISOString(); pick(() => onTemp(name, keep, at)); }} />}
+      {onTemp && <TempRow projects={projects} onSubmit={(name, keep, project) => { const at = new Date().toISOString(); pick(() => onTemp(name, keep, at, project)); }} />}
     </div>}
   </div>;
 }
 
-/** 弹层最后一行（原型的 .tray-temp）。跟着弹层卸载，下次打开是空的。 */
-function TempRow({ onSubmit }: { onSubmit: (name: string, keep: boolean) => void }) {
-  const [name, setName] = useState(''), [keep, setKeep] = useState(false);
-  return <form className="tray-temp" onSubmit={e => { e.preventDefault(); if (name.trim()) onSubmit(name.trim(), keep); }}>
+/** 弹层最后一行（原型的 .tray-temp）。跟着弹层卸载，下次打开是空的。写了名字后出现项目选择，缺省「未分类」（已定 62）。 */
+function TempRow({ onSubmit, projects }: { onSubmit: (name: string, keep: boolean, project: string) => void; projects: ProjectOption[] }) {
+  const [name, setName] = useState(''), [keep, setKeep] = useState(false), [project, setProject] = useState('未分类');
+  const options = projects.length ? projects : [{ name: '未分类', color: 'var(--mute-2)' }];
+  return <form className="tray-temp" onSubmit={e => { e.preventDefault(); if (name.trim()) onSubmit(name.trim(), keep, project); }}>
     <TextInput aria-label="临时活动" placeholder="直接写一项活动，回车就开始（临时的，不进列表）" value={name} onChange={e => setName(e.target.value)} />
+    {name.trim() && <ProjectPicker id="tray-temp-project" small value={project} options={options} onChange={setProject} />}
     <span className="tray-keep"><Switch checked={keep} onChange={setKeep} label="存为快捷活动" /><span>存为快捷活动</span></span>
     <Button tone="ink" type="submit" disabled={!name.trim()}>开始</Button>
   </form>;

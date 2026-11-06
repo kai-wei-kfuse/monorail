@@ -90,7 +90,7 @@ export function BackpackPage({ tab, onTab, pool, tasks, queue, ideas, doneIdeas,
     </SplitLayout>
 
     {open?.kind === 'task' && <TaskDialog mode="new" initialSlot={open.slot} inBackpack={inBackpack}
-      mainFree={pool.mains.length < pool.mainMax} sideFree={pool.sides.length < pool.sideMax} mainItems={pool.mainItems}
+      mainFree={pool.mains.length < pool.mainMax} sideFree={pool.sides.length < pool.sideMax} mainItems={pool.mainItems} defaultMinutes={defaultTimebox}
       projects={pool.projects} onCreateProject={name => actions.createProject(name, at())}
       onCancel={close} onSave={(draft, when) => { close(); actions.createTask(draft, when); }} />}
     {open?.kind === 'card' && editing && <CardEditor isNew={false} tasks={choices} defaultTimebox={defaultTimebox}

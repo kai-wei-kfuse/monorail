@@ -234,7 +234,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const statusBar = <StatusBar
     left={<><QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.startPreset(id, at))}
-      onTemp={(name, keep, at) => void actions.tempActivity(name, keep, at)} />
+      onTemp={(name, keep, at, project) => void actions.tempActivity(name, keep, at, project)}
+      projects={[{ name: '未分类', color: '#888884' }, ...settings.lists.projects]} />
       <button type="button" className="dock-toggle mini-toggle" title={`打开快速记录条（Q / ${settings.quickbarHotkey}）`} onClick={() => void actions.showQuickbar()}>
         <span className="chev"><Icon name="plus" /></span><span className="t-cn">快速记录</span>
       </button>

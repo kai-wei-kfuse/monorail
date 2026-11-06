@@ -138,6 +138,13 @@ describe('插入的事暂停 / 继续、回到任务、结束原任务（已定 
     f.clock(at(20)); await resume(f.ctx, at(20));
     expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通' });
   });
+  it('〔休息一下〕可以换项目（已定 63）：选用户项目就记到它，系统项目只认「休息」', async () => {
+    const f = await working(); f.ctx.settings = { ...f.ctx.settings, lists: { ...f.ctx.settings.lists, projects: [{ name: '学习', color: '#1aa3ff' }] } };
+    f.clock(at(10)); await rest(f.ctx, at(10), '学习');
+    expect(open(f)).toMatchObject({ description: '休息', project: '学习', kind: '插入' });
+    f.clock(at(12)); await resume(f.ctx, at(12));
+    await expect(rest(f.ctx, at(12), '待机')).rejects.toThrow('RESERVED_PROJECT');
+  });
 });
 
 describe('卡暂停中「继续这一条」继续的正是原来那张卡（代码审核 S5）', () => {

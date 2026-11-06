@@ -60,7 +60,8 @@ it('short offline gaps do not change activity', async () => {
 });
 it('free-typed insert trims and rejects blanks; no target resumes idle', async () => {
   const f = fixture(); await insert(f.ctx, ' 拿快递 ', at());
-  expect(open(f)).toMatchObject({ description: '拿快递', project: '生活' });
+  // 手写的临时活动不选项目记「未分类」（已定 62；0.3.0 是「生活」）
+  expect(open(f)).toMatchObject({ description: '拿快递', project: '未分类' });
   await expect(insert(f.ctx, ' ', at())).rejects.toThrow('不能为空');
   f.clock(at(5)); await resume(f.ctx, at(5)); expect(open(f).project).toBe('待机');
 });

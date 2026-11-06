@@ -69,12 +69,17 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     resume: guard((at: string) => timer.resume(ctx, at)),
     /** 〔继续〕：插入的事暂停时继续插入的事；否则同原来的继续（卡暂停、自由记录暂停） */
     continueTimer: guard((at: string) => timer.continueTimer(ctx, at)),
-    // 临时活动：手写的名字直接插入（项目默认「生活」）。和已有快捷活动同名就用那一项；勾了「存为快捷活动」先写进列表
+    // 临时活动：手写的名字直接插入，项目用选的（缺省「未分类」，已定 62）。和已有快捷活动同名就用那一项；勾了「存为快捷活动」先按选的项目写进列表
     // 两次提交各记一条历史：改列表设置（来源首页）、插入临时活动
-    tempActivity: guard(async (name: string, keep: boolean, at: string) => {
+    tempActivity: guard(async (name: string, keep: boolean, at: string, project: string = '未分类') => {
       const list = ctx.settings.lists.presets, same = list.find(a => a.name === name);
-      if (keep && !same) await changeLists(ctx, { presets: [...list, { id: crypto.randomUUID(), name, project: '生活', tags: [], mode: '插入', place: '弹层' }] }, at, HOME);
-      await timer.insert(ctx, same?.id ?? name, at);
+      if (keep && !same) {
+        const id = crypto.randomUUID();
+        await changeLists(ctx, { presets: [...list, { id, name, project, tags: [], mode: '插入', place: '弹层' }] }, at, HOME);
+        await timer.insert(ctx, id, at);
+        return;
+      }
+      await timer.insert(ctx, same?.id ?? name, at, same ? undefined : project);
     }),
     backfill: guard(async (r: BackfillResult): Promise<void> => { await (r.mode === 'since'
       ? timer.backfillSwitch(ctx, r.minutesAgo, r.activity, r.at)
@@ -83,7 +88,7 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     answerOffline: guard((from: string, to: string, activity: string, at: string, project?: string) => timer.answerOffline(ctx, { start: from, end: to }, activity, at, project)),
     answerIdle: guard((entryId: string, activity: string, at: string, project?: string) => timer.answerIdle(ctx, entryId, activity, at, project)),
     // 主动休息（已定 48、55）：插入一条「休息」，回来就是〔回到任务〕
-    rest: guard((at: string) => timer.rest(ctx, at)),
+    rest: guard((at: string, project?: string) => timer.rest(ctx, at, project)),
     // 窗口
     showQuickbar: guard(() => invoke('show_quickbar')),
   };
