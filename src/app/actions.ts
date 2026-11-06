@@ -80,8 +80,8 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
       ? timer.backfillSwitch(ctx, r.minutesAgo, r.activity, r.at)
       : timer.backfillRange(ctx, { start: r.from, end: r.to }, r.activity, r.at)); }),
     wake: guard((at: string) => timer.wake(ctx, at)),
-    answerOffline: guard((from: string, to: string, activity: string, at: string) => timer.answerOffline(ctx, { start: from, end: to }, activity, at)),
-    answerIdle: guard((entryId: string, activity: string, at: string) => timer.answerIdle(ctx, entryId, activity, at)),
+    answerOffline: guard((from: string, to: string, activity: string, at: string, project?: string) => timer.answerOffline(ctx, { start: from, end: to }, activity, at, project)),
+    answerIdle: guard((entryId: string, activity: string, at: string, project?: string) => timer.answerIdle(ctx, entryId, activity, at, project)),
     // 主动休息（已定 48、55）：插入一条「休息」，回来就是〔回到任务〕
     rest: guard((at: string) => timer.rest(ctx, at)),
     // 窗口

@@ -196,8 +196,8 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   function onResolve(n: Notice, r: NoticeResult[keyof NoticeResult]) {
     const at = (r as { at: string }).at;
     switch (n.kind) {
-      case 'offlineAsk': { const d = n.data as Notice<'offlineAsk'>['data']; void actions.answerOffline(d.from, d.to, (r as NoticeResult['offlineAsk']).activity, at); break; }
-      case 'idleAsk': { const d = n.data as Notice<'idleAsk'>['data']; void actions.answerIdle(d.entryId, (r as NoticeResult['idleAsk']).activity, at); break; }
+      case 'offlineAsk': { const d = n.data as Notice<'offlineAsk'>['data'], a = r as NoticeResult['offlineAsk']; void actions.answerOffline(d.from, d.to, a.activity, at, a.project); break; }
+      case 'idleAsk': { const d = n.data as Notice<'idleAsk'>['data'], a = r as NoticeResult['idleAsk']; void actions.answerIdle(d.entryId, a.activity, at, a.project); break; }
       case 'longActivity': if (!(r as NoticeResult['longActivity']).still) setBackfill(true); break;
       case 'skipSignal': {
         const choice = (r as NoticeResult['skipSignal']).choice, cardId = (n.data as Notice<'skipSignal'>['data']).cardId;

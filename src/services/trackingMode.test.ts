@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, entries, seed } from './serviceFixture';
 import type { Fixture } from './serviceFixture';
 import { start } from './cardService';
-import { answerIdle, insert, pause, resume, settleOffline, startFree } from './homeService';
+import { answerIdle, answerOffline, insert, pause, resume, settleOffline, startFree } from './homeService';
 import { planReminders } from '../domain/reminders';
 import type { Notice } from '../shared/notices';
 
@@ -44,6 +44,25 @@ describe('空闲追问（紧凑模式）', () => {
       f.clock(at(minute)); await startFree(f.ctx, { description: '写周报', project: '工作', tags: [] }, at(minute));
       expect(notices(f).some((n: { kind: string }) => n.kind === 'idleAsk')).toBe(false);
     }
+  });
+  it('追问的项目：手写的用选的项目，没选记「未分类」；快捷活动带出它自己的项目；通知带全部项目（用户 2026-11-06）', async () => {
+    const f = fixture(); await seed(f, []);
+    f.ctx.settings = { ...f.ctx.settings, idleAskMinutes: 5, lists: { ...f.ctx.settings.lists, projects: [{ name: '学习', color: '#1aa3ff' }],
+      presets: [{ id: 'q1', name: '吃饭', project: '学习', tags: [], mode: '插入', place: '弹层' }] } };
+    f.clock(at(10)); await startFree(f.ctx, { description: '写周报', project: '未分类', tags: [] }, at(10));
+    const ask = idleAsk(f)!;
+    expect(ask.data.projects!.map(p => p.name)).toEqual(['未分类', '学习']);
+    expect(ask.data.activities).toEqual([{ id: 'q1', name: '吃饭', project: '学习' }]);
+    f.clock(at(11)); await answerIdle(f.ctx, ask.data.entryId, '看书', at(11), '学习');
+    expect(entries(f).find(e => e.id === ask.data.entryId)).toMatchObject({ description: '看书', project: '学习' });
+    // 离线追问：手写不选项目记「未分类」，不再是「生活」；快捷活动用它的项目；系统项目拒绝
+    f.clock(at(40)); await settleOffline(f.ctx, { start: at(20), end: at(40) });
+    await answerOffline(f.ctx, { start: at(20), end: at(40) }, '散步', at(40));
+    expect(entries(f).find(e => e.source === '离线追问')).toMatchObject({ description: '散步', project: '未分类' });
+    f.clock(at(70)); await settleOffline(f.ctx, { start: at(50), end: at(70) });
+    await answerOffline(f.ctx, { start: at(50), end: at(70) }, 'q1', at(70));
+    expect(entries(f).find(e => e.source === '离线追问' && e.started_at === at(50))).toMatchObject({ description: '吃饭', project: '学习' });
+    await expect(answerOffline(f.ctx, { start: at(50), end: at(70) }, '躺着', at(70), '待机')).rejects.toThrow('RESERVED_PROJECT');
   });
   it('卡暂停那段回答后：kind 从暂停改成普通，不留下「学习 / 暂停」', async () => {
     const f = fixture(); await seed(f, [card('a')]); f.ctx.settings = { ...f.ctx.settings, idleAskMinutes: 5 };

@@ -25,6 +25,7 @@ const TABS = [{ id: 'home', cn: '首页', en: 'HOME' }, { id: 'backpack', cn: '�
 const min = (m: number) => m * 60_000;
 const ACTS = [{ id: 'qa-wc', name: '厕所' }, { id: 'qa-parcel', name: '拿快递' }, { id: 'qa-video', name: '刷视频' }];
 const iso = (msAgo: number) => new Date(Date.now() - msAgo).toISOString();
+const ASK_PROJECTS = [{ name: '未分类', color: '#888884' }, { name: '学习', color: '#1aa3ff' }, { name: '工作', color: '#7c5cff' }, { name: '生活', color: '#3cbf7a' }];
 function notices(o: string | null): Notice[] {
   const toasts: Notice[] = [
     { id: 't1', kind: 'longActivity', data: { activity: '沿 Python 往下学', startedAt: iso(min(240)), hours: 4 } },
@@ -33,11 +34,11 @@ function notices(o: string | null): Notice[] {
     { id: 't4', kind: 'inputHint', data: {} },
   ];
   const dialogs: Record<string, Notice> = {
-    offlineAsk: { id: 'd1', kind: 'offlineAsk', data: { from: iso(min(130)), to: iso(min(5)), activities: ACTS } },
+    offlineAsk: { id: 'd1', kind: 'offlineAsk', data: { from: iso(min(130)), to: iso(min(5)), activities: ACTS, projects: ASK_PROJECTS } },
     backfill: { id: 'd2', kind: 'backfill', data: { activities: ACTS, now: iso(0) } },
     timeboxShort: { id: 'd3', kind: 'timeboxShort', data: { cardId: 'c', remainingMinutes: 15, at: iso(0) } },
     restReturn: { id: 'd4', kind: 'restReturn', data: { suggestion: '眺望窗外' } },
-    idleAsk: { id: 'd5', kind: 'idleAsk', data: { entryId: 'idle', from: iso(min(75)), to: iso(min(35)), minutes: 40, activities: ACTS } },
+    idleAsk: { id: 'd5', kind: 'idleAsk', data: { entryId: 'idle', from: iso(min(75)), to: iso(min(35)), minutes: 40, activities: ACTS, projects: ASK_PROJECTS } },
   };
   return o === 'toasts' ? toasts : o && dialogs[o] ? [dialogs[o]] : [];
 }

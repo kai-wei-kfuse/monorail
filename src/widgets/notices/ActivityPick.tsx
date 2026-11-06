@@ -5,7 +5,7 @@ import './notices.css';
 
 /**
  * 选一个活动：常用活动点一下就选上，也可以直接写一个名字。提示组件内部共用。
- * 点选的交出快捷活动的 id，手写的交出名字；timerService 两种都认（不是 id 就按名字落账，类别默认「生活」）。
+ * 点选的交出快捷活动的 id，手写的交出名字；timerService 两种都认。追问对话框另有项目选择（AskProject）。
  */
 export function ActivityPick({ label, value, options, onChange, autoFocus }:
   { label: string; value: string; options: ActivityOption[]; onChange: (v: string) => void; autoFocus?: boolean }) {

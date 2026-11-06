@@ -1,4 +1,5 @@
 import type { Card } from '../domain/card/card';
+import { askChoices } from '../shared/notices';
 import type { TimeEntry } from '../domain/timeline/entry';
 import { startSystemInTx } from './tracking/api';
 import { activityDay, activityDayStartOf } from '../domain/timeline/day';
@@ -299,7 +300,7 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       const minutes = idle?.ended_at ? (Date.parse(idle.ended_at) - Date.parse(idle.started_at)) / 60_000 : 0;
       if (idle && now && now.project !== '待机' && minutes > tx.settings.idleAskMinutes)
         tx.notices.push({ id: tx.id(), kind: 'idleAsk', data: { entryId: idle.id, from: idle.started_at, to: idle.ended_at!, minutes: Math.round(minutes),
-          activities: tx.settings.lists.presets.map(item => ({ id: item.id, name: item.name })) } });
+          ...askChoices(tx.settings) } });
     }
     const open = tx.entries.filter(entry => entry.ended_at === null);
     if (open.length !== 1 || open[0].id !== tx.state.open_entry) throw new Error('当前计时条目与运行指针不一致');
