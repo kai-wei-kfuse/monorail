@@ -12,6 +12,7 @@ import { formatReadout } from '../../shared/duration';
 import type { HomeSlice } from '../../store/homeSlice';
 import { cardProgress } from '../../widgets/cardProgress';
 import { motionLevel, play, settled } from '../../ui/effects/animate';
+import { decode } from '../../ui/effects/decode';
 import type { CardLook } from './CardFrame';
 import { CardFrame } from './CardFrame';
 import { ActivityActions } from './ActivityActions';
@@ -40,7 +41,8 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
 
   // 插入时：原来那张退后，插入卡落下，顶边闪一下（只在第一次出现时演）
   useEffect(() => {
-    const s = stack.current, t = topRef.current, under = s?.querySelector<HTMLElement>(':scope > .card:not(.ins-top)');
+    // 底下那张在 UnderCard 的 display:contents 那一层里（不是 .ins-stack 的直接子元素）；按「不是插入卡的那张卡」找，不依赖 ins-under 先挂上
+    const s = stack.current, t = topRef.current, under = s?.querySelector<HTMLElement>('.card:not(.ins-top)');
     if (!s || !t || !under) return;
     if (motionLevel() === 'reduced') { t.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'linear', fill: 'backwards' }); return; }
     s.classList.add('clip');
@@ -49,6 +51,8 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
     void settled([back, drop]).then(() => {
       s.classList.remove('clip');
       play(t.querySelector('.ins-stripe'), [{ transform: 'scaleY(1)' }, { transform: 'scaleY(3)', offset: .3 }, { transform: 'scaleY(1)' }], { duration: 380, easing: 'ease-out' });
+      // 竖条「INSERT」解码（§11.14 动画）
+      decode(t.querySelector('.vt-t'));
     });
   }, []);
 
@@ -62,7 +66,7 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
   const back = async () => {
     if (leaving) return;
     setLeaving(true);
-    const s = stack.current, t = topRef.current, under = s?.querySelector<HTMLElement>(':scope > .card:not(.ins-top)');
+    const s = stack.current, t = topRef.current, under = s?.querySelector<HTMLElement>('.card:not(.ins-top)');
     if (s && t && under && motionLevel() === 'full') {
       s.classList.add('clip');
       const from = getComputedStyle(t).transform;
