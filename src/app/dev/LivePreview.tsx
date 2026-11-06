@@ -70,6 +70,7 @@ export function LivePreview() {
       look={{ titleScale: 1, topoMode: 'off', topoDepth: 0, timeboxDefault: 30 }} onGuide={() => {}} onOpenReview={() => {}} />
     <div id="state" style={{ font: '330 11px/1.5 var(--f-cn)', maxHeight: 120, overflow: 'auto' }}>
       <div>mode={home.mode} · 待确认：{home.pending ? hms(home.pending.startedAt) : '无'} · 卡：{home.card ? `${home.card.content}（${home.card.status}）` : '无'}{errors.length > 0 && ` · 出错：${errors.join(' / ')}`}
+        {' · '}<button type="button" id="dev-start-card" onClick={() => void actions.start('card0', new Date().toISOString())}>开始第一张卡</button>
         {' · '}<button type="button" id="dev-away-wc" onClick={() => void actions.startPreset('q1', new Date().toISOString())}>插入：上厕所</button>
         {' '}<button type="button" id="dev-away-parcel" onClick={() => void actions.startPreset('q2', new Date().toISOString())}>插入：拿快递</button>
       </div>

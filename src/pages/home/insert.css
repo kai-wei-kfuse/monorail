@@ -1,0 +1,97 @@
+/* 插入卡（UI 规范 §11.14，原型 原型/页面/insert-prototype.html v0.24 定稿参数）：原来那张退到后面、上沿露出一条；插入卡盖在上面，底边（或顶边）是回去区域。
+   数值：缩放 .96、下沉 8px、露出 66px、变暗 .4；回去区域高 56px、强调色、动效「完整」时飘、箭头跳、鼠标在左边时插入卡抬 14px。 */
+.ins-stack { position: relative; display: grid; min-height: 0; height: 100%; --peek: 66px; --sink: 8px; --scale: .96; --dim: .4; --upH: 56px; }
+.ins-stack > .card { grid-area: 1 / 1; }
+.ins-stack.clip { overflow: hidden; }
+
+/* 底下那张：退到后面、变灰，上沿露出一条（.ins-peek），点它回去 */
+.ins-under { transform-origin: 50% 0; transform: translateY(var(--sink)) scale(var(--scale)); }
+.ins-under > .card-in, .ins-under > .vtab, .ins-under > .topo { opacity: var(--dim); filter: grayscale(1); transition: opacity .26s var(--snap), filter .26s var(--snap); }
+.ins-under > .card-in { pointer-events: none; }
+.ins-peek { position: absolute; left: calc((1 - var(--scale)) * 50% + 30px * var(--scale)); right: calc((1 - var(--scale)) * 50%); top: var(--sink); z-index: 4; height: calc(var(--peek) - var(--sink)); display: flex; align-items: center; gap: 14px;
+  padding: 0 var(--pad, 28px) 0 calc(var(--pad, 28px) - 6px); background: var(--paper); border-bottom: 1px solid var(--line-2); text-align: left; color: var(--ink); cursor: pointer; }
+.ins-peek .mk { flex: none; position: relative; width: 12px; height: 12px; background: var(--ink); }
+.ins-peek .mk::after { content: ""; position: absolute; inset: 4px; background: var(--yellow); }
+.pk-t { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 630 15px/1 var(--f-cn); letter-spacing: .03em; color: var(--ink-3); }
+.pk-s { margin-left: auto; display: grid; justify-items: end; gap: 5px; white-space: nowrap; font: 520 12px/1 var(--f-cn); color: var(--ink-3); }
+.pk-s em { font: 500 8px/1 var(--f-en); letter-spacing: .22em; color: var(--mute); font-style: normal; }
+.ins-peek .mbars { flex: none; width: clamp(80px, 12cqi, 150px); }
+.ins-peek .mbars i { background: var(--line-2); }
+.ins-peek .mbars i.on { background: var(--ink-3); }
+.pk-n { flex: none; font: 600 expanded 19px/1 var(--f-en); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink-3); }
+.pk-go { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 8px; background: var(--ink); color: #f6f6f3; font: 520 12px/1 var(--f-cn); }
+.pk-go svg { width: 12px; height: 12px; color: var(--yellow); }
+.ins-peek:hover .pk-go { background: var(--yellow); color: var(--ink); }
+.ins-peek:hover .pk-go svg { color: var(--ink); }
+
+/* 插入卡：盖在上面，顶上一条强调色，左边竖条写「INSERT / 插」 */
+.card.ins-top { position: absolute; left: 0; right: 0; bottom: 0; top: var(--peek); z-index: 5; border-color: var(--ink);
+  box-shadow: 0 -6px 18px rgb(22 22 22 / .12), 0 18px 40px rgb(22 22 22 / .18); }
+.ins-stripe { position: absolute; left: 0; right: 0; top: 0; z-index: 4; height: 4px; background: var(--yellow); transform-origin: 50% 0; }
+.ins-badge { position: relative; flex: none; width: 16px; height: 16px; background: var(--ink); }
+.ins-badge::after { content: ""; position: absolute; inset: 4px; background: var(--yellow); }
+.ins-where { font: 330 12px/1 var(--f-cn); color: var(--mute); white-space: nowrap; }
+.ins-where b { font-weight: 630; color: var(--ink); }
+.card.ins-top[data-up="bottom"] > .card-in { padding-bottom: calc(var(--upH) + 6px); }
+.card.ins-top[data-up="top"] > .card-in { padding-top: calc(var(--upH) + 4px); }
+
+/* 回去区域：整条宽，几团深浅不一的强调色光叠成，边上淡到没有；左边大块〔回到任务〕，右边一块〔结束原任务〕 */
+.ins-up { --glow: var(--yellow); --a1: 82%; --a2: 38%; --a3: 68%; --a4: 20%; --upFg: var(--ink); --upFg2: var(--ink-3); --upArrow: var(--ink); --upArrowIdle: var(--ink);
+  position: absolute; left: 0; right: 0; z-index: 5; height: var(--upH); display: flex; align-items: stretch; color: var(--upFg); isolation: isolate;
+  --gy: 100%; --gdir: to top; --upAlign: flex-end; }
+.ins-up::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(40% 120% at 18% var(--gy), color-mix(in srgb, var(--glow) var(--a1), transparent) 0%, color-mix(in srgb, var(--glow) calc(var(--a1) * .42), transparent) 45%, transparent 78%),
+    radial-gradient(30% 85% at 52% var(--gy), color-mix(in srgb, var(--glow) var(--a2), transparent) 0%, transparent 75%),
+    radial-gradient(36% 135% at 86% var(--gy), color-mix(in srgb, var(--glow) var(--a3), transparent) 0%, color-mix(in srgb, var(--glow) calc(var(--a3) * .38), transparent) 50%, transparent 80%),
+    linear-gradient(var(--gdir), color-mix(in srgb, var(--glow) var(--a4), transparent) 0%, transparent 70%);
+  background-repeat: no-repeat; background-size: 150% 100%, 130% 100%, 160% 100%, 100% 100%; background-position: 10% 0, 70% 0, 40% 0, 0 0;
+  -webkit-mask-image: linear-gradient(var(--gdir), #000 45%, transparent 100%); mask-image: linear-gradient(var(--gdir), #000 45%, transparent 100%); }
+.ins-up::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .22s var(--ease);
+  background: linear-gradient(var(--gdir), var(--glow) 0%, color-mix(in srgb, var(--glow) 62%, transparent) 45%, color-mix(in srgb, var(--glow) 33%, transparent) 60%,
+    color-mix(in srgb, var(--glow) 15%, transparent) 72%, color-mix(in srgb, var(--glow) 3%, transparent) 86%, transparent 100%); }
+.ins-up:has(> .ins-up-back:is(:hover, :focus-visible))::after { opacity: 1; }
+.ins-up:has(> .ins-up-end:is(:hover, :focus-visible))::after { opacity: .5; }
+.card[data-up="bottom"] > .ins-up { bottom: 0; }
+.card[data-up="top"] > .ins-up { top: 0; left: 30px; --gy: 0%; --gdir: to bottom; --upAlign: flex-start; }
+:root[data-motion="full"] .card[data-drift] > .ins-up::before { animation: insDrift 14s ease-in-out infinite alternate; }
+@keyframes insDrift { from { background-position: 0% 0, 100% 0, 30% 0, 0 0; } to { background-position: 70% 0, 15% 0, 95% 0, 0 0; } }
+.ins-up > button { position: relative; display: flex; align-items: var(--upAlign); min-width: 0; color: var(--upFg); text-align: left; isolation: isolate; background: none; border: 0; cursor: pointer; }
+.card[data-up="bottom"] > .ins-up > button { padding-bottom: calc(var(--upH) * .18); }
+.card[data-up="top"] > .ins-up > button { padding-top: calc(var(--upH) * .16); }
+.ins-up > button:focus-visible { outline: 2px solid var(--ink); outline-offset: -4px; }
+.ins-up-back { flex: 1 1 auto; justify-content: center; padding: 0 12px 0 var(--pad, 28px); }
+.ins-arrow { flex: none; width: calc(var(--upH) * .36); height: calc(var(--upH) * .44); opacity: .3; transition: opacity .22s var(--ease); }
+.ins-arrow svg { width: 100%; height: 100%; fill: var(--upArrowIdle); }
+.ins-up-back:is(:hover, :focus-visible) .ins-arrow { opacity: 1; }
+:root[data-motion="full"] .ins-up-back:hover .ins-arrow { animation: insBob .8s var(--ease) infinite; }
+@keyframes insBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.ins-up-x { display: flex; align-items: inherit; gap: 20px; min-width: 0; max-width: 0; margin-left: 0; overflow: hidden; white-space: nowrap; opacity: 0;
+  transition: max-width .32s var(--ease), margin-left .32s var(--ease), opacity .2s var(--ease); }
+.ins-up-back:is(:hover, :focus-visible) .ins-up-x { max-width: 80%; margin-left: 20px; opacity: 1; }
+.ins-up-t { flex: none; display: grid; gap: 6px; }
+.ins-up-cn { font: 630 20px/1 var(--f-cn); letter-spacing: .1em; }
+.ins-up-en { font: 600 expanded 9px/1 var(--f-en); letter-spacing: .28em; font-style: normal; color: var(--upFg2); }
+.ins-up-s { min-width: 0; padding-left: 18px; border-left: 1px solid var(--upFg2); overflow: hidden; text-overflow: ellipsis; font: 520 13px/1.3 var(--f-cn); color: var(--upFg2); }
+.ins-up-s b { font: 600 14px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--upFg); }
+/* 右边：结束原任务。鼠标放上去淡入一团红色烟雾（同一种几团光的画法），只写白字 */
+.ins-up-end { flex: 0 0 clamp(200px, 22%, 280px); justify-content: flex-end; padding: 0 var(--pad, 28px) 0 18px; transition: flex-basis .32s var(--ease); --smoke: var(--red); }
+.ins-up-end:is(:hover, :focus-visible) { flex-basis: clamp(260px, 30%, 380px); }
+.ins-end-bg { position: absolute; inset: 0 0 0 -60%; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .3s var(--ease);
+  background:
+    radial-gradient(46% 120% at 78% var(--gy), color-mix(in srgb, var(--smoke) 92%, transparent) 0%, color-mix(in srgb, var(--smoke) 40%, transparent) 45%, transparent 78%),
+    radial-gradient(32% 85% at 46% var(--gy), color-mix(in srgb, var(--smoke) 42%, transparent) 0%, transparent 75%),
+    radial-gradient(30% 135% at 97% var(--gy), color-mix(in srgb, var(--smoke) 78%, transparent) 0%, color-mix(in srgb, var(--smoke) 30%, transparent) 50%, transparent 80%),
+    linear-gradient(var(--gdir), color-mix(in srgb, var(--smoke) 22%, transparent) 0%, transparent 70%);
+  background-repeat: no-repeat; background-size: 150% 100%, 130% 100%, 120% 100%, 100% 100%; background-position: 60% 0, 35% 0, 90% 0, 0 0;
+  -webkit-mask-image: linear-gradient(var(--gdir), #000 45%, transparent 100%), linear-gradient(to right, transparent, #000 50%);
+  mask-image: linear-gradient(var(--gdir), #000 45%, transparent 100%), linear-gradient(to right, transparent, #000 50%);
+  -webkit-mask-composite: source-in; mask-composite: intersect; }
+.ins-up-end:is(:hover, :focus-visible) > .ins-end-bg { opacity: 1; }
+:root[data-motion="full"] .card[data-drift] > .ins-up .ins-end-bg { animation: insSmoke 11s ease-in-out infinite alternate; }
+@keyframes insSmoke { from { background-position: 60% 0, 35% 0, 90% 0, 0 0; } to { background-position: 40% 0, 60% 0, 80% 0, 0 0; } }
+.ins-end-k { position: relative; align-self: var(--upAlign); font: 520 13px/1 var(--f-cn); letter-spacing: .12em; color: var(--upFg2); white-space: nowrap; opacity: 0; transition: opacity .2s var(--ease); }
+.ins-up:hover > .ins-up-end .ins-end-k { opacity: 1; }
+.ins-up-end:is(:hover, :focus-visible) .ins-end-k { opacity: 1; color: #fff; font: 630 18px/1 var(--f-cn); letter-spacing: .12em; text-shadow: 0 1px 12px rgb(80 8 0 / .55); }
+/* 插入中原来那张卡的〔开始〕〔抽一张〕都不可用（规范 §11.14 最后一条） */
+.ins-note { margin: 0; font: 330 13px/1.6 var(--f-cn); color: var(--mute); }

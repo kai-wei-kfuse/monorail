@@ -343,7 +343,8 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
     }
     await postCommit('projection', () => {
       const entriesSnapshot = ctx.repos.times.snapshot();
-      const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: entriesSnapshot, at: ctx.now(), version: ++queue.version });
+      const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: entriesSnapshot, at: ctx.now(), version: ++queue.version,
+        planToday: plans.get(todayKey)!.value });
       const backpack = projectBackpack(tx.cards, tx.tasks, tx.records, entriesSnapshot, ctx.settings, ctx.now());
       const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, entries: entriesSnapshot, state: tx.state, settings: ctx.settings, at: ctx.now() });
       const plan = projectPlan({ today: plans.get(todayKey)!.value, tomorrow: plans.get(shiftDay(todayKey, 1))!.value, cards: tx.cards, tasks: tx.tasks,

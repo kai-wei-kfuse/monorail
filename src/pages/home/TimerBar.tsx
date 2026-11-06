@@ -92,7 +92,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
   const headDigits = readoutText.slice(0, splitAt), tailSec = readoutText.slice(splitAt);
   const label = {
     pending: ['WAIT', 'PENDING', '待确认'], idle: paused ? ['PAUSE', 'PAUSED', '暂停中'] : view.looseIdle ? ['OFF', 'NOT TIMING', '没在计时'] : ['IDLE', 'IDLE', '待机'],
-    away: running?.kind === '暂停' ? ['PAUSE', 'PAUSED', '暂停中'] : ['AWAY', 'AWAY', '离开中'], focus: ['NOW', 'ELAPSED', '这一条'],
+    away: running?.kind === '暂停' ? ['PAUSE', 'PAUSED', '暂停中'] : ['INSERT', 'INSERT', '插入中'], focus: ['NOW', 'ELAPSED', '这一条'],
   }[kind];
 
   return <section className="tbar">
@@ -109,7 +109,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
               placeholder={deciding && view.waitingCard ? '或者写别的事（抽到的卡点〔开始〕就算它）' : paused ?? 'I am working on…'} />
             {paused && !focused && <span className="tbar-pills"><span className="tbar-pill">暂停中</span></span>}
             {running && !focused && !deciding && <span className="tbar-pills">
-              {running.kind !== '普通' && <span className="tbar-pill">{running.kind === '插入' ? '离开中' : '暂停中'}</span>}
+              {running.kind !== '普通' && <span className="tbar-pill">{running.kind === '插入' ? '插入' : '暂停中'}</span>}
               {cardRun && <span className="tbar-pill is-card">卡</span>}
             </span>}
             {/* 设为收藏：收藏不关联卡，带卡或底层冻结的条目不给。按下时不抢焦点，免得进到「改这一条」 */}
@@ -140,7 +140,8 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
             : running || view.away ? <ActionButton primary compact data-entry-keep="" cn="暂停" en="PAUSE" icon="pause" title="暂停，转为待机" onClick={actions.pause} />
             : paused ? <ActionButton primary compact cn="继续" en="RESUME" icon="play" title={`继续「${paused}」`} onClick={actions.continueTimer} />
             : <ActionButton primary compact cn="开始" en="START" icon="play" title="开始计时，然后写下在做什么" onClick={E.next} />}
-          {((running && !deciding) || !!view.away) && <StopButton onClick={actions.stop} />}
+          {/* 插入中没有〔停止〕（已定 57）：不想继续插入的事就回到任务、结束原任务或开始别的事 */}
+          {running && !deciding && running.kind !== '插入' && !view.away && <StopButton onClick={actions.stop} />}
           {(!running || !!view.away) && !deciding && <button type="button" className="tbar-new" disabled={!!pending} aria-label="开始想下一件事" title="开始想下一件事" onClick={E.next}><Icon name="plus" /></button>}
           <ActionButton compact cn="抽卡" en="DRAW" icon="cards" disabled={!view.canDraw} onClick={actions.draw} />
         </ActivityActions>

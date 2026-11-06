@@ -67,6 +67,8 @@ export function createActions(ctx: Ctx, report: (error: unknown) => void) {
     insert: guard((activity: string, at: string) => timer.insert(ctx, activity, at)),
     /** 〔回来〕〔回到任务〕：回到原来那张卡 / 原来那件事 */
     resume: guard((at: string) => timer.resume(ctx, at)),
+    /** 〔结束原任务〕（已定 19、26）：插入的事变普通自由记录接着计，原来那张卡回待做、还在今天的板子上 */
+    endOriginal: guard((at: string) => timer.endOriginal(ctx, at)),
     /** 〔继续〕：插入的事暂停时继续插入的事；否则同原来的继续（卡暂停、自由记录暂停） */
     continueTimer: guard((at: string) => timer.continueTimer(ctx, at)),
     // 临时活动：手写的名字直接插入，项目用选的（缺省「未分类」，已定 62）。和已有快捷活动同名就用那一项；勾了「存为快捷活动」先按选的项目写进列表

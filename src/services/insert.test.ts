@@ -147,6 +147,19 @@ describe('插入的事暂停 / 继续、回到任务、结束原任务（已定 
   });
 });
 
+describe('插入卡的投影 home.insert（UI 规范 §11.14）', () => {
+  const home = (f: Awaited<ReturnType<typeof working>>) => f.publish.mock.calls.at(-1)![0].home;
+  it('插入中：插的事、被插的卡和今天已计；插入的事暂停后能继续；回到任务后为 null', async () => {
+    const f = await working(); f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
+    expect(home(f).insert).toMatchObject({ paused: false, name: '厕所', project: '生活', startedAt: at(10),
+      over: { kind: 'card', cardId: 'c1', todayMs: 10 * 60_000 } });
+    f.clock(at(12)); await pause(f.ctx, at(12));
+    expect(home(f).insert).toMatchObject({ paused: true, canContinue: true, name: '厕所', startedAt: null });
+    f.clock(at(14)); await resume(f.ctx, at(14));
+    expect(home(f).insert).toBeNull();
+  });
+});
+
 describe('卡暂停中「继续这一条」继续的正是原来那张卡（代码审核 S5）', () => {
   it('等于〔继续〕：从点的那一刻接着计，回到目标清掉', async () => {
     const f = await working(); f.clock(at(5)); await pause(f.ctx, at(5));

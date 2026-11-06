@@ -15,6 +15,7 @@ import { CardActions } from './CardActions';
 import { CompleteDialog } from './CompleteDialog';
 import { ShrinkDialog } from './ShrinkDialog';
 import { RestDialog } from './RestDialog';
+import { InsertCard } from './InsertCard';
 import { GUIDES, GuideCard } from './GuideCard';
 import type { GuideKind } from './GuideCard';
 import { ReviewCard } from './ReviewCard';
@@ -28,7 +29,6 @@ import { favorites, timerView } from './timerView';
 import { cardArea } from './cardArea';
 import { FreeCard } from './FreeCard';
 import { FusedCard } from './FusedCard';
-import { AwayDrawer } from './AwayDrawer';
 import { ActivityActions } from './ActivityActions';
 import { Dialog } from '../../ui/overlay/Dialog';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
@@ -49,6 +49,8 @@ export interface HomeActions {
   /** 从今天的板子抽一张（只读）；G7 换成翻卡。现在：抽到就直接开始 */
   draw(at: string): Promise<{ kind: string; card?: { id: string } } | undefined>;
   resume(at: string): Promise<unknown>;
+  /** 〔结束原任务〕（已定 19、26） */
+  endOriginal(at: string): Promise<unknown>;
   continueTimer(at: string): Promise<unknown>;
   wake(at: string): Promise<unknown>;
   /** 主动休息（已定 48、55、63）：插入一条「休息」，项目缺省「休息」 */
@@ -243,10 +245,15 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     </>} />;
 
   return <div className={`home${fused ? ' fused' : ''}`}>
-    {!fused && <TimerBar view={tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
+    {/* 分开布局插入时，计时条写正在计的那件事（插入的事），可以改名字、项目、标签（用户 2026-11-06）；插入卡下面照常 */}
+    {!fused && <TimerBar view={home.insert && tv.away ? { ...tv, entry: tv.away, away: null, idle: tv.away.project === '待机', paused: home.insert.paused ? home.insert.name : null } : tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
     <div ref={stage} className="home-stage">
-    {body}
-    {tv.away && home.mode !== 'rest' && <AwayDrawer away={tv.away} now={now} look={cardLook} projects={projects} knownTags={home.knownTags} actions={timerActions} />}
+    {home.insert
+      ? <InsertCard key={home.insert.over.kind === 'card' ? home.insert.over.cardId : 'free'} insert={home.insert} now={now} look={cardLook} titleScale={look.titleScale}
+          place={settings.insertBackPlace} onBack={() => act(() => actions.resume(new Date().toISOString()))}
+          onEndOriginal={() => act(() => actions.endOriginal(new Date().toISOString()))}
+          onPause={() => void actions.pause(new Date().toISOString())} onContinue={() => void act(() => actions.continueTimer(new Date().toISOString()))}>{body}</InsertCard>
+      : body}
     {dialog?.kind === 'rest' && <RestDialog projects={projects} onCancel={() => setDialog(null)}
       onConfirm={project => { const at = dialog.at; setDialog(null); void act(() => actions.rest(at, project)); }} />}
     {dialog?.kind === 'manual' && <Dialog en="MANUAL" title="手动补录" wide onClose={() => setDialog(null)}><div className="tbar f-manual">{manualForm}</div></Dialog>}

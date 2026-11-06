@@ -1,9 +1,8 @@
-import { createElement, isValidElement } from 'react';
-import type { FocusEvent, ReactElement, ReactNode } from 'react';
+import { createElement } from 'react';
+import type { FocusEvent } from 'react';
 import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AwayDrawer } from './AwayDrawer';
 import { FreeCard } from './FreeCard';
 import { FusedCard } from './FusedCard';
 import { TimerBar } from './TimerBar';
@@ -64,19 +63,6 @@ vi.mock('react', async importOriginal => {
   };
 });
 
-function walk(node: ReactNode, visit: (el: ReactElement<Record<string, unknown>>) => void): void {
-  if (!node) return;
-  if (Array.isArray(node)) { node.forEach(child => walk(child, visit)); return; }
-  if (!isValidElement(node)) return;
-  const el = node as ReactElement<Record<string, unknown>>;
-  if (typeof el.type === 'function') {
-    if ((el.type as { name?: string }).name === 'Topo') return;
-    walk((el.type as (props: Record<string, unknown>) => ReactNode)(el.props), visit);
-    return;
-  }
-  visit(el);
-  walk(el.props.children as ReactNode, visit);
-}
 
 const entry = (more: Partial<TimerEntry> = {}): TimerEntry => ({
   id: 'e1', description: '学 408', project: '学习', tags: ['408'],
@@ -108,7 +94,7 @@ function makeView(overrides: Partial<TimerView> = {}): TimerView {
   };
 }
 
-describe('AwayDrawer & useEntry stateful interactions', () => {
+describe('插入中的 useEntry 与计时条交互', () => {
   beforeEach(() => resetHooks());
 
   it('[P1] beginPending 延迟提交与失败时保持底层只读冻结，成功后自动聚焦且不重复派发 beginPending，覆盖先聚焦只读框再点＋', () => {
@@ -165,7 +151,8 @@ describe('AwayDrawer & useEntry stateful interactions', () => {
     }));
     expect(tbarHtml).toContain('<b>放弃</b>');
     expect(tbarHtml).toContain('<b>暂停</b>');
-    expect(tbarHtml).toContain('aria-label="停止"');
+    // 插入中没有〔停止〕（已定 57）
+    expect(tbarHtml).not.toContain('aria-label="停止"');
 
     const freeHtml = renderToStaticMarkup(createElement(FreeCard, {
       view, draft: '草稿', over: null, now, look, titleScale: 65, actions,
@@ -232,81 +219,4 @@ describe('AwayDrawer & useEntry stateful interactions', () => {
     }
   });
 
-  it('AwayDrawer 支持就地改名、切换/新建项目、增删标签及读数覆盖确认与取消', async () => {
-    const actions = makeActions();
-    const away = awayEntry();
-    const now = Date.parse('2026-11-01T09:27:15Z');
-    const look = { topoMode: 'off' as const, topoDepth: 0, paused: false };
-    const projects = [{ name: '生活', color: '#d9a400' }, { name: '运动', color: '#00f5a0' }];
-    const knownTags = ['日常', '休息'];
-
-    const collect = () => {
-      const els: Array<ReactElement<Record<string, unknown>>> = [];
-      runWithHooks(() => walk(createElement(AwayDrawer, { away, now, look, projects, knownTags, actions }), el => els.push(el)));
-      return els;
-    };
-
-    // 1. 点击标题进入 InlineInput 编辑并提交新名称「下楼拿快递」
-    let els = collect();
-    const titleEl = els.find(el => el.type === 'h2' && el.props.className === 'away-title');
-    expect(titleEl).toBeDefined();
-    (titleEl!.props.onClick as () => void)();
-
-    els = collect();
-    let nameInput = els.find(el => el.type === 'input' && el.props.id === 'away-edit');
-    expect(nameInput).toBeDefined();
-    (nameInput!.props.onChange as (e: { target: { value: string } }) => void)({ target: { value: '下楼拿快递' } });
-    els = collect();
-    nameInput = els.find(el => el.type === 'input' && el.props.id === 'away-edit');
-    (nameInput!.props.onBlur as () => void)();
-    expect(actions.editOpen).toHaveBeenCalledWith('away-1', { description: '下楼拿快递' });
-
-    // 2. 移除已有标签 #日常 -> 调用 actions.editOpen('away-1', { tags: [] })
-    els = collect();
-    const removeTag = els.find(el => el.type === 'button' && el.props['aria-label'] === '移除 #日常');
-    expect(removeTag).toBeDefined();
-    (removeTag!.props.onClick as (e: { stopPropagation: () => void }) => void)({ stopPropagation: vi.fn() });
-    expect(actions.editOpen).toHaveBeenCalledWith('away-1', { tags: [] });
-
-    // 3. 点击读数 #away-elapsed 修改为 '20' 分钟 -> 触发覆盖确认提示 HitNote -> 先点取消再重新触发点确定
-    const plan = { entryId: 'away-1', start: '2026-11-01T09:07:15Z', hit: [{ id: 'e1', description: '学 408', from: '2026-11-01T09:07:15Z', to: '2026-11-01T09:25:00Z', minutes: 18 }] };
-    vi.mocked(actions.readout)
-      .mockResolvedValueOnce({ kind: 'confirm', hit: plan.hit, plan })
-      .mockResolvedValueOnce({ kind: 'confirm', hit: plan.hit, plan })
-      .mockResolvedValueOnce({ kind: 'done', hit: plan.hit });
-
-    resetHooks();
-    els = collect();
-    (els.find(el => el.type === 'button' && el.props.id === 'away-elapsed')!.props.onClick as () => void)();
-    els = collect();
-    (els.find(el => el.type === 'input' && el.props.id === 'away-elapsed')!.props.onChange as (e: { target: { value: string } }) => void)({ target: { value: '20' } });
-    els = collect();
-    await (els.find(el => el.type === 'input' && el.props.id === 'away-elapsed')!.props.onBlur as () => Promise<void>)();
-
-    // 此时应渲染覆盖确认提示与「确定」「取消」
-    els = collect();
-    const cancelBtn = els.find(el => el.type === 'button' && el.props.children === '取消');
-    expect(cancelBtn).toBeDefined();
-    (cancelBtn!.props.onClick as () => void)();
-    els = collect();
-    expect(els.find(el => el.type === 'button' && el.props.children === '取消')).toBeUndefined();
-
-    // 再次提交并点击「确定」
-    resetHooks();
-    els = collect();
-    (els.find(el => el.type === 'button' && el.props.id === 'away-elapsed')!.props.onClick as () => void)();
-    els = collect();
-    (els.find(el => el.type === 'input' && el.props.id === 'away-elapsed')!.props.onChange as (e: { target: { value: string } }) => void)({ target: { value: '20' } });
-    els = collect();
-    await (els.find(el => el.type === 'input' && el.props.id === 'away-elapsed')!.props.onBlur as () => Promise<void>)();
-
-    els = collect();
-    const okBtn = els.find(el => el.type === 'button' && el.props.children === '确定');
-    expect(okBtn).toBeDefined();
-    await (okBtn!.props.onClick as () => Promise<void>)();
-    expect(actions.readout).toHaveBeenLastCalledWith(
-      expect.objectContaining({ target: { mode: 'entry', id: 'away-1' }, milliseconds: 20 * 60_000 }),
-      plan,
-    );
-  });
 });
