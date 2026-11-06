@@ -219,4 +219,18 @@ describe('插入中的 useEntry 与计时条交互', () => {
     }
   });
 
+  it('分开布局插入时计时条读数按累计（已定 69）：前面 2 分 + 开着这段 1 分 = 03:00；暂停时停在 02:00', () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-11-01T09:26:00Z'));
+    try {
+      const ins = awayEntry({ startedAt: '2026-11-01T09:25:00Z' });
+      const render = (paused: boolean) => renderToStaticMarkup(createElement(TimerBar, {
+        view: makeView({ entry: paused ? entry({ id: 'idle-1', project: '待机', kind: '插入', startedAt: '2026-11-01T09:25:30Z' }) : ins, away: null, idle: paused,
+          paused: paused ? '上厕所' : null, insertRun: { closedMs: 120_000, paused } }),
+        actions: makeActions(), mode: 'timer', onMode: vi.fn(),
+      })).replace(/<[^>]+>/g, '');
+      expect(render(false)).toContain('03:00');
+      expect(render(true)).toContain('02:00');
+    } finally { vi.useRealTimers(); }
+  });
+
 });

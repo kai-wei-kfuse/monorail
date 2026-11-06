@@ -40,6 +40,8 @@ export interface TimerView {
   projects: ProjectOption[];
   knownTags: string[];
   suggest: SuggestData;
+  /** 分开布局插入时：计时条写的是插入的事，读数按这件事累计（前面几段 + 开着这一段），暂停时停在前面几段之和（用户 2026-11-06，已定 69） */
+  insertRun?: { closedMs: number; paused: boolean } | null;
 }
 export interface EntryValue { description: string; project: string; tags: string[] }
 /** 都由 app/actions 补上点击时刻。 */
@@ -90,7 +92,9 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
 
   const endMs = pending ? now : entry?.endedAt ? Date.parse(entry.endedAt) : now;
   // 宽松模式空闲：读数停在 0，不走
-  const elapsed = view.looseIdle && !pending ? 0 : Math.max(0, endMs - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
+  const run = view.insertRun && !pending ? view.insertRun : null;
+  const elapsed = run ? run.closedMs + (run.paused || !entry ? 0 : Math.max(0, now - Date.parse(entry.startedAt)))
+    : view.looseIdle && !pending ? 0 : Math.max(0, endMs - Date.parse(pending?.startedAt ?? entry?.startedAt ?? new Date(now).toISOString()));
   const canEditTime = !!pending || (!!running && !view.away);
   const readoutText = formatReadout(elapsed, 'mmss'), splitAt = readoutText.lastIndexOf(':');
   const headDigits = readoutText.slice(0, splitAt), tailSec = readoutText.slice(splitAt);
@@ -132,7 +136,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
         <div className="tbar-time">
           <div className={`tbar-clock${kind === 'idle' ? ' idle' : ''}`}><span className="k">{label[1]}<em>{label[2]}</em></span>
             <b><TimeField id="elapsed" kind="mmss" shown={elapsed} disabled={!canEditTime} submit={actions.readout} onNote={E.setNote}
-              target={() => pending ? { mode: 'pending', id: pending.id } : running && !view.away ? { mode: 'entry', id: running.id } : null}>
+              target={() => pending ? { mode: 'pending', id: pending.id } : running && !view.away ? { mode: run && !run.paused ? 'insertRun' : 'entry', id: running.id } : null}>
               {headDigits}<small>{tailSec}</small></TimeField></b>
           </div>
         </div>

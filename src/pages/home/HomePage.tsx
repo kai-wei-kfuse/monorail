@@ -285,7 +285,8 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
 
   return <div className={`home${fused ? ' fused' : ''}`}>
     {/* 分开布局插入时，计时条写正在计的那件事（插入的事），可以改名字、项目、标签（用户 2026-11-06）；插入卡下面照常 */}
-    {!fused && <TimerBar view={home.insert && tv.away ? { ...tv, entry: tv.away, away: null, idle: tv.away.project === '待机', paused: home.insert.paused ? home.insert.name : null } : tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
+    {!fused && <TimerBar view={home.insert && tv.away ? { ...tv, entry: tv.away, away: null, idle: tv.away.project === '待机', paused: home.insert.paused ? home.insert.name : null,
+      insertRun: { closedMs: home.insert.closedMs, paused: home.insert.paused } } : tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
     <div ref={stage} className="home-stage">
     {(drawer ?? (x => x))(shownInsert
       ? <InsertCard key={shownInsert.over.kind === 'card' ? shownInsert.over.cardId : 'free'} insert={shownInsert} now={now} look={cardLook} titleScale={look.titleScale}
