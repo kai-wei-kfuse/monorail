@@ -1,4 +1,5 @@
 import type { Ctx, Transaction } from './commit';
+import { activityDay, activityDayStartOf } from '../domain/timeline/day';
 import { askChoices } from '../shared/notices';
 import { run } from './commit';
 import type { HistoryIntent, HistorySource } from '../shared/history';
@@ -184,7 +185,7 @@ export function editOpenInTx(tx: Transaction, entryId: string, patch: Partial<Pi
   if (patch.project !== undefined || patch.tags !== undefined) editMetaInTx(tx, card.id, patch.project ?? card.project, patch.tags ?? card.tags);
 }
 export const editOpen = (ctx: Ctx, entryId: string, patch: Partial<Pick<EntryTemplate, 'description' | 'project' | 'tags'>>, at: string) => action(ctx, at, tx => editOpenInTx(tx, entryId, patch), { action: 'home.editOpen' });
-export interface HomeReadoutRequest { target: { mode: 'idle' | 'pending' | 'entry' | 'ref'; id: string }; milliseconds: number; at: string }
+export interface HomeReadoutRequest { target: { mode: 'idle' | 'pending' | 'entry' | 'ref' | 'refToday'; id: string }; milliseconds: number; at: string }
 export function commitReadoutInTx(tx: Transaction, request: HomeReadoutRequest, seen: ReadoutPlan | null) {
   if (request.target.mode === 'idle' || request.target.mode === 'pending') {
     const open = tracking.openInTx(tx);
@@ -207,8 +208,10 @@ export function commitReadoutInTx(tx: Transaction, request: HomeReadoutRequest, 
     return { kind: 'done' as const, hit };
   }
   const open = tracking.openInTx(tx);
-  if (!open || (request.target.mode === 'ref' ? open.card_id : open.id) !== request.target.id) throw new Error('已经换成别的事了');
-  const result = tracking.setReadoutInTx(tx, { entryId: open.id, mode: request.target.mode, at: request.at, milliseconds: request.milliseconds }, seen);
+  const byCard = request.target.mode === 'ref' || request.target.mode === 'refToday';
+  if (!open || (byCard ? open.card_id : open.id) !== request.target.id) throw new Error('已经换成别的事了');
+  const since = request.target.mode === 'refToday' ? new Date(activityDayStartOf(activityDay(request.at, tx.settings.dayBoundaryHour), tx.settings.dayBoundaryHour)).toISOString() : undefined;
+  const result = tracking.setReadoutInTx(tx, { entryId: open.id, mode: request.target.mode, at: request.at, milliseconds: request.milliseconds, since }, seen);
   return result.kind === 'confirm' ? { kind: 'confirm' as const, plan: result.plan, hit: result.plan.hit } : { kind: 'done' as const, hit: result.plan.hit };
 }
 export const commitReadout = (ctx: Ctx, request: HomeReadoutRequest, seen: ReadoutPlan | null) => action(ctx, request.at, tx => commitReadoutInTx(tx, request, seen), { action: 'home.commitReadout' });

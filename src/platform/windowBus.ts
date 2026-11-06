@@ -25,7 +25,7 @@ export const miniCommandSchema = z.discriminatedUnion('type', [
   z.object({ ...edit, type: z.literal('startCard'), pending_id: id.nullable(), targetCardId: id }).strict(),
   z.object({ ...edit, type: z.literal('continueEntry'), pending_id: id.nullable(), targetEntryId: id }).strict(),
   z.object({ ...edit, type: z.literal('setReadout'), pending_id: id.nullable(),
-    target: z.object({ mode: z.enum(['idle', 'pending', 'entry', 'ref']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
+    target: z.object({ mode: z.enum(['idle', 'pending', 'entry', 'ref', 'refToday']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
 ]);
 export type MiniCommand = z.infer<typeof miniCommandSchema>;
 export type MiniReadoutPlan = z.infer<typeof plan>;
@@ -39,6 +39,8 @@ export interface MiniSnapshot {
   pending: { id: string; startedAt: string } | null; resumeDescription: string | null;
   card: { id: string; content: string; status: '待做' | '进行中'; project: string | null; tags: string[]; goalMinutes: number | null } | null;
   closedEffectiveMs: number; currentSegStartedAt: string | null; awayActivity: string | null;
+  /** 已定 23：卡的读数是今天的（同首页）。旧主窗口不发时按总累计 */
+  closedTodayMs?: number; todaySegStartedAt?: string | null; todayGoal?: number | null;
   /** 宽松模式下什么都没在做：写「没在计时」，读数不走（ADR 0021 第 13 条）。旧主窗口不发，按 false */
   looseIdle?: boolean;
   /** 插入状态（ADR 0021 第 3 条）：被插入的那张的名字；paused = 插入的事暂停了；canContinue = 能照前一段再开。旧主窗口不发 */

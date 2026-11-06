@@ -125,3 +125,6 @@
 .shr-half .min { display: flex; align-items: center; gap: 6px; font: 330 12px/1 var(--f-cn); color: var(--mute); }
 .shr-half .min b { font: 600 13px/1 var(--f-en); color: var(--ink); }
 .shr-note { margin: 0; font: 330 11px/1.5 var(--f-cn); color: var(--mute); }
+/* 已定 23：卡的总累计，标题下面一行小字（大读数是今天的） */
+.c-total { margin: 4px 0 0; font: 330 13px/1.3 var(--f-cn); color: var(--mute); }
+.c-total b { font: 600 14px/1 var(--f-en); font-variant-numeric: tabular-nums; color: var(--ink-3); }

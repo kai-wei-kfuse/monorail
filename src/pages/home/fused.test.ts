@@ -33,8 +33,8 @@ describe('fusedState', () => {
     expect(fusedState({ ...idle, pending }, ready, false)).toMatchObject({ show: 'card', pendingOnCard: true, target: { mode: 'pending', id: 'p' } });
     expect(fusedState({ ...idle, pending }, ready, true)).toMatchObject({ show: 'input', pendingOnCard: false });
   });
-  it('做卡中：读数改卡的已用', () =>
-    expect(fusedState({ ...idle, entry: e({ cardId: 'k' }), idle: false }, doing, false)).toMatchObject({ show: 'card', onCard: true, target: { mode: 'ref', id: 'k' } }));
+  it('做卡中：读数改卡今天的已用（已定 23，用户 2026-11-06）', () =>
+    expect(fusedState({ ...idle, entry: e({ cardId: 'k' }), idle: false }, doing, false)).toMatchObject({ show: 'card', onCard: true, target: { mode: 'refToday', id: 'k' } }));
   it('做卡时暂停、插了快捷活动：还显示卡，读数不能点', () => {
     expect(fusedState({ ...idle, entry: e({ project: '待机', kind: '暂停' }), paused: '改简历' }, doing, false)).toMatchObject({ show: 'card', paused: true, target: null });
     expect(fusedState({ ...idle, entry: e({ description: '厕所', kind: '插入' }), idle: false }, doing, false)).toMatchObject({ show: 'card', away: true, target: null });

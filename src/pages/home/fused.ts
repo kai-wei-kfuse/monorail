@@ -27,7 +27,7 @@ export function fusedState(view: Pick<TimerView, 'entry' | 'away' | 'idle' | 'pe
   const paused = doing && !running && !hasAway && view.paused !== null, away = doing && hasAway;
   const target: ReadoutTarget | null = view.pending ? { mode: 'pending', id: view.pending.id }
     : hasAway ? null
-    : onCard ? { mode: 'ref', id: card!.id }
+    : onCard ? { mode: 'refToday', id: card!.id }
     : show === 'input' && running ? { mode: 'entry', id: running.id } : null;
   return { show, onCard, paused, away, pendingOnCard: show === 'card' && card!.status === '待做' && !!view.pending, target };
 }

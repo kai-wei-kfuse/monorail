@@ -79,12 +79,15 @@ export interface HomeLook { titleScale: number; topoMode: TopoMode; topoDepth: n
 export function cardView(home: HomeSlice, now: number): TaskCardView | null {
   const c = home.card;
   if (!c) return null;
-  const elapsedMs = home.closedEffectiveMs + (home.currentSegStartedAt ? now - Date.parse(home.currentSegStartedAt) : 0);
+  const totalMs = home.closedEffectiveMs + (home.currentSegStartedAt ? now - Date.parse(home.currentSegStartedAt) : 0);
+  // 已定 23：大读数是今天在这张卡上的时间，进度按今天的量；总累计放标题下小字
+  const elapsedMs = home.closedTodayMs + (home.todaySegStartedAt ? Math.max(0, now - Date.parse(home.todaySegStartedAt)) : 0);
+  const goal = c.type === '时间盒卡' ? home.todayGoal ?? c.goalMinutes : null;
   const away = home.awayActivity !== null;
   // 不属于项目的卡不占背包格，不显示「/03」
   return { id: c.id, slotNo: c.slotNo, slotOf: c.slotNo === LOOSE.slot ? undefined : c.slotOf, task: c.task, type: c.type, goalMinutes: c.goalMinutes, content: c.content,
-    progressNote: c.progressNote || undefined, elapsedMs, awayActivity: home.awayActivity ?? undefined,
-    progress: cardProgress(elapsedMs, c.goalMinutes, c.status === '进行中' && !away, away) };
+    progressNote: c.progressNote || undefined, elapsedMs, totalMs, todayGoal: goal, awayActivity: home.awayActivity ?? undefined,
+    progress: cardProgress(elapsedMs, goal, c.status === '进行中' && !away, away) };
 }
 
 /** 每秒刷新一次「现在」。 */

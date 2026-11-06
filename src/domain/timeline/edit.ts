@@ -2,12 +2,15 @@ import { assertEntries, isIdle } from './entry';
 import type { TimeEntry } from './entry';
 import { place } from './place';
 
-export interface ReadoutRequest { entryId: string; at: string; milliseconds: number; mode: 'entry' | 'ref' }
+/** ref：这张卡的总累计；refToday：今天（since 之后）在这张卡上的时间（已定 23，用户 2026-11-06：显示什么就改什么） */
+export interface ReadoutRequest { entryId: string; at: string; milliseconds: number; mode: 'entry' | 'ref' | 'refToday'; since?: string }
 export interface Coverage { id: string; description: string; project: string; tags: string[]; card_id: string | null; from: string; to: string }
 export interface ReadoutPlan { entryId: string; start: string; hit: Coverage[] }
 
-function refStart(entries: readonly TimeEntry[], open: TimeEntry, at: number, target: number): number {
-  const history = entries.filter(entry => entry.id !== open.id && entry.card_id === open.card_id);
+function refStart(entries: readonly TimeEntry[], open: TimeEntry, at: number, target: number, since = -Infinity): number {
+  // since：只算这个时刻之后的（今天活动日起点）；之前的各段裁掉，不参与
+  const history = entries.filter(entry => entry.id !== open.id && entry.card_id === open.card_id && Date.parse(entry.ended_at!) > since)
+    .map(entry => Date.parse(entry.started_at) >= since ? entry : { ...entry, started_at: new Date(since).toISOString() });
   const closed = history.reduce((sum, entry) => sum + Date.parse(entry.ended_at!) - Date.parse(entry.started_at), 0);
   if (target < closed) throw new Error(`最少 ${closed / 60000} 分钟（之前各段已计 ${closed / 60000} 分钟）`);
   // Sweep backwards: extending the open interval adds time, while covered own-history is removed.
@@ -35,12 +38,13 @@ export function previewReadout(entries: readonly TimeEntry[], request: ReadoutRe
   if (!Number.isFinite(at) || at < Date.parse(open.started_at)) throw new Error('命令时间早于当前计时');
   if (!Number.isFinite(target) || target < 0) throw new Error('读数不能小于 0');
   let start = at - target;
-  if (request.mode === 'ref') {
+  if (request.mode === 'ref' || request.mode === 'refToday') {
     if (!open.card_id) throw new Error('当前条目没有引用');
-    start = refStart(entries, open, at, target);
+    const since = request.mode === 'refToday' && request.since ? Date.parse(request.since) : -Infinity;
+    start = refStart(entries, open, at, target, since);
   }
   const hit = entries.filter(entry => entry.id !== open.id && !isIdle(entry) &&
-    !(request.mode === 'ref' && entry.card_id === open.card_id)).flatMap(entry => {
+    !((request.mode === 'ref' || request.mode === 'refToday') && entry.card_id === open.card_id)).flatMap(entry => {
       const from = Math.max(start, Date.parse(entry.started_at)), to = Date.parse(entry.ended_at ?? request.at);
       return to > from ? [{ id: entry.id, description: entry.description, project: entry.project, tags: [...entry.tags],
         card_id: entry.card_id, from: new Date(from).toISOString(), to: new Date(to).toISOString() }] : [];

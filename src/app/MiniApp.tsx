@@ -147,9 +147,13 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   // 显示的是哪张卡：正在计的卡，或者待确认时抽到还没开始的卡
   const c = card && (running?.cardId === card.id || (pending && card.status === '待做')) ? card : null;
   const pend = pending ? now - Date.parse(pending.startedAt) : 0;
-  const total = c ? snap.closedEffectiveMs + (snap.currentSegStartedAt ? now - Date.parse(snap.currentSegStartedAt) : 0) + (c.status === '待做' ? pend : 0)
+  // 已定 23：卡的读数是今天的（同首页）；旧主窗口没发今天的就按总累计
+  const today = snap.closedTodayMs !== undefined
+    ? snap.closedTodayMs + (snap.todaySegStartedAt ? Math.max(0, now - Date.parse(snap.todaySegStartedAt)) : 0)
+    : snap.closedEffectiveMs + (snap.currentSegStartedAt ? now - Date.parse(snap.currentSegStartedAt) : 0);
+  const total = c ? today + (c.status === '待做' ? pend : 0)
     : pending ? pend : snap.looseIdle || snap.inserting?.paused ? 0 : entry ? now - Date.parse(entry.startedAt) : 0;   // 插入的事暂停：同首页插入卡，读数停在 00:00
-  const progress = cardProgress(total, c?.goalMinutes ?? null, !!running, away);
+  const progress = cardProgress(total, c ? (snap.todayGoal ?? c.goalMinutes) : null, !!running, away);
   // 插入的事暂停时：写「已暂停：插入的那件事」，〔继续〕继续插入的事（不是回到原来那张）
   const title = c ? c.content : pending ? '待确认' : running ? running.description : snap.inserting?.paused ? `已暂停：${snap.inserting.name}` : resumeDescription ? `已暂停：${resumeDescription}` : snap.looseIdle ? '没在计时' : '待机';
   const currentProject = c?.project ?? running?.project ?? '未分类';
@@ -222,7 +226,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   };
   const canEditTime = !!running || !!pending || (!!entry && !resumeDescription);
   const target = () => pending ? { mode: 'pending' as const, id: pending.id }
-    : c && running ? { mode: 'ref' as const, id: c.id }
+    : c && running ? { mode: snap.closedTodayMs !== undefined ? 'refToday' as const : 'ref' as const, id: c.id }
     : running ? { mode: 'entry' as const, id: running.id }
     : entry && !resumeDescription ? { mode: 'idle' as const, id: entry.id } : null;
 

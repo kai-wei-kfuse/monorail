@@ -14,6 +14,9 @@ export interface HomeSlice {
   knownTags: string[];
   guideKind: 'firstTask' | 'setMain' | 'splitMain' | 'allDone';
   card: HomeCard | null; closedEffectiveMs: number; currentSegStartedAt: string | null;
+  /** 今天（当前活动日）这张卡已结束的那几段，和今天的量（板子上填的；不在板子上取时间盒的目标；结果卡为 null）（已定 23） */
+  closedTodayMs: number; todayGoal: number | null;
+  /** 开着那一段在今天的起点（跨夜时是今天活动日起点） */ todaySegStartedAt: string | null;
   awayActivity: string | null; baseline: { main: boolean | null; side: boolean };
   noMainHint: boolean; rest: { suggestion: string | null } | null;
   review: { period: string; resumeStep: string; betDue: boolean } | null;
@@ -36,6 +39,7 @@ export interface HomeSlice {
 }
 export const initialHome: HomeSlice = {
   mode: 'blank', entry: null, resumeEntry: null, pending: null, resumeDescription: null, knownTags: [], guideKind: 'firstTask', card: null, closedEffectiveMs: 0, currentSegStartedAt: null,
+  closedTodayMs: 0, todayGoal: null, todaySegStartedAt: null,
   awayActivity: null, baseline: { main: null, side: false }, noMainHint: false, rest: null, review: null,
   activity: { kind: 'idle', label: '', startedAt: null }, looseIdle: false, insert: null, dataVersion: 0,
 };

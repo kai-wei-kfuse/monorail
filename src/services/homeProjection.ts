@@ -8,7 +8,7 @@ import { inBackpack, trackOf } from '../domain/task/task';
 import type { Review } from '../domain/review/schedule';
 import { dueReview } from '../domain/review/schedule';
 import type { TimeEntry } from '../domain/timeline/entry';
-import { activityDay } from '../domain/timeline/day';
+import { activityDay, activityDayStartOf } from '../domain/timeline/day';
 import { baseline } from '../domain/baseline/baseline';
 import { guide } from '../domain/picker/guide';
 import type { AppState } from '../data/repos';
@@ -45,6 +45,9 @@ export function projectHome(input: ProjectionInput): HomeSlice {
   const rows = selected ? entries.filter(row => row.card_id === selected.id) : [];
   const tail = current?.card_id === selected?.id ? current : undefined;
   const closedEffectiveMs = rows.filter(row => row !== tail).reduce((sum, row) => sum + Date.parse(row.ended_at!) - Date.parse(row.started_at), 0);
+  // 今天的：开着那一段跨了换日时间的话，今天只算换日以后那一截（界面从 max(开始, 今天起点) 往后补秒）
+  const closedTodayMs = selected ? Math.round(minutesOnDay(rows.filter(row => row !== tail), selected.id, day, settings.dayBoundaryHour, at) * 60_000) : 0;
+  const todayGoal = selected?.type === '时间盒卡' ? input.planToday?.items.find(i => i.card_id === selected.id)?.today_minutes ?? selected.timebox_minutes : null;
   const task = active.find(item => item.id === selected?.task_id);
   const card = selected && (selected.status === '待做' || selected.status === '进行中') ? {
     ...cardTiming(selected, tasks.find(task => task.id === selected.task_id)),
@@ -55,8 +58,8 @@ export function projectHome(input: ProjectionInput): HomeSlice {
   const mode = state.home_mode;
   const resume = entries.find(entry => entry.id === state.resume_entry_id);
   return {
-    mode, card, guideKind: guide(cards, tasks), closedEffectiveMs,
-    currentSegStartedAt: tail?.started_at ?? null,
+    mode, card, guideKind: guide(cards, tasks), closedEffectiveMs, closedTodayMs, todayGoal,
+    currentSegStartedAt: tail?.started_at ?? null, todaySegStartedAt: tail ? new Date(Math.max(Date.parse(tail.started_at), activityDayStartOf(day, settings.dayBoundaryHour))).toISOString() : null,
     awayActivity: current?.kind === '插入' ? current.description : current?.kind === '暂停' ? '已暂停' : null,
     baseline: baseline(cards, day, mains.length > 0), noMainHint: mains.length === 0 && !!card,
     rest: state.rest ? { suggestion: state.rest.suggestion } : null,

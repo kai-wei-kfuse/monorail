@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode, Ref } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { Progress } from '../../widgets/cardProgress';
 import { formatMinutes } from '../../widgets/cardProgress';
+const formatHm = (ms: number) => { const m = Math.floor(ms / 60_000); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 import { InlineInput } from '../../ui/controls/InlineInput';
 import { Corners } from '../../ui/marks/Corners';
 import { TrackMark } from '../../ui/marks/TrackMark';
@@ -20,6 +21,7 @@ export interface TaskCardView {
   task: string;             // 项目名；不属于项目的卡显示「支线」
   type: '结果卡' | '时间盒卡';
   goalMinutes: number | null;  // 只有时间盒卡有
+  /** 已定 23：总累计（大读数是今天的）；有值时标题下面多一行小字 */ totalMs?: number; todayGoal?: number | null;
   content: string;             // 带 [词] 标记的原文
   progressNote?: string;       // 上次留下的「做到哪了」
   elapsedMs: number;
@@ -70,7 +72,7 @@ export function TaskCard({ view, look, titleScale, actions, actionsDisabled, cor
       const bs = getComputedStyle(box);
       // 左边距是负的，角标伸出去；可用宽度要把它加回来
       const availW = h.clientWidth - parseFloat(bs.paddingRight) - parseFloat(bs.paddingLeft) - parseFloat(bs.marginLeft);
-      const availH = h.clientHeight - parseFloat(bs.paddingTop) - parseFloat(bs.paddingBottom) - (h.querySelector('.c-note')?.clientHeight ?? 0);
+      const availH = h.clientHeight - parseFloat(bs.paddingTop) - parseFloat(bs.paddingBottom) - (h.querySelector('.c-note')?.clientHeight ?? 0) - (h.querySelector('.c-total')?.clientHeight ?? 0);
       t.style.maxWidth = availW + 'px';
       const size = fitTitleSize(s => { t.style.setProperty('--ts', s + 'px'); return t.scrollWidth <= availW + 1 && t.scrollHeight <= availH + 1; }, titleScale);
       t.style.setProperty('--ts', size + 'px');
@@ -86,7 +88,7 @@ export function TaskCard({ view, look, titleScale, actions, actionsDisabled, cor
   return <CardFrame look={look} running={progress.state === 'run'} slotNo={view.slotNo} slotOf={view.slotOf} slotLabel={slotLabel} cardRef={cardRef} innerRef={innerRef} fx={fx}>
     <div className="c-head" data-fx="head">
       <TrackMark /><b>{view.task}</b>
-      <span className="c-meta">{meta ?? <>{view.type === '时间盒卡' ? '时间盒' : '结果卡'}{view.goalMinutes !== null && <em>目标 {view.goalMinutes} 分钟</em>}</>}</span>
+      <span className="c-meta">{meta ?? <>{view.type === '时间盒卡' ? '时间盒' : '结果卡'}{view.todayGoal ? <em>今天 {view.todayGoal} 分钟</em> : view.goalMinutes !== null && <em>目标 {view.goalMinutes} 分钟</em>}</>}</span>
       {picks}
       {corner && <span className="c-corner">{corner}</span>}
     </div>
@@ -100,6 +102,7 @@ export function TaskCard({ view, look, titleScale, actions, actionsDisabled, cor
               {view.content ? <MarkedText content={view.content} /> : <span className="ph">{placeholder}</span>}
             </h1>)}
       </Corners>
+      {view.totalMs !== undefined && <p className="c-total">累计 <b>{formatHm(view.totalMs)}</b>{view.goalMinutes !== null && <> / {formatHm(view.goalMinutes * 60_000)}</>}</p>}
       {note ?? (view.progressNote && <p className="c-note"><b>上次做到</b>{view.progressNote}</p>)}
     </div>
     <VBars filled={progress.filled} state={progress.state} />
