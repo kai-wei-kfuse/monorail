@@ -62,24 +62,30 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
     if (!t || leaving || motionLevel() !== 'full') return;
     t.animate([{ transform: on ? 'translateY(0)' : 'translateY(-14px)' }, { transform: on ? 'translateY(-14px)' : 'translateY(0)' }], { duration: 180, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
   };
-  // 回到任务：插入卡往上收走，原来那张回到前面，然后交给服务端（数据在提交后才变，这里只演出）
+  // 回到任务：点下去就提交（不等动画），同时演出——插入卡往上收走，原来那张回到前面、颜色恢复、上沿那条收起。
+  // 写盘通常比动画慢（真窗口量到 0.8–1 秒），先演再提交会在动画后停一段（用户 2026-11-06）；两件事一起做，提交一到就换成正常的卡
   const back = async () => {
     if (leaving) return;
     setLeaving(true);
     const s = stack.current, t = topRef.current, under = s?.querySelector<HTMLElement>('.card:not(.ins-top)');
+    const commit = onBack();
+    const anims: Animation[] = [];
     if (s && t && under && motionLevel() === 'full') {
       s.classList.add('clip');
       const from = getComputedStyle(t).transform;
-      const out = t.animate([{ transform: from === 'none' ? 'translateY(0)' : from, opacity: 1 }, { offset: .6, opacity: 1 }, { transform: 'translateY(calc(-100% - 90px))', opacity: 0 }],
-        { duration: 280, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' });
-      const fwd = under.animate([{ transform: 'translateY(var(--sink)) scale(var(--scale))' }, { transform: 'none' }], { duration: 280, delay: 100, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'forwards' });
-      await settled([out, fwd]);
-    } else if (t && motionLevel() === 'reduced') await settled([t.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'linear', fill: 'forwards' })]);
+      anims.push(t.animate([{ transform: from === 'none' ? 'translateY(0)' : from, opacity: 1 }, { offset: .6, opacity: 1 }, { transform: 'translateY(calc(-100% - 90px))', opacity: 0 }],
+        { duration: 280, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' }));
+      anims.push(under.animate([{ transform: 'translateY(var(--sink)) scale(var(--scale))' }, { transform: 'none' }], { duration: 280, delay: 60, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'forwards' }));
+      // 退后时变灰、变淡的那几层也一起恢复；上沿那条淡出（不等提交以后才变）
+      under.querySelectorAll<HTMLElement>(':scope > .card-in, :scope > .vtab, :scope > .topo').forEach(el =>
+        anims.push(el.animate([{ opacity: 'var(--dim)', filter: 'grayscale(1)' }, { opacity: 1, filter: 'grayscale(0)' }], { duration: 280, delay: 60, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'forwards' })));
+      const peek = s.querySelector<HTMLElement>('.ins-peek');
+      if (peek) anims.push(peek.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'linear', fill: 'forwards' }));
+    } else if (t && motionLevel() === 'reduced') anims.push(t.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'linear', fill: 'forwards' }));
     try {
-      const ok = await onBack();
+      const ok = await commit;
       // 没有成功（状态变了、写盘出错）：撤掉收走的动画，插入卡和底下那张复位（G7 审核 S4）
-      if (ok === false) [t, under].forEach(el => el?.getAnimations().forEach(a => a.cancel()));
-      s?.classList.remove('clip');
+      if (ok === false) { anims.forEach(a => a.cancel()); s?.classList.remove('clip'); }
     } finally { setLeaving(false); }
   };
   const end = async () => { setAsking(false); setLeaving(true); try { await onEndOriginal(); } finally { setLeaving(false); } };
