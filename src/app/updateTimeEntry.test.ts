@@ -69,3 +69,14 @@ it('找不到记录、状态变了、一项都不改：拒绝且不写', async (
   await expect(handleApplicationRequest(f.ctx, { method: 'update_time_entry',
     arguments: { operation_id: c.operation_id, expected_state: c.expected_state, entry_id: open(f).id } })).rejects.toThrow('至少要改一项');
 });
+
+it('任务模式关掉：start_task_item 报 TASK_MODE_OFF，下一步提示改用 start_timer（ADR 0021 第 10 条）', async () => {
+  const f = fixture(); await seed(f, [card('c1')], [task('t1')]);
+  f.ctx.settings = { ...f.ctx.settings, taskMode: false };
+  f.clock(at(5));
+  const c = await ctxOf(f);
+  const err = await handleApplicationRequest(f.ctx, { method: 'start_task_item', arguments: { operation_id: c.operation_id, expected_state: c.expected_state, card_id: 'c1' } })
+    .then(() => null, e => e as { failure?: { code: string; next_step: string } });
+  expect(err?.failure).toMatchObject({ code: 'TASK_MODE_OFF' });
+  expect(err?.failure?.next_step).toMatch(/start_timer/);
+});

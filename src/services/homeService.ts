@@ -288,6 +288,7 @@ export function startTimerCheckedInTx(tx: Transaction, input: { expected_state: 
 
 export async function startTaskItemCheckedInTx(tx: Transaction, input: { expected_state: string; card_id: string }): Promise<{ noop: boolean }> {
   checkExpectedState(tx, input.expected_state);
+  if (!tx.settings.taskMode) throw new Error('TASK_MODE_OFF：单轨的任务模式关掉了，不能开始任务卡；可以用 start_timer 开始自由计时');
   const open = checkNormalPreconditions(tx);
   const card = tx.cards.find(item => item.id === input.card_id);
   if (!card) throw new Error('CARD_NOT_FOUND：找不到指定的待办事项卡片');

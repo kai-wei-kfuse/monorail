@@ -139,6 +139,16 @@ it('A8 continue extends the original deadline by one bet period and finishes aft
   await continueBet(f.ctx, at()); expect((await saved(f))[0].status).toBe('已完成');
 });
 
+it('任务模式关掉（ADR 0021 第 10 条）：押注主线这一步跳过，冷库捞完就能结束；主线的押注到期日不动', async () => {
+  const f = fixture(); f.ctx.settings = { ...f.ctx.settings, taskMode: false };
+  const deadline = at(-1);
+  await seed(f, [], [{ ...task('a'), bet_ends_at: deadline }]);
+  await toCold(f);
+  expect(view(f).betDue).toBe(false);
+  await skipCold(f.ctx, at());
+  expect((await saved(f))[0]).toMatchObject({ status: '已完成', bet_task_ids: [] });
+  expect((await f.ctx.repos.tasks.get('a'))!.value.bet_ends_at).toBe(deadline);
+});
 it('review projection keeps the exact id when advancing between identically named mains', async () => {
   const f = fixture(); f.ctx.settings.mainTasks = 2;
   await seed(f, [], ['first', 'second'].map((id, index) => ({ ...task(id, '主线', index + 1), name: '同名主线', bet_ends_at: at(-1) })));

@@ -62,7 +62,7 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
   const data: BagData = {
     pool: view.pool, tasks: view.tasks, queue: view.queue, ideas: view.ideas, doneIdeas: view.doneIdeas, plan: planView,
     ideaLimit: ctx.settings.ideaPoolLimit, defaultTimebox: ctx.settings.timeboxDefaultMinutes, knownTags: view.pool.knownTags,
-    drawable: planView.today.drawable.length, inserting: !!home.insert,
+    drawable: planView.today.drawable.length, inserting: !!home.insert, taskMode: ctx.settings.taskMode,
     now: home.insert ? { title: home.insert.name, startedAt: home.insert.startedAt ?? new Date().toISOString() }
       : running ? { title: home.card?.status === '进行中' ? home.card.content : running.description, startedAt: running.startedAt } : null,
   };

@@ -255,6 +255,8 @@ function nextStepForCode(code: string): string {
       return '单轨界面存在待确认起点；请提示用户在单轨界面完成确认或放弃后再调用计时工具';
     case 'IN_AWAY_ACTIVITY':
       return '当前正在插入别的事（做卡途中插进来的事，或临时活动）；可以用 start_timer / start_break 换成另一件事、pause_timer / resume_timer 暂停或继续插入的事，或调用 return_from_break 回到原来的任务；停止计时、开始另一张卡要先回到任务或在单轨界面结束原任务';
+    case 'TASK_MODE_OFF':
+      return '用户在单轨设置 02 关掉了任务模式；请改用 start_timer 开始自由计时，或提示用户在设置里打开任务模式';
     case 'IN_DEGRADE_REST':
       return '单轨还停在 0.3.0 留下的降级休息状态；请提示用户重启单轨（启动时会自动结束这段休息）';
     case 'NO_RESUME_TARGET':

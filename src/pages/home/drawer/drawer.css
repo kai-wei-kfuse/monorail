@@ -28,6 +28,7 @@
 .bp-close kbd { font: 400 10px/1 var(--f-mono); color: var(--mute); }
 .bp-close:hover { border-color: var(--ink); }
 .bp-body { min-height: 0; display: grid; grid-template-columns: 380px minmax(0, 1fr); }
+.bp-body[data-ideas-only] { grid-template-columns: minmax(0, 1fr); }
 @container stage (max-width: 900px) { .bp-body { grid-template-columns: 300px minmax(0, 1fr); } }
 
 /* 左：今日任务板 */

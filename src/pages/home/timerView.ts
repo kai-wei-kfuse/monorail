@@ -18,7 +18,7 @@ export function timerView({ home, entries, cards, tasks, settings, projects }: T
   const away = isAway ? home.entry : null;
   const baseEntry = isAway ? (home.resumeEntry ?? null) : home.entry;
   return {
-    entry: baseEntry, away, idle: !baseEntry || baseEntry.project === '待机', looseIdle: home.looseIdle, pending: home.pending,
+    entry: baseEntry, away, idle: !baseEntry || baseEntry.project === '待机', looseIdle: home.looseIdle, taskMode: settings.taskMode, pending: home.pending,
     paused: isAway ? null : home.resumeDescription,
     waitingCard: home.card?.status === '待做', canDraw: !home.card && home.mode !== 'rest',
     projects: [...projects], knownTags: home.knownTags,

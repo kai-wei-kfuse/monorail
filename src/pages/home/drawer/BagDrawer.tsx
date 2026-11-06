@@ -49,6 +49,7 @@ export interface BagData {
   plan: PlanSlice; ideaLimit: number; defaultTimebox: number; knownTags: string[];
   /** 板子上能抽的项数（不含正在做的、已达成的、待确认的带过来项） */ drawable: number;
   /** 正在计的那一项（抽屉顶边） */ now: { title: string; startedAt: string } | null;
+  /** 任务模式（设置 02）：关掉时抽屉只剩想法池页，没有今日任务板（ADR 0021 第 10 条） */ taskMode: boolean;
   inserting: boolean;
 }
 
@@ -61,7 +62,8 @@ type Open = { kind: 'task'; slot: BackpackSlot } | { kind: 'card'; cardId: strin
  */
 export function BagDrawer({ open, onClose, data, actions, children }:
   { open: boolean; onClose: () => void; data: BagData; actions: BagActions; children: ReactNode }) {
-  const [day, setDay] = useState<PlanDay>('today'), [tab, setTab] = useState<'tasks' | 'ideas'>('tasks');
+  const [day, setDay] = useState<PlanDay>('today'), [tabPicked, setTab] = useState<'tasks' | 'ideas'>('tasks');
+  const tab = data.taskMode ? tabPicked : 'ideas';
   const [detail, setDetail] = useState<string | null>(null), [coldOpen, setColdOpen] = useState(false);
   const [pop, setPop] = useState<{ item: PoolItem; task: PoolTask; anchor: HTMLElement } | null>(null), [dlg, setDlg] = useState<Open>(null);
   const [tick, setTick] = useState(() => Date.now()), drawer = useRef<HTMLDivElement>(null);
@@ -102,18 +104,19 @@ export function BagDrawer({ open, onClose, data, actions, children }:
         <span className={`bp-now${data.now ? '' : ' idle'}`}><i className="dot" />{data.now ? <><span>{plainText(data.now.title)}</span><b>{nowText}</b></> : <span>没有在做的事</span>}</span>
         <button type="button" className="bp-close" onClick={onClose}><kbd>ESC</kbd>收起<span className="chev"><Icon name="chev" /></span></button>
       </div>
-      <div className="bp-body">
-        <TodayBoard day={day} board={board} drawable={data.drawable} inserting={data.inserting} runningMs={runningMs}
-          onDay={setDay} onStart={start} onRemove={unplan} onDraw={actions.draw} onCarry={actions.confirmCarry} />
+      <div className="bp-body" data-ideas-only={data.taskMode ? undefined : ''}>
+        {data.taskMode && <TodayBoard day={day} board={board} drawable={data.drawable} inserting={data.inserting} runningMs={runningMs}
+          onDay={setDay} onStart={start} onRemove={unplan} onDraw={actions.draw} onCarry={actions.confirmCarry} />}
         <div className="bp-main">
           {task ? <QuestDetail task={task} day={day} board={board} days={days} inserting={data.inserting} onBack={() => setDetail(null)}
               onEdit={cardId => setDlg({ kind: 'card', cardId })} onPlan={planOf} onUnplan={unplan} onStart={start}
               onAdd={content => actions.addItem(task.id, content)} onFreeze={() => { actions.freezeTask(task.id); setDetail(null); }}
               onAbandon={() => setDlg({ kind: 'abandon', task })} />
             : <>
-              <div className="bp-mhead"><Segmented label="背包分页" value={tab} onChange={setTab}
+              <div className="bp-mhead">{data.taskMode ? <Segmented label="背包分页" value={tab} onChange={setTab}
                   options={[{ value: 'tasks', label: `任务 ${all.length}` }, { value: 'ideas', label: `想法池 ${data.ideas.filter(i => i.pool === '活跃池').length}` }]} />
-                <span className="note">{tab === 'tasks' ? `点卡片看详情 · 卡上的〔排进${day === 'today' ? '今天' : '明天'}〕只排下一项` : '想到要做的事先放这里'}</span></div>
+                  : <span className="bp-sec" style={{ margin: 0 }}>想法池<i>IDEAS</i></span>}
+                <span className="note">{tab === 'tasks' ? `点卡片看详情 · 卡上的〔排进${day === 'today' ? '今天' : '明天'}〕只排下一项` : data.taskMode ? '想到要做的事先放这里' : '任务模式关着：背包里只有想法池。在设置 02 打开任务模式，任务和今日任务板都会回来'}</span></div>
               {tab === 'tasks' ? <>
                 <h3 className="bp-sec">主线任务<i>MAIN QUEST</i><small>{pool.mains.length} / {pool.mainMax} 个</small></h3>
                 <div className="bp-grid">{pool.mains.map(card)}{pool.mains.length < pool.mainMax && newTile('主线', pool.mains.length)}</div>

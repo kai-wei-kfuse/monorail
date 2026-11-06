@@ -40,7 +40,8 @@ export const enter = (ctx: Ctx, at: string) => run(ctx, async tx => {
     row = { id: period, period, status: '未开始', step: 'recap' };
   }
   let review = progress(row);
-  if (!review.started_at) review = { ...review, started_at: at, bet_task_ids: tx.tasks.filter(task =>
+  // 任务模式关掉时不押注主线（ADR 0021 第 10 条）：开始回顾时不记要复盘的主线，这一步自然跳过
+  if (!review.started_at) review = { ...review, started_at: at, bet_task_ids: !tx.settings.taskMode ? [] : tx.tasks.filter(task =>
     inBackpack(task) && task.slot === '主线' && task.bet_ends_at && Date.parse(task.bet_ends_at) <= Date.parse(at)).map(task => task.id) };
   // A main changed from the backpack page already received its explicit decision.
   review = { ...review, bet_done_ids: [...new Set([...review.bet_done_ids, ...review.bet_task_ids.filter(id =>

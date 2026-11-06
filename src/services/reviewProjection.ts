@@ -29,7 +29,7 @@ export function projectReview(input: Input): ReviewSlice {
   const row = currentReview(reviews);
   if (!row || !state.first_used_day) return null;
   const review = progress(row), active = tasks.filter(inBackpack);
-  const due = review.started_at ? review.bet_task_ids : active.filter(p => p.slot === '主线' && p.bet_ends_at && Date.parse(p.bet_ends_at) <= Date.parse(at)).map(p => p.id);
+  const due = review.started_at ? review.bet_task_ids : !settings.taskMode ? [] : active.filter(p => p.slot === '主线' && p.bet_ends_at && Date.parse(p.bet_ends_at) <= Date.parse(at)).map(p => p.id);
   const bet = due.filter(id => !review.bet_done_ids.includes(id)).map(id => tasks.find(p => p.id === id))
     .find(p => p && inBackpack(p) && p.slot === '主线');
   const duel = review.cold_duel ? { left: records.find(r => r.id === review.cold_duel!.left), right: records.find(r => r.id === review.cold_duel!.right) }

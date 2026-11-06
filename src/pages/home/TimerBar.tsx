@@ -28,6 +28,8 @@ export interface TimerView {
   idle: boolean;
   /** 宽松模式下什么都没在做（ADR 0021 第 13 条）：读数不走、写「没在计时」；数据里照样开着待机 */
   looseIdle?: boolean;
+  /** 任务模式（ADR 0021 第 10 条）：关掉时没有〔今日任务板〕 */
+  taskMode?: boolean;
   /** 待确认：从 startedAt 起在计时，还没写盘；id 标识这一轮，放弃时带上。 */
   pending: { id: string; startedAt: string } | null;
   /** 暂停中、点「继续」会接着计的那件事（回到目标）的描述；没有就是 null。 */
@@ -145,7 +147,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
           {/* 插入中没有〔停止〕（已定 57）：不想继续插入的事就回到任务、结束原任务或开始别的事 */}
           {running && !deciding && running.kind !== '插入' && !view.away && <StopButton onClick={actions.stop} />}
           {(!running || !!view.away) && !deciding && <button type="button" className="tbar-new" disabled={!!pending} aria-label="开始想下一件事" title="开始想下一件事" onClick={E.next}><Icon name="plus" /></button>}
-          <ActionButton compact cn="今日任务板" en="TODAY" icon="cards" onClick={actions.openBoard} />
+          {view.taskMode !== false && <ActionButton compact cn="今日任务板" en="TODAY" icon="cards" onClick={actions.openBoard} />}
         </ActivityActions>
       </div>
       <div className="tbar-sub"><EntryLine view={view} note={E.note} /></div>
