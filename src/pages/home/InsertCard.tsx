@@ -46,7 +46,8 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
   /** 正在演 / 演过的收走动画（在这张卡上点的〔回到任务〕）：插入在提交后结束时等它们演完再拿掉 */
   const leaveAnims = useRef<Animation[] | null>(null);
   const o = insert.over, onTask = o.kind === 'card';
-  const elapsed = insert.startedAt ? now - Date.parse(insert.startedAt) : 0;
+  // 读数是这件插入的事一共计了多久：前面几段 + 开着的这一段；暂停时停在前面几段之和，不归零（用户 2026-11-06）
+  const elapsed = (insert.closedMs ?? 0) + (insert.startedAt ? Math.max(0, now - Date.parse(insert.startedAt)) : 0);
   const progress = cardProgress(elapsed, null, !insert.paused, insert.paused);
   const ts = Math.max(26, Math.floor(80 * titleScale / 100));
 

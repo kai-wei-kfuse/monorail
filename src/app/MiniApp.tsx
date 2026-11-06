@@ -151,8 +151,10 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const today = snap.closedTodayMs !== undefined
     ? snap.closedTodayMs + (snap.todaySegStartedAt ? Math.max(0, now - Date.parse(snap.todaySegStartedAt)) : 0)
     : snap.closedEffectiveMs + (snap.currentSegStartedAt ? now - Date.parse(snap.currentSegStartedAt) : 0);
+  // 插入的事：读数是前面几段 + 开着的这一段；暂停时停在前面几段之和，不归零（同首页插入卡，用户 2026-11-06）
+  const insClosed = snap.inserting?.closedMs ?? 0;
   const total = c ? today + (c.status === '待做' ? pend : 0)
-    : pending ? pend : snap.looseIdle || snap.inserting?.paused ? 0 : entry ? now - Date.parse(entry.startedAt) : 0;   // 插入的事暂停：同首页插入卡，读数停在 00:00
+    : pending ? pend : snap.looseIdle ? 0 : snap.inserting?.paused ? insClosed : entry ? (snap.inserting ? insClosed : 0) + now - Date.parse(entry.startedAt) : 0;
   const progress = cardProgress(total, c ? (snap.todayGoal ?? c.goalMinutes) : null, !!running, away);
   // 插入的事暂停时：写「已暂停：插入的那件事」，〔继续〕继续插入的事（不是回到原来那张）
   const title = c ? c.content : pending ? '待确认' : running ? running.description : snap.inserting?.paused ? `已暂停：${snap.inserting.name}` : resumeDescription ? `已暂停：${resumeDescription}` : snap.looseIdle ? '没在计时' : '待机';

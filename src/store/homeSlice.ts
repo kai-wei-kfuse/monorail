@@ -34,6 +34,8 @@ export interface HomeSlice {
     entryId: string;
     /** 插入的那件事（暂停时是暂停前那一段） */
     name: string; project: string; startedAt: string | null;
+    /** 这件插入的事前面已计完的几段之和（暂停不重置读数，用户 2026-11-06）：读数 = closedMs + (现在 − startedAt) */
+    closedMs: number;
     over: { kind: 'card'; cardId: string; title: string; track: '主线' | '支线'; todayMs: number; todayGoal: number | null }
       | { kind: 'free'; title: string; elapsedMs: number };
   } | null;

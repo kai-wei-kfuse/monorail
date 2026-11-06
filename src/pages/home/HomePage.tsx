@@ -245,7 +245,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     setDraftInsert({ at, leaving: false, over: { kind: 'card', cardId: c.id, title: c.content, track, todayMs, todayGoal: live?.todayGoal ?? null } });
   };
   const draftView: NonNullable<HomeSlice['insert']> | null = draftInsert
-    ? { paused: false, canContinue: false, entryId: '', name: '', project: '未分类', startedAt: draftInsert.at, over: draftInsert.over } : null;
+    ? { paused: false, canContinue: false, entryId: '', name: '', project: '未分类', startedAt: draftInsert.at, closedMs: 0, over: draftInsert.over } : null;
   const shownInsert = home.insert ?? exitingInsert ?? draftView;
   const drafting = !home.insert && !exitingInsert ? draftInsert : null;
   // 〔休息一下〕（已定 55、63）：做着卡、没在插入时显示；点下那一刻是开始时刻，先选项目

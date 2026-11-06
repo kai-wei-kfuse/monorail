@@ -61,3 +61,23 @@ export function insertToContinue(entries: readonly TimeEntry[], open: TimeEntry,
   const between = closed.filter(e => Date.parse(e.started_at) >= Date.parse(last.ended_at!) && !isIdle(e));
   return between.length ? null : last;
 }
+
+/**
+ * 这件插入的事前面已经计完的那几段之和（用户 2026-11-06：暂停不重置读数）。读数 = 这个 + 开着的那一段。
+ * 从开着的那条往前找：插入的事暂停（待机 / 插入）跳过，同名同项目的插入段加上，碰到别的事就停。
+ * 只看回到目标那条之后的；不改数据，日历、列表里照旧是分开的几段。
+ */
+export function insertClosedMs(entries: readonly TimeEntry[], open: TimeEntry, resume: TimeEntry): number {
+  const name = isIdle(open) ? insertToContinue(entries, open, resume) : open;
+  if (!name) return 0;
+  const after = Date.parse(resume.ended_at ?? resume.started_at), openStart = Date.parse(open.started_at);
+  const closed = entries.filter(e => e.id !== open.id && e.ended_at !== null && Date.parse(e.started_at) >= after && Date.parse(e.ended_at) <= openStart)
+    .sort((a, b) => Date.parse(b.ended_at!) - Date.parse(a.ended_at!));
+  let sum = 0;
+  for (const e of closed) {
+    if (isIdle(e) && e.kind === '插入') continue;
+    if (e.kind !== '插入' || isIdle(e) || e.description !== name.description || e.project !== name.project) break;
+    sum += Date.parse(e.ended_at!) - Date.parse(e.started_at);
+  }
+  return sum;
+}

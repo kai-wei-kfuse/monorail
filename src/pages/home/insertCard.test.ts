@@ -7,7 +7,7 @@ import type { HomeSlice } from '../../store/homeSlice';
 // 插入卡（ADR 0021 第 3 条，UI 规范 §11.14）：静态渲染核对文字和按钮；动画、鼠标悬停交给无头截图
 const look = { topoMode: 'off' as const, topoDepth: 0, paused: false };
 const base: NonNullable<HomeSlice['insert']> = {
-  paused: false, canContinue: false, entryId: 'e-ins', name: '上厕所', project: '生活', startedAt: '2026-11-06T02:00:00Z',
+  paused: false, canContinue: false, entryId: 'e-ins', name: '上厕所', project: '生活', startedAt: '2026-11-06T02:00:00Z', closedMs: 0,
   over: { kind: 'card', cardId: 'c1', title: '改 [简历] 第二版', track: '主线', todayMs: 25 * 60_000, todayGoal: 60 },
 };
 const render = (insert: NonNullable<HomeSlice['insert']>, place: 'bottom' | 'top' = 'bottom') => renderToStaticMarkup(createElement(InsertCard, {
@@ -38,6 +38,10 @@ describe('插入卡', () => {
     expect(html).toContain('<b>继续</b>');
     expect(html).toContain('已暂停 · 还在等你回去');
     expect(html).not.toMatch(/disabled=""[^>]*title="找不到前一段/);
+  });
+  it('暂停不重置读数（用户 2026-11-06）：暂停时停在前面几段之和；继续后从那里接着走', () => {
+    expect(render({ ...base, paused: true, canContinue: true, startedAt: null, closedMs: 74_000 })).toContain('>01:14<');
+    expect(render({ ...base, closedMs: 74_000 })).toContain('>03:19<');   // 01:14 + 开着这一段 02:05
   });
   it('插在自由记录中间：写「回到原来的事」「结束原来的事」；回去区域可以放顶边', () => {
     const html = render({ ...base, over: { kind: 'free', title: '写周报', elapsedMs: 12 * 60_000 } }, 'top');

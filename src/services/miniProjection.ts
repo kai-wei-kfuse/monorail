@@ -26,7 +26,7 @@ export function projectMini(snapshot: Snapshot, epoch: number): MiniSnapshot {
       goalMinutes: home.card.goalMinutes } : null,
     closedEffectiveMs: home.closedEffectiveMs, currentSegStartedAt: home.currentSegStartedAt,
     closedTodayMs: home.closedTodayMs, todaySegStartedAt: home.todaySegStartedAt, todayGoal: home.todayGoal, awayActivity: home.awayActivity, looseIdle: home.looseIdle,
-    inserting: home.insert ? { originalTitle: home.insert.over.title, name: home.insert.name, paused: home.insert.paused, canContinue: home.insert.canContinue } : null,
+    inserting: home.insert ? { originalTitle: home.insert.over.title, name: home.insert.name, paused: home.insert.paused, canContinue: home.insert.canContinue, closedMs: home.insert.closedMs } : null,
     projects: snapshot.backpack.pool.projects, knownTags: home.knownTags, accent: settings.accent, miniMode: settings.miniMode,
     suggest: miniSuggest(snapshot) });
 }

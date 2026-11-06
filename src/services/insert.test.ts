@@ -152,9 +152,9 @@ describe('小窗的插入状态（执行方案 G7）', () => {
   const snap = (f: Fixture) => projectMini(f.publish.mock.calls.at(-1)![0], 0);
   it('插入中：带上原来那张的名字；插入的事暂停：paused、能继续；回到任务后为 null', async () => {
     const f = await working(); f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
-    expect(snap(f).inserting).toEqual({ originalTitle: '读第 4 章', name: '厕所', paused: false, canContinue: false });
+    expect(snap(f).inserting).toEqual({ originalTitle: '读第 4 章', name: '厕所', paused: false, canContinue: false, closedMs: 0 });
     f.clock(at(12)); await mini(f, 'pause', at(12));
-    expect(snap(f).inserting).toEqual({ originalTitle: '读第 4 章', name: '厕所', paused: true, canContinue: true });
+    expect(snap(f).inserting).toEqual({ originalTitle: '读第 4 章', name: '厕所', paused: true, canContinue: true, closedMs: 2 * 60_000 });
     f.clock(at(14)); await mini(f, 'backToTask', at(14));
     expect(snap(f).inserting).toBeNull();
     expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通' });
@@ -171,6 +171,21 @@ describe('插入卡的投影 home.insert（UI 规范 §11.14）', () => {
     expect(home(f).insert).toMatchObject({ paused: true, canContinue: true, name: '厕所', startedAt: null });
     f.clock(at(14)); await resume(f.ctx, at(14));
     expect(home(f).insert).toBeNull();
+  });
+  it('暂停不重置读数（用户 2026-11-06）：closedMs 是这件事前面几段之和；继续后接着加；换成别的事从 0 算；记录照旧分段', async () => {
+    const f = await working(); f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
+    expect(home(f).insert).toMatchObject({ closedMs: 0, startedAt: at(10) });
+    f.clock(at(12)); await pause(f.ctx, at(12));
+    expect(home(f).insert).toMatchObject({ paused: true, closedMs: 2 * 60_000, startedAt: null });
+    f.clock(at(15)); await continueTimer(f.ctx, at(15));
+    expect(home(f).insert).toMatchObject({ paused: false, name: '厕所', closedMs: 2 * 60_000, startedAt: at(15) });
+    f.clock(at(16)); await pause(f.ctx, at(16));
+    expect(home(f).insert).toMatchObject({ paused: true, closedMs: 3 * 60_000 });
+    f.clock(at(17)); await continueTimer(f.ctx, at(17));
+    expect(home(f).insert).toMatchObject({ closedMs: 3 * 60_000, startedAt: at(17) });
+    expect(entries(f).filter(e => e.kind === '插入' && e.project === '生活').length).toBe(3);
+    f.clock(at(18)); await startFree(f.ctx, { description: '回消息', project: '工作', tags: [] }, at(18));
+    expect(home(f).insert).toMatchObject({ name: '回消息', closedMs: 0, startedAt: at(18) });
   });
 });
 
