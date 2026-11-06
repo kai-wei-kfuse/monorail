@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { plainText } from '../ui/marks/MarkedText';
 import type { MouseEvent } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
@@ -147,9 +148,10 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const c = card && (running?.cardId === card.id || (pending && card.status === '待做')) ? card : null;
   const pend = pending ? now - Date.parse(pending.startedAt) : 0;
   const total = c ? snap.closedEffectiveMs + (snap.currentSegStartedAt ? now - Date.parse(snap.currentSegStartedAt) : 0) + (c.status === '待做' ? pend : 0)
-    : pending ? pend : snap.looseIdle ? 0 : entry ? now - Date.parse(entry.startedAt) : 0;
+    : pending ? pend : snap.looseIdle || snap.inserting?.paused ? 0 : entry ? now - Date.parse(entry.startedAt) : 0;   // 插入的事暂停：同首页插入卡，读数停在 00:00
   const progress = cardProgress(total, c?.goalMinutes ?? null, !!running, away);
-  const title = c ? c.content : pending ? '待确认' : running ? running.description : resumeDescription ? `已暂停：${resumeDescription}` : snap.looseIdle ? '没在计时' : '待机';
+  // 插入的事暂停时：写「已暂停：插入的那件事」，〔继续〕继续插入的事（不是回到原来那张）
+  const title = c ? c.content : pending ? '待确认' : running ? running.description : snap.inserting?.paused ? `已暂停：${snap.inserting.name}` : resumeDescription ? `已暂停：${resumeDescription}` : snap.looseIdle ? '没在计时' : '待机';
   const currentProject = c?.project ?? running?.project ?? '未分类';
   // 分类：写新事件时是先选的那个；否则是正在计的这一条（是卡时改的是卡）。待机且不在写时没有
   const catValue = writingNew ? edit!.project : c || running ? currentProject : null;
@@ -165,11 +167,11 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const meta = catValue !== null
     ? <>记到 <button type="button" className="mini-pick" id="mini-project" aria-haspopup="listbox" aria-expanded={catOpen} title={`分类：${catValue}`}
       onMouseDown={toggleCat}><i style={{ background: color(catValue) }} />{catValue}</button></>
-    : '没有在做的事';
+    : snap.inserting ? `插在「${plainText(snap.inserting.originalTitle)}」中间` : '没有在做的事';
   const cat = catValue !== null && <button type="button" className="mini-cat" id="mini-cat" aria-haspopup="listbox" aria-expanded={catOpen}
     title={`分类：${catValue}（点开切换）`} onMouseDown={toggleCat}><i style={{ background: color(catValue) }} /><span>{catValue}</span></button>;
   const overText = progress.overMs > 0 ? `+${formatReadout(progress.overMs, 'mmss')}` : null;
-  const stateEn = pending ? 'PENDING' : !running ? (resumeDescription ? 'PAUSED' : snap.looseIdle ? 'NOT TIMING' : 'IDLE') : away ? 'AWAY' : overText ?? 'RUNNING';
+  const stateEn = pending ? 'PENDING' : snap.inserting ? (snap.inserting.paused ? 'PAUSED' : 'INSERT') : !running ? (resumeDescription ? 'PAUSED' : snap.looseIdle ? 'NOT TIMING' : 'IDLE') : away ? 'INSERT' : overText ?? 'RUNNING';
 
   // 点名字就地变成透明输入框：待机时和点主窗口输入框一样，从这一刻起计时（待确认）
   const openEdit = () => {
@@ -233,7 +235,9 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
 
   return <div ref={root}>
     <MiniWindow mode={mode} strip={c ? '卡' : '—'} meta={meta} cat={cat || undefined} title={title} stateEn={stateEn} miniFilled={progress.miniFilled} running={!!running} off={!!snap.looseIdle && !pending} topoDepth={0}
-      paused={!running} canResume={!!resumeDescription}
+      paused={!running} canResume={snap.inserting?.paused ? snap.inserting.canContinue : !!resumeDescription}
+      onBack={snap.inserting ? () => act({ type: 'backToTask' }) : undefined}
+      backTitle={snap.inserting ? `回到「${plainText(snap.inserting.originalTitle)}」` : undefined}
       onPause={() => act({ type: 'pause' })} onResume={() => act({ type: 'resume' })}
       onComplete={c && c.status === '进行中' ? () => act({ type: 'complete', cardId: c.id }) : undefined}
       onClose={() => void onClose().catch(e => setError(`小窗没能关闭：${String(e)}`))} onTitle={openEdit}

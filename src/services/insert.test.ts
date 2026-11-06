@@ -5,6 +5,7 @@ import { start } from './cardService';
 import { beginPending, commitReadout, continueEntry, continueTimer, dispatchMiniCommand, endOriginal, insert, pause, resume, rest, startCard, startFree, startPreset, stop } from './homeService';
 import { canContinueInsert } from './tracking/api';
 import type { MiniCommand } from '../platform/windowBus';
+import { projectMini } from './miniProjection';
 
 // 插入（ADR 0021 第 3 条，执行方案 G4）
 async function working() {
@@ -144,6 +145,19 @@ describe('插入的事暂停 / 继续、回到任务、结束原任务（已定 
     expect(open(f)).toMatchObject({ description: '休息', project: '学习', kind: '插入' });
     f.clock(at(12)); await resume(f.ctx, at(12));
     await expect(rest(f.ctx, at(12), '待机')).rejects.toThrow('RESERVED_PROJECT');
+  });
+});
+
+describe('小窗的插入状态（执行方案 G7）', () => {
+  const snap = (f: Fixture) => projectMini(f.publish.mock.calls.at(-1)![0], 0);
+  it('插入中：带上原来那张的名字；插入的事暂停：paused、能继续；回到任务后为 null', async () => {
+    const f = await working(); f.clock(at(10)); await insert(f.ctx, 'wc', at(10));
+    expect(snap(f).inserting).toEqual({ originalTitle: '读第 4 章', name: '厕所', paused: false, canContinue: false });
+    f.clock(at(12)); await mini(f, 'pause', at(12));
+    expect(snap(f).inserting).toEqual({ originalTitle: '读第 4 章', name: '厕所', paused: true, canContinue: true });
+    f.clock(at(14)); await mini(f, 'backToTask', at(14));
+    expect(snap(f).inserting).toBeNull();
+    expect(open(f)).toMatchObject({ card_id: 'c1', kind: '普通' });
   });
 });
 

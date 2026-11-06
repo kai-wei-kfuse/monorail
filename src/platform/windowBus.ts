@@ -41,6 +41,8 @@ export interface MiniSnapshot {
   closedEffectiveMs: number; currentSegStartedAt: string | null; awayActivity: string | null;
   /** 宽松模式下什么都没在做：写「没在计时」，读数不走（ADR 0021 第 13 条）。旧主窗口不发，按 false */
   looseIdle?: boolean;
+  /** 插入状态（ADR 0021 第 3 条）：被插入的那张的名字；paused = 插入的事暂停了；canContinue = 能照前一段再开。旧主窗口不发 */
+  inserting?: { originalTitle: string; name: string; paused: boolean; canContinue: boolean } | null;
   projects: { name: string; color: string }[]; knownTags: string[];
   /** 写新事件时的自动完成（0.3.0-beta.4 D1）：收藏、待做的卡、最近的记录（已去重，最多 100 条） */
   suggest: SuggestData;

@@ -61,6 +61,8 @@
 .mini-btn:hover { background: #3c3c3a; }
 .mini-btn:active { transform: translateY(2px); }
 .mini-btn svg { width: 14px; height: 14px; }
+.mini-btn.back { background: var(--yellow); color: var(--ink); }
+.mini-btn.back:hover { background: color-mix(in srgb, var(--yellow) 80%, #fff); }
 .mini-btn.go { background: var(--yellow); color: var(--ink); }
 
 /* v0.3 独立小窗（UI 规范 §11.9）：窗口里自上而下是小窗本体、一条说明（有提示时）；名称点一下就地变成透明输入框 */

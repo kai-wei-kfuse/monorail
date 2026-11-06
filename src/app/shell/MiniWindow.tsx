@@ -16,10 +16,11 @@ import './shell.css';
  * pop：贴着小窗本体、与窗口同宽的弹层（自动完成、分类下拉，0.3.0-beta.4 D1）；popUp 时放在本体上面。
  */
 export function MiniWindow({ mode = 'mini', strip, meta, title, titleInput, cat, stateEn, digits, miniFilled, running, off = false, topoDepth, paused, canResume,
-  onPause, onResume, onComplete, onClose, onTitle, caption, pop, popUp, popStyle }:
+  onPause, onResume, onComplete, onBack, backTitle, onClose, onTitle, caption, pop, popUp, popStyle }:
   { mode?: 'mini' | 'tiny'; strip: string; meta: ReactNode; title: string; titleInput?: ReactNode; cat?: ReactNode; stateEn: string; digits: ReactNode;
     miniFilled: number; running: boolean; /** 宽松模式没在计时：读数变灰（ADR 0021 第 13 条） */ off?: boolean; topoDepth: number;
-    paused: boolean; canResume: boolean; onPause: () => void; onResume: () => void; onComplete?: () => void; onClose: () => void; onTitle: () => void;
+    paused: boolean; canResume: boolean; onPause: () => void; onResume: () => void; onComplete?: () => void;
+    /** 插入时〔↩ 回到 …〕（取代〔完成〕） */ onBack?: () => void; backTitle?: string; onClose: () => void; onTitle: () => void;
     caption?: ReactNode; pop?: ReactNode; popUp?: boolean; popStyle?: CSSProperties }) {
   const tiny = mode === 'tiny';
   const popBox = pop && <div className={`mini-pop${popUp ? ' up' : ''}`} style={popStyle}>{pop}</div>;
@@ -39,7 +40,8 @@ export function MiniWindow({ mode = 'mini', strip, meta, title, titleInput, cat,
         {paused
           ? <button type="button" className="mini-btn go" aria-label="继续" title="继续" disabled={!canResume} onClick={onResume}><Icon name="play" /></button>
           : <button type="button" className="mini-btn go" aria-label="暂停" title="暂停" onClick={onPause}><Icon name="pause" /></button>}
-        {onComplete && <button type="button" className="mini-btn" aria-label="完成" title="完成：会打开主窗口填写「做到哪了」" onClick={onComplete}><Icon name="check" /></button>}
+        {onBack ? <button type="button" className="mini-btn back" aria-label="回到任务" title={backTitle} onClick={onBack}><Icon name="back" /></button>
+          : onComplete && <button type="button" className="mini-btn" aria-label="完成" title="完成：会打开主窗口填写「做到哪了」" onClick={onComplete}><Icon name="check" /></button>}
         {!tiny && <button type="button" className="mini-btn" aria-label="关闭小窗口" title="关闭小窗口" onClick={onClose}><Icon name="x" /></button>}
       </div>
     </div>

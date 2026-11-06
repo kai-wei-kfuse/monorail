@@ -28,6 +28,9 @@ export function MiniPreview() {
     // ?idle：从待机开始（点名字就是写新事件）；?long：正在计的这一条分类名很长
     if (params.has('idle')) s = { ...s, entry: { ...s.entry!, id: 'idle', description: '待机', project: '待机' }, entryId: 'idle' };
     // &loose：宽松模式没在计时（ADR 0021 第 13 条）
+    // &ins：插入中（底下等着一张卡）；&ins=paused：插入的事暂停了
+    if (params.has('ins')) s = { ...s, entry: { ...s.entry!, id: 'ins', description: params.get('ins') === 'paused' ? '待机' : '上厕所', project: params.get('ins') === 'paused' ? '待机' : '生活', cardId: null, kind: '插入' }, entryId: 'ins',
+      inserting: { originalTitle: s.card?.content ?? '读第 4 章', name: '上厕所', paused: params.get('ins') === 'paused', canContinue: true } };
     if (params.has('loose')) s = { ...s, card: null, cardId: null, entry: { ...s.entry!, id: 'idle', description: '待机', project: '待机', cardId: null }, entryId: 'idle', looseIdle: true };
     if (params.has('long')) s = { ...s, entry: { ...s.entry!, project: '英语口语练习打卡计划' } };
     let onSnap: ((v: MiniSnapshot) => void) | null = null, onReply: ((r: MiniReply) => void) | null = null;
