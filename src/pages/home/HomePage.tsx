@@ -259,7 +259,7 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     <div ref={stage} className="home-stage">
     {(drawer ?? (x => x))(home.insert
       ? <InsertCard key={home.insert.over.kind === 'card' ? home.insert.over.cardId : 'free'} insert={home.insert} now={now} look={cardLook} titleScale={look.titleScale}
-          place={settings.insertBackPlace} onBack={() => act(() => actions.resume(new Date().toISOString()))}
+          place={settings.insertBackPlace} onBack={async () => { let ok = false; await act(async () => { ok = (await actions.resume(new Date().toISOString())) !== undefined; }); return ok; }}
           onEndOriginal={() => act(() => actions.endOriginal(new Date().toISOString()))}
           onPause={() => void actions.pause(new Date().toISOString())} onContinue={() => void act(() => actions.continueTimer(new Date().toISOString()))}>{body}</InsertCard>
       : body)}

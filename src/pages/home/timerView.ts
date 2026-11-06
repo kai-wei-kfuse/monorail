@@ -23,7 +23,7 @@ export function timerView({ home, entries, cards, tasks, settings, projects }: T
     waitingCard: home.card?.status === '待做', canDraw: !home.card && home.mode !== 'rest',
     projects: [...projects], knownTags: home.knownTags,
     // 自动完成：与小窗同一来源（services/suggestSource，0.3.0-beta.4 D1）
-    suggest: suggestSource({ presets: settings.lists.presets, cards, entries,
+    suggest: suggestSource({ presets: settings.lists.presets, cards, entries, taskMode: settings.taskMode,
       tasks: tasks.map(t => ({ id: t.id, slot: t.slot })) }),
   };
 }

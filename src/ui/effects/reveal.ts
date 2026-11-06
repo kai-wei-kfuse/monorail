@@ -25,5 +25,7 @@ export function scrambleDigits(el: HTMLElement | null, delay: number, dur: numbe
     id = requestAnimationFrame(step);
   };
   id = requestAnimationFrame(step);
-  return () => { cancelAnimationFrame(id); delete el.dataset.scramble; };
+  // 窗口在后台或被隐藏时 requestAnimationFrame 会停，乱码会一直盖在读数上（隔离真窗口 2026-11-06 看到读数 24:30）：到点用定时器兜底清掉
+  const guard = setTimeout(() => { cancelAnimationFrame(id); delete el.dataset.scramble; }, delay + dur + 100);
+  return () => { cancelAnimationFrame(id); clearTimeout(guard); delete el.dataset.scramble; };
 }

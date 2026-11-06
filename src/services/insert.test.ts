@@ -190,3 +190,16 @@ describe('卡暂停中「继续这一条」继续的正是原来那张卡（代�
     expect((await state(f)).resume_entry_id).toBeNull();
   });
 });
+
+describe('任务模式关掉（G7 审核 S3）', () => {
+  it('「继续这一条」遇到卡的条目：退成自由记录，不开始卡；自动完成不列卡', async () => {
+    const f = await working(); f.clock(at(5)); await stop(f.ctx, at(5));
+    const cardEntry = entries(f).find(e => e.card_id === 'c1')!;
+    f.ctx.settings = { ...f.ctx.settings, taskMode: false };
+    f.clock(at(6)); await continueEntry(f.ctx, cardEntry.id, at(6));
+    expect(open(f)).toMatchObject({ card_id: null, description: cardEntry.description });
+    expect((await getCard(f, 'c1')).status).toBe('待做');
+    const { suggestSource } = await import('./suggestSource');
+    expect(suggestSource({ presets: [], cards: [{ id: 'c2', content: '跑步', status: '待做', task_id: null }], tasks: [], entries: [], taskMode: false }).cards).toEqual([]);
+  });
+});

@@ -162,8 +162,10 @@ export const setReadout = (ctx: Ctx, request: ReadoutRequest, seen: ReadoutPlan 
 export async function continueEntryInTx(tx: Transaction, entryId: string): Promise<void> {
   const entry = tx.entries.find(entry => entry.id === entryId); if (!entry) throw new Error('计时条目不存在');
   const card = tx.cards.find(card => card.id === entry.card_id);
-  if (card && (card.status === '待做' || card.status === '进行中')) {
-    const resume = tx.entries.find(e => e.id === tx.state.resume_entry_id);
+  const resume = tx.entries.find(e => e.id === tx.state.resume_entry_id);
+  // 任务模式关掉（G7 审核 S3）：不开始卡；回到正在等的那张照旧
+  const offCard = !tx.settings.taskMode && !(resume?.card_id === card?.id && card);
+  if (card && !offCard && (card.status === '待做' || card.status === '进行中')) {
     // 插入中、或卡暂停中，继续的正是回到目标那张卡 = 〔回到任务〕/〔继续〕（代码审核 S5）
     const open = tracking.openInTx(tx);
     if (resume?.card_id === card.id && (tracking.insertStateInTx(tx) || open?.kind === '暂停')) { clearPending(tx); await resumeInTx(tx); return; }

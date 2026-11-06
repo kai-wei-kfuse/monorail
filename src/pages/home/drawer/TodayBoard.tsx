@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { PlanBoard, PlanRow } from '../../../store/planSlice';
 import { Icon } from '../../../ui/icons/Icon';
 import { Segmented } from '../../../ui/controls/Segmented';
@@ -27,11 +28,7 @@ export function TodayBoard({ day, board, drawable, inserting, runningMs, onDay, 
         <span className="n">{today ? <>{pad(board.achieved)}<small>/{pad(board.total)}</small></> : <>{pad(board.total)}<small> 项</small></>}</span></div>
       <Segmented label="哪一天" value={day} onChange={onDay} options={[{ value: 'today', label: '今天' }, { value: 'tomorrow', label: '明天' }]} />
     </div>
-    {carried.length > 0 && <div className="bp-carry" role="region" aria-label="带过来的">
-      <b>从{board.carriedFrom ? ` ${board.carriedFrom.slice(5).replace('-', '/')} ` : '前一天'}带过来 {carried.length} 项</b>
-      <span>没做完的带到了今天。确认前它们不参与抽卡。</span>
-      <span className="acts"><Button size="sm" onClick={() => onCarry([])}>不带</Button><Button size="sm" tone="ink" onClick={() => onCarry(carried.map(r => r.cardId))}>都带上</Button></span>
-    </div>}
+    {carried.length > 0 && <CarryStrip from={board.carriedFrom} rows={carried} onCarry={onCarry} />}
     {rows.length ? <ul className="bp-list">{rows.map(r => <Row key={r.cardId} row={r} today={today} runningMs={runningMs} inserting={inserting} onStart={onStart} onRemove={onRemove} />)}</ul>
       : <div className="bp-empty"><b>{today ? '今天还没排' : '明天还没排'}</b>从右边的任务卡点〔{today ? '排进今天' : '排进明天'}〕，或者在详情里逐项排。</div>}
     <div className="bp-bfoot">{today
@@ -40,6 +37,19 @@ export function TodayBoard({ day, board, drawable, inserting, runningMs, onDay, 
           <span className="bp-hint">{inserting ? '插入中不能抽卡，先回到任务。' : rows.length ? `从板子上没达成的 ${drawable} 项里抽，标「高」的抽到概率更高。` : '今天没排时会先问你要不要排。'}</span></>
       : <span className="bp-hint">明天的板子只能排，不能抽。过了换日时间，它就是今天的板子；今天没做完的会让你确认带不带。</span>}</div>
   </section>;
+}
+
+/** 带过来的确认（已定 4、ADR 0021 第 6 条）：默认都勾着，逐项可去勾；〔确认〕〔全部去掉〕。 */
+function CarryStrip({ from, rows, onCarry }: { from: string | null; rows: PlanRow[]; onCarry: (keep: string[]) => void }) {
+  const [keep, setKeep] = useState(() => new Set(rows.map(r => r.cardId)));
+  const toggle = (id: string) => setKeep(prev => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next; });
+  return <div className="bp-carry" role="region" aria-label="带过来的">
+    <b>从{from ? ` ${from.slice(5).replace('-', '/')} ` : '前一天'}带过来 {rows.length} 项</b>
+    <span>没做完的带到了今天，去掉勾的不带。确认前它们不参与抽卡。</span>
+    <ul className="bp-carry-list">{rows.map(r => <li key={r.cardId}><label><input type="checkbox" checked={keep.has(r.cardId)} onChange={() => toggle(r.cardId)} />
+      <span>{r.taskName ? `${r.taskName}：${plainText(r.title)}` : plainText(r.title)}</span></label></li>)}</ul>
+    <span className="acts"><Button size="sm" onClick={() => onCarry([])}>全部去掉</Button><Button size="sm" tone="ink" onClick={() => onCarry([...keep])}>确认</Button></span>
+  </div>;
 }
 
 function Row({ row: r, today, runningMs, inserting, onStart, onRemove }:

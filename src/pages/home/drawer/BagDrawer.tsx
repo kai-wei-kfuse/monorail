@@ -37,6 +37,8 @@ export interface BagActions {
   abandonTask: (id: string) => void;
   restoreTask: (id: string, slot: BackpackSlot, makeRoom?: MakeRoom) => void;
   saveCard: (cardId: string, fields: CardFields) => void;
+  /** 编辑器里的〔PASS〕（同 0.3.0 背包页） */
+  pass: (cardId: string) => void;
   convertIdea: (ideaId: string, input: IdeaTaskInput) => void;
   deleteIdea: (ideaId: string) => void;
   completeIdea: (ideaId: string, text: string) => void;
@@ -82,7 +84,8 @@ export function BagDrawer({ open, onClose, data, actions, children }:
     return () => document.removeEventListener('keydown', key);
   }, [open, dlg, pop, detail, onClose]);
 
-  const runningMs = (() => { const run = plan.today.rows.find(r => r.running); return run && data.now ? 0 : 0; })();
+  // 正在计那一行：提交之后又过去的时间（G7 审核 S1）
+  const runningMs = (() => { const run = plan.today.rows.find(r => r.running && r.runningSince); return run?.asOf ? Math.max(0, tick - Date.parse(run.asOf)) : 0; })();
   const start = (cardId: string) => { actions.start(cardId); onClose(); };
   const planOf = (item: PoolItem, anchor: HTMLElement) => { const t = all.find(x => x.items.some(i => i.id === item.id)); if (t) setPop({ item, task: t, anchor }); };
   const unplan = (cardId: string) => actions.planRemove(day, cardId);
@@ -143,7 +146,7 @@ export function BagDrawer({ open, onClose, data, actions, children }:
     {dlg?.kind === 'card' && editing && <CardEditor isNew={false} tasks={choices} defaultTimebox={data.defaultTimebox}
       initial={editing.fields} passBlocked={editing.passBlocked} projects={pool.projects} knownTags={data.knownTags}
       onCreateProject={actions.createProject} onCreateTag={actions.createTag} onCancel={() => setDlg(null)}
-      onSave={fields => { setDlg(null); actions.saveCard(editing.id, fields); }} onPass={() => setDlg(null)} />}
+      onSave={fields => { setDlg(null); actions.saveCard(editing.id, fields); }} onPass={() => { setDlg(null); actions.pass(editing.id); }} />}
     {dlg?.kind === 'idea' && <ConvertIdea ideaText={dlg.idea.text} mains={pool.mains.map(t => ({ id: t.id, name: t.name, room: pool.mainItems - t.items.length }))}
       mainFree={pool.mains.length < pool.mainMax} sideFree={pool.sides.length < pool.sideMax} mainItems={pool.mainItems}
       projects={pool.projects} onCreateProject={actions.createProject} onCancel={() => setDlg(null)}

@@ -3,7 +3,7 @@ import type * as Zustand from 'zustand';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { createActions } from './actions';
 import { BagScreen } from './BagScreen';
-import { fixture, at, card, task, seed, open } from '../services/serviceFixture';
+import { fixture, at, card, task, seed, open, getCard } from '../services/serviceFixture';
 import type { Ctx } from '../services/commit';
 
 const native = vi.hoisted(() => ({ invoke: vi.fn() }));
@@ -11,6 +11,7 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: native.invoke }));
 vi.mock('react', async importOriginal => ({
   ...await importOriginal<typeof React>(),
   useState: vi.fn((init: unknown) => [typeof init === 'function' ? (init as () => unknown)() : init, vi.fn()]),
+  useEffect: vi.fn(),
 }));
 vi.mock('zustand', async importOriginal => ({
   ...await importOriginal<typeof Zustand>(),
@@ -62,5 +63,20 @@ it('背包抽屉的〔开始〕经 homeService 开始计时，出错交给 repor
   element.props.actions.start('cold-card');
   await vi.waitFor(() => expect(report).toHaveBeenCalledTimes(1));
   expect(String(report.mock.calls[0][0])).toContain('不在背包');
+  vi.useRealTimers();
+});
+
+it('背包抽屉的〔PASS〕接上 cardService.pass（G7 审核 B2）', async () => {
+  const f = fixture();
+  await seed(f, [card('c1', { task_id: 'm1' })], [task('m1')]);
+  vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(at(3))); f.clock(at(3));
+  const report = vi.fn();
+  const fragment = BagScreen({ ctx: f.ctx, open: true, onOpen: vi.fn(), onClose: vi.fn(), drawAt: null, onDrawn: vi.fn(), report, children: null });
+  const element = (fragment.props.children as { props: { actions: { pass: (id: string) => void } } }[])[0];
+  const before = f.publish.mock.calls.length;
+  element.props.actions.pass('c1');
+  await vi.waitFor(() => expect(f.publish.mock.calls.length).toBeGreaterThan(before));
+  expect((await getCard(f, 'c1')).status).not.toBe('待做');
+  expect(report).not.toHaveBeenCalled();
   vi.useRealTimers();
 });

@@ -101,7 +101,7 @@ export function TimerBar({ view, actions, mode, onMode, manual, onDraft }:
 
   return <section className="tbar">
     <div className="tbar-head"><span className="k">TIMER<em>计时条</em></span>
-      <span className="tbar-tip">{mode === 'manual' ? '补一段过去做过的事：开始、结束、时长填两项' : '点输入框就开始计时；写下在做什么，或者抽一张卡'}</span>
+      <span className="tbar-tip">{mode === 'manual' ? '补一段过去做过的事：开始、结束、时长填两项' : '点输入框就开始计时；写下在做什么，或者从今日任务板抽一张'}</span>
       <Segmented label="计时方式" value={mode} onChange={onMode} options={[{ value: 'timer', label: '计时' }, { value: 'manual', label: '手动补录', disabled: !manual }]} />
     </div>
     {mode === 'manual' ? manual : <>

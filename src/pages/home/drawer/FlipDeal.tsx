@@ -61,9 +61,9 @@ export function FlipDeal({ pick, pool, from, onStart, onAgain, onCancel }:
     return () => { alive = false; };
   }, []);
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); onCancel(); } };
-    document.addEventListener('keydown', key);
-    return () => document.removeEventListener('keydown', key);
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onCancel(); } };
+    document.addEventListener('keydown', key, true);
+    return () => document.removeEventListener('keydown', key, true);
   }, [onCancel]);
 
   return <div ref={host} className={`fd-deal${on ? ' on' : ''}`} role="dialog" aria-label="抽一张" onPointerDown={e => { if (e.target === e.currentTarget && ready) onCancel(); }}>

@@ -41,6 +41,9 @@ export function previewReadout(entries: readonly TimeEntry[], request: ReadoutRe
   if (request.mode === 'ref' || request.mode === 'refToday') {
     if (!open.card_id) throw new Error('当前条目没有引用');
     const since = request.mode === 'refToday' && request.since ? Date.parse(request.since) : -Infinity;
+    // 改今天的（G7 审核 B1）：开着那一段从换日前就开始了，挪它的起点会改掉换日前那部分，拒绝；今天最多到「现在 − 今天起点」
+    if (request.mode === 'refToday' && Date.parse(open.started_at) < since) throw new Error('这一段跨过了换日时间，读数只算今天的部分；要改请在日历里改这一段');
+    if (request.mode === 'refToday' && target > at - since) throw new Error(`今天最多 ${Math.floor((at - since) / 60000)} 分钟（从今天的换日时间算起）`);
     start = refStart(entries, open, at, target, since);
   }
   const hit = entries.filter(entry => entry.id !== open.id && !isIdle(entry) &&

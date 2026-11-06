@@ -1,4 +1,5 @@
 import type { Card } from '../domain/card/card';
+import { activityDay } from '../domain/timeline/day';
 import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
 import type { RecordEntry } from '../domain/record/record';
@@ -27,7 +28,8 @@ export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEnt
     return { id: card.id, content: card.content, type: card.type, timeboxMinutes: card.timebox_minutes,
       elapsedMs: refElapsedInTx({ entries, at }, card.id), running: entries.some(entry => entry.card_id === card.id && entry.ended_at === null),
       blocking: card.blocking, dueAt: card.due_at, shrinkLevel: card.shrink_level, project: card.project, tags: card.tags,
-      done: card.status === '已完成' ? card.completed_day : null, split: isRest ? 'rest' as const : isToday ? 'today' as const : null, splitFrom: isRest ? note! : null };
+      done: card.status === '已完成' ? card.completed_day : null, split: isRest ? 'rest' as const : isToday ? 'today' as const : null, splitFrom: isRest ? note! : null,
+      dueDay: card.due_at ? activityDay(card.due_at, settings.dayBoundaryHour) : null };
   };
   const poolTask = (task: Task): PoolTask => {
     const ordered = cards.filter(card => card.task_id === task.id).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));

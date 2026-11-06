@@ -31,7 +31,7 @@ const todayText = (o: Insert['over']) => o.kind === 'card'
  */
 export function InsertCard({ insert, now, look, titleScale, place, onBack, onEndOriginal, onPause, onContinue, children }:
   { insert: Insert; now: number; look: CardLook; titleScale: number; place: 'bottom' | 'top';
-    onBack: () => Promise<unknown>; onEndOriginal: () => Promise<unknown>; onPause: () => void; onContinue: () => void; children: ReactNode }) {
+    /** 交回 false 表示没成功（插入卡复位） */ onBack: () => Promise<unknown>; onEndOriginal: () => Promise<unknown>; onPause: () => void; onContinue: () => void; children: ReactNode }) {
   const stack = useRef<HTMLDivElement>(null), topRef = useRef<HTMLElement>(null), [asking, setAsking] = useState(false), [leaving, setLeaving] = useState(false);
   const o = insert.over, onTask = o.kind === 'card';
   const elapsed = insert.startedAt ? now - Date.parse(insert.startedAt) : 0;
@@ -71,7 +71,12 @@ export function InsertCard({ insert, now, look, titleScale, place, onBack, onEnd
       const fwd = under.animate([{ transform: 'translateY(var(--sink)) scale(var(--scale))' }, { transform: 'none' }], { duration: 280, delay: 100, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'forwards' });
       await settled([out, fwd]);
     } else if (t && motionLevel() === 'reduced') await settled([t.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'linear', fill: 'forwards' })]);
-    try { await onBack(); } finally { setLeaving(false); }
+    try {
+      const ok = await onBack();
+      // 没有成功（状态变了、写盘出错）：撤掉收走的动画，插入卡和底下那张复位（G7 审核 S4）
+      if (ok === false) [t, under].forEach(el => el?.getAnimations().forEach(a => a.cancel()));
+      s?.classList.remove('clip');
+    } finally { setLeaving(false); }
   };
   const end = async () => { setAsking(false); setLeaving(true); try { await onEndOriginal(); } finally { setLeaving(false); } };
 

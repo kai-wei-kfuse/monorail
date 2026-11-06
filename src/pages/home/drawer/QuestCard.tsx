@@ -7,10 +7,9 @@ import { hm } from './TodayBoard';
 import type { PlanDay } from './TodayBoard';
 
 const minutesOf = (it: PoolItem) => it.elapsedMs / 60_000;
-const dayOf = (iso: string | null) => iso ? iso.slice(0, 10) : null;
-/** 那天到期：卡的期限落在今天 / 明天的活动日。期限按活动日换算由投影做；这里只比较日期部分（板子上的「到期」以投影的 dueThatDay 为准）。 */
+/** 那天到期：卡的期限落在今天 / 明天的活动日（投影按换日时间算好 dueDay）。 */
 export function dueLabel(it: PoolItem, days: { today: string; tomorrow: string }): string {
-  const d = dayOf(it.dueAt);
+  const d = it.dueDay ?? null;
   return d === days.today ? '今天到期' : d === days.tomorrow ? '明天到期' : '';
 }
 export function onBoard(board: PlanBoard, cardId: string) { return board.rows.some(r => r.cardId === cardId); }

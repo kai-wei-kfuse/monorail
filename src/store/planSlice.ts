@@ -11,6 +11,9 @@ export interface PlanRow {
   achieved: boolean; running: boolean; carried: boolean;
   /** 那天到期（标红） */
   dueThatDay: boolean;
+  /** 正在计那一行：这一段在今天的起点（界面按秒补）；别的行为 null */
+  runningSince?: string | null;
+  /** minutesToday 算到的时刻（提交时刻） */ asOf?: string;
 }
 export interface PlanBoard {
   day: string; rows: PlanRow[];

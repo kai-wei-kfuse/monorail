@@ -47,7 +47,8 @@ export function projectHome(input: ProjectionInput): HomeSlice {
   const closedEffectiveMs = rows.filter(row => row !== tail).reduce((sum, row) => sum + Date.parse(row.ended_at!) - Date.parse(row.started_at), 0);
   // 今天的：开着那一段跨了换日时间的话，今天只算换日以后那一截（界面从 max(开始, 今天起点) 往后补秒）
   const closedTodayMs = selected ? Math.round(minutesOnDay(rows.filter(row => row !== tail), selected.id, day, settings.dayBoundaryHour, at) * 60_000) : 0;
-  const todayGoal = selected?.type === '时间盒卡' ? input.planToday?.items.find(i => i.card_id === selected.id)?.today_minutes ?? selected.timebox_minutes : null;
+  // 卡在板子上才有「今天的量」；不在板子上首页写「目标 N 分钟」（G7 审核 N4）
+  const todayGoal = selected?.type === '时间盒卡' ? input.planToday?.items.find(i => i.card_id === selected.id)?.today_minutes ?? null : null;
   const task = active.find(item => item.id === selected?.task_id);
   const card = selected && (selected.status === '待做' || selected.status === '进行中') ? {
     ...cardTiming(selected, tasks.find(task => task.id === selected.task_id)),

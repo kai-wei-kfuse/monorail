@@ -10,7 +10,7 @@ const suggestCache = new WeakMap<Snapshot, SuggestData>();
 function miniSuggest(snapshot: Snapshot): SuggestData {
   let value = suggestCache.get(snapshot);
   if (!value) {
-    value = suggestSource({ presets: snapshot.settings.lists.presets, cards: snapshot.cards, tasks: snapshot.tasks, entries: snapshot.entries }, MINI_RECENT_LIMIT);
+    value = suggestSource({ presets: snapshot.settings.lists.presets, cards: snapshot.cards, tasks: snapshot.tasks, entries: snapshot.entries, taskMode: snapshot.settings.taskMode }, MINI_RECENT_LIMIT);
     suggestCache.set(snapshot, value);
   }
   return value;

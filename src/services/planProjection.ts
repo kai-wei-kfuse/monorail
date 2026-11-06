@@ -1,4 +1,5 @@
 // 今日任务板的投影（执行方案 G2）：提交后整块重算今天、明天两块板子；心跳只由界面按秒补正在计那一行（R5）。
+import { activityDayStartOf } from '../domain/timeline/day';
 import type { Card } from '../domain/card/card';
 import type { Task } from '../domain/task/task';
 import { trackOf } from '../domain/task/task';
@@ -12,6 +13,7 @@ export interface PlanProjectionInput {
   today: DayPlan; tomorrow: DayPlan; cards: readonly Card[]; tasks: readonly Task[];
   entries: readonly TimeEntry[]; runningCard: string | null; boundaryHour: number; at: string;
 }
+const DAY_START = (day: string, boundaryHour: number) => activityDayStartOf(day, boundaryHour);
 
 function board(plan: DayPlan, input: PlanProjectionInput, isToday: boolean): PlanBoard {
   const cards = new Map(input.cards.map(card => [card.id, card])), tasks = new Map(input.tasks.map(task => [task.id, task]));
@@ -24,6 +26,7 @@ function board(plan: DayPlan, input: PlanProjectionInput, isToday: boolean): Pla
       todayMinutes: item.today_minutes, minutesToday: Math.floor(minutes),
       achieved: isToday && achieved(item, card, minutes), running: isToday && input.runningCard === card.id,
       carried: item.carried, dueThatDay: dueOn(card, plan.day, input.boundaryHour),
+      runningSince: isToday && input.runningCard === card.id ? runningSince(input.entries, card.id, plan.day, input.boundaryHour) : null, asOf: input.at,
     };
   });
   return { day: plan.day, rows, achieved: rows.filter(row => row.achieved).length, total: rows.length,
@@ -31,6 +34,11 @@ function board(plan: DayPlan, input: PlanProjectionInput, isToday: boolean): Pla
     drawable: isToday ? drawableOnPlan({ plan, cards: input.cards, tasks: input.tasks, entries: input.entries, boundaryHour: input.boundaryHour, at: input.at, activeCard: input.runningCard }).map(c => c.card.id) : [] };
 }
 
+/** 正在计这张卡的那一段在今天的起点：minutesToday 只算到提交时刻，界面从这里往后按秒补（G7 审核 S1） */
+function runningSince(entries: readonly TimeEntry[], cardId: string, day: string, boundaryHour: number): string | null {
+  const open = entries.find(e => e.card_id === cardId && e.ended_at === null);
+  return open ? new Date(Math.max(Date.parse(open.started_at), DAY_START(day, boundaryHour))).toISOString() : null;
+}
 export function projectPlan(input: PlanProjectionInput): PlanSlice {
   return { today: board(input.today, input, true), tomorrow: board(input.tomorrow, input, false) };
 }

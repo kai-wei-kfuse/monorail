@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { appStore } from '../store/appStore';
@@ -16,6 +16,7 @@ import * as preset from '../services/presetService';
 import * as plan from '../services/planService';
 import * as deal from '../services/dealService';
 import { startCard } from '../services/homeService';
+import { pass } from '../services/cardService';
 import { changeLists } from '../services/settingsService';
 import type { HistorySource } from '../shared/history';
 
@@ -55,8 +56,8 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
     if (motionLevel() === 'off') { await startCard(ctx, result.card.id, now()); return; }
     setFlip({ pick: flipCard(result.card.id), pool: result.candidates.map(c => flipCard(c.card.id)), from, key: at });
   });
-  // 外壳每次给一个新的 drawAt 就抽一次（React 渲染里不直接发请求）
-  if (drawAt && drawAt !== lastDraw) { setLastDraw(drawAt); queueMicrotask(() => { onDrawn(); draw(drawAt); }); }
+  // 外壳每次给一个新的 drawAt 就抽一次（G7 审核 N1：放进 effect，不在渲染里发请求）
+  useEffect(() => { if (drawAt && drawAt !== lastDraw) { setLastDraw(drawAt); onDrawn(); draw(drawAt); } }, [drawAt]);
 
   const running = home.insert ? null : home.card?.status === '进行中' && home.entry?.cardId === home.card.id ? home.entry : home.entry && home.entry.project !== '待机' ? home.entry : null;
   const data: BagData = {
@@ -78,6 +79,7 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
     abandonTask: id => call(() => backpack.abandonTask(ctx, id, now())),
     restoreTask: (id, slot, makeRoom) => call(() => backpack.restoreTask(ctx, id, slot, now(), makeRoom)),
     saveCard: (cardId, fields) => call(() => backpack.saveCard(ctx, cardId, fields, now())),
+    pass: cardId => call(() => pass(ctx, cardId, now())),
     convertIdea: (ideaId, input) => call(() => ideas.convertIdeaToTask(ctx, ideaId, input, now())),
     deleteIdea: ideaId => call(() => ideas.deleteIdea(ctx, ideaId, now())),
     completeIdea: (ideaId, text) => call(async () => {
