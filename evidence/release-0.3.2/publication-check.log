@@ -1,0 +1,37 @@
+PASS: installer signature and trusted comment match the application public key
+PASS: one-byte-tampered installer rejected
+{
+  "tag": "v0.3.2",
+  "url": "https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.3.2",
+  "commit": "8c60915ecae689ac9b2a123d81c94c58c3d21821",
+  "runId": "42384154392",
+  "releaseId": 437649353,
+  "prerelease": false,
+  "stableLatest": "v0.3.2",
+  "assets": [
+    {
+      "name": "latest.json",
+      "id": 721034871,
+      "size": 6337,
+      "digest": "sha256:73895be81cbd99fa260f5a38dc0a24235a53be9462ffc8352bae21c347d45e9d"
+    },
+    {
+      "name": "monorail_0.3.2_windows-x86_64_setup.exe",
+      "id": 721034779,
+      "size": 9432282,
+      "digest": "sha256:8e82137b1263cbe4ed58ce81397c213cdbaea2a7433e814fcc5d212bcd536971"
+    },
+    {
+      "name": "monorail_0.3.2_windows-x86_64_setup.exe.sig",
+      "id": 721034777,
+      "size": 436,
+      "digest": "sha256:9fee7f1ca3e392b60cc3b4191584d31e640b3e7a97ca468fe342f511ca2c34dd"
+    }
+  ],
+  "manifestMatches": true,
+  "ciArtifactHashesMatch": true,
+  "productionSignatureVerified": true,
+  "tamperedInstallerRejected": true,
+  "installerExecuted": false,
+  "checkedAt": "2026-11-07T15:11:11.930Z"
+}
