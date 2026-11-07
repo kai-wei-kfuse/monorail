@@ -32,10 +32,29 @@ export const cardSchema = z.object({
   completed_track: z.enum(['主线', '支线']).nullable(), progress_note: z.string(), progress_noted_at: iso.nullable().optional(),
 }).passthrough().refine(card => card.type !== '时间盒卡' || card.timebox_minutes !== null, '时间盒缺少目标时长');
 
+const taskCompletionCardSchema = z.object({
+  id: z.string().min(1),
+  before: z.object({
+    status: z.enum(['待做', '进行中']),
+    completed_at: iso.nullable(),
+    completed_day: nullableText,
+    completed_track: z.enum(['主线', '支线']).nullable(),
+  }).passthrough(),
+}).passthrough();
+const taskCompletionSchema = z.object({
+  id: z.uuid(),
+  at: iso,
+  completed_day: z.string().min(1).optional(),
+  task_slot: z.enum(['主线', '支线']),
+  member_ids: z.array(z.string().min(1)),
+  cards: z.array(taskCompletionCardSchema),
+}).passthrough();
 export const taskSchema = z.object({
   id: z.string().min(1), name: z.string().min(1), slot: z.enum(['主线', '支线']),
   slot_index: z.number().int().positive().nullable(), status: z.enum(['进行中', '冷藏', '已放弃', '已完成']), default_project: nullableText,
   created_at: iso, bet_ends_at: iso.nullable(),
+  completed_at: iso.nullable().optional(),
+  completion: taskCompletionSchema.nullable().optional(),
 }).passthrough();
 const reviewStep = z.enum(['recap', 'newIdeas', 'arena', 'coldPick', 'bet']);
 export const reviewSchema = z.object({

@@ -11,8 +11,10 @@ export const activeItems = (cards: readonly Card[], taskId: string) => cards.fil
 export function canAddTask(tasks: readonly Task[], slot: '主线' | '支线', limits: PoolLimits): boolean {
   return tasks.filter(task => inBackpack(task) && task.slot === slot).length < (slot === '主线' ? limits.mainTasks : limits.sideTasks);
 }
-export function afterItem(task: Task, cards: readonly Card[]): Task {
-  return task.slot === '支线' && task.status === '进行中' && activeItems(cards, task.id).length === 0 ? { ...task, status: '已完成' } : task;
+export function afterItem(task: Task, cards: readonly Card[], at: string | null = null): Task {
+  return task.slot === '支线' && task.status === '进行中' && activeItems(cards, task.id).length === 0
+    ? { ...task, status: '已完成', slot_index: null, completed_at: at, completion: null }
+    : task;
 }
 export function itemCapacity(task: Task, cards: readonly Card[], limits: PoolLimits): number {
   return task.slot === '主线' ? limits.mainItems - activeItems(cards, task.id).length : Infinity;

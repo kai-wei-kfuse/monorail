@@ -10,14 +10,29 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
   addTimeEntryResult,
+  applicationContracts,
   applicationRequest,
   captureTodoResult,
   completeIdeaResult,
+  completeTaskItemResult,
+  completeTaskResult,
   contextResult,
+  drawTaskItemResult,
+  endOriginalTaskResult,
   findItemsResult,
+  getRecapResult,
+  getTaskDetailsResult,
+  getTaskPlanResult,
+  keepGoingTaskItemResult,
+  listOperationHistoryResult,
   listTimeEntriesResult,
   lookupResult,
+  planMutationResult,
+  reopenIdeaResult,
+  reopenTaskItemResult,
+  reopenTaskResult,
   saveIdeaResult,
+  splitTaskItemResult,
   timeSummaryResult,
   timerMutationResult,
   updateTimeEntryResult,
@@ -681,6 +696,398 @@ function createStatefulPeer() {
           };
         });
       }
+
+      case 'end_original_task': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'end_original_task', rest, () => {
+          assertExpectedState(req.arguments.expected_state);
+          const endedId = pausedTarget?.id ?? 'entry-orig';
+          const endedCardId = pausedTarget?.card_id ?? null;
+          pausedTarget = null;
+          mode = 'running';
+          openEntry = { ...openEntry, kind: '普通', card_id: null };
+          const nextState = advanceState();
+          return {
+            ended_entry_id: endedId,
+            ended_card_id: endedCardId,
+            promoted_entry_id: openEntry.id,
+            expected_state: nextState,
+            timer: timerSnapshot(),
+          };
+        });
+      }
+
+      case 'reopen_idea': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'reopen_idea', rest, () => {
+          const idea = ideas.find(i => i.id === req.arguments.idea_id);
+          if (!idea) {
+            throw new ApplicationError({
+              status: 'error',
+              code: 'IDEA_NOT_FOUND',
+              category: 'not_executed',
+              message: 'IDEA_NOT_FOUND：找不到这个想法',
+              next_step: '先用 find_items 查到准确 ID',
+            });
+          }
+          const noop = idea.pool === '活跃池';
+          idea.pool = '活跃池';
+          return { id: idea.id, text: idea.text, pool: '活跃池' as const, noop };
+        });
+      }
+
+      case 'get_task_plan': {
+        const which = req.arguments.day ?? 'today';
+        const resolvedDay = which === 'today' ? '2026-11-03' : '2026-11-04';
+        return {
+          as_of: now,
+          which,
+          resolved_day: resolvedDay,
+          day_boundary_hour: 4,
+          enabled: true,
+          plan: {
+            day: resolvedDay,
+            skip_until_planned: false,
+            carry_pending: false,
+            items: [
+              {
+                card_id: 'card-1',
+                title: '复习编译原理语法分析',
+                track: '主线' as const,
+                priority: '高' as const,
+                today_minutes: null,
+                minutes_today: 0,
+                achieved: false,
+                running: false,
+                carried: false,
+                due_today: false,
+              },
+            ],
+            seen_card_ids: [],
+            drawable_card_ids: ['card-1'],
+          },
+        };
+      }
+
+      case 'add_plan_item':
+      case 'remove_plan_item':
+      case 'update_plan_item':
+      case 'confirm_plan_carry':
+      case 'skip_today_plan':
+      case 'skip_task_item': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, req.method, rest, () => ({
+          noop: false,
+          which: 'today' as const,
+          day: req.arguments.day,
+          plan: {
+            day: req.arguments.day,
+            skip_until_planned: req.method === 'skip_today_plan',
+            carry_pending: false,
+            items: [],
+            seen_card_ids: req.method === 'skip_task_item' ? [req.arguments.card_id] : [],
+            drawable_card_ids: ['card-1'],
+          },
+        }));
+      }
+
+      case 'draw_task_item': {
+        return {
+          as_of: now,
+          day: '2026-11-03',
+          outcome: 'card' as const,
+          card: {
+            id: 'card-1',
+            content: '复习编译原理语法分析',
+            task_id: 'task-main',
+            task_name: '编译原理主线',
+            track: '主线' as const,
+            type: '结果卡' as const,
+            priority: '高' as const,
+            today_minutes: null,
+            goal_minutes: null,
+          },
+          candidates: [
+            {
+              card_id: 'card-1',
+              title: '复习编译原理语法分析',
+              track: '主线' as const,
+              priority: '高' as const,
+              weight: 3,
+            },
+          ],
+          reset_round: false,
+          blocked_reason: null,
+          guide: null,
+        };
+      }
+
+      case 'complete_task_item': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'complete_task_item', rest, () => {
+          const card = cards.find(c => c.id === req.arguments.card_id) ?? cards[0];
+          const touches = openEntry.card_id === card.id;
+          if (touches && req.arguments.expected_state !== undefined) {
+            assertExpectedState(req.arguments.expected_state);
+          }
+          card.status = '已完成';
+          return {
+            noop: false,
+            stopped_timer: touches,
+            card: {
+              id: card.id,
+              content: card.content,
+              status: '已完成' as const,
+              completed_at: now,
+              completed_day: '2026-11-03',
+              completed_track: '主线' as const,
+              progress_note: req.arguments.note ?? '',
+            },
+            task: {
+              id: 'task-main',
+              name: '编译原理主线',
+              slot: '主线' as const,
+              status: '进行中' as const,
+              open_card_count: 0,
+            },
+            expected_state: expectedState,
+            timer: timerSnapshot(),
+          };
+        });
+      }
+
+      case 'reopen_task_item': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'reopen_task_item', rest, () => {
+          const card = cards.find(c => c.id === req.arguments.card_id) ?? cards[0];
+          card.status = '待做';
+          return {
+            noop: false,
+            reopened_parent_task: Boolean(req.arguments.make_room),
+            card: {
+              id: card.id,
+              content: card.content,
+              status: '待做' as const,
+              progress_note: '',
+            },
+            task: {
+              id: 'task-main',
+              name: '编译原理主线',
+              slot: '主线' as const,
+              status: '进行中' as const,
+              slot_index: 1,
+              open_card_count: 1,
+            },
+            expected_state: expectedState,
+            timer: timerSnapshot(),
+          };
+        });
+      }
+
+      case 'keep_going_task_item': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'keep_going_task_item', rest, () => {
+          assertExpectedState(req.arguments.expected_state);
+          const card = cards.find(c => c.id === req.arguments.card_id) ?? cards[0];
+          card.status = '待做';
+          const nextState = advanceState();
+          return {
+            card: {
+              id: card.id,
+              content: card.content,
+              status: '待做' as const,
+              progress_note: req.arguments.note ?? '',
+            },
+            expected_state: nextState,
+            timer: timerSnapshot(),
+          };
+        });
+      }
+
+      case 'split_task_item': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'split_task_item', rest, () => {
+          assertExpectedState(req.arguments.expected_state);
+          const nextState = advanceState();
+          return {
+            today_card_id: 'card-split-today',
+            rest_card_id: 'card-split-rest',
+            today_content: req.arguments.today_content,
+            rest_content: req.arguments.rest_content,
+            today_minutes: 25,
+            rest_minutes: req.arguments.rest_minutes ?? null,
+            expected_state: nextState,
+            timer: timerSnapshot(),
+          };
+        });
+      }
+
+      case 'get_task_details': {
+        return {
+          as_of: now,
+          task: {
+            id: req.arguments.task_id,
+            name: '编译原理主线',
+            slot: '主线' as const,
+            slot_index: 1,
+            status: '进行中' as const,
+            created_at: now,
+            completed_at: null,
+            bet_ends_at: null,
+            default_project: '学习',
+            completion_id: null,
+            reopen_mode: null,
+            reopen_conflict_reason: null,
+            reopen_card_ids: [],
+            slot_full: false,
+            make_room_candidates: [],
+          },
+          items: cards.map(c => ({
+            id: c.id,
+            content: c.content,
+            status: c.status,
+            type: c.type,
+            timebox_minutes: null,
+            project: c.project,
+            tags: c.tags,
+            due_at: c.due_at,
+            progress_note: '',
+            completed_at: null,
+            in_completion_batch: false,
+          })),
+        };
+      }
+
+      case 'complete_task': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'complete_task', rest, () => ({
+          noop: false,
+          stopped_timer: false,
+          completion_id: '11111111-1111-4111-8111-111111111111',
+          affected_card_ids: ['card-1'],
+          freed_slot: { slot: '主线' as const, slot_index: 1 },
+          task: {
+            id: req.arguments.task_id,
+            name: '编译原理主线',
+            slot: '主线' as const,
+            status: '已完成' as const,
+            completed_at: now,
+            bet_ends_at: null,
+          },
+          expected_state: expectedState,
+          timer: timerSnapshot(),
+        }));
+      }
+
+      case 'reopen_task': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'reopen_task', rest, () => ({
+          noop: false,
+          reopen_mode: req.arguments.completion_id ? ('snapshot_batch' as const) : ('task_only' as const),
+          reopened_card_ids: req.arguments.completion_id ? ['card-1'] : [],
+          task: {
+            id: req.arguments.task_id,
+            name: '编译原理主线',
+            slot: '主线' as const,
+            slot_index: 1,
+            status: '进行中' as const,
+            bet_ends_at: null,
+            open_card_count: 1,
+          },
+          expected_state: expectedState,
+          timer: timerSnapshot(),
+        }));
+      }
+
+      case 'get_recap': {
+        const period = req.arguments.period ?? 'week';
+        return {
+          computed_at: now,
+          tracking_mode: 'strict' as const,
+          range: {
+            period,
+            from_day: req.arguments.from ?? '2026-11-02',
+            to_day: req.arguments.to ?? '2026-11-08',
+            days: 7,
+            from: '2026-11-02T04:00:00+08:00',
+            to: '2026-11-09T04:00:00+08:00',
+            effective_to: now,
+            after: null,
+          },
+          today: '2026-11-03',
+          earliest_day: '2026-11-01',
+          last_review_at: null,
+          effective_ms: 1800000,
+          active_days: 1,
+          entry_count: 1,
+          mainline: { permille: 1000, by_source: { 主线任务: 1800000 } },
+          previous: {
+            label: '上周',
+            from_day: '2026-10-26',
+            to_day: '2026-11-01',
+            comparable: true,
+            effective_ms: 0,
+            main_permille: 0,
+            done: 0,
+            notes: 0,
+          },
+          unit: 'day' as const,
+          buckets: [
+            {
+              id: '2026-11-03',
+              label: '二',
+              sub: '11/03',
+              title: '2026-11-03',
+              weekend: false,
+              days: ['2026-11-03'],
+              total_ms: 1800000,
+              by_key: { 学习: 1800000 },
+            },
+          ],
+          total_ms: 1800000,
+          series: [{ key: '学习', ms: 1800000, permille: 1000, color: '#3b82f6', merged: 0 }],
+          groups: [
+            {
+              key: '学习',
+              ms: 1800000,
+              permille: 1000,
+              count: 1,
+              color: '#3b82f6',
+              previous_ms: 0,
+              rows: [],
+            },
+          ],
+          gone_keys: [],
+          done: [],
+          notes: [],
+        };
+      }
+
+      case 'list_operation_history': {
+        return {
+          as_of: now,
+          from_day: req.arguments.from_day ?? '2026-10-28',
+          to_day: req.arguments.to_day ?? '2026-11-03',
+          bad_count: 0,
+          older_before_range: false,
+          records: [
+            {
+              id: 'hist-1',
+              at: now,
+              day: '2026-11-03',
+              action: 'auto.save_idea',
+              title: '保存想法',
+              summary: '保存想法到活跃池',
+              source: { kind: 'cli' },
+              operation_id: null,
+              method: 'save_idea',
+              subject: null,
+              changes: [],
+              warnings: [],
+            },
+          ],
+        };
+      }
     }
   }
 
@@ -825,6 +1232,21 @@ test('CLI usage validation rejects unknown commands, unknown/duplicate flags, co
     { argv: ['timer', 'start-item'] }, // missing card-id
     { argv: ['timer', 'pause', 'extra-arg'] },
     { argv: ['operation', 'get'] },
+    { argv: ['plan', 'show', '--day', '2026-11-07'] }, // plan show only accepts today|tomorrow
+    { argv: ['plan', 'add', 'card-1', '--day', 'today'] }, // plan write commands require YYYY-MM-DD
+    { argv: ['plan', 'add', 'card-1', '--day', '2026-02-31'] }, // invalid calendar date
+    { argv: ['plan', 'edit', 'card-1', '--day', '2026-11-07'] }, // must change at least one field
+    { argv: ['plan', 'carry', '--day', '2026-11-07'] }, // must specify --keep or --keep-none
+    { argv: ['plan', 'carry', '--day', '2026-11-07', '--keep', 'card-1', '--keep-none'] }, // mutually exclusive
+    { argv: ['plan', 'carry', '--day', '2026-11-07', '--keep', 'card-1', '--keep', 'card-1'] }, // duplicate keep IDs
+    { argv: ['item', 'split', 'card-1', '--today-content', 'a'] }, // missing --rest-content
+    { argv: ['task', 'reopen', 'task-main'] }, // missing --completion-id or --legacy
+    { argv: ['task', 'reopen', 'task-main', '--legacy', '--completion-id', '11111111-1111-4111-8111-111111111111'] },
+    { argv: ['task', 'reopen', 'task-main', '--legacy', '--make-room', 'invalid-format'] },
+    { argv: ['recap', 'show', '--period', 'custom', '--from', '2026-11-01'] }, // custom requires both --from and --to
+    { argv: ['recap', 'show', '--period', 'week', '--from', '2026-11-01'] }, // non-custom forbids --from/--to
+    { argv: ['history', 'list', '--from-day', '2026-11-08', '--to-day', '2026-11-07'] }, // from_day > to_day
+    { argv: ['idea', 'reopen', 'not-a-uuid'] },
   ];
 
   for (const c of invalidCases) {
@@ -870,7 +1292,7 @@ test('CLI usage validation rejects unknown commands, unknown/duplicate flags, co
   assert.equal(clientCreated, false);
 });
 
-test('CLI reaches all 17 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin', async () => {
+test('CLI reaches all 36 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin', async () => {
   const peer = createStatefulPeer();
 
   // 1. context (get_context) - read-only, 1 call
@@ -1026,6 +1448,113 @@ test('CLI reaches all 17 application methods and preserves multiline Chinese tex
       method: 'save_idea',
       arguments: { text: specialIdea, needs: '验证特殊字符原样保存' },
     });
+  }
+
+  // 17. idea reopen (reopen_idea)
+  const reopenIdeaRes = await execCli(['idea', 'reopen', savedIdea.data.id, '--json'], peer);
+  assert.equal(reopenIdeaRes.exitCode, 0);
+  const reopenedIdea = reopenIdeaResult.parse(JSON.parse(reopenIdeaRes.stdout).result);
+  assert.deepEqual([reopenedIdea.data.pool, reopenedIdea.data.noop], ['活跃池', false]);
+
+  // 18. break end-original (end_original_task)
+  await execCli(['timer', 'start-item', capturedTodo.data.card_id, '--json'], peer);
+  await execCli(['break', 'start', '上厕所', '--json'], peer);
+  const endOrigRes = await execCli(['break', 'end-original', '--json'], peer);
+  assert.equal(endOrigRes.exitCode, 0);
+  const endedOrig = endOriginalTaskResult.parse(JSON.parse(endOrigRes.stdout).result);
+  assert.equal(endedOrig.data.ended_card_id, capturedTodo.data.card_id);
+  await execCli(['timer', 'stop', '--json'], peer);
+
+  // 19. item done / reopen / keep / split (complete_task_item / reopen_task_item / keep_going_task_item / split_task_item)
+  const itemDoneRes = await execCli(['item', 'done', capturedTodo.data.card_id, '--note', '完成了第一步', '--json'], peer);
+  assert.equal(itemDoneRes.exitCode, 0);
+  assert.equal(completeTaskItemResult.parse(JSON.parse(itemDoneRes.stdout).result).data.card.status, '已完成');
+
+  const itemReopenRes = await execCli(['item', 'reopen', capturedTodo.data.card_id, '--json'], peer);
+  assert.equal(itemReopenRes.exitCode, 0);
+  assert.equal(reopenTaskItemResult.parse(JSON.parse(itemReopenRes.stdout).result).data.card.status, '待做');
+
+  await execCli(['timer', 'start-item', capturedTodo.data.card_id, '--json'], peer);
+  const itemKeepRes = await execCli(
+    ['item', 'keep', capturedTodo.data.card_id, '--note', '整理后续步骤', '--json'],
+    peer,
+  );
+  assert.equal(itemKeepRes.exitCode, 0);
+  const keptItem = keepGoingTaskItemResult.parse(JSON.parse(itemKeepRes.stdout).result);
+  assert.equal(keptItem.data.card.status, '待做');
+
+  await execCli(['timer', 'start-item', capturedTodo.data.card_id, '--json'], peer);
+  const itemSplitRes = await execCli(
+    ['item', 'split', capturedTodo.data.card_id, '--today-content', '第一步', '--rest-content', '第二步', '--json'],
+    peer,
+  );
+  assert.equal(itemSplitRes.exitCode, 0);
+  const splitRes = splitTaskItemResult.parse(JSON.parse(itemSplitRes.stdout).result);
+  assert.ok(splitRes.data.rest_card_id);
+
+  // 20. plan show / add / edit / carry / skip-today / remove / draw / skip
+  const planShowRes = await execCli(['plan', 'show', '--json'], peer);
+  assert.equal(planShowRes.exitCode, 0);
+  getTaskPlanResult.parse(JSON.parse(planShowRes.stdout).result);
+
+  const secondCardId = splitRes.data.rest_card_id;
+  const planAddRes = await execCli(['plan', 'add', secondCardId, '--day', '2026-11-03', '--json'], peer);
+  assert.equal(planAddRes.exitCode, 0);
+  planMutationResult.parse(JSON.parse(planAddRes.stdout).result);
+
+  const planEditRes = await execCli(['plan', 'edit', secondCardId, '--day', '2026-11-03', '--priority', '高', '--json'], peer);
+  assert.equal(planEditRes.exitCode, 0);
+  planMutationResult.parse(JSON.parse(planEditRes.stdout).result);
+
+  const planCarryRes = await execCli(['plan', 'carry', '--day', '2026-11-03', '--keep', secondCardId, '--json'], peer);
+  assert.equal(planCarryRes.exitCode, 0);
+  planMutationResult.parse(JSON.parse(planCarryRes.stdout).result);
+
+  const planSkipTodayRes = await execCli(['plan', 'skip-today', '--day', '2026-11-03', '--json'], peer);
+  assert.equal(planSkipTodayRes.exitCode, 0);
+  planMutationResult.parse(JSON.parse(planSkipTodayRes.stdout).result);
+
+  const planRemoveRes = await execCli(['plan', 'remove', secondCardId, '--day', '2026-11-03', '--json'], peer);
+  assert.equal(planRemoveRes.exitCode, 0);
+  planMutationResult.parse(JSON.parse(planRemoveRes.stdout).result);
+
+  const planDrawRes = await execCli(['plan', 'draw', '--json'], peer);
+  assert.equal(planDrawRes.exitCode, 0);
+  drawTaskItemResult.parse(JSON.parse(planDrawRes.stdout).result);
+
+  const planSkipRes = await execCli(['plan', 'skip', secondCardId, '--day', '2026-11-03', '--json'], peer);
+  assert.equal(planSkipRes.exitCode, 0);
+  planMutationResult.parse(JSON.parse(planSkipRes.stdout).result);
+
+  // 21. task show / done / reopen
+  const taskShowRes = await execCli(['task', 'show', capturedTodo.data.task_id, '--json'], peer);
+  assert.equal(taskShowRes.exitCode, 0);
+  getTaskDetailsResult.parse(JSON.parse(taskShowRes.stdout).result);
+
+  const taskDoneRes = await execCli(['task', 'done', capturedTodo.data.task_id, '--json'], peer);
+  assert.equal(taskDoneRes.exitCode, 0);
+  const completedTask = completeTaskResult.parse(JSON.parse(taskDoneRes.stdout).result);
+  assert.equal(completedTask.data.task.status, '已完成');
+
+  const taskReopenRes = await execCli(
+    ['task', 'reopen', capturedTodo.data.task_id, '--completion-id', completedTask.data.completion_id!, '--json'],
+    peer,
+  );
+  assert.equal(taskReopenRes.exitCode, 0);
+  assert.equal(reopenTaskResult.parse(JSON.parse(taskReopenRes.stdout).result).data.task.status, '进行中');
+
+  // 22. recap show & history list
+  const recapRes = await execCli(['recap', 'show', '--period', 'week', '--json'], peer);
+  assert.equal(recapRes.exitCode, 0);
+  getRecapResult.parse(JSON.parse(recapRes.stdout).result);
+
+  const historyRes = await execCli(['history', 'list', '--source', 'all_automation', '--json'], peer);
+  assert.equal(historyRes.exitCode, 0);
+  listOperationHistoryResult.parse(JSON.parse(historyRes.stdout).result);
+
+  const calledMethods = new Set(peer.calls.map((c) => c.method));
+  for (const method of Object.keys(applicationContracts) as ApplicationMethod[]) {
+    assert.equal(calledMethods.has(method), true, `Expected CLI test to exercise ${method}`);
   }
 });
 

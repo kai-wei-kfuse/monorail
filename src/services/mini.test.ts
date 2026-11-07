@@ -254,3 +254,143 @@ it('D1 writing a new event carries the chosen category; @project in the name win
   await dispatchMiniCommand(f.ctx, { ...editSeen(f), type: 'editOpen', pending_id: f.home().pending!.id, patch: { description: '写方案', project: '工作', tags: [] } });
   expect(open(f)).toMatchObject({ description: '写方案', project: '工作', started_at: at(10) });
 });
+
+// ===== 0.3.2 ADR 0024 v1.2：跨主窗、小窗显式插入与内存草稿协调器 =====
+it('ADR 0024: explicit insert works on running/paused card and free timer (even when taskMode is false), truncates at click time and records home.insertExplicit', async () => {
+  const { createInsertDraftCoordinator } = await import('./insertDraftCoordinator');
+  const { resume } = await import('./homeService');
+  const f = fixture();
+  f.ctx.settings.lists.projects = [{ name: '工作', color: '#7c5cff' }, { name: '学习', color: '#1aa3ff' }, { name: '生活', color: '#3cbf7a' }];
+  f.ctx.settings.taskMode = false;
+  await seed(f, []);
+  await startFree(f.ctx, { description: '写周报', project: '工作', tags: [] }, at(0));
+  const origId = open(f).id;
+  const coord = createInsertDraftCoordinator(f.ctx);
+  try {
+    // 同毫秒点击明确拒绝，不建草稿
+    await expect(coord.begin({ owner: 'main', ownerSession: 's-main', at: at(0) })).rejects.toThrow('原计时刚开始或时刻已变化');
+    expect(coord.current()).toBeNull();
+
+    // t=5 点下插入事件，t=12 才按回车提交：起点固定在 t=5
+    f.clock(at(5));
+    const draft = await coord.begin({ owner: 'main', ownerSession: 's-main', at: at(5) });
+    expect(draft.original).toMatchObject({ entryId: origId, cardId: null, title: '写周报' });
+    f.clock(at(12));
+    const insId = await coord.commit({ draftId: draft.id, owner: 'main', ownerSession: 's-main', text: '回紧急消息 @学习 #加急', project: '生活' });
+    expect(coord.current()).toBeNull();
+    expect(open(f)).toMatchObject({ id: insId, description: '回紧急消息', project: '学习', tags: ['加急'], kind: '插入', started_at: at(5) });
+    expect(f.ctx.snapshot()!.state.resume_entry_id).toBe(origId);
+    const { records } = await f.ctx.repos.history.readDays('2000-01-01', '2999-12-31');
+    expect(records[0]).toMatchObject({ action: 'home.insertExplicit', subject: { type: 'entry', id: insId } });
+
+    // 回到原自由记录，暂停后再显式插入：原目标从 resume_entry_id 取，不把待机当原事
+    f.clock(at(15));
+    await resume(f.ctx, at(15));
+    const resumedId = open(f).id;
+    f.clock(at(20));
+    await pause(f.ctx, at(20));
+    expect(open(f).project).toBe('待机');
+    const pausedDraft = await coord.begin({ owner: 'mini', ownerSession: 's-mini', at: at(20) });
+    expect(pausedDraft.original).toMatchObject({ entryId: resumedId, title: '写周报' });
+    f.clock(at(22));
+    await coord.commit({ draftId: pausedDraft.id, owner: 'mini', ownerSession: 's-mini', text: '接电话', project: '工作' });
+    expect(open(f)).toMatchObject({ description: '接电话', kind: '插入', started_at: at(20) });
+    expect(f.ctx.snapshot()!.state.resume_entry_id).toBe(resumedId);
+  } finally {
+    coord.dispose();
+  }
+});
+
+it('ADR 0024: coordinator enforces single draft, rejects concurrent begin, survives unrelated commits, invalidates on timer change, and routes mini commands with monotonic viewSeq', async () => {
+  const { createInsertDraftCoordinator } = await import('./insertDraftCoordinator');
+  const backpack = await import('./backpackService');
+  const f = fixture();
+  await seed(f, [card('c1', { task_id: 't1', content: '做主线卡' })], [task('t1')]);
+  await startCard(f.ctx, 'c1', at(0));
+  const coord = createInsertDraftCoordinator(f.ctx);
+  let receive!: (message: MiniMessage) => void;
+  let readyFn!: (session?: string) => void;
+  const replies: MiniReply[] = [];
+  const pushed: ReturnType<typeof projectMini>[] = [];
+  const bus: MainWindowBus = {
+    onCommand: async fn => { receive = fn; return () => {}; },
+    onReady: async fn => { readyFn = fn; return () => {}; },
+    push: async snap => { pushed.push(snap); },
+    reply: async r => { replies.push(r); },
+  };
+  const stop = await connectMini(f.ctx, bus, {
+    openMain: async () => {},
+    complete: async () => {},
+    report: error => { throw error; },
+    draftCoordinator: coord,
+  }, MINI_HEARTBEAT_MS);
+  try {
+    f.clock(at(10));
+    const snap0 = pushed.at(-1)!;
+    expect(snap0.canInsert).toBe(true);
+    expect(snap0.viewSeq).toBe(1);
+
+    // 小窗发起 beginInsertDraft
+    receive({
+      command: {
+        requestId: 'req-begin',
+        at: at(10),
+        epoch: snap0.epoch,
+        entryId: snap0.entryId,
+        cardId: snap0.cardId,
+        type: 'beginInsertDraft',
+        ownerSession: 'mini-1',
+        expectedTimer: snap0.timerStateToken!,
+      },
+    });
+    await vi.waitFor(() => expect(replies).toHaveLength(1));
+    expect(replies[0].outcome.kind).toBe('done');
+    const draft1 = coord.current()!;
+    expect(draft1).toMatchObject({ owner: 'mini', ownerSession: 'mini-1', at: at(10) });
+    expect(pushed.at(-1)!.viewSeq).toBeGreaterThan(snap0.viewSeq!);
+    expect(pushed.at(-1)!.insertDraft).toMatchObject({ id: draft1.id, owner: 'mini', ownerSession: 'mini-1' });
+
+    // 另一窗口同时 begin 明确拒绝
+    f.clock(at(11));
+    await expect(coord.begin({ owner: 'main', ownerSession: 'main-1', at: at(11) })).rejects.toThrow('另一窗口正在写插入事件');
+
+    // 无关的背包写入不会取消草稿
+    await backpack.addItem(f.ctx, 't1', '新子项', at(11));
+    expect(coord.current()?.id).toBe(draft1.id);
+
+    // 小窗重载产生新的 miniSession：自动回收旧 mini editing 草稿
+    readyFn('mini-2');
+    expect(coord.current()).toBeNull();
+
+    // 重新建草稿，验证外部计时变化会使草稿失效并通知原因
+    const invalidated: string[] = [];
+    let latestNotifiedDraft = coord.current();
+    coord.onChange((d, msg) => { latestNotifiedDraft = d; if (msg) invalidated.push(msg); });
+    f.clock(at(12));
+    const draft2 = await coord.begin({ owner: 'main', ownerSession: 'main-1', at: at(12) });
+    expect(coord.current()?.id).toBe(draft2.id);
+    // 旧 draftId 的 cancel 不能清掉新草稿
+    await coord.cancel({ draftId: draft1.id, epoch: f.ctx.mainEpoch });
+    expect(coord.current()?.id).toBe(draft2.id);
+    // 暂停原计时：timerStateToken 变化，草稿自动失效
+    f.clock(at(15));
+    await pause(f.ctx, at(15));
+    expect(coord.current()).toBeNull();
+    expect(invalidated).toContain('原来的事已变化，插入未记下');
+
+    // 提交进行中（committing）时调用 cancelDraftByOwner('mini') 不会取消正在落盘的草稿；提交成功后 onChange 必须收到 null
+    f.clock(at(16));
+    const draft3 = await coord.begin({ owner: 'mini', ownerSession: 'mini-2', at: at(16) });
+    const committingPromise = coord.commit({ draftId: draft3.id, owner: 'mini', ownerSession: 'mini-2', text: '正在提交的插入' });
+    expect(coord.current()?.phase).toBe('committing');
+    expect(latestNotifiedDraft?.phase).toBe('committing');
+    expect(coord.cancelDraftByOwner('mini')).toBe(false);
+    await committingPromise;
+    expect(coord.current()).toBeNull();
+    expect(latestNotifiedDraft).toBeNull();
+    expect(open(f)).toMatchObject({ description: '正在提交的插入', kind: '插入', started_at: at(16) });
+  } finally {
+    stop();
+    coord.dispose();
+  }
+});

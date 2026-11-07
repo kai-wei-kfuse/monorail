@@ -22,6 +22,13 @@ export class CliUsageError extends ApplicationError {
 export type ContextSection = 'timer' | 'pending_actions' | 'options';
 export type FindKind = 'idea' | 'todo_card' | 'task' | 'all';
 export type DayMode = 'activity' | 'calendar';
+export type PlanShowDay = 'today' | 'tomorrow';
+export type PlanPriority = '普通' | '高';
+export type RecapPeriodOption = 'week' | 'lastWeek' | 'cycle' | 'month' | 'quarter' | 'year' | 'custom';
+export type RecapDimensionOption = 'project' | 'tag' | 'source' | 'activity';
+export type HistorySourceOption = 'manual' | 'system' | 'mcp' | 'cli' | 'automation' | 'all_automation';
+export type HistorySubjectTypeOption = 'entry' | 'card' | 'task' | 'record' | 'review' | 'settings' | 'state';
+export type MakeRoomOption = { action: 'freeze' | 'abandon'; task_id: string };
 
 /** 每种命令都可以带全局 `--agent <名字>`（操作历史里的调用方）。 */
 export type ParsedCliCommand = ParsedCommandBody & { agent?: string };
@@ -80,6 +87,13 @@ type ParsedCommandBody =
   | {
       kind: 'call';
       json: boolean;
+      method: 'reopen_idea';
+      ideaId: string;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
       method: 'capture_todo';
       text: string;
       taskId?: string;
@@ -132,7 +146,7 @@ type ParsedCommandBody =
   | {
       kind: 'call';
       json: boolean;
-      method: 'pause_timer' | 'resume_timer' | 'stop_timer' | 'return_from_break';
+      method: 'pause_timer' | 'resume_timer' | 'stop_timer' | 'return_from_break' | 'end_original_task';
       operationId?: string;
       expectedState?: string;
     }
@@ -143,6 +157,155 @@ type ParsedCommandBody =
       activity: string;
       operationId?: string;
       expectedState?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'get_task_plan';
+      day?: PlanShowDay;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'add_plan_item';
+      cardId: string;
+      day: string;
+      priority?: PlanPriority;
+      todayMinutes?: number;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'remove_plan_item';
+      cardId: string;
+      day: string;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'update_plan_item';
+      cardId: string;
+      day: string;
+      priority?: PlanPriority;
+      todayMinutes?: number;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'confirm_plan_carry';
+      day: string;
+      keepCardIds: string[];
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'skip_today_plan';
+      day: string;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'draw_task_item';
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'skip_task_item';
+      cardId: string;
+      day: string;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'complete_task_item';
+      cardId: string;
+      note?: string;
+      finishEarly?: boolean;
+      operationId?: string;
+      expectedState?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'reopen_task_item';
+      cardId: string;
+      makeRoom?: MakeRoomOption;
+      operationId?: string;
+      expectedState?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'keep_going_task_item';
+      cardId: string;
+      note?: string;
+      operationId?: string;
+      expectedState?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'split_task_item';
+      cardId: string;
+      todayContent: string;
+      restContent: string;
+      restMinutes?: number;
+      operationId?: string;
+      expectedState?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'get_task_details';
+      taskId: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'complete_task';
+      taskId: string;
+      operationId?: string;
+      expectedState?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'reopen_task';
+      taskId: string;
+      completionId: string | null;
+      makeRoom?: MakeRoomOption;
+      operationId?: string;
+      expectedState?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'get_recap';
+      period?: RecapPeriodOption;
+      from?: string;
+      to?: string;
+      dimension?: RecapDimensionOption;
+      includeIdle?: boolean;
+      bucket?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'list_operation_history';
+      fromDay?: string;
+      toDay?: string;
+      source?: HistorySourceOption;
+      filterAgent?: string;
+      filterMethod?: string;
+      subjectType?: HistorySubjectTypeOption;
+      subjectId?: string;
+      operationId?: string;
     };
 
 export interface ParseOptions {
@@ -151,9 +314,16 @@ export interface ParseOptions {
 }
 
 const isoSchema = z.iso.datetime({ offset: true });
+const isoDateSchema = z.iso.date();
 const sectionSchema = z.enum(['timer', 'pending_actions', 'options']);
 const findKindSchema = z.enum(['idea', 'todo_card', 'task', 'all']);
 const dayModeSchema = z.enum(['activity', 'calendar']);
+const planShowDaySchema = z.enum(['today', 'tomorrow']);
+const planPrioritySchema = z.enum(['普通', '高']);
+const recapPeriodSchema = z.enum(['week', 'lastWeek', 'cycle', 'month', 'quarter', 'year', 'custom']);
+const recapDimensionSchema = z.enum(['project', 'tag', 'source', 'activity']);
+const historySourceSchema = z.enum(['manual', 'system', 'mcp', 'cli', 'automation', 'all_automation']);
+const historySubjectTypeSchema = z.enum(['entry', 'card', 'task', 'record', 'review', 'settings', 'state']);
 
 interface FlagSpec {
   booleanFlags: ReadonlySet<string>;
@@ -363,6 +533,100 @@ function validateIso(value: string, flagName: string): string {
   return parsed.data;
 }
 
+function validateIsoDate(value: string, flagName: string): string {
+  const parsed = isoDateSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new CliUsageError(
+      `USAGE_ERROR：${flagName} 必须是真实有效的活动日 YYYY-MM-DD（如 2026-11-07，收到 "${value}"）`,
+    );
+  }
+  return parsed.data;
+}
+
+function validatePositiveInt(value: string, flagName: string): number {
+  const trimmed = value.trim();
+  if (!/^[1-9]\d*$/.test(trimmed)) {
+    throw new CliUsageError(`USAGE_ERROR：${flagName} 必须是正整数（收到 "${value}"）`);
+  }
+  const num = Number(trimmed);
+  if (!Number.isSafeInteger(num) || num <= 0) {
+    throw new CliUsageError(`USAGE_ERROR：${flagName} 必须是正整数（收到 "${value}"）`);
+  }
+  return num;
+}
+
+async function resolveOptionalNoteInput(
+  raw: RawFlags,
+  options: ParseOptions,
+): Promise<string | undefined> {
+  const noteDirect = raw.singles.get('--note');
+  const noteFile = raw.singles.get('--note-file');
+  const hasStdin = raw.booleans.has('--stdin');
+
+  const sourceCount = (noteDirect !== undefined ? 1 : 0) + (noteFile !== undefined ? 1 : 0) + (hasStdin ? 1 : 0);
+  if (sourceCount === 0) return undefined;
+  if (sourceCount > 1) {
+    throw new CliUsageError('USAGE_ERROR：进度笔记输入来源互斥；--note、--note-file 与 --stdin 只能三选一');
+  }
+  if (noteDirect !== undefined) {
+    return noteDirect.trim();
+  }
+  if (noteFile !== undefined) {
+    if (noteFile.trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：--note-file 路径不能为空');
+    }
+    const reader = options.readTextFile ?? defaultReadTextFile;
+    try {
+      return reader(noteFile).trim();
+    } catch (error) {
+      if (error instanceof CliUsageError) throw error;
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new CliUsageError(`USAGE_ERROR：无法读取文件 "${noteFile}"：${msg}`);
+    }
+  }
+  const stdinReader = options.readStdin ?? defaultReadStdin;
+  try {
+    return (await stdinReader()).trim();
+  } catch (error) {
+    if (error instanceof CliUsageError) throw error;
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new CliUsageError(`USAGE_ERROR：无法读取标准输入：${msg}`);
+  }
+}
+
+function parseMakeRoomOption(raw: RawFlags): MakeRoomOption | undefined {
+  const combined = raw.singles.get('--make-room');
+  const actionFlag = raw.singles.get('--make-room-action');
+  const taskFlag = raw.singles.get('--make-room-task');
+
+  if (combined !== undefined && (actionFlag !== undefined || taskFlag !== undefined)) {
+    throw new CliUsageError('USAGE_ERROR：--make-room 不能与 --make-room-action / --make-room-task 同时使用');
+  }
+  if (combined !== undefined) {
+    const sep = combined.indexOf(':');
+    const actionRaw = sep >= 0 ? combined.slice(0, sep).trim() : '';
+    const taskIdRaw = sep >= 0 ? combined.slice(sep + 1).trim() : '';
+    if ((actionRaw !== 'freeze' && actionRaw !== 'abandon') || taskIdRaw.length === 0) {
+      throw new CliUsageError(
+        `USAGE_ERROR：--make-room 格式必须为 freeze:<task-id> 或 abandon:<task-id>（收到 "${combined}"）`,
+      );
+    }
+    return { action: actionRaw, task_id: taskIdRaw };
+  }
+  if (actionFlag !== undefined || taskFlag !== undefined) {
+    if (actionFlag === undefined || taskFlag === undefined) {
+      throw new CliUsageError('USAGE_ERROR：--make-room-action 与 --make-room-task 必须同时提供');
+    }
+    const actionTrimmed = actionFlag.trim();
+    const taskTrimmed = taskFlag.trim();
+    if ((actionTrimmed !== 'freeze' && actionTrimmed !== 'abandon') || taskTrimmed.length === 0) {
+      throw new CliUsageError('USAGE_ERROR：--make-room-action 仅支持 freeze 或 abandon，且 --make-room-task 不能为空');
+    }
+    return { action: actionTrimmed, task_id: taskTrimmed };
+  }
+  return undefined;
+}
+
 interface GlobalFlags { json: boolean; help: boolean; version: boolean; agent?: string; rest: string[] }
 
 function extractGlobalJsonAndHelp(argv: string[]): GlobalFlags {
@@ -384,8 +648,9 @@ function extractGlobalJsonAndHelp(argv: string[]): GlobalFlags {
       rest.push(token);
       continue;
     }
-    // 全局 --agent <名字>：操作历史里的调用方（ADR 0019 第 6 条），任何命令都可以带
-    if (token === '--agent' || token.startsWith('--agent=')) {
+    // 全局 --agent <名字>：操作历史里的调用方（ADR 0019 第 6 条），任何命令都可以带；
+    // 但若出现在 `history list` 子命令之后，则留给 `history list` 作为调用方筛选条件。
+    if ((token === '--agent' || token.startsWith('--agent=')) && rest[0] !== 'history') {
       if (agent !== undefined) throw new CliUsageError('USAGE_ERROR：重复参数 --agent');
       const value = token === '--agent' ? argv[++index] : token.slice('--agent='.length);
       if (value === undefined || value === '--' || !value.trim()) throw new CliUsageError('USAGE_ERROR：--agent 需要一个名字');
@@ -519,9 +784,18 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
       if (!ideaId.success) throw new CliUsageError(`USAGE_ERROR：想法 ID 必须是 UUID（收到 "${raw.positionals[0]}"）`);
       return { kind: 'call', json, method: 'complete_idea', ideaId: ideaId.data, operationId: validateOperationId(raw.singles.get('--operation-id')) };
     }
+    if (sub === 'reopen') {
+      const raw = parseTokens(args, { booleanFlags: new Set(), singleFlags: new Set(['--operation-id']), multiFlags: new Set() });
+      if (raw.positionals.length !== 1) {
+        throw new CliUsageError(`USAGE_ERROR：idea reopen 需要且只接受 1 个想法 ID（收到 ${raw.positionals.length} 个）；先用 monorail find --kind idea --include-archived 查到 ID`);
+      }
+      const ideaId = z.uuid().safeParse(raw.positionals[0]);
+      if (!ideaId.success) throw new CliUsageError(`USAGE_ERROR：想法 ID 必须是 UUID（收到 "${raw.positionals[0]}"）`);
+      return { kind: 'call', json, method: 'reopen_idea', ideaId: ideaId.data, operationId: validateOperationId(raw.singles.get('--operation-id')) };
+    }
     if (sub !== 'add') {
       throw new CliUsageError(
-        `USAGE_ERROR：未知子命令 "${`idea ${sub ?? ''}`.trim()}"；请使用 monorail idea add <text> 或 monorail idea done <idea_id>`,
+        `USAGE_ERROR：未知子命令 "${`idea ${sub ?? ''}`.trim()}"；请使用 monorail idea add <text>、monorail idea done <idea_id> 或 monorail idea reopen <idea_id>`,
       );
     }
     const raw = parseTokens(args, {
@@ -766,29 +1040,577 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
       };
     }
 
-    if (sub === 'return') {
+    if (sub === 'return' || sub === 'end-original') {
       const raw = parseTokens(args, {
         booleanFlags: new Set(),
         singleFlags: new Set(['--operation-id', '--expected-state']),
         multiFlags: new Set(),
       });
       if (raw.positionals.length > 0) {
-        throw new CliUsageError(`USAGE_ERROR：break return 不接受位置参数（收到 "${raw.positionals[0]}"）`);
+        throw new CliUsageError(`USAGE_ERROR：break ${sub} 不接受位置参数（收到 "${raw.positionals[0]}"）`);
       }
       const operationIdVal = validateOperationId(raw.singles.get('--operation-id'));
       const expectedState = validateExpectedState(raw.singles.get('--expected-state'));
       return {
         kind: 'call',
         json,
-        method: 'return_from_break',
+        method: sub === 'return' ? 'return_from_break' : 'end_original_task',
         operationId: operationIdVal,
         expectedState,
       };
     }
 
     throw new CliUsageError(
-      `USAGE_ERROR：未知子命令 "${`break ${sub ?? ''}`.trim()}"；支持 break start <activity>、break return`,
+      `USAGE_ERROR：未知子命令 "${`break ${sub ?? ''}`.trim()}"；支持 break start <activity>、break return、break end-original`,
     );
+  }
+
+  if (cmd === 'plan') {
+    const [sub, ...args] = subTokens;
+    if (sub === 'show') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--day']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length > 0) {
+        throw new CliUsageError(`USAGE_ERROR：plan show 不接受位置参数（收到 "${raw.positionals[0]}"）`);
+      }
+      const rawDay = raw.singles.get('--day');
+      let day: PlanShowDay | undefined;
+      if (rawDay !== undefined) {
+        const parsed = planShowDaySchema.safeParse(rawDay);
+        if (!parsed.success) {
+          throw new CliUsageError(`USAGE_ERROR：plan show --day 仅支持 today 或 tomorrow（收到 "${rawDay}"）`);
+        }
+        day = parsed.data;
+      }
+      return { kind: 'call', json, method: 'get_task_plan', day };
+    }
+
+    if (sub === 'add') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--day', '--priority', '--today-minutes', '--operation-id']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：plan add 必须提供 1 个卡片 ID（如 monorail plan add <card-id> --day <YYYY-MM-DD>）');
+      }
+      const rawDay = raw.singles.get('--day');
+      if (rawDay === undefined) {
+        throw new CliUsageError('USAGE_ERROR：plan add 必须提供 --day <YYYY-MM-DD>');
+      }
+      const day = validateIsoDate(rawDay, '--day');
+      const rawPriority = raw.singles.get('--priority');
+      let priority: PlanPriority | undefined;
+      if (rawPriority !== undefined) {
+        const parsed = planPrioritySchema.safeParse(rawPriority);
+        if (!parsed.success) {
+          throw new CliUsageError(`USAGE_ERROR：--priority 仅支持 普通 或 高（收到 "${rawPriority}"）`);
+        }
+        priority = parsed.data;
+      }
+      const rawMinutes = raw.singles.get('--today-minutes');
+      const todayMinutes = rawMinutes !== undefined ? validatePositiveInt(rawMinutes, '--today-minutes') : undefined;
+      return {
+        kind: 'call',
+        json,
+        method: 'add_plan_item',
+        cardId: raw.positionals[0].trim(),
+        day,
+        priority,
+        todayMinutes,
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+
+    if (sub === 'remove') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--day', '--operation-id']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：plan remove 必须提供 1 个卡片 ID（如 monorail plan remove <card-id> --day <YYYY-MM-DD>）');
+      }
+      const rawDay = raw.singles.get('--day');
+      if (rawDay === undefined) {
+        throw new CliUsageError('USAGE_ERROR：plan remove 必须提供 --day <YYYY-MM-DD>');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'remove_plan_item',
+        cardId: raw.positionals[0].trim(),
+        day: validateIsoDate(rawDay, '--day'),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+
+    if (sub === 'edit') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--day', '--priority', '--today-minutes', '--operation-id']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：plan edit 必须提供 1 个卡片 ID（如 monorail plan edit <card-id> --day <YYYY-MM-DD> ...）');
+      }
+      const rawDay = raw.singles.get('--day');
+      if (rawDay === undefined) {
+        throw new CliUsageError('USAGE_ERROR：plan edit 必须提供 --day <YYYY-MM-DD>');
+      }
+      const day = validateIsoDate(rawDay, '--day');
+      const rawPriority = raw.singles.get('--priority');
+      let priority: PlanPriority | undefined;
+      if (rawPriority !== undefined) {
+        const parsed = planPrioritySchema.safeParse(rawPriority);
+        if (!parsed.success) {
+          throw new CliUsageError(`USAGE_ERROR：--priority 仅支持 普通 或 高（收到 "${rawPriority}"）`);
+        }
+        priority = parsed.data;
+      }
+      const rawMinutes = raw.singles.get('--today-minutes');
+      const todayMinutes = rawMinutes !== undefined ? validatePositiveInt(rawMinutes, '--today-minutes') : undefined;
+      if (priority === undefined && todayMinutes === undefined) {
+        throw new CliUsageError('USAGE_ERROR：plan edit 至少要改一项：--priority 或 --today-minutes');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'update_plan_item',
+        cardId: raw.positionals[0].trim(),
+        day,
+        priority,
+        todayMinutes,
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+
+    if (sub === 'carry') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--keep-none']),
+        singleFlags: new Set(['--day', '--operation-id']),
+        multiFlags: new Set(['--keep']),
+      });
+      if (raw.positionals.length > 0) {
+        throw new CliUsageError(`USAGE_ERROR：plan carry 不接受位置参数（收到 "${raw.positionals[0]}"）`);
+      }
+      const rawDay = raw.singles.get('--day');
+      if (rawDay === undefined) {
+        throw new CliUsageError('USAGE_ERROR：plan carry 必须提供 --day <YYYY-MM-DD>');
+      }
+      const day = validateIsoDate(rawDay, '--day');
+      const keepNone = raw.booleans.has('--keep-none');
+      const keepList = raw.multis.get('--keep');
+      if (keepNone && keepList !== undefined) {
+        throw new CliUsageError('USAGE_ERROR：--keep-none 不能与 --keep 同时使用');
+      }
+      if (!keepNone && (!keepList || keepList.length === 0)) {
+        throw new CliUsageError('USAGE_ERROR：plan carry 必须明确指定 --keep <card-id>（可多次）或 --keep-none');
+      }
+      const keepCardIds = keepNone
+        ? []
+        : keepList!.map(id => {
+            const trimmed = id.trim();
+            if (!trimmed) throw new CliUsageError('USAGE_ERROR：--keep 的卡片 ID 不能为空');
+            return trimmed;
+          });
+      if (new Set(keepCardIds).size !== keepCardIds.length) {
+        throw new CliUsageError('USAGE_ERROR：--keep 不能包含重复的卡片 ID');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'confirm_plan_carry',
+        day,
+        keepCardIds,
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+
+    if (sub === 'skip-today') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--day', '--operation-id']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length > 0) {
+        throw new CliUsageError(`USAGE_ERROR：plan skip-today 不接受位置参数（收到 "${raw.positionals[0]}"）`);
+      }
+      const rawDay = raw.singles.get('--day');
+      if (rawDay === undefined) {
+        throw new CliUsageError('USAGE_ERROR：plan skip-today 必须提供 --day <YYYY-MM-DD>');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'skip_today_plan',
+        day: validateIsoDate(rawDay, '--day'),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+
+    if (sub === 'draw') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length > 0) {
+        throw new CliUsageError(`USAGE_ERROR：plan draw 不接受位置参数（收到 "${raw.positionals[0]}"）`);
+      }
+      return { kind: 'call', json, method: 'draw_task_item' };
+    }
+
+    if (sub === 'skip') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--day', '--operation-id']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：plan skip 必须提供 1 个候选卡片 ID（如 monorail plan skip <card-id> --day <YYYY-MM-DD>）');
+      }
+      const rawDay = raw.singles.get('--day');
+      if (rawDay === undefined) {
+        throw new CliUsageError('USAGE_ERROR：plan skip 必须提供 --day <YYYY-MM-DD>');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'skip_task_item',
+        cardId: raw.positionals[0].trim(),
+        day: validateIsoDate(rawDay, '--day'),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+
+    throw new CliUsageError(
+      `USAGE_ERROR：未知子命令 "${`plan ${sub ?? ''}`.trim()}"；支持 plan show、plan add、plan remove、plan edit、plan carry、plan skip-today、plan draw、plan skip`,
+    );
+  }
+
+  if (cmd === 'item') {
+    const [sub, ...args] = subTokens;
+    if (sub === 'done') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--finish-early', '--stdin']),
+        singleFlags: new Set(['--note', '--note-file', '--operation-id', '--expected-state']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：item done 必须提供 1 个子任务卡片 ID（如 monorail item done <card-id>）');
+      }
+      const note = await resolveOptionalNoteInput(raw, options);
+      return {
+        kind: 'call',
+        json,
+        method: 'complete_task_item',
+        cardId: raw.positionals[0].trim(),
+        note,
+        finishEarly: raw.booleans.has('--finish-early') ? true : undefined,
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+        expectedState: validateExpectedState(raw.singles.get('--expected-state')),
+      };
+    }
+
+    if (sub === 'reopen') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--make-room', '--make-room-action', '--make-room-task', '--operation-id', '--expected-state']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：item reopen 必须提供 1 个子任务卡片 ID（如 monorail item reopen <card-id>）');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'reopen_task_item',
+        cardId: raw.positionals[0].trim(),
+        makeRoom: parseMakeRoomOption(raw),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+        expectedState: validateExpectedState(raw.singles.get('--expected-state')),
+      };
+    }
+
+    if (sub === 'keep') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--stdin']),
+        singleFlags: new Set(['--note', '--note-file', '--operation-id', '--expected-state']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：item keep 必须提供 1 个当前卡片 ID（如 monorail item keep <card-id>）');
+      }
+      const note = await resolveOptionalNoteInput(raw, options);
+      return {
+        kind: 'call',
+        json,
+        method: 'keep_going_task_item',
+        cardId: raw.positionals[0].trim(),
+        note,
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+        expectedState: validateExpectedState(raw.singles.get('--expected-state')),
+      };
+    }
+
+    if (sub === 'split') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--today-content', '--rest-content', '--rest-minutes', '--operation-id', '--expected-state']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：item split 必须提供 1 个当前卡片 ID（如 monorail item split <card-id> --today-content ... --rest-content ...）');
+      }
+      const todayContent = raw.singles.get('--today-content')?.trim();
+      const restContent = raw.singles.get('--rest-content')?.trim();
+      if (!todayContent || !restContent) {
+        throw new CliUsageError('USAGE_ERROR：item split 必须同时提供非空的 --today-content 与 --rest-content');
+      }
+      const rawRestMinutes = raw.singles.get('--rest-minutes');
+      const restMinutes = rawRestMinutes !== undefined ? validatePositiveInt(rawRestMinutes, '--rest-minutes') : undefined;
+      return {
+        kind: 'call',
+        json,
+        method: 'split_task_item',
+        cardId: raw.positionals[0].trim(),
+        todayContent,
+        restContent,
+        restMinutes,
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+        expectedState: validateExpectedState(raw.singles.get('--expected-state')),
+      };
+    }
+
+    throw new CliUsageError(
+      `USAGE_ERROR：未知子命令 "${`item ${sub ?? ''}`.trim()}"；支持 item done、item reopen、item keep、item split`,
+    );
+  }
+
+  if (cmd === 'task') {
+    const [sub, ...args] = subTokens;
+    if (sub === 'show') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：task show 必须提供 1 个任务 ID（如 monorail task show <task-id>）');
+      }
+      return { kind: 'call', json, method: 'get_task_details', taskId: raw.positionals[0].trim() };
+    }
+
+    if (sub === 'done') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(['--operation-id', '--expected-state']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：task done 必须提供 1 个任务 ID（如 monorail task done <task-id>）');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'complete_task',
+        taskId: raw.positionals[0].trim(),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+        expectedState: validateExpectedState(raw.singles.get('--expected-state')),
+      };
+    }
+
+    if (sub === 'reopen') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--legacy']),
+        singleFlags: new Set(['--completion-id', '--make-room', '--make-room-action', '--make-room-task', '--operation-id', '--expected-state']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1 || raw.positionals[0].trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：task reopen 必须提供 1 个任务 ID（如 monorail task reopen <task-id> --completion-id <uuid>）');
+      }
+      const isLegacy = raw.booleans.has('--legacy');
+      const rawCompletionId = raw.singles.get('--completion-id');
+      if (isLegacy && rawCompletionId !== undefined) {
+        throw new CliUsageError('USAGE_ERROR：--legacy 不能与 --completion-id 同时使用');
+      }
+      if (!isLegacy && rawCompletionId === undefined) {
+        throw new CliUsageError('USAGE_ERROR：task reopen 必须提供 --completion-id <uuid>（来自 monorail task show）或 --legacy（无快照旧完成任务）');
+      }
+      let completionId: string | null = null;
+      if (rawCompletionId !== undefined) {
+        const parsed = z.uuid().safeParse(rawCompletionId);
+        if (!parsed.success) {
+          throw new CliUsageError(`USAGE_ERROR：--completion-id 必须是合法的 UUID（收到 "${rawCompletionId}"）`);
+        }
+        completionId = parsed.data;
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'reopen_task',
+        taskId: raw.positionals[0].trim(),
+        completionId,
+        makeRoom: parseMakeRoomOption(raw),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+        expectedState: validateExpectedState(raw.singles.get('--expected-state')),
+      };
+    }
+
+    throw new CliUsageError(
+      `USAGE_ERROR：未知子命令 "${`task ${sub ?? ''}`.trim()}"；支持 task show、task done、task reopen`,
+    );
+  }
+
+  if (cmd === 'recap') {
+    const [sub, ...args] = subTokens;
+    if (sub !== 'show') {
+      throw new CliUsageError(`USAGE_ERROR：未知子命令 "${`recap ${sub ?? ''}`.trim()}"；支持 recap show`);
+    }
+    const raw = parseTokens(args, {
+      booleanFlags: new Set(['--include-idle']),
+      singleFlags: new Set(['--period', '--from', '--to', '--dimension', '--bucket']),
+      multiFlags: new Set(),
+    });
+    if (raw.positionals.length > 0) {
+      throw new CliUsageError(`USAGE_ERROR：recap show 不接受位置参数（收到 "${raw.positionals[0]}"）`);
+    }
+    const rawPeriod = raw.singles.get('--period');
+    let period: RecapPeriodOption | undefined;
+    if (rawPeriod !== undefined) {
+      const parsed = recapPeriodSchema.safeParse(rawPeriod);
+      if (!parsed.success) {
+        throw new CliUsageError(
+          `USAGE_ERROR：--period 仅支持 week、lastWeek、cycle、month、quarter、year 或 custom（收到 "${rawPeriod}"）`,
+        );
+      }
+      period = parsed.data;
+    }
+    const rawFrom = raw.singles.get('--from');
+    const rawTo = raw.singles.get('--to');
+    const from = rawFrom !== undefined ? validateIsoDate(rawFrom, '--from') : undefined;
+    const to = rawTo !== undefined ? validateIsoDate(rawTo, '--to') : undefined;
+    if (period === 'custom') {
+      if (!from || !to) {
+        throw new CliUsageError('USAGE_ERROR：--period custom 时必须同时提供 --from <YYYY-MM-DD> 与 --to <YYYY-MM-DD>');
+      }
+    } else if (from !== undefined || to !== undefined) {
+      throw new CliUsageError('USAGE_ERROR：非 custom 周期不能传 --from 或 --to');
+    }
+    const rawDimension = raw.singles.get('--dimension');
+    let dimension: RecapDimensionOption | undefined;
+    if (rawDimension !== undefined) {
+      const parsed = recapDimensionSchema.safeParse(rawDimension);
+      if (!parsed.success) {
+        throw new CliUsageError(
+          `USAGE_ERROR：--dimension 仅支持 project、tag、source 或 activity（收到 "${rawDimension}"）`,
+        );
+      }
+      dimension = parsed.data;
+    }
+    const rawBucket = raw.singles.get('--bucket');
+    if (rawBucket !== undefined && rawBucket.trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：--bucket 不能为空字符串');
+    }
+    return {
+      kind: 'call',
+      json,
+      method: 'get_recap',
+      period,
+      from,
+      to,
+      dimension,
+      includeIdle: raw.booleans.has('--include-idle') ? true : undefined,
+      bucket: rawBucket?.trim(),
+    };
+  }
+
+  if (cmd === 'history') {
+    const [sub, ...args] = subTokens;
+    if (sub !== 'list') {
+      throw new CliUsageError(`USAGE_ERROR：未知子命令 "${`history ${sub ?? ''}`.trim()}"；支持 history list`);
+    }
+    const raw = parseTokens(args, {
+      booleanFlags: new Set(),
+      singleFlags: new Set([
+        '--from-day',
+        '--to-day',
+        '--source',
+        '--agent',
+        '--filter-agent',
+        '--method',
+        '--subject-type',
+        '--subject-id',
+        '--operation-id',
+      ]),
+      multiFlags: new Set(),
+    });
+    if (raw.positionals.length > 0) {
+      throw new CliUsageError(`USAGE_ERROR：history list 不接受位置参数（收到 "${raw.positionals[0]}"）`);
+    }
+    const rawFromDay = raw.singles.get('--from-day');
+    const rawToDay = raw.singles.get('--to-day');
+    const fromDay = rawFromDay !== undefined ? validateIsoDate(rawFromDay, '--from-day') : undefined;
+    const toDay = rawToDay !== undefined ? validateIsoDate(rawToDay, '--to-day') : undefined;
+    if (fromDay !== undefined && toDay !== undefined && fromDay > toDay) {
+      throw new CliUsageError(`USAGE_ERROR：--from-day (${fromDay}) 不能晚于 --to-day (${toDay})`);
+    }
+    const rawSource = raw.singles.get('--source');
+    let source: HistorySourceOption | undefined;
+    if (rawSource !== undefined) {
+      const parsed = historySourceSchema.safeParse(rawSource);
+      if (!parsed.success) {
+        throw new CliUsageError(
+          `USAGE_ERROR：--source 仅支持 manual、system、mcp、cli、automation 或 all_automation（收到 "${rawSource}"）`,
+        );
+      }
+      source = parsed.data;
+    }
+    const agentFlag = raw.singles.get('--agent');
+    const filterAgentFlag = raw.singles.get('--filter-agent');
+    if (agentFlag !== undefined && filterAgentFlag !== undefined) {
+      throw new CliUsageError('USAGE_ERROR：history list 中 --agent 与 --filter-agent 不能同时指定');
+    }
+    const rawFilterAgent = filterAgentFlag ?? agentFlag;
+    if (rawFilterAgent !== undefined && rawFilterAgent.trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：调用方筛选名称不能为空');
+    }
+    const rawFilterMethod = raw.singles.get('--method');
+    if (rawFilterMethod !== undefined && rawFilterMethod.trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：--method 不能为空字符串');
+    }
+    const rawSubjectType = raw.singles.get('--subject-type');
+    let subjectType: HistorySubjectTypeOption | undefined;
+    if (rawSubjectType !== undefined) {
+      const parsed = historySubjectTypeSchema.safeParse(rawSubjectType);
+      if (!parsed.success) {
+        throw new CliUsageError(
+          `USAGE_ERROR：--subject-type 仅支持 entry、card、task、record、review、settings 或 state（收到 "${rawSubjectType}"）`,
+        );
+      }
+      subjectType = parsed.data;
+    }
+    const rawSubjectId = raw.singles.get('--subject-id');
+    if (rawSubjectId !== undefined && rawSubjectId.trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：--subject-id 不能为空字符串');
+    }
+    return {
+      kind: 'call',
+      json,
+      method: 'list_operation_history',
+      fromDay,
+      toDay,
+      source,
+      filterAgent: rawFilterAgent?.trim(),
+      filterMethod: rawFilterMethod?.trim(),
+      subjectType,
+      subjectId: rawSubjectId?.trim(),
+      operationId: validateOperationId(raw.singles.get('--operation-id')),
+    };
   }
 
   if (cmd === 'entry') {

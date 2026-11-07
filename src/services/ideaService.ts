@@ -78,6 +78,14 @@ export function completeIdeaInTx(tx: Transaction, id: string, by: IdeaCompletedB
 }
 export const complete = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => { completeIdeaInTx(tx, id, completedBy(undefined)); }, at,
   { action: 'idea.complete', subject: { type: 'record', id } });
+/** 撤销完成一个想法；已经在活跃池的返回 noop（已转任务或冷库仍按 uncompleteIdea 规则报错，ADR 0020 / ADR 0023 §4）。 */
+export function uncompleteIdeaInTx(tx: Transaction, id: string): { record: RecordEntry; noop: boolean } {
+  const idea = findIdea(tx, id);
+  if (ideaStatus(idea) === '活跃池') return { record: idea, noop: true };
+  const reopened = uncompleteIdea(idea, tx.at);
+  tx.saveRecord(reopened);
+  return { record: reopened, noop: false };
+}
 export const uncomplete = (ctx: Ctx, id: string, at: string) => run(ctx, async tx => {
   tx.saveRecord(uncompleteIdea(findIdea(tx, id), tx.at));
 }, at, { action: 'idea.uncomplete', subject: { type: 'record', id } });

@@ -23,9 +23,26 @@ export function activeCardOf(open: TimeEntry | null | undefined, resume: TimeEnt
  * 从哪个入口开始别的事（ADR 0021 第 3 条入口表）。
  * quick：快捷活动（预设 place 弹层）；temp：临时活动；其余都是「计时框、小窗新事件、收藏、最近的记录、继续这一条、MCP start_timer」一类。
  */
-export type EntrySource = 'quick' | 'temp' | 'favorite' | 'timerBox' | 'mini' | 'recent' | 'continue' | 'mcpTimer' | 'mcpBreak';
+export type EntrySource = 'quick' | 'temp' | 'favorite' | 'timerBox' | 'mini' | 'recent' | 'continue' | 'mcpTimer' | 'mcpBreak' | 'explicitInsert';
 export type EntryAction = 'insert' | 'replace' | 'switch' | 'start';
-const ALWAYS_INSERT: readonly EntrySource[] = ['quick', 'temp', 'mcpBreak'];
+const ALWAYS_INSERT: readonly EntrySource[] = ['quick', 'temp', 'mcpBreak', 'explicitInsert'];
+
+/**
+ * 显式〔插入事件〕入口是否可用（ADR 0024 第 1 节）：
+ * 仅在普通卡/普通自由记录正在计时，或卡/自由记录已暂停且有有效 resume 目标时可用；
+ * 已插入/插入暂停、待确认、待机、休息态或已有草稿时均不可用。
+ */
+export function canExplicitInsert(
+  open: TimeEntry | null | undefined,
+  resume: TimeEntry | null | undefined,
+  options?: { hasPending?: boolean; hasRest?: boolean; hasDraft?: boolean },
+): boolean {
+  if (options?.hasPending || options?.hasRest || options?.hasDraft) return false;
+  if (!open || insertState(open, resume) !== null) return false;
+  if (open.kind === '普通' && !isIdle(open)) return true;
+  if (open.kind === '暂停' && !!resume && !isIdle(resume)) return true;
+  return false;
+}
 
 /**
  * 入口判断（判断放在各 InTx 内部，调用方不用逐个改）：

@@ -1,0 +1,115 @@
+{
+  "bootAndDockGap": {
+    "ok": true,
+    "gapCss": "6px",
+    "buttonCount": 4,
+    "rects": [
+      {
+        "text": "快捷活动1",
+        "left": 16,
+        "right": 143,
+        "w": 127
+      },
+      {
+        "text": "快速记录",
+        "left": 149,
+        "right": 251,
+        "w": 102
+      },
+      {
+        "text": "开启小窗口",
+        "left": 257,
+        "right": 373,
+        "w": 116
+      },
+      {
+        "text": "背包今日未排",
+        "left": 379,
+        "right": 517,
+        "w": 138
+      }
+    ],
+    "gaps": [
+      6,
+      6,
+      6
+    ],
+    "ms": 12325
+  },
+  "bagCompletionAndWipe": {
+    "ok": true,
+    "afterSubtaskDone": {
+      "doneCount": 1,
+      "reopenText": "取消完成"
+    },
+    "afterSubtaskReopen": 0,
+    "doneRowText": "0.3.2 原生验收主线 主线完成于 2026-11-07 14:30 · 2/2 项 · 押注到 12/05 详情 › 重新打开",
+    "wipeResult": {
+      "wipeMounts": 1,
+      "frames": [
+        {
+          "at": 10986,
+          "text": "01 START TASK开始计时 主线 · 0.3.2 原生验收主线 · 结果卡 子项 A：写接口"
+        }
+      ]
+    },
+    "ms": 10516
+  },
+  "mainFreeTimerExplicitInsert": {
+    "ok": true,
+    "hasFreeInsertBtn": true,
+    "beforeCount": 3,
+    "afterCancelCount": 3,
+    "ms": 4335
+  },
+  "dualWindowMatrix": {
+    "ok": true,
+    "miniMetrics": {
+      "winW": 520,
+      "winH": 88,
+      "btnW": 22,
+      "btnH": 26
+    },
+    "mirrorInfo": {
+      "meta": "小窗正在输入",
+      "title": "小窗口",
+      "hasEndOriginalBtn": false
+    },
+    "draftStillAliveAfterPassiveHide": true,
+    "entriesBeforeMiniDraft": 3,
+    "entriesAfterExplicitClose": 3,
+    "committedEntry": {
+      "id": "3a5992e5-c397-4ed3-9d35-b2d2f9aa1911",
+      "started_at": "2026-11-07T14:30:15.279Z",
+      "ended_at": null,
+      "description": "小窗后台提交插入",
+      "project": "未分类",
+      "tags": [],
+      "card_id": null,
+      "kind": "插入",
+      "source": "计时",
+      "updated_at": "2026-11-07T14:30:15.279Z"
+    },
+    "tinyMetrics": {
+      "isTinyClass": true,
+      "winW": 320,
+      "winH": 46,
+      "btnW": 22,
+      "btnH": 26
+    },
+    "epochBeforeReload": true,
+    "ms": 16314
+  },
+  "finish": {
+    "ok": true,
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyPid": [
+      17044,
+      17044
+    ],
+    "isolatedRunningForUser": 1,
+    "ms": 6344
+  }
+}

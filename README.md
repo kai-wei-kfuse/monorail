@@ -49,7 +49,7 @@
 
 ![小窗：插入中](docs/assets/mini.png)
 
-**AI 与自动化（MCP / CLI）。** 安装包内置本机 MCP 服务（`monorail-mcp.mjs`）与命令行工具（`monorail-cli.mjs`），供支持 MCP 的客户端、具备终端能力的 AI Agent 或脚本直接调用（需 Node.js 24+）。能做的事包括：读取当前状态和今日任务板、保存想法、捕获待办、检索想法与任务卡、开始 / 暂停 / 继续 / 停止计时、插入临时活动与回到任务、查询时间统计、补录记录、修改已有记录（0.3.1 新加 `update_time_entry` / `monorail entry edit`，规则同日历，不能删除）。CLI 和 MCP 做不到的事，会提示 agent 停下来告诉用户，不要直接改数据文件。完成首次初始化后，即使关闭窗口或退出应用，调用时也会按需自动拉起本机后台。在「设置 → 09 AI 与自动化」可以直接复制当前安装路径对应的 MCP 配置与 PowerShell 命令，详见 [docs/application/README.md](docs/application/README.md) 与 [mcp/README.md](mcp/README.md)。
+**AI 与自动化（MCP / CLI）。** 安装包内置本机 MCP 服务（`monorail-mcp.mjs`）与命令行工具（`monorail-cli.mjs`），供支持 MCP 的客户端、具备终端能力的 AI Agent 或脚本直接调用（需 Node.js 24+）。共提供 36 项共享应用方法（26 写、10 读）：读取当前状态、查看与编排今天/明天任务板、按权重抽卡与换一张、保存/完成/撤销完成想法、捕获待办、检索想法与任务卡、查看任务详情与整张完成/重新打开任务、完成/取消完成/接着做/拆分子任务卡片、开始 / 暂停 / 继续 / 停止计时、插入临时活动与返回或结束原任务、查询时间统计与多维度统计回看（`get_recap`）、读取操作历史（`list_operation_history`）、补录记录、修改已有记录（规则同日历，不能删除）。CLI 和 MCP 做不到的事，会提示 agent 停下来告诉用户，不要直接改数据文件。完成首次初始化后，即使关闭窗口或退出应用，调用时也会按需自动拉起本机后台。在「设置 → 09 AI 与自动化」可以直接复制当前安装路径对应的 MCP 配置与 PowerShell 命令，详见 [docs/application/README.md](docs/application/README.md) 与 [mcp/README.md](mcp/README.md)。
 
 另外还有：快速记录条（全局快捷键，主窗口隐藏时也能存一条待办）、到期提醒、每周回顾、睡眠和离线时段追问（项目可以任选）、任务模式开关（关掉后只用计时，数据都留着）、开机自启、应用内更新（支持稳定版与 Beta 渠道切换）。
 

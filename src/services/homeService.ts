@@ -4,14 +4,20 @@ import { askChoices } from '../shared/notices';
 import { run } from './commit';
 import type { HistoryIntent, HistorySource } from '../shared/history';
 import * as tracking from './tracking/api';
-import { entryAction, insertClosedMs, insertRunSegments } from '../domain/timeline/insert';
+import { canExplicitInsert, entryAction, insertClosedMs, insertRunSegments } from '../domain/timeline/insert';
 import type { EntrySource } from '../domain/timeline/insert';
 import type { ReadoutRequest, ReadoutPlan, EntryTemplate, TimeEntry } from './tracking/api';
 import { alignInTx, startCardInTx, editContentInTx, editMetaInTx } from './cardService';
 import type { MiniCommand, MiniOutcome } from '../platform/windowBus';
 import { validateUserProject, validateUserTags } from '../domain/timeline/project';
+import { parseEntryText } from '../shared/tags';
+import { insertOverOf } from './homeProjection';
 import type { AppState } from '../data/repos';
 import type { Card } from '../domain/card/card';
+import type { Task } from '../domain/task/task';
+import type { DayPlan } from '../domain/plan/plan';
+import type { Settings } from '../shared/settings';
+import type { HomeSlice } from '../store/homeSlice';
 
 export function timerStateToken(state: AppState, openEntry: TimeEntry | null, currentCard: Pick<Card, 'id' | 'status'> | null): string {
   return `ts1:${[
@@ -25,6 +31,94 @@ export function timerStateTokenInTx(tx: Pick<Transaction, 'state' | 'entries' | 
   const card = tx.cards.find(item => item.id === tx.state.current_card) ?? null;
   return timerStateToken(tx.state, open, card);
 }
+
+export interface ExplicitInsertOriginal {
+  entryId: string;
+  cardId: string | null;
+  title: string;
+  openEntryId: string;
+  openStartedAt: string;
+  paused: boolean;
+  over: NonNullable<HomeSlice['insert']>['over'];
+}
+
+export function explicitInsertTarget(input: {
+  state: AppState; entries: TimeEntry[]; cards: Card[]; tasks: Task[];
+  settings: Settings; planToday?: DayPlan | null; at: string;
+}): ExplicitInsertOriginal | null {
+  const { state, entries, cards, tasks, settings, planToday, at } = input;
+  const open = entries.find(e => e.id === state.open_entry && e.ended_at === null) ?? null;
+  const resume = state.resume_entry_id ? entries.find(e => e.id === state.resume_entry_id) ?? null : null;
+  if (!canExplicitInsert(open, resume, { hasPending: Boolean(state.pending_id || state.pending_at), hasRest: state.rest !== null })) return null;
+  const paused = open!.kind === '暂停';
+  const target = paused ? resume! : open!;
+  const card = target.card_id ? cards.find(c => c.id === target.card_id) : undefined;
+  if (target.card_id && (!card || !['待做', '进行中'].includes(card.status) || !settings.taskMode)) return null;
+  const over = insertOverOf({ cards, tasks, entries, settings, at, planToday }, target);
+  return {
+    entryId: target.id,
+    cardId: card?.id ?? null,
+    title: card ? card.content : target.description,
+    openEntryId: open!.id,
+    openStartedAt: open!.started_at,
+    paused,
+    over,
+  };
+}
+
+export function validateInsertDraftAt(draftAt: string, openStartedAt: string, paused: boolean, nowIso: string): void {
+  const atMs = Date.parse(draftAt), openMs = Date.parse(openStartedAt), nowMs = Date.parse(nowIso);
+  if (!Number.isFinite(atMs) || !Number.isFinite(openMs) || !Number.isFinite(nowMs)) {
+    throw new Error('原计时刚开始或时刻已变化，请重新点插入事件');
+  }
+  if (atMs > nowMs || (paused ? atMs < openMs : atMs <= openMs)) {
+    throw new Error('原计时刚开始或时刻已变化，请重新点插入事件');
+  }
+}
+
+export function commitInsertDraftInTx(
+  tx: Transaction,
+  input: { text: string; project?: string; expectedTimer?: string },
+): string {
+  if (input.expectedTimer !== undefined && timerStateTokenInTx(tx) !== input.expectedTimer) {
+    throw new Error('原来的事已变化，插入未记下');
+  }
+  const target = explicitInsertTarget({
+    state: tx.state, entries: tx.entries, cards: tx.cards, tasks: tx.tasks,
+    settings: tx.settings, planToday: tx.todayPlan, at: tx.at,
+  });
+  if (!target) throw new Error('原来的事已变化，插入未记下');
+  validateInsertDraftAt(tx.at, target.openStartedAt, target.paused, tx.now());
+  const parsed = parseEntryText(input.text, tx.settings.lists.projects.map(p => p.name));
+  const description = parsed.description.trim();
+  if (!description) throw new Error('请输入插入事件名称');
+  const chosenProject = parsed.project ?? input.project ?? '未分类';
+  const project = validateUserProject(tx.settings.lists.projects, chosenProject);
+  const tags = validateUserTags(parsed.tags);
+  startOtherInTx(tx, { description, project, tags }, 'explicitInsert');
+  return tx.state.open_entry!;
+}
+
+export const commitInsertDraft = (
+  ctx: Ctx,
+  input: {
+    at: string; text: string; project?: string; expectedTimer?: string;
+    source?: HistorySource;
+    beforeCommit?: (tx: Transaction) => void;
+    onCommitted?: (entryId: string, committedAt: string) => void;
+  },
+): Promise<string> => run(
+  ctx,
+  async tx => {
+    input.beforeCommit?.(tx);
+    const id = commitInsertDraftInTx(tx, { text: input.text, project: input.project, expectedTimer: input.expectedTimer });
+    alignInTx(tx);
+    return id;
+  },
+  input.at,
+  { action: 'home.insertExplicit', ...(input.source ? { source: input.source } : {}) },
+  input.onCommitted ? { onCommitted: input.onCommitted } : undefined,
+);
 
 export interface Range { start: string; end: string }
 export const manual = (ctx: Ctx, value: Omit<EntryTemplate, 'card_id'>, start: string, end: string, at: string) =>
@@ -105,7 +199,7 @@ export async function continueInTx(tx: Transaction): Promise<void> {
 }
 export const continueTimer = (ctx: Ctx, at: string) => action(ctx, at, continueInTx, { action: 'home.continueInsert' });
 /** 结束原任务（已定 19、26）：插入的事变成普通自由记录接着计；原来那张卡回待做，仍在今天的板子上。 */
-export function endOriginalInTx(tx: Transaction): void { tracking.promoteInsertInTx(tx); }
+export function endOriginalInTx(tx: Transaction): void { tracking.promoteInsertInTx(tx); alignInTx(tx); }
 export const endOriginal = (ctx: Ctx, at: string) => action(ctx, at, tx => {
   const resume = tx.entries.find(e => e.id === tx.state.resume_entry_id);
   endOriginalInTx(tx);
@@ -283,9 +377,13 @@ export const dispatchMiniCommand = (ctx: Ctx, command: MiniCommand): Promise<Min
       await startCardFromPendingInTx(tx, card.id); break;
     }
     case 'continueEntry': await continueEntryInTx(tx, command.targetEntryId); break;
+    case 'beginInsertDraft':
+    case 'commitInsertDraft':
+    case 'cancelInsertDraft':
+      throw new Error('插入草稿命令由协调器处理');
   }
   return { kind: 'done' };
-}, { action: `mini.${command.type}`, source: { kind: 'manual', via: 'mini' } });
+}, { action: `mini.${command.type}` as HistoryIntent['action'], source: { kind: 'manual', via: 'mini' } });
 
 function checkExpectedState(tx: Transaction, expectedState: string): void {
   const actual = timerStateTokenInTx(tx);

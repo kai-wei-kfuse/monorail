@@ -13,9 +13,11 @@ it('capacity checks do not evict existing tasks when the configured maximum is l
   expect(canAddTask(tasks, '主线', limits)).toBe(true);
 });
 it('only a finished side task auto-completes; main tasks remain available for the next item', () => {
-  expect(afterItem(task, [card]).status).toBe('进行中');
-  expect(afterItem(task, [{ ...card, status: '已完成' }]).status).toBe('已完成');
-  expect(afterItem({ ...task, slot: '主线' }, [{ ...card, status: '已完成' }]).status).toBe('进行中');
+  const at = '2026-11-07T10:00:00.000+08:00';
+  expect(afterItem(task, [card], at).status).toBe('进行中');
+  const autoDone = afterItem({ ...task, slot_index: 2, completion: { id: '00000000-0000-4000-8000-000000000001', at, task_slot: '支线', member_ids: ['c'], cards: [] } }, [{ ...card, status: '已完成' }], at);
+  expect(autoDone).toMatchObject({ status: '已完成', slot_index: null, completed_at: at, completion: null });
+  expect(afterItem({ ...task, slot: '主线' }, [{ ...card, status: '已完成' }], at).status).toBe('进行中');
 });
 it('the first split may replace only a never-timed placeholder item', () => {
   expect(replaceableSingle(task, [card], () => 0)?.id).toBe('c');

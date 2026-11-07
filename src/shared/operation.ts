@@ -10,7 +10,7 @@ export const receiptSchema = z.strictObject({
 });
 export type OperationReceipt = z.infer<typeof receiptSchema>;
 export interface Operation { id: string; command: string; input: JsonValue }
-export interface CommitWarning { phase: 'settings' | 'projection' | 'reminders' | 'logging'; message: string }
+export interface CommitWarning { phase: 'onCommitted' | 'settings' | 'projection' | 'reminders' | 'logging'; message: string }
 export interface OperationResult<T> {
   status: 'committed'; operation_id: string; data: T; committed_at: string;
   replayed: boolean; warnings: CommitWarning[];

@@ -52,6 +52,18 @@ export function drawableOnPlan(input: Omit<PickInput, 'random' | 'inserting' | '
   return out;
 }
 
+/** 当前可抽取的候选（含 skip_until_planned 空板时从全背包取）；插入/遗留休息或未确认带过来项时返回空数组。 */
+export function drawableCandidates(input: Omit<PickInput, 'random' | 'inserting' | 'legacyRest'> & { inserting?: boolean; legacyRest?: boolean }): Candidate[] {
+  if (input.inserting || input.legacyRest) return [];
+  if (!input.plan.items.length) {
+    if (!input.plan.skip_until_planned) return [];
+    return input.cards.filter(card => isCandidate(card, input.tasks) && card.id !== input.activeCard)
+      .map(card => ({ card, priority: '普通' as const, weight: weightOf(card, '普通', input.tasks) }));
+  }
+  if (!input.plan.carried_confirmed && input.plan.items.some(item => item.carried)) return [];
+  return drawableOnPlan(input);
+}
+
 function weighted(list: Candidate[], random: number): Candidate {
   if (!(random >= 0 && random < 1)) throw new Error('Invalid selection random value');
   const sorted = [...list].sort((a, b) => a.card.order - b.card.order || a.card.id.localeCompare(b.card.id));
@@ -67,13 +79,11 @@ export function pickFromPlan(input: PickInput): PickResult {
   let all: Candidate[];
   if (!plan.items.length) {
     if (!plan.skip_until_planned) return { kind: 'plan' };
-    // 「这次先不排」：从整个背包抽，只做加权随机（优先级都按普通）
-    all = input.cards.filter(card => isCandidate(card, input.tasks) && card.id !== input.activeCard)
-      .map(card => ({ card, priority: '普通' as const, weight: weightOf(card, '普通', input.tasks) }));
+    all = drawableCandidates(input);
     if (!all.length) return { kind: 'guide', guide: guide([...input.cards], [...input.tasks]) };
   } else {
     if (!plan.carried_confirmed && plan.items.some(item => item.carried)) return { kind: 'confirmCarry' };
-    all = drawableOnPlan(input);
+    all = drawableCandidates(input);
     if (!all.length) return { kind: 'done' };
   }
   const left = all.filter(c => !plan.seen.includes(c.card.id));

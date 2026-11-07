@@ -26,15 +26,36 @@ export const miniCommandSchema = z.discriminatedUnion('type', [
   z.object({ ...edit, type: z.literal('continueEntry'), pending_id: id.nullable(), targetEntryId: id }).strict(),
   z.object({ ...edit, type: z.literal('setReadout'), pending_id: id.nullable(),
     target: z.object({ mode: z.enum(['idle', 'pending', 'entry', 'ref', 'refToday', 'insertRun']), id }).strict(), milliseconds: z.number().nonnegative(), seen: plan.nullable() }).strict(),
+  // 0.3.2 ADR 0024：小窗显式插入草稿命令（begin/cancel 走 readSerial 零写，commit 走同一提交队列）
+  z.object({ ...base, type: z.literal('beginInsertDraft'), ownerSession: id, expectedTimer: id }).strict(),
+  z.object({ ...base, type: z.literal('commitInsertDraft'), draftId: id, ownerSession: id, text: z.string().min(1), project: z.string().min(1).optional() }).strict(),
+  z.object({ ...base, type: z.literal('cancelInsertDraft'), draftId: id }).strict(),
 ]);
 export type MiniCommand = z.infer<typeof miniCommandSchema>;
 export type MiniReadoutPlan = z.infer<typeof plan>;
+export interface MiniInsertDraft {
+  id: string;
+  owner: 'main' | 'mini';
+  ownerSession: string;
+  at: string;
+  phase: 'editing' | 'committing';
+  originalTitle: string;
+  isCard: boolean;
+}
 export interface MiniSnapshot {
   accent: string;
   miniMode?: 'mini' | 'tiny';
   /** 主窗口会话世代（Rust begin_main_session 发放，单调递增）；重载后变大，revision 从头计数。 */
   epoch: number;
+  /** 主窗每次推送单调递增的视图序号（ADR 0024 第 3 节）：纯内存草稿变化与心跳也推进，同 epoch 严格取更大序号。 */
+  viewSeq?: number;
   revision: number; entryId: string | null; cardId: string | null; pending_id: string | null;
+  /** 计时状态令牌（与草稿校验及自动化 expected_state 同源） */
+  timerStateToken?: string;
+  /** 当前状态是否允许点显式〔＋ 插入事件〕（已有草稿时为 false） */
+  canInsert?: boolean;
+  /** 当前显式插入草稿镜像（无草稿时为 null） */
+  insertDraft?: MiniInsertDraft | null;
   entry: { id: string; description: string; project: string; tags: string[]; startedAt: string; cardId: string | null; kind: '普通' | '插入' | '暂停' } | null;
   pending: { id: string; startedAt: string } | null; resumeDescription: string | null;
   card: { id: string; content: string; status: '待做' | '进行中'; project: string | null; tags: string[]; goalMinutes: number | null } | null;
@@ -54,7 +75,7 @@ export type MiniOutcome = { kind: 'done' } | { kind: 'confirm'; plan: MiniReadou
 export interface MiniReply { requestId: string; outcome: MiniOutcome }
 export interface MainWindowBus {
   onCommand(handler: (message: MiniMessage) => void): Promise<() => void>;
-  onReady(handler: () => void): Promise<() => void>;
+  onReady(handler: (session?: string) => void): Promise<() => void>;
   push(snapshot: MiniSnapshot): Promise<void>;
   reply(value: MiniReply): Promise<void>;
 }
@@ -68,36 +89,45 @@ export function decodeMiniCommand(payload: unknown): MiniMessage {
 export interface MiniWindowBus {
   onSnapshot(handler: (snapshot: MiniSnapshot) => void): Promise<() => void>;
   onReply(handler: (reply: MiniReply) => void): Promise<() => void>;
-  ready(): Promise<void>; send(command: MiniCommand): Promise<void>;
+  ready(session?: string): Promise<void>; send(command: MiniCommand): Promise<void>;
 }
 export const mainWindowBus: MainWindowBus = {
   onCommand: handler => listen<unknown>('mini-command', event => handler(decodeMiniCommand(event.payload))),
-  onReady: handler => listen('mini-ready', () => handler()),
+  onReady: handler => listen<unknown>('mini-ready', event => {
+    const payload = event.payload;
+    const session = typeof payload === 'object' && payload !== null && 'session' in payload && typeof (payload as { session?: unknown }).session === 'string'
+      ? (payload as { session: string }).session : undefined;
+    handler(session);
+  }),
   push: snapshot => emitTo('mini', 'mini-snapshot', snapshot),
   reply: value => emitTo('mini', 'mini-reply', value),
 };
 /**
- * 小窗收到的快照要不要接（审核 G3）：按 (epoch, revision) 字典序比较。更大的 epoch 是主窗口重载后的新会话，
- * 接受并以它为新基准（它的 revision 从头计数）；更小的 epoch 是旧会话迟到的，丢弃；同一会话里丢弃更小的 revision，
- * 心跳带着相同的 revision 照常接受。还没接过任何快照时什么都接。不需要「已退役会话」集合：
- * 连续重载 A → B → C 时，C 先到、B 迟到，B 的 epoch 比 C 小，会被丢弃。
+ * 小窗收到的快照要不要接（审核 G3 + ADR 0024 第 3 节）：
+ * - 更大的 epoch 是主窗口重载后的新会话，接受并以它为新基准；更小的 epoch 是旧会话迟到的，丢弃；
+ * - 同一 epoch 内若双方都带 viewSeq，严格只接受 next.viewSeq > seen.viewSeq（每次 push/心跳均分配递增 viewSeq，防止纯内存草稿乱序复活）；
+ * - 未带 viewSeq 的旧测试/快照按 next.revision >= seen.revision 兼容。
  */
-export function acceptMiniSnapshot(seen: { epoch: number; revision: number } | null, next: { epoch: number; revision: number }): boolean {
+export function acceptMiniSnapshot(
+  seen: { epoch: number; revision: number; viewSeq?: number } | null,
+  next: { epoch: number; revision: number; viewSeq?: number },
+): boolean {
   if (!seen) return true;
   if (next.epoch !== seen.epoch) return next.epoch > seen.epoch;
+  if (next.viewSeq !== undefined && seen.viewSeq !== undefined) return next.viewSeq > seen.viewSeq;
   return next.revision >= seen.revision;
 }
 export const miniWindowBus: MiniWindowBus = {
   onSnapshot: handler => {
-    let seen: { epoch: number; revision: number } | null = null;
+    let seen: { epoch: number; revision: number; viewSeq?: number } | null = null;
     return listen<MiniSnapshot>('mini-snapshot', event => {
       // Replies and publish/heartbeat events can cross; an older commit or an older session must never replace a newer view.
       if (!acceptMiniSnapshot(seen, event.payload)) return;
-      seen = { epoch: event.payload.epoch, revision: event.payload.revision }; handler(event.payload);
+      seen = { epoch: event.payload.epoch, revision: event.payload.revision, viewSeq: event.payload.viewSeq }; handler(event.payload);
     });
   },
   onReply: handler => listen<MiniReply>('mini-reply', event => handler(event.payload)),
-  ready: () => emitTo('main', 'mini-ready'),
+  ready: (session?: string) => emitTo('main', 'mini-ready', session ? { session } : undefined),
   send: command => emitTo('main', 'mini-command', miniCommandSchema.parse(command)),
 };
 // The design requires a warning after three seconds without a snapshot. Heartbeats do not advance revision.

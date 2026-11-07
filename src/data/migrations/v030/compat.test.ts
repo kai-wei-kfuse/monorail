@@ -1,10 +1,17 @@
+import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
-import { cardSchema, entrySchema, settingsSchema } from './schemas';
+import { cardSchema, entrySchema, settingsSchema, taskSchema as frozenLegacyTaskSchema } from './schemas';
+import { cardSchema as cardSchema032, taskSchema as taskSchema032 } from '../../schemas';
+import { MemoryFs } from '../../memoryFs';
+import { MdRepo } from '../../mdRepo';
+import { Journal } from '../../journal';
 import { stateSchema } from './state';
 import { historyRecordSchema } from './history';
 import { restoreParent, shrinkCard } from './shrink';
 import { restoreParent as restoreParent031 } from '../../../domain/card/shrink';
-import { abandonCard, completeCard, startCard } from '../../../domain/card/transitions';
+import { abandonCard, completeCard, completeCardItem, startCard } from '../../../domain/card/transitions';
+import { completeTaskMeta, verifyTaskReopen } from '../../../domain/task/complete';
+import type { Task } from '../../../domain/task/task';
 import { defaults } from './settings';
 import { assertEntries } from '../../../domain/timeline/entry';
 import type { Card } from '../../../domain/card/card';
@@ -94,5 +101,123 @@ describe('0.3.0 读 0.3.1 的数据（ADR 0021 G1 兼容锁定）', () => {
         { type: 'card', id: baseCard.id, name: baseCard.content, field: '优先级', before: null, after: '高' }],
       effects: [{ type: 'state', id: 'state', name: '今天', field: '今天先不排', before: '是', after: '否' }] };
     expect(historyRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe('0.3.1 / 0.3.0 (23d6240) / 0.2.5 (c5a74d8) 读 0.3.2 完成任务数据（ADR 0022 §8 兼容锁定）', () => {
+  const completionId = '019a5dc0-1111-7000-8000-000000000001';
+  const completedAt = '2026-11-07T15:30:00.000+08:00';
+  const baseTask: Task = {
+    id: 't-main',
+    name: '完成 0.3.2 里程碑',
+    slot: '主线',
+    slot_index: 1,
+    status: '进行中',
+    created_at: '2026-11-01T09:00:00.000+08:00',
+    bet_ends_at: '2026-11-20T00:00:00.000+08:00',
+    default_project: '工作',
+  };
+
+  it('① 冻结旧版 taskSchema / cardSchema 能解析 0.3.2 已完成 Task 与 Card', () => {
+    const c1: Card = { ...baseCard, id: 'c-1', task_id: baseTask.id, status: '待做' };
+    const plan = completeTaskMeta(baseTask, [c1], completionId, completedAt, '2026-11-07');
+    const doneC1 = completeCardItem(c1, completedAt, '2026-11-07', '主线');
+
+    const parsedTaskOld = frozenLegacyTaskSchema.parse(plan.task);
+    expect(parsedTaskOld).toMatchObject({
+      id: plan.task.id,
+      status: '已完成',
+      completed_at: completedAt,
+      completion: {
+        id: completionId,
+        cards: [{ id: 'c-1', before: { status: '待做', completed_at: null, completed_day: null, completed_track: null } }],
+      },
+    });
+    expect(cardSchema032.parse(doneC1)).toEqual(cardSchema.parse(doneC1));
+  });
+
+  it('② 旧版 MdRepo 读 → 改已知字段 → 写回保留嵌套的 completion.cards[].before 与 completed_at', async () => {
+    const fs = new MemoryFs();
+    const repo032 = new MdRepo<Task>(fs, 'tasks', taskSchema032);
+    const repoLegacy = new MdRepo<Task>(fs, 'tasks', frozenLegacyTaskSchema as typeof taskSchema032);
+
+    const c1: Card = { ...baseCard, id: 'c-1', task_id: baseTask.id, status: '进行中' };
+    const plan = completeTaskMeta(baseTask, [c1], completionId, completedAt, '2026-11-07');
+    await new Journal(fs).run(crypto.randomUUID(), [await repo032.write(plan.task, null)]);
+
+    const legacyEntity = (await repoLegacy.get(plan.task.id))!;
+    const legacyEdited: Task = {
+      id: legacyEntity.value.id,
+      name: '旧版改名后的任务',
+      slot: legacyEntity.value.slot,
+      slot_index: legacyEntity.value.slot_index,
+      status: legacyEntity.value.status,
+      default_project: '旧版分类',
+      created_at: legacyEntity.value.created_at,
+      bet_ends_at: legacyEntity.value.bet_ends_at,
+    };
+    await new Journal(fs).run(crypto.randomUUID(), [await repoLegacy.write(legacyEdited, legacyEntity)]);
+
+    const roundTripped = (await repo032.get(plan.task.id))!;
+    expect(roundTripped.value.name).toBe('旧版改名后的任务');
+    expect(roundTripped.value.default_project).toBe('旧版分类');
+    expect(roundTripped.value.completed_at).toBe(completedAt);
+    expect(roundTripped.value.completion).toEqual(plan.task.completion);
+    expect(roundTripped.value.completion?.cards[0]?.before).toEqual({
+      status: '进行中',
+      completed_at: null,
+      completed_day: null,
+      completed_track: null,
+    });
+  });
+
+  it('③ 旧版若改了成员或把快照内卡改成别的状态，回 0.3.2 时 verifyTaskReopen 明确拒绝', async () => {
+    const fs = new MemoryFs();
+    const taskRepo032 = new MdRepo<Task>(fs, 'tasks', taskSchema032);
+    const cardRepoLegacy = new MdRepo<Card>(fs, 'cards', cardSchema);
+
+    const c1: Card = { ...baseCard, id: 'c-1', task_id: baseTask.id, status: '待做' };
+    const plan = completeTaskMeta(baseTask, [c1], completionId, completedAt, '2026-11-07');
+    const doneC1 = completeCardItem(c1, completedAt, '2026-11-07', '主线');
+
+    await new Journal(fs).run(crypto.randomUUID(), [
+      await taskRepo032.write(plan.task, null),
+      await cardRepoLegacy.write(doneC1, null),
+    ]);
+
+    const legacyCard = (await cardRepoLegacy.get('c-1'))!;
+    await new Journal(fs).run(crypto.randomUUID(), [
+      await cardRepoLegacy.write({ ...legacyCard.value, status: '待做', completed_at: null }, legacyCard),
+    ]);
+
+    const taskAfter = (await taskRepo032.get(plan.task.id))!.value;
+    const cardAfter = (await cardRepoLegacy.get('c-1'))!.value;
+    expect(verifyTaskReopen(taskAfter, [cardAfter], completionId)).toEqual({
+      ok: false,
+      reason: 'CARD_STATE_CHANGED',
+      conflictCardIds: ['c-1'],
+    });
+  });
+
+  it('④ git tag 历史核对：v0.2.5 / v0.3.0 / v0.3.1 的 taskSchema、cardSchema 与 MdRepo 读写实现同本测试一致', () => {
+    const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+    const md030 = git('rev-parse', 'v0.3.0:src/data/mdRepo.ts');
+    const md031 = git('rev-parse', 'v0.3.1:src/data/mdRepo.ts');
+    const mdHead = git('rev-parse', 'HEAD:src/data/mdRepo.ts');
+    expect(md030).toBe(md031);
+    expect(mdHead).toBe(md031);
+
+    const extractBlock = (src: string, marker: string) => {
+      const start = src.indexOf(marker);
+      expect(start).toBeGreaterThanOrEqual(0);
+      const end = src.indexOf(';', start);
+      return src.slice(start, end + 1);
+    };
+    const frozenSrc = git('show', 'HEAD:src/data/migrations/v030/schemas.ts');
+    for (const tag of ['v0.2.5', 'v0.3.0', 'v0.3.1']) {
+      const tagSrc = git('show', `${tag}:src/data/schemas.ts`);
+      expect(extractBlock(tagSrc, 'export const taskSchema =')).toBe(extractBlock(frozenSrc, 'export const taskSchema ='));
+      expect(extractBlock(tagSrc, 'export const cardSchema =')).toBe(extractBlock(frozenSrc, 'export const cardSchema ='));
+    }
   });
 });

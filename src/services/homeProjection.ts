@@ -1,5 +1,5 @@
 import type { Card } from '../domain/card/card';
-import { insertClosedMs, insertState, insertToContinue } from '../domain/timeline/insert';
+import { canExplicitInsert, insertClosedMs, insertState, insertToContinue } from '../domain/timeline/insert';
 import { minutesOnDay } from '../domain/plan/plan';
 import type { DayPlan } from '../domain/plan/plan';
 import { cardTiming } from '../domain/card/edit';
@@ -20,19 +20,28 @@ import { knownTags } from '../domain/timeline/tags';
 export interface ProjectionInput { cards: Card[]; tasks: Task[]; reviews: Review[]; entries: TimeEntry[]; state: AppState; settings: Settings; at: string; version: number;
   /** 今天的板子：插入卡上沿那一条写「今天已计 / 今天的量」 */
   planToday?: DayPlan | null }
+export function insertOverOf(
+  input: Pick<ProjectionInput, 'cards' | 'tasks' | 'entries' | 'settings' | 'at' | 'planToday'>,
+  targetEntry: TimeEntry,
+  day = activityDay(input.at, input.settings.dayBoundaryHour),
+): NonNullable<HomeSlice['insert']>['over'] {
+  const { cards, tasks, entries, settings, at } = input;
+  const card = targetEntry.card_id ? cards.find(c => c.id === targetEntry.card_id) : undefined;
+  return card
+    ? { kind: 'card' as const, cardId: card.id, title: card.content, track: trackOf(card.task_id, tasks),
+        todayMs: Math.round(minutesOnDay(entries, card.id, day, settings.dayBoundaryHour, at) * 60_000),
+        todayGoal: card.type === '时间盒卡' ? input.planToday?.items.find(i => i.card_id === card.id)?.today_minutes ?? card.timebox_minutes : null }
+    : { kind: 'free' as const, title: targetEntry.description, elapsedMs: Math.max(0, Date.parse(targetEntry.ended_at ?? at) - Date.parse(targetEntry.started_at)) };
+}
+
 /** 插入卡的数据（UI 规范 §11.14）：不在插入状态时为 null */
 function insertView(input: ProjectionInput, current: TimeEntry | undefined, resume: TimeEntry | undefined, day: string): HomeSlice['insert'] {
   const st = insertState(current, resume);
   if (!st || !current || !resume) return null;
-  const { cards, tasks, entries, settings, at } = input;
+  const { entries } = input;
   const paused = st === 'insertPaused', prev = paused ? insertToContinue(entries, current, resume) : null;
   const shown = paused ? prev : current;
-  const card = resume.card_id ? cards.find(c => c.id === resume.card_id) : undefined;
-  const over = card
-    ? { kind: 'card' as const, cardId: card.id, title: card.content, track: trackOf(card.task_id, tasks),
-        todayMs: Math.round(minutesOnDay(entries, card.id, day, settings.dayBoundaryHour, at) * 60_000),
-        todayGoal: card.type === '时间盒卡' ? input.planToday?.items.find(i => i.card_id === card.id)?.today_minutes ?? card.timebox_minutes : null }
-    : { kind: 'free' as const, title: resume.description, elapsedMs: Math.max(0, Date.parse(resume.ended_at ?? at) - Date.parse(resume.started_at)) };
+  const over = insertOverOf(input, resume, day);
   return { paused, canContinue: paused && prev !== null, entryId: current.id, name: shown?.description ?? '', project: shown?.project ?? '未分类',
     startedAt: paused ? null : current.started_at, closedMs: insertClosedMs(entries, current, resume), over };
 }
@@ -58,6 +67,9 @@ export function projectHome(input: ProjectionInput): HomeSlice {
   } : null;
   const mode = state.home_mode;
   const resume = entries.find(entry => entry.id === state.resume_entry_id);
+  const targetEntry = current?.kind === '暂停' ? resume : current;
+  const targetCardOk = !targetEntry?.card_id || (settings.taskMode && !!cards.find(c => c.id === targetEntry.card_id && (c.status === '待做' || c.status === '进行中')));
+  const canInsert = targetCardOk && canExplicitInsert(current, resume, { hasPending: Boolean(state.pending_id || state.pending_at), hasRest: state.rest !== null });
   return {
     mode, card, guideKind: guide(cards, tasks), closedEffectiveMs, closedTodayMs, todayGoal,
     currentSegStartedAt: tail?.started_at ?? null, todaySegStartedAt: tail ? new Date(Math.max(Date.parse(tail.started_at), activityDayStartOf(day, settings.dayBoundaryHour))).toISOString() : null,
@@ -67,6 +79,7 @@ export function projectHome(input: ProjectionInput): HomeSlice {
     review: state.first_used_day ? dueReview(day, state.first_used_day, settings.reviewWeekday, reviews, mains.some(main => main.bet_ends_at !== null && Date.parse(main.bet_ends_at) <= Date.parse(at))) : null,
     activity: { kind: current?.kind === '插入' ? 'away' : current?.project !== '待机' ? 'focus' : 'idle', label: current?.description ?? settings.lists.idleName, startedAt: current?.started_at ?? null },
     looseIdle: settings.trackingMode === 'loose' && current?.project === '待机' && current.kind !== '插入' && !state.resume_entry_id,
+    canInsert,
     insert: insertView(input, current, resume, day),
     entry: current ? { id: current.id, description: current.description, project: current.project, tags: current.tags,
       startedAt: current.started_at, cardId: current.card_id, paused: current.kind === '暂停', kind: current.kind } : null,

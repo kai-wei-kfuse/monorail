@@ -11,6 +11,7 @@ import { ActionButton } from '../../ui/controls/Button';
 import { cardProgress } from '../../widgets/cardProgress';
 import { LOOSE } from '../../shared/backpack';
 import { TimeboxShort } from '../../widgets/notices/TimeboxShort';
+import type { InsertDraft } from '../../services/insertDraftCoordinator';
 import type { TaskCardView } from './TaskCard';
 import { TaskCard } from './TaskCard';
 import { CardActions } from './CardActions';
@@ -34,6 +35,25 @@ import { FusedCard } from './FusedCard';
 import { ActivityActions } from './ActivityActions';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
 import { TagPicker } from '../../ui/controls/TagPicker';
+
+export interface HomeInsertDraftProps {
+  draft: InsertDraft | null;
+  form: { text: string; project: string };
+  onFormChange: (patch: { text?: string; project?: string }) => void;
+  onBegin: (at: string) => Promise<void>;
+  onCancel: (draftId: string) => Promise<void>;
+  onSubmit: (draftId: string, v: { description: string; project: string }) => Promise<boolean>;
+}
+
+export interface HomeBagStartRequest {
+  id: string;
+  cardId: string;
+  at: string;
+  previousView: TaskCardView | null;
+}
+
+type FrozenStage = { kind: 'card'; view: TaskCardView } | { kind: 'blank' } | null;
+type WipeState = { id: string; cardId: string; no: string; meta: string; title: string } | null;
 
 /** 首页需要的动作。由外壳的适配层（app/actions）提供，出错由适配层统一报告。 */
 export interface HomeActions {
@@ -106,16 +126,18 @@ type DialogState = { kind: 'short'; cardId: string; remaining: number; at: strin
  * completeAt：小窗里点了完成、主窗口还原以后，由外壳传进来，接着走完成流程（架构 §5.5）。
  * shrinkFor：跳过信号里选了「拆小」，由外壳传进来卡 id，打开缩小对话框。
  */
-export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview, drawer, onDraw, onOpenBag }:
+export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed, shrinkFor, onShrinkConsumed, onGuide, onOpenReview, drawer, onDraw, onOpenBag, insertDraft, bagStart, onBagStartConsumed }:
   { /** 背包抽屉（外壳给，ADR 0021 第 2 条）：把首页的卡包进去，拉开时卡退后一点 */ drawer?: (stage: ReactNode) => ReactNode;
     /** 抽卡交给外壳（翻卡在抽屉那一层演）；没给就照旧抽到直接开始 */ onDraw?: (at: string) => void;
     /** 〔今日任务板〕：拉开背包抽屉 */ onOpenBag?: () => void;
+    insertDraft?: HomeInsertDraftProps;
+    bagStart?: HomeBagStartRequest | null;
+    onBagStartConsumed?: () => void;
     actions: HomeActions; look: HomeLook; intro: { kind: 'cold' | 'resume' } | null; completeAt: { cardId: string; at: string } | null; onCompleteConsumed: () => void;
     shrinkFor: string | null; onShrinkConsumed: () => void;
     onGuide: (kind: GuideKind) => void; onOpenReview: () => void }) {
   const home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   const entries = useStore(appStore, s => s.entries), tasks = useStore(appStore, s => s.backpack.tasks), projects = useStore(appStore, s => s.backpack.pool.projects), settings = useStore(appStore, s => s.settings);
-  const mains = useStore(appStore, s => s.backpack.pool.mains);
   const [timerMode, setTimerMode] = useState<'timer' | 'manual'>('timer'), [prefill, setPrefill] = useState<EntryValue | null>(null);
   // 首页布局（设置 → 外观）：分开 = 上面计时条、下面卡区；融合 = 计时条并进大卡（UI 规范 §11.3）
   const fused = settings.homeLayout === 'fused';
@@ -124,10 +146,10 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   const stage = useRef<HTMLDivElement>(null);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [busy, setBusy] = useState(false);
-  // 再抽一张：先冻结旧画面，换卡完成后用擂除盖住，盖住时才放出新卡（UI 规范 §8.3）
-  const [frozen, setFrozen] = useState<TaskCardView | null>(null), [wipe, setWipe] = useState<{ no: string; meta: string; title: string } | null>(null);
+  // 背包开始计时：先冻结旧画面，用擦除盖住后放出已提交的新卡（ADR 0025 v1.1，UI 规范 §8.3）
+  const [frozen, setFrozen] = useState<FrozenStage>(null), [wipe, setWipe] = useState<WipeState>(null);
   const cardLook = { topoMode: look.topoMode, topoDepth: look.topoDepth, paused: false };
-  const live = cardView(home, now), view = frozen ?? live;
+  const live = cardView(home, now), view = frozen?.kind === 'card' ? frozen.view : live;
   const full = home.card ? cards.find(c => c.id === home.card!.id) : undefined;
 
   useLayoutEffect(() => {
@@ -161,6 +183,33 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
     onShrinkConsumed();
     if (home.card?.id === shrinkFor) void beginShrink(shrinkFor, new Date().toISOString());
   }, [shrinkFor]);
+  useEffect(() => {
+    if (!bagStart) return;
+    onBagStartConsumed?.();
+    if (home.mode !== 'task' || home.card?.id !== bagStart.cardId || home.card.status !== '进行中' || home.insert || home.pending) return;
+    const level = motionLevel();
+    if (level === 'off') return;
+    if (level === 'reduced') {
+      if (stage.current) playAfterWipe(stage.current);
+      return;
+    }
+    const cur = cardView(home, Date.now());
+    setFrozen(bagStart.previousView ? { kind: 'card', view: bagStart.previousView } : { kind: 'blank' });
+    setWipe({
+      id: bagStart.id,
+      cardId: bagStart.cardId,
+      no: cur?.slotNo ?? '—',
+      meta: cur ? `${cur.slotNo === LOOSE.slot ? '支线' : '主线 · ' + cur.task} · ${cur.type}` : '',
+      title: cur?.content ?? home.card.content,
+    });
+  }, [bagStart]);
+  useEffect(() => {
+    if (!wipe) return;
+    if (home.mode !== 'task' || home.card?.id !== wipe.cardId || home.card.status !== '进行中' || home.insert || home.pending) {
+      setFrozen(null);
+      setWipe(null);
+    }
+  }, [wipe, home.mode, home.card?.id, home.card?.status, home.insert, home.pending]);
 
   // 抽卡（ADR 0021 第 2 条）：只读拿到结果；抽到就开始那一张。板子空着、带过来的待确认等情况由 G7 的抽屉处理
   async function drawAndStart(at: string) {
@@ -202,7 +251,14 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
   const manualForm = <ManualForm projects={projects} knownTags={home.knownTags} overlaps={actions.overlaps} prefill={prefill}
     onAdd={(v, start, end) => void actions.manual(v, start, end, now_())}
     onCreateProject={name => void actions.createProject(name, now_())} onCreateTag={tag => void actions.createTag(tag, now_())} />;
-  // 抽到的卡上的部件，两种布局共用。再抽一张的擦除演出期间，画面上还是旧卡，不让改
+  const wipeNode = wipe ? <Wipe key={wipe.id} no={wipe.no} meta={wipe.meta} title={wipe.title}
+    onCovered={() => setWipe(w => { if (w?.id === wipe.id) setFrozen(null); return w; })}
+    onDone={() => setWipe(w => {
+      if (w?.id !== wipe.id) return w;
+      if (stage.current) playAfterWipe(stage.current);
+      return null;
+    })} /> : null;
+  // 抽到的卡上的部件，两种布局共用。擦除演出期间，画面上还是旧卡，不让改
   // 卡头「记到」那一行：存在卡自己身上，正在计的那条跟着改。只改标签时，项目保持原来是单独设的还是跟随任务
   const c = home.card, task = c && {
     picks: <span className="c-meta c-picks">记到
@@ -216,91 +272,106 @@ export function HomePage({ actions, look, intro, completeAt, onCompleteConsumed,
       onStart={at => void act(() => actions.start(c.id, at))}
       onComplete={at => void beginComplete(c.id, at)}
       onShrink={at => void beginShrink(c.id, at)} />,
-    fx: wipe && <Wipe no={wipe.no} meta={wipe.meta} title={wipe.title} onCovered={() => setFrozen(null)}
-      onDone={() => { setWipe(null); if (stage.current) playAfterWipe(stage.current); }} />,
   };
   let body;
   // 插入结束（从哪儿结束的都算）时，插入卡先演完收走再拿掉；同一帧里接着渲染，不让它先卸载再装回来（那样会重演落下）
   const [lastInsert, setLastInsert] = useState(home.insert), [exitingInsert, setExitingInsert] = useState<typeof home.insert>(null);
-  // 〔插入事件〕刚点下、还没写名字的插入卡（用户 2026-11-06 确认）：只在界面上，不写盘。at 是点下那一刻（插入从这里算），leaving 是撤回时正在收走
-  type Draft = { at: string; leaving: boolean; over: Extract<NonNullable<HomeSlice['insert']>['over'], { kind: 'card' }> };
-  const [draftInsert, setDraftInsert] = useState<Draft | null>(null);
+  const [exitingDraft, setExitingDraft] = useState<NonNullable<HomeSlice['insert']> | null>(null);
+  const coordDraft = insertDraft?.draft ?? null;
   if (home.insert !== lastInsert) {
     const prev = lastInsert;
     setLastInsert(home.insert);
     // 结束原任务：插入那一条变普通、接着开着，不演收走
     if (!home.insert && prev && motionLevel() !== 'off' && home.entry?.id !== prev.entryId) setExitingInsert(prev);
     // 插入有了（回车记下了，或别处开始了别的事）：同一张插入卡接着用，不再落下
-    else if (home.insert) { setExitingInsert(null); setDraftInsert(null); }
+    else if (home.insert) { setExitingInsert(null); setExitingDraft(null); }
   }
-  // 卡换了、卡不在做了：还没写名字的插入卡跟着撤掉（什么都没记）
-  if (draftInsert && !draftInsert.leaving && !home.insert && (home.card?.id !== draftInsert.over.cardId || home.card?.status !== '进行中')) setDraftInsert(null);
-  const startDraftInsert = () => {
-    const c = home.card;
-    if (!c || c.status !== '进行中' || home.insert || draftInsert) return;
-    // 卡上还留着待确认时，提交会从待确认的起点算（startOtherInTx），这里跟着用它
-    const at = tv.pending?.startedAt ?? new Date().toISOString();
-    const todayMs = home.closedTodayMs + (home.todaySegStartedAt ? Math.max(0, Date.parse(at) - Date.parse(home.todaySegStartedAt)) : 0);
-    const track = full && mains.some(t => t.id === full.task_id) ? '主线' as const : '支线' as const;
-    setDraftInsert({ at, leaving: false, over: { kind: 'card', cardId: c.id, title: c.content, track, todayMs, todayGoal: live?.todayGoal ?? null } });
-  };
-  const draftView: NonNullable<HomeSlice['insert']> | null = draftInsert
-    ? { paused: false, canContinue: false, entryId: '', name: '', project: '未分类', startedAt: draftInsert.at, closedMs: 0, over: draftInsert.over } : null;
-  const shownInsert = home.insert ?? exitingInsert ?? draftView;
-  const drafting = !home.insert && !exitingInsert ? draftInsert : null;
+  const draftView: NonNullable<HomeSlice['insert']> | null = coordDraft
+    ? { paused: false, canContinue: false, entryId: '', name: '', project: insertDraft?.form.project ?? '未分类', startedAt: coordDraft.at, closedMs: 0, over: coordDraft.original.over } : null;
+  const shownInsert = home.insert ?? exitingInsert ?? draftView ?? exitingDraft;
+  const isDraft = !home.insert && !exitingInsert && Boolean(coordDraft || exitingDraft);
+  const canInsert = Boolean(home.canInsert && !home.insert && !exitingInsert && !coordDraft && !exitingDraft && !wipe && insertDraft);
+  const beginInsert = () => { if (canInsert && insertDraft) void insertDraft.onBegin(new Date().toISOString()); };
   // 〔休息一下〕（已定 55、63）：做着卡、没在插入时显示；点下那一刻是开始时刻，先选项目
   const restButton = home.card?.status === '进行中' && !tv.away && !tv.pending
     ? <button type="button" className="c-rest" title="插一段休息，这张卡等你回来" onClick={() => setDialog({ kind: 'rest', at: new Date().toISOString() })}><Icon name="pause" />休息一下</button> : null;
+  const blankStage = (disabled = false) => <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
+    <div /><div className="alt-hero"><h1>现在做什么？</h1><p>从今日任务板上抽一张，开始下一件事。</p></div><div />
+    <div className="foot"><ActivityActions className="actions" disabled={!!tv.away || disabled}><ActionButton primary cn="今日任务板" en="TODAY" icon="cards" onClick={() => onOpenBag?.()} /></ActivityActions></div>
+  </CardFrame>;
   // 0.3.1：降级休息卡不再出现（0.3.0 遗留的 state.rest 由换日处理一次，ADR 0021 第 6、7 条）
-  if (area === 'free') body = <FreeCard view={tv} draft={draft} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
+  if (frozen?.kind === 'blank') body = blankStage(true);
+  else if (frozen?.kind === 'card') {
+    body = <TaskCard view={frozen.view} look={cardLook} titleScale={look.titleScale} actionsDisabled
+      actions={<CardActions running busy onStart={() => {}} onComplete={() => {}} onShrink={() => {}} />} />;
+  } else if (area === 'free') body = <FreeCard view={tv} draft={draft} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
+    onInsertEvent={canInsert ? beginInsert : undefined}
     over={home.card?.status === '待做' ? { id: home.card.id, content: home.card.content } : null} />;
   else if (home.mode === 'review' && home.review) body = <ReviewCard period={home.review.period} resumeStep={home.review.resumeStep || null} betDue={home.review.betDue} look={cardLook} onOpen={onOpenReview} />;
-  else if (home.mode === 'blank') body = <CardFrame look={cardLook} slotNo="—" slotLabel="READY">
-    <div /><div className="alt-hero"><h1>现在做什么？</h1><p>从今日任务板上抽一张，开始下一件事。</p></div><div />
-    <div className="foot"><ActivityActions className="actions" disabled={!!tv.away}><ActionButton primary cn="今日任务板" en="TODAY" icon="cards" onClick={() => onOpenBag?.()} /></ActivityActions></div>
-  </CardFrame>;
+  else if (home.mode === 'blank') body = blankStage(!!wipe);
   else if (home.mode === 'task' && view && task) {
     const corner = <>
       {home.noMainHint && <span className="c-hint">还没有主线</span>}
+      {canInsert && <button type="button" className="c-rest" title="插一件别的事：插入卡马上落下，在上面写名字；这张卡等你回来" onClick={beginInsert}><Icon name="plus" />插入事件</button>}
       {restButton}
     </>;
     body = <TaskCard view={view} look={cardLook} titleScale={look.titleScale} corner={corner} picks={task.picks} actionsDisabled={!!tv.away}
       stateText={tv.away && home.card?.status === '进行中' && !tv.pending ? ['进行中（暂停）', 'PAUSED'] : undefined}
-      onEditContent={task.onEditContent} actions={task.actions} fx={task.fx} />;
+      onEditContent={task.onEditContent} actions={task.actions} />;
   } else body = <GuideCard kind={home.mode === 'guide' ? home.guideKind : 'allDone'} look={cardLook} onAction={() => onGuide(home.mode === 'guide' ? home.guideKind : 'allDone')} />;
 
   // 融合布局：首页只有一张大卡（休息时是休息卡）。引导、回顾不再占整张卡，改成卡头右边的提示，输入框一直在
   const guide = home.mode === 'guide' ? GUIDES[home.guideKind] : null;
-  if (fused && home.mode !== 'rest') body = <FusedCard key={home.card?.id ?? 'none'} view={tv} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
-    card={home.mode === 'task' && home.card ? home.card : null} cardView={home.mode === 'task' ? view : null}
-    cardPicks={task?.picks} cardActions={task?.actions} onEditContent={task?.onEditContent} fx={task?.fx}
-    onInsertEvent={home.mode === 'task' && home.card?.status === '进行中' ? startDraftInsert : undefined}
-    corner={<>
-      {home.noMainHint && <span className="c-hint">还没有主线</span>}
-      {home.mode === 'task' && restButton}
-      {guide && <><span className="c-hint">{guide.title}</span><button type="button" className="c-link" onClick={() => onGuide(home.guideKind)}>{guide.cn}</button></>}
-      {home.mode === 'review' && home.review && <><span className="c-hint">每周回顾</span>
-        <button type="button" className="c-link" onClick={onOpenReview}>{home.review.resumeStep ? '接着回顾' : '开始回顾'}</button></>}
-    </>} />;
+  if (fused && home.mode !== 'rest') {
+    const fusedCard = frozen?.kind === 'blank'
+      ? null
+      : frozen?.kind === 'card'
+        ? { id: frozen.view.id ?? 'frozen', status: '进行中' as const, content: frozen.view.content }
+        : home.mode === 'task' && home.card ? home.card : null;
+    const fusedCardView = frozen?.kind === 'blank' ? null : frozen?.kind === 'card' ? frozen.view : home.mode === 'task' ? view : null;
+    body = <FusedCard key={fusedCard?.id ?? 'none'} view={tv} now={now} look={cardLook} titleScale={look.titleScale} actions={timerActions}
+      card={fusedCard} cardView={fusedCardView}
+      cardPicks={frozen ? undefined : task?.picks} cardActions={frozen ? undefined : task?.actions} onEditContent={task?.onEditContent}
+      onInsertEvent={canInsert ? beginInsert : undefined}
+      corner={frozen ? undefined : <>
+        {home.noMainHint && <span className="c-hint">还没有主线</span>}
+        {home.mode === 'task' && restButton}
+        {guide && <><span className="c-hint">{guide.title}</span><button type="button" className="c-link" onClick={() => onGuide(home.guideKind)}>{guide.cn}</button></>}
+        {home.mode === 'review' && home.review && <><span className="c-hint">每周回顾</span>
+          <button type="button" className="c-link" onClick={onOpenReview}>{home.review.resumeStep ? '接着回顾' : '开始回顾'}</button></>}
+      </>} />;
+  }
 
   return <div className={`home${fused ? ' fused' : ''}`}>
     {/* 分开布局插入时，计时条写正在计的那件事（插入的事），可以改名字、项目、标签（用户 2026-11-06）；插入卡下面照常 */}
     {!fused && <TimerBar view={home.insert && tv.away ? { ...tv, entry: tv.away, away: null, idle: tv.away.project === '待机', paused: home.insert.paused ? home.insert.name : null,
       insertRun: { closedMs: home.insert.closedMs, paused: home.insert.paused } } : tv} actions={timerActions} mode={timerMode} onMode={setTimerMode} onDraft={setDraft} manual={manualForm} />}
     <div ref={stage} className="home-stage">
-    {(drawer ?? (x => x))(shownInsert
+    {(drawer ?? (x => x))(<div className="c-stage">{shownInsert
       ? <InsertCard key={shownInsert.over.kind === 'card' ? shownInsert.over.cardId : 'free'} insert={shownInsert} now={now} look={cardLook} titleScale={look.titleScale}
-          exiting={drafting ? drafting.leaving : !home.insert} onExited={() => { setExitingInsert(null); setDraftInsert(null); }}
+          exiting={isDraft ? !coordDraft : !home.insert} onExited={() => { setExitingInsert(null); setExitingDraft(null); }}
           place={settings.insertBackPlace}
-          // 还没写名字：〔回到任务〕/ Esc 只是撤回（没写过盘），收走演完再拿掉
-          onBack={drafting ? async () => { setDraftInsert(d => d && { ...d, leaving: true }); return true; }
-            : async () => { await act(() => actions.resume(new Date().toISOString())); return appStore.getState().home.insert === null; }}
-          draft={drafting ? { projects, onCreateProject: name => void actions.createProject(name, now_()),
-            // 回车：从点下那一刻开始插入这件事（做卡时开始别的事 = 插入，startOtherInTx）
-            onSubmit: async v => { await act(() => actions.startFree({ description: v.description, project: v.project, tags: [] }, drafting.at)); return appStore.getState().home.insert !== null; } } : undefined}
+          mirror={coordDraft && coordDraft.owner === 'mini' ? { ownerLabel: '小窗口', busy: coordDraft.phase === 'committing' } : undefined}
+          onBack={isDraft ? async () => {
+            if (coordDraft && insertDraft) {
+              if (motionLevel() !== 'off' && draftView) setExitingDraft(draftView);
+              await insertDraft.onCancel(coordDraft.id);
+            }
+            return true;
+          } : async () => { await act(() => actions.resume(new Date().toISOString())); return appStore.getState().home.insert === null; }}
+          draft={coordDraft && coordDraft.owner === 'main' && insertDraft ? {
+            projects,
+            text: insertDraft.form.text,
+            project: insertDraft.form.project,
+            busy: coordDraft.phase === 'committing',
+            onChangeText: (text: string) => insertDraft.onFormChange({ text }),
+            onChangeProject: (project: string) => insertDraft.onFormChange({ project }),
+            onCreateProject: name => void actions.createProject(name, now_()),
+            onSubmit: v => insertDraft.onSubmit(coordDraft.id, v),
+          } : undefined}
           onEndOriginal={() => act(() => actions.endOriginal(new Date().toISOString()))}
           onPause={() => void actions.pause(new Date().toISOString())} onContinue={() => void act(() => actions.continueTimer(new Date().toISOString()))}>{body}</InsertCard>
-      : body)}
+      : body}{wipeNode}</div>)}
     {dialog?.kind === 'rest' && <RestDialog projects={projects} onCancel={() => setDialog(null)}
       onConfirm={project => { const at = dialog.at; setDialog(null); void act(() => actions.rest(at, project)); }} />}
     {dialog?.kind === 'short' && <TimeboxShort data={{ cardId: dialog.cardId, remainingMinutes: dialog.remaining, at: dialog.at }} dismiss={() => setDialog(null)}

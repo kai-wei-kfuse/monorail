@@ -5,11 +5,35 @@ import { run } from './commit';
 import { activityDay } from '../domain/timeline/day';
 import { carryItems, defaultTodayMinutes, minutesOnDay, shiftDay, startedBeforeDay, totalMinutes, workable } from '../domain/plan/plan';
 import type { DayPlan, PlanItem, PlanPriority } from '../domain/plan/plan';
-import { activeRefInTx, openInTx } from './tracking/api';
-import { drawableOnPlan } from '../domain/picker/pick';
+import { activeRefInTx, insertStateInTx, openInTx } from './tracking/api';
+import { drawableCandidates } from '../domain/picker/pick';
 
 export type PlanDay = 'today' | 'tomorrow';
 const todayOf = (tx: Transaction) => activityDay(tx.at, tx.settings.dayBoundaryHour);
+export function resolvePlanDayInTx(tx: Transaction, day: string, todayOnly = false): PlanDay {
+  if (!tx.settings.taskMode) throw new Error('TASK_MODE_OFF：任务模式已关闭，不能操作任务板');
+  const today = todayOf(tx), tomorrow = shiftDay(today, 1);
+  if (todayOnly) {
+    if (day !== today) throw new Error(`PLAN_DAY_CHANGED：只能操作今天的任务板（当前今天为 ${today}，收到 ${day}）`);
+    return 'today';
+  }
+  if (day === today) return 'today';
+  if (day === tomorrow) return 'tomorrow';
+  throw new Error(`PLAN_DAY_CHANGED：日期 ${day} 不在可修改的今天（${today}）或明天（${tomorrow}）范围内`);
+}
+export function drawableIdsInTx(tx: Transaction, plan: DayPlan = tx.todayPlan): string[] {
+  return drawableCandidates({
+    plan,
+    cards: tx.cards,
+    tasks: tx.tasks,
+    entries: tx.entries,
+    boundaryHour: tx.settings.dayBoundaryHour,
+    at: tx.at,
+    activeCard: activeRefInTx(tx),
+    inserting: insertStateInTx(tx) !== null,
+    legacyRest: tx.state.rest !== null,
+  }).map(c => c.card.id);
+}
 async function planOf(tx: Transaction, which: PlanDay): Promise<DayPlan> {
   return which === 'today' ? tx.todayPlan : tx.plan(shiftDay(todayOf(tx), 1));
 }
@@ -26,6 +50,7 @@ export async function addInTx(tx: Transaction, which: PlanDay, input: AddInput):
   if (!workable(card, tx.tasks)) throw new Error('这张卡不在背包里，不能排进来');
   const plan = structuredClone(await planOf(tx, which));
   if (plan.items.some(item => item.card_id === card.id)) throw new Error(`这张卡已经在${which === 'today' ? '今天' : '明天'}的板子上了`);
+  if (card.type !== '时间盒卡' && input.todayMinutes !== undefined && input.todayMinutes !== null) throw new Error('结果卡不填今天的量');
   const minutes = card.type === '时间盒卡'
     ? input.todayMinutes ?? defaultTodayMinutes(card, totalMinutes(tx.entries, card.id, tx.at))
     : null;
@@ -140,7 +165,6 @@ export const edit = (ctx: Ctx, which: PlanDay, input: EditInput, at: string) =>
 export const skipToday = (ctx: Ctx, at: string) => run(ctx, async tx => skipTodayInTx(tx), at, { action: 'plan.skip' });
 /** 〔换一张〕：跳过这张、这一轮不再出（不累计 skip_count，不推跳过信号，ADR 0021 第 2 条第 6 点）。 */
 export const skipCard = (ctx: Ctx, cardId: string, at: string) => run(ctx, async tx => {
-  skipCardInTx(tx, cardId, plan => drawableOnPlan({ plan, cards: tx.cards, tasks: tx.tasks, entries: tx.entries,
-    boundaryHour: tx.settings.dayBoundaryHour, at: tx.at, activeCard: activeRefInTx(tx) }).map(c => c.card.id));
+  skipCardInTx(tx, cardId, plan => drawableIdsInTx(tx, plan));
 }, at, { action: 'plan.skipCard', subject: subjectOf(cardId) });
 export const confirmCarry = (ctx: Ctx, keep: readonly string[], at: string) => run(ctx, async tx => confirmCarryInTx(tx, keep), at, { action: 'plan.carry' });

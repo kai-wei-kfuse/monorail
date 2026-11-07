@@ -59,10 +59,32 @@ impl Default for McpBridge {
     }
 }
 
+pub const READ_ONLY_METHODS: &[&str] = &[
+    "get_context",
+    "get_operation_result",
+    "find_items",
+    "get_time_summary",
+    "list_time_entries",
+    "get_task_plan",
+    "draw_task_item",
+    "get_task_details",
+    "get_recap",
+    "list_operation_history",
+];
+
 pub fn is_write_method(method: &str) -> bool {
     !matches!(
         method,
-        "get_context" | "get_operation_result" | "find_items" | "get_time_summary" | "list_time_entries"
+        "get_context"
+            | "get_operation_result"
+            | "find_items"
+            | "get_time_summary"
+            | "list_time_entries"
+            | "get_task_plan"
+            | "draw_task_item"
+            | "get_task_details"
+            | "get_recap"
+            | "list_operation_history"
     )
 }
 
@@ -528,7 +550,7 @@ async fn serve(app: tauri::AppHandle, name: String, mut listener: NamedPipeServe
 mod tests {
     use super::{
         is_write_method, read_host_metadata_from_dir, resolve_bundle_entry_path, update_phase,
-        BridgeCore, HostMetadata, McpBridge, Phase,
+        BridgeCore, HostMetadata, McpBridge, Phase, READ_ONLY_METHODS,
     };
     use std::fs;
     use tokio::sync::oneshot;
@@ -544,13 +566,42 @@ mod tests {
 
     #[test]
     fn read_only_methods_are_distinguished_from_writes() {
-        assert!(!is_write_method("get_context"));
-        assert!(!is_write_method("get_operation_result"));
-        assert!(!is_write_method("find_items"));
-        assert!(!is_write_method("get_time_summary"));
-        assert!(!is_write_method("list_time_entries"));
-        assert!(is_write_method("save_idea"));
-        assert!(is_write_method("start_timer"));
+        assert_eq!(READ_ONLY_METHODS.len(), 10);
+        for method in READ_ONLY_METHODS {
+            assert!(!is_write_method(method), "expected read-only: {method}");
+        }
+        for write_method in [
+            "save_idea",
+            "complete_idea",
+            "reopen_idea",
+            "capture_todo",
+            "add_time_entry",
+            "update_time_entry",
+            "start_timer",
+            "start_task_item",
+            "pause_timer",
+            "resume_timer",
+            "stop_timer",
+            "start_break",
+            "return_from_break",
+            "end_original_task",
+            "add_plan_item",
+            "remove_plan_item",
+            "update_plan_item",
+            "confirm_plan_carry",
+            "skip_today_plan",
+            "skip_task_item",
+            "complete_task_item",
+            "reopen_task_item",
+            "keep_going_task_item",
+            "split_task_item",
+            "complete_task",
+            "reopen_task",
+            "unknown_method",
+            "",
+        ] {
+            assert!(is_write_method(write_method), "expected write: {write_method}");
+        }
     }
 
     #[test]

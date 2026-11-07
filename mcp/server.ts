@@ -1,23 +1,56 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import {
+  addPlanItemInput,
   addTimeEntryInput,
   addTimeEntryResult,
+  updatePlanItemInput,
   updateTimeEntryInput,
   updateTimeEntryResult,
   captureTodoInput,
   captureTodoResult,
   completeIdeaInput,
   completeIdeaResult,
+  completeTaskInput,
+  completeTaskItemInput,
+  completeTaskItemResult,
+  completeTaskResult,
+  confirmPlanCarryInput,
   contextInput,
   contextResult,
+  drawTaskItemInput,
+  drawTaskItemResult,
+  endOriginalTaskInput,
+  endOriginalTaskResult,
   findItemsInput,
   findItemsResult,
+  getRecapInput,
+  getRecapResult,
+  getTaskDetailsInput,
+  getTaskDetailsResult,
+  getTaskPlanInput,
+  getTaskPlanResult,
   ideaInput,
+  keepGoingTaskItemInput,
+  keepGoingTaskItemResult,
+  listOperationHistoryInput,
+  listOperationHistoryResult,
   listTimeEntriesInput,
   listTimeEntriesResult,
   lookupInput,
   lookupResult,
+  planMutationResult,
+  removePlanItemInput,
+  reopenIdeaInput,
+  reopenIdeaResult,
+  reopenTaskInput,
+  reopenTaskItemInput,
+  reopenTaskItemResult,
+  reopenTaskResult,
   saveIdeaResult,
+  skipTaskItemInput,
+  skipTodayPlanInput,
+  splitTaskItemInput,
+  splitTaskItemResult,
   startBreakInput,
   startTaskItemInput,
   startTimerInput,
@@ -193,6 +226,158 @@ export function createServer(client: ApplicationClient) {
     outputSchema: withError(completeIdeaResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, async (args, ctx) => call('complete_idea', args, ctx));
+
+  server.registerTool('reopen_idea', {
+    title: '撤销完成想法并放回想法池',
+    description: '把已完成列表里的想法恢复回活跃想法池（即使想法池已满也允许恢复）。已处于想法池的想法重复调用返回 noop=true。',
+    inputSchema: reopenIdeaInput,
+    outputSchema: withError(reopenIdeaResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('reopen_idea', args, ctx));
+
+  server.registerTool('get_task_plan', {
+    title: '读取今天或明天的任务板',
+    description: '读取今天（today）或明天（tomorrow）的任务板详情，包括实际活动日 YYYY-MM-DD、板子事项、优先级、今日目标分钟与已计分钟、待确认带入项（carry_pending）及可抽取候选（drawable_card_ids）。只读不建文件。',
+    inputSchema: getTaskPlanInput,
+    outputSchema: withError(getTaskPlanResult),
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  }, async (args, ctx) => call('get_task_plan', args, ctx));
+
+  server.registerTool('add_plan_item', {
+    title: '将待办事项排入任务板',
+    description: '把背包中的待办事项卡排入今天或明天（精确活动日 YYYY-MM-DD，先从 get_task_plan 获取）的任务板，可指定优先级与时间盒当天分钟数。',
+    inputSchema: addPlanItemInput,
+    outputSchema: withError(planMutationResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('add_plan_item', args, ctx));
+
+  server.registerTool('remove_plan_item', {
+    title: '从任务板移出事项',
+    description: '从今天或明天的任务板移出指定事项卡片（卡片本身保留在背包中）；若不在板子上则返回 noop=true。',
+    inputSchema: removePlanItemInput,
+    outputSchema: withError(planMutationResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('remove_plan_item', args, ctx));
+
+  server.registerTool('update_plan_item', {
+    title: '修改任务板事项的优先级或今日目标量',
+    description: '修改今天或明天任务板上已有事项的 priority（普通/高）或时间盒卡的 today_minutes（正整数分钟）。',
+    inputSchema: updatePlanItemInput,
+    outputSchema: withError(planMutationResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('update_plan_item', args, ctx));
+
+  server.registerTool('confirm_plan_carry', {
+    title: '确认昨天带入今天的任务板事项',
+    description: '当今天任务板 carry_pending=true 时，显式指定要保留在今天板子上的带入卡片 ID 列表（keep_card_ids，全部不带传 []）。非带入的今日已排事项不受影响。',
+    inputSchema: confirmPlanCarryInput,
+    outputSchema: withError(planMutationResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('confirm_plan_carry', args, ctx));
+
+  server.registerTool('skip_today_plan', {
+    title: '今天先不排任务板（全背包抽卡）',
+    description: '在今天任务板为空时标记「这次先不排」（skip_until_planned=true），允许直接从整个背包抽取待办事项。',
+    inputSchema: skipTodayPlanInput,
+    outputSchema: withError(planMutationResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('skip_today_plan', args, ctx));
+
+  server.registerTool('draw_task_item', {
+    title: '从今日任务板加权抽取一张事项卡',
+    description: '只读按权重从今日任务板（或 skip_until_planned 下的全背包）抽取一张待办事项卡，不自动开始计时。若要开始抽到的卡请再调用 start_task_item；若要换一张请先调用 skip_task_item 再调用本工具。',
+    inputSchema: drawTaskItemInput,
+    outputSchema: withError(drawTaskItemResult),
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  }, async (args, ctx) => call('draw_task_item', args, ctx));
+
+  server.registerTool('skip_task_item', {
+    title: '换一张（本轮抽卡跳过指定候选卡）',
+    description: '将指定候选卡记入今日抽卡本轮已看过集合（seen_card_ids）；若所有候选都已看过则自动重开新一轮。跳过后请再调用 draw_task_item 抽取下一张。',
+    inputSchema: skipTaskItemInput,
+    outputSchema: withError(planMutationResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('skip_task_item', args, ctx));
+
+  server.registerTool('complete_task_item', {
+    title: '完成待办事项卡片（当前卡或背包待做子项）',
+    description: '完成当前正在计时/已暂停的事项卡片（必填 expected_state；时间盒未达目标时长时需传 finish_early=true），或直接完成背包进行中任务下的待做子项（可省略 expected_state，不影响其他正在运行的计时）。',
+    inputSchema: completeTaskItemInput,
+    outputSchema: withError(completeTaskItemResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('complete_task_item', args, ctx));
+
+  server.registerTool('reopen_task_item', {
+    title: '取消完成单个子事项并恢复为待做',
+    description: '将已完成的单个子事项卡片恢复为「待做」（校验主线活跃事项上限；若所属父任务处于已完成状态，则同一事务将父任务一并恢复回原槽位，满格时支持传 make_room 显式腾位）。',
+    inputSchema: reopenTaskItemInput,
+    outputSchema: withError(reopenTaskItemResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('reopen_task_item', args, ctx));
+
+  server.registerTool('keep_going_task_item', {
+    title: '接着做（记录进度并暂停放回待做）',
+    description: '对首页当前正在做或已暂停的事项卡片写下进度笔记（note）、停止计时并将同一张卡放回待做（不新建续卡）。',
+    inputSchema: keepGoingTaskItemInput,
+    outputSchema: withError(keepGoingTaskItemResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('keep_going_task_item', args, ctx));
+
+  server.registerTool('split_task_item', {
+    title: '缩小拆分当前事项卡片',
+    description: '将首页当前正在做或已暂停的事项卡片拆分为「今天先做的内容」（原卡继续计时）与「留到后面的剩余内容」（新卡排在后面待做）。',
+    inputSchema: splitTaskItemInput,
+    outputSchema: withError(splitTaskItemResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('split_task_item', args, ctx));
+
+  server.registerTool('end_original_task', {
+    title: '在插入活动期间结束原任务/原活动',
+    description: '在临时离开/插入活动期间结束底层等待返回的原卡片或原自由计时，将当前插入活动转为普通自由记录继续计时，原卡片放回待做。',
+    inputSchema: endOriginalTaskInput,
+    outputSchema: withError(endOriginalTaskResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('end_original_task', args, ctx));
+
+  server.registerTool('get_task_details', {
+    title: '查看任务详情、子事项与完成/恢复信息',
+    description: '读取指定主线或支线任务的完整详情、子事项列表、当前 completion_id、可恢复模式（reopen_mode）及槽位满格腾位候选（make_room_candidates）。',
+    inputSchema: getTaskDetailsInput,
+    outputSchema: withError(getTaskDetailsResult),
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  }, async (args, ctx) => call('get_task_details', args, ctx));
+
+  server.registerTool('complete_task', {
+    title: '整张完成主线或支线任务',
+    description: '将背包中进行中的整张主线或支线任务及其剩余待做/进行中子项一并标记为已完成，释放背包槽位并记录批次 completion_id（若任务含当前计时卡则必填 expected_state）。',
+    inputSchema: completeTaskInput,
+    outputSchema: withError(completeTaskResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('complete_task', args, ctx));
+
+  server.registerTool('reopen_task', {
+    title: '重新打开（撤销完成）已完成任务',
+    description: '根据 get_task_details 返回的 completion_id 将已完成任务及其同批完成子项恢复回背包（旧版无快照任务显式传 completion_id=null）；若原槽位已满可通过 make_room 显式冷藏或放弃同槽位任务腾位。',
+    inputSchema: reopenTaskInput,
+    outputSchema: withError(reopenTaskResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('reopen_task', args, ctx));
+
+  server.registerTool('get_recap', {
+    title: '查询时间回看统计',
+    description: '按周期（week/lastWeek/cycle/month/quarter/year/custom）与维度（project/tag/source/activity）查询完整回看统计、分桶（buckets）、分组明细、上期对比、已完成卡片与进度笔记。',
+    inputSchema: getRecapInput,
+    outputSchema: withError(getRecapResult),
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  }, async (args, ctx) => call('get_recap', args, ctx));
+
+  server.registerTool('list_operation_history', {
+    title: '查询操作历史记录',
+    description: '按活动日范围（from_day/to_day，默认最近 7 天）及来源（source）、调用方（agent）、方法（method）、主体（subject_type/subject_id）或 operation_id 查询单轨操作历史与坏记录计数（bad_count）。',
+    inputSchema: listOperationHistoryInput,
+    outputSchema: withError(listOperationHistoryResult),
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  }, async (args, ctx) => call('list_operation_history', args, ctx));
 
   return server;
 }

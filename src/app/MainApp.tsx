@@ -9,6 +9,8 @@ import { updatePhaseLabels, updateStepLabels } from '../shared/updates';
 import { miniWindow } from '../platform/miniWindow';
 import { mainWindowBus, MINI_HEARTBEAT_MS } from '../platform/windowBus';
 import { connectMini } from '../services/miniController';
+import { createInsertDraftCoordinator } from '../services/insertDraftCoordinator';
+import { timerStateTokenInTx } from '../services/homeService';
 import { windowControls } from '../platform/windowControls';
 import type { Ctx } from '../services/commit';
 import { Frame, StatusBar } from '../ui/frame/StatusBar';
@@ -20,6 +22,7 @@ import type { ToastItem } from '../ui/overlay/Toast';
 import { motionLevel, play, setMotionLevel } from '../ui/effects/animate';
 import { Backfill } from '../widgets/notices/Backfill';
 import { HomePage, useNow } from '../pages/home/HomePage';
+import type { HomeInsertDraftProps } from '../pages/home/HomePage';
 import { favorites } from '../pages/home/timerView';
 import type { GuideKind } from '../pages/home/GuideCard';
 import { bootstrap } from './bootstrap';
@@ -27,6 +30,7 @@ import { createActions } from './actions';
 import type { Actions } from './actions';
 import { readyRoutes } from './routes';
 import { BagScreen } from './BagScreen';
+import type { BagStartPresentation } from './BagScreen';
 import { BagToggle, WaitingChip } from './shell/BagToggle';
 import { CalendarScreen, ListScreen } from './TimeScreens';
 import type { DayFocus, HistoryFocus } from './TimeScreens';
@@ -112,7 +116,12 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const [bagOpen, setBagOpen] = useState(false), [dealAt, setDealAt] = useState<string | null>(null);
   const openBag = () => { setPage('home'); setBagOpen(true); };
   const [completeAt, setCompleteAt] = useState<{ cardId: string; at: string } | null>(null), [shrinkFor, setShrinkFor] = useState<string | null>(null);
+  const [bagStart, setBagStart] = useState<BagStartPresentation | null>(null);
   const [intro, setIntro] = useState<{ kind: 'cold' | 'resume' }>({ kind: 'cold' });
+  const draftCoordinator = useMemo(() => createInsertDraftCoordinator(ctx), [ctx]);
+  const mainSession = useMemo(() => crypto.randomUUID(), [ctx]);
+  const [insertDraft, setInsertDraft] = useState(() => draftCoordinator.current());
+  const [mainDraftForm, setMainDraftForm] = useState<{ draftId: string; text: string; project: string }>({ draftId: '', text: '', project: '未分类' });
   // 操作历史的跳转与定位（执行方案 E8c 第 4 条）：列表看的是哪一种、从设置 09 要打开哪一条、◎ 要看哪一天
   const [listView, setListView] = useState<ListView>('entries');
   const [historyFocus, setHistoryFocus] = useState<HistoryFocus | null>(null);
@@ -127,6 +136,21 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
     setToasts(t => [...t, { id, en: 'NOTE', title, text }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 6000);
   };
+
+  useEffect(() => {
+    const off = draftCoordinator.onChange((next, invalidationMessage) => {
+      setInsertDraft(next);
+      if (invalidationMessage) info('插入未记下', invalidationMessage);
+    });
+    return () => { off(); draftCoordinator.dispose(); };
+  }, [draftCoordinator]);
+  useEffect(() => {
+    if (insertDraft?.owner === 'main' && mainDraftForm.draftId !== insertDraft.id) {
+      setMainDraftForm({ draftId: insertDraft.id, text: '', project: '未分类' });
+    } else if (!insertDraft && mainDraftForm.draftId !== '') {
+      setMainDraftForm({ draftId: '', text: '', project: '未分类' });
+    }
+  }, [insertDraft, mainDraftForm.draftId]);
 
   // 底栏弹层只放快捷活动（位置是弹层的预设）；收藏在首页计时条下面
   const acts: QuickAct[] = useMemo(() => settings.lists.presets.filter(a => a.place === '弹层').map(a => ({ id: a.id, name: a.name, icon: iconFor(a.name) })), [settings]);
@@ -159,7 +183,10 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
 
   // 小窗是独立窗口（N6）：主窗口照常开着；底栏按钮、M、托盘都是开关
   async function toggleMini() {
-    try { await miniWindow.toggle(); } catch (error) { info('小窗切换失败', String(error)); }
+    try {
+      const visible = await miniWindow.toggle();
+      if (!visible) draftCoordinator.cancelDraftByOwner('mini');
+    } catch (error) { info('小窗切换失败', String(error)); }
   }
   // 给小窗发快照、接它的命令。在小窗里点完成：主窗口出来，回到首页接着走完成流程，保留小窗里点的时刻
   useEffect(() => {
@@ -168,14 +195,66 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
       // 两段式：保存卡片和时刻，主窗口的完成对话框确认时把来源记成小窗（ADR 0019 第 5 条）
       complete: async (cardId, at) => { setPage('home'); setCompleteAt({ cardId, at }); },
       report,
+      draftCoordinator,
     }, MINI_HEARTBEAT_MS);
     return () => { void off.then(fn => fn()); };
-  }, [ctx]);
-  // 底栏按钮跟着小窗真实的显示状态（小窗自己关、托盘开关也算）；toggle 的返回值不当状态用
+  }, [ctx, draftCoordinator]);
+  // 底栏按钮跟着小窗真实的显示状态；仅在用户显式关闭小窗（底栏开关、M、托盘或小窗关闭事件）时撤回当前 mini editing 草稿，非显式的被动可见性隐藏不撤回（ADR 0024 v1.2）
+  useEffect(() => {
+    const off = miniWindow.subscribeExplicitClose(() => {
+      draftCoordinator.cancelDraftByOwner('mini');
+    }).catch(error => { report(error); return () => {}; });
+    return () => { void off.then(fn => fn()); };
+  }, [draftCoordinator]);
   useEffect(() => {
     const off = miniWindow.subscribeVisibility(setMiniOpen).catch(error => { report(error); return () => {}; });
     return () => { void off.then(fn => fn()); };
   }, []);
+  const insertDraftProps: HomeInsertDraftProps = {
+    draft: insertDraft,
+    form: { text: mainDraftForm.text, project: mainDraftForm.project },
+    onFormChange: patch => setMainDraftForm(f => ({ ...f, ...patch })),
+    onBegin: async at => {
+      try {
+        const snap = ctx.snapshot();
+        const open = snap?.entries.find(e => e.ended_at === null) ?? null;
+        await draftCoordinator.begin({
+          owner: 'main',
+          ownerSession: mainSession,
+          at,
+          epoch: ctx.mainEpoch,
+          expectedTimer: snap ? timerStateTokenInTx(snap) : undefined,
+          entryId: open?.id ?? null,
+          cardId: snap?.state.current_card ?? null,
+        });
+      } catch (error) {
+        info('无法插入事件', String(error instanceof Error ? error.message : error));
+      }
+    },
+    onCancel: async draftId => {
+      try {
+        await draftCoordinator.cancel({ draftId, epoch: ctx.mainEpoch });
+      } catch (error) {
+        info('撤回没有完成', String(error instanceof Error ? error.message : error));
+      }
+    },
+    onSubmit: async (draftId, v) => {
+      try {
+        await draftCoordinator.commit({
+          draftId,
+          owner: 'main',
+          ownerSession: mainSession,
+          epoch: ctx.mainEpoch,
+          text: v.description,
+          project: v.project,
+        });
+        return true;
+      } catch (error) {
+        info('插入没有完成', String(error instanceof Error ? error.message : error));
+        return false;
+      }
+    },
+  };
   function onGuide(kind: GuideKind) {
     // 建项目、设主线、给主线拆卡都在背包页做；卡都做完了就去写一条
     if (kind === 'allDone') { void actions.showQuickbar(); return; }
@@ -239,7 +318,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
       onClose={() => { wasHidden.current = true; void windowControls.hide(); }} />
   </TitleBar>;
   const statusBar = <StatusBar
-    left={<><QuickActs acts={acts} current={awayId}
+    left={<><div className="dock-actions"><QuickActs acts={acts} current={awayId}
       onPick={(id, at) => void (id === awayId ? actions.resume(at) : actions.startPreset(id, at))}
       onTemp={(name, keep, at, project) => void actions.tempActivity(name, keep, at, project)}
       projects={[{ name: '未分类', color: '#888884' }, ...settings.lists.projects]} />
@@ -247,7 +326,7 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
         <span className="chev"><Icon name="plus" /></span><span className="t-cn">快速记录</span>
       </button>
       <MiniToggle on={miniOpen} onClick={() => void toggleMini()} />
-      <BagToggle open={bagOpen && page === 'home'} onToggle={() => (bagOpen && page === 'home' ? setBagOpen(false) : openBag())} />
+      <BagToggle open={bagOpen && page === 'home'} onToggle={() => (bagOpen && page === 'home' ? setBagOpen(false) : openBag())} /></div>
       <WaitingChip onBack={() => { setPage('home'); void actions.resume(new Date().toISOString()); }} /></>}
     right={page === 'settings' ? <SavedBadge saves={saves} /> : undefined} />;
 
@@ -256,10 +335,12 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
       <div ref={stage} className="page">
         {page === 'home' && <HomePage actions={actions} intro={intro} completeAt={completeAt} onCompleteConsumed={() => setCompleteAt(null)}
           shrinkFor={shrinkFor} onShrinkConsumed={() => setShrinkFor(null)}
+          insertDraft={insertDraftProps} bagStart={bagStart} onBagStartConsumed={() => setBagStart(null)}
           look={{ titleScale: settings.titleScale, topoMode: settings.topoMode, topoDepth: settings.topoDepth, timeboxDefault: settings.timeboxDefaultMinutes }}
           onGuide={onGuide} onOpenReview={() => setPage('review')}
           onDraw={at => { setBagOpen(false); setDealAt(at); }} onOpenBag={openBag}
           drawer={stageContent => <BagScreen ctx={ctx} open={bagOpen} onOpen={() => setBagOpen(true)} onClose={() => setBagOpen(false)} drawAt={dealAt} onDrawn={() => setDealAt(null)}
+            onBagStarted={req => { setPage('home'); setBagStart(req); }}
             report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} onInfo={info}>{stageContent}</BagScreen>} />}
         {page === 'calendar' && <CalendarScreen ctx={ctx} report={report} focusDay={dayFocus} />}
         {page === 'list' && <ListScreen ctx={ctx} report={report} view={listView} onView={setListView} historyFocus={historyFocus}

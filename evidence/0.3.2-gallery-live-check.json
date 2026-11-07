@@ -1,0 +1,61 @@
+{
+  "detailButtons": {
+    "itemBtns": [
+      "排进今天",
+      "完成",
+      "排进今天",
+      "完成"
+    ],
+    "footBtns": [
+      "＋ 添加子任务",
+      "✓ 完成整张任务",
+      "冷藏",
+      "放弃"
+    ],
+    "checkboxes": 2
+  },
+  "afterSubtaskComplete": {
+    "doneRows": 1,
+    "reopenBtnText": "取消完成"
+  },
+  "afterSubtaskReopen": 0,
+  "wipeResult": {
+    "wipeMounts": 1,
+    "frames": [
+      {
+        "at": 1747,
+        "text": "01\nSTART TASK开始计时\n主线 · 找到后端实习 · 结果卡\n改 [简历] 第二版"
+      }
+    ]
+  },
+  "entriesBeforeDraft": 4,
+  "draftState": {
+    "hasInput": true,
+    "entriesDuringDraft": 4,
+    "stateLine": "mode=task · 待确认：无 · 卡：改 [简历] 第二版（进行中） · 回到任务（外壳） · 背包 · 开始第一张卡 · 插入：上厕所 插入：拿快递"
+  },
+  "afterCancelDraft": {
+    "hasInput": false,
+    "entriesAfterCancel": 4,
+    "stateLine": "mode=task · 待确认：无 · 卡：改 [简历] 第二版（进行中） · 回到任务（外壳） · 背包 · 开始第一张卡 · 插入：上厕所 插入：拿快递"
+  },
+  "afterCommitInsert": {
+    "entriesAfterCommit": 5,
+    "entriesText": [
+      "学 408 [学习 #408] 普通 09:00:00 – 10:00:00",
+      "回消息 [工作] 普通 10:00:00 – 10:30:00",
+      "待机 [待机] 普通 21:57:40 – 21:57:41",
+      "改 简历 第二版 [求职] 卡 普通 21:57:41 – 21:57:44",
+      "接电话 [未分类] 插入 21:57:44 – 现在"
+    ],
+    "stateLine": "mode=task · 待确认：无 · 卡：改 [简历] 第二版（进行中） · 回到任务（外壳） · 背包 · 开始第一张卡 · 插入：上厕所 插入：拿快递"
+  },
+  "screenshots": [
+    "evidence/0.3.2-gallery-shots/gallery-quest-detail.png",
+    "evidence/0.3.2-gallery-shots/gallery-subtask-done-and-reopen.png",
+    "evidence/0.3.2-gallery-shots/gallery-bag-start-wipe.png",
+    "evidence/0.3.2-gallery-shots/gallery-explicit-insert-draft.png",
+    "evidence/0.3.2-gallery-shots/gallery-explicit-insert-committed.png"
+  ],
+  "runtimeErrors": []
+}

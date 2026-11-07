@@ -57,11 +57,11 @@ export const historyActions = {
   'mini.editCard': A('改卡片内容', 'card'), 'mini.setReadout': A('改读数', 'entry'),
   'mini.startFavorite': A('开始收藏', 'entry'), 'mini.startCard': A('开始卡片', 'card'), 'mini.continueEntry': A('继续这一条', 'entry'),
   // 卡片（cardService）
-  'card.editContent': A('改卡片内容', 'card'), 'card.start': A('开始卡片', 'card'), 'card.complete': A('完成卡片', 'card'), 'card.shrink': A('缩小卡片', 'card'),
+  'card.editContent': A('改卡片内容', 'card'), 'card.start': A('开始卡片', 'card'), 'card.complete': A('完成卡片', 'card'), 'card.reopen': A('取消完成卡片', 'card'), 'card.shrink': A('缩小卡片', 'card'),
   'card.redraw': A('换一张', 'card'), 'card.pass': A('PASS', 'card'), 'card.leaveTo': A('离开去做', 'entry'),
   // 背包（backpackService）
   'backpack.createTask': A('新建任务', 'task'), 'backpack.freezeTask': A('冷藏任务', 'task'), 'backpack.abandonTask': A('放弃任务', 'task'),
-  'backpack.restoreTask': A('放回背包', 'task'), 'backpack.addItem': A('加事项', 'card'), 'backpack.setDefaultProject': A('改任务的默认项目', 'task'),
+  'backpack.restoreTask': A('放回背包', 'task'), 'backpack.completeTask': A('完成任务', 'task'), 'backpack.reopenTask': A('重新打开任务', 'task'), 'backpack.addItem': A('加事项', 'card'), 'backpack.setDefaultProject': A('改任务的默认项目', 'task'),
   'backpack.saveCard': A('保存事项', 'card'), 'backpack.reorderQueue': A('调整事项顺序', 'card'),
   // 出卡、降级
   'deal.refresh': A('重新出卡', 'card'), 'deal.draw': A('抽卡', 'card'), 'degrade.returnFromRest': A('休息回来', 'state'),
@@ -69,6 +69,7 @@ export const historyActions = {
   'plan.add': A('排进板子', 'card'), 'plan.remove': A('移出板子', 'card'), 'plan.edit': A('改今天的量或优先级', 'card'),
   'plan.skip': A('今天先不排', 'state'), 'plan.skipCard': A('换一张', 'card'), 'plan.carry': A('确认昨天带过来的'),
   'home.endOriginal': A('结束原任务', 'card'), 'home.pauseInsert': A('暂停插入的事', 'entry'), 'home.continueInsert': A('继续插入的事', 'entry'),
+  'home.insertExplicit': A('插入事件', 'entry', 'result'),
   'home.rest': A('休息一下', 'entry'), 'home.answerIdle': A('说明空闲时段', 'entry'),
   'card.split': A('缩小（拆成两项）', 'card'), 'card.keepGoing': A('接着做', 'card'),
   // 想法（ideaService）
@@ -94,11 +95,17 @@ export const historyActions = {
   'entry.setShowIdle': A('显示待机', 'settings'), 'entry.saveAsCard': A('存为卡', 'card'),
   // 系统（后台）
   'system.dayChange': A('活动日切换'), 'system.resume': A('补记离线时段', 'entry'), 'system.reconcile': A('整理记录'),
-  // 自动化（MCP / CLI 的 12 个写方法；0.3.1 加 update_time_entry）
+  // 自动化（MCP / CLI 写方法；0.3.2 扩展至 26 个写方法）
   'auto.save_idea': A('保存想法', 'record'), 'auto.capture_todo': A('捕获待办', 'record'), 'auto.start_timer': A('开始计时', 'entry'),
   'auto.start_task_item': A('开始事项', 'card'), 'auto.pause_timer': A('暂停', 'entry'), 'auto.resume_timer': A('继续', 'entry'),
   'auto.stop_timer': A('停止计时', 'entry'), 'auto.start_break': A('开始临时活动', 'entry'), 'auto.return_from_break': A('回来', 'entry'),
   'auto.add_time_entry': A('补录条目', 'entry'), 'auto.update_time_entry': A('改计时记录', 'entry'), 'auto.complete_idea': A('完成想法', 'record'),
+  'auto.reopen_idea': A('撤销完成想法', 'record'),
+  'auto.add_plan_item': A('排进板子', 'card'), 'auto.remove_plan_item': A('移出板子', 'card'), 'auto.update_plan_item': A('改今天的量或优先级', 'card'),
+  'auto.confirm_plan_carry': A('确认昨天带过来的'), 'auto.skip_today_plan': A('今天先不排', 'state'), 'auto.skip_task_item': A('换一张', 'card'),
+  'auto.complete_task_item': A('完成事项', 'card'), 'auto.reopen_task_item': A('取消完成事项', 'card'),
+  'auto.keep_going_task_item': A('接着做', 'card'), 'auto.split_task_item': A('缩小（拆成两项）', 'card'),
+  'auto.end_original_task': A('结束原任务'), 'auto.complete_task': A('完成任务', 'task'), 'auto.reopen_task': A('重新打开任务', 'task'),
 } as const satisfies Record<string, HistoryActionSpec>;
 
 /** 系统来源的「为什么会改」（ADR 0019 第 5 条）。 */

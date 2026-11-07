@@ -76,6 +76,14 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
     ],
   },
   {
+    usage: 'monorail idea reopen <idea-id> [--operation-id <uuid>] [--json]',
+    method: 'reopen_idea',
+    summary: '撤销想法的完成状态并放回活跃池',
+    examples: [
+      'monorail idea reopen <idea-id>',
+    ],
+  },
+  {
     usage: 'monorail todo add [<text>] [--text-file <path> | --stdin] [--task-id <id>] [--due-at <iso>] [--operation-id <uuid>] [--json]   （--blocking 0.3.1 起不起作用，仍接受）',
     method: 'capture_todo',
     summary: '捕捉待办事项并原子入包（可归入指定任务或自动建单事项支线任务）',
@@ -167,6 +175,157 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
     summary: '从临时离开活动返回原计时或待机',
     examples: [
       'monorail break return',
+    ],
+  },
+  {
+    usage: 'monorail break end-original [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'end_original_task',
+    summary: '临时离开期间直接结束离开前的原计时，当前临时离开升级为普通自由计时',
+    examples: [
+      'monorail break end-original',
+    ],
+  },
+  {
+    usage: 'monorail plan show [--day today|tomorrow] [--json]',
+    method: 'get_task_plan',
+    summary: '查看今天或明天的任务板（只读，实时计算已计分钟、达标状态与可抽候选）',
+    examples: [
+      'monorail plan show',
+      'monorail plan show --day tomorrow --json',
+    ],
+  },
+  {
+    usage: 'monorail plan add <card-id> --day <YYYY-MM-DD> [--priority 普通|高] [--today-minutes <N>] [--operation-id <uuid>] [--json]',
+    method: 'add_plan_item',
+    summary: '把背包进行中任务的待做卡片排进指定活动日的任务板',
+    examples: [
+      'monorail plan add <card-id> --day 2026-11-07 --priority 高 --today-minutes 45',
+    ],
+  },
+  {
+    usage: 'monorail plan remove <card-id> --day <YYYY-MM-DD> [--operation-id <uuid>] [--json]',
+    method: 'remove_plan_item',
+    summary: '把一张卡片从指定活动日的任务板移出（回背包）',
+    examples: [
+      'monorail plan remove <card-id> --day 2026-11-07',
+    ],
+  },
+  {
+    usage: 'monorail plan edit <card-id> --day <YYYY-MM-DD> [--priority 普通|高] [--today-minutes <N>] [--operation-id <uuid>] [--json]',
+    method: 'update_plan_item',
+    summary: '修改指定活动日任务板上某张卡的优先级或当天目标分钟数',
+    examples: [
+      'monorail plan edit <card-id> --day 2026-11-07 --priority 高',
+    ],
+  },
+  {
+    usage: 'monorail plan carry --day <YYYY-MM-DD> (--keep <card-id>... | --keep-none) [--operation-id <uuid>] [--json]',
+    method: 'confirm_plan_carry',
+    summary: '确认今天任务板上的昨日未完成带入项（明确保留列表或全部移出）',
+    examples: [
+      'monorail plan carry --day 2026-11-07 --keep <card-1> --keep <card-2>',
+      'monorail plan carry --day 2026-11-07 --keep-none',
+    ],
+  },
+  {
+    usage: 'monorail plan skip-today --day <YYYY-MM-DD> [--operation-id <uuid>] [--json]',
+    method: 'skip_today_plan',
+    summary: '标记今天先不排任务板，直接从全背包可抽卡片中抽卡',
+    examples: [
+      'monorail plan skip-today --day 2026-11-07',
+    ],
+  },
+  {
+    usage: 'monorail plan draw [--json]',
+    method: 'draw_task_item',
+    summary: '按今日任务板或全背包规则加权随机抽取一张待办事项卡（只读，不自动开始计时）',
+    examples: [
+      'monorail plan draw --json',
+    ],
+  },
+  {
+    usage: 'monorail plan skip <card-id> --day <YYYY-MM-DD> [--operation-id <uuid>] [--json]',
+    method: 'skip_task_item',
+    summary: '换一张：将当前候选卡片记入本轮已看过（seen），随后可再运行 monorail plan draw',
+    examples: [
+      'monorail plan skip <card-id> --day 2026-11-07',
+    ],
+  },
+  {
+    usage: 'monorail item done <card-id> [--note <text> | --note-file <path> | --stdin] [--finish-early] [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'complete_task_item',
+    summary: '完成当前计时/暂停卡片或直接完成背包进行中任务的待做子项（时间盒未达量须 --finish-early）',
+    examples: [
+      'monorail item done <card-id>',
+      'monorail item done <card-id> --note "已完成核心章节" --finish-early',
+    ],
+  },
+  {
+    usage: 'monorail item reopen <card-id> [--make-room <freeze|abandon>:<task-id>] [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'reopen_task_item',
+    summary: '取消单个已完成子项的完成状态并恢复为待做（父任务已完成时同事务恢复父任务，满格可传 --make-room）',
+    examples: [
+      'monorail item reopen <card-id>',
+      'monorail item reopen <card-id> --make-room freeze:<active-task-id>',
+    ],
+  },
+  {
+    usage: 'monorail item keep <card-id> [--note <text> | --note-file <path> | --stdin] [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'keep_going_task_item',
+    summary: '当前卡片接着做：记录进度笔记、停止计时并将卡片放回待做',
+    examples: [
+      'monorail item keep <card-id> --note "读到第 42 页"',
+    ],
+  },
+  {
+    usage: 'monorail item split <card-id> --today-content <text> --rest-content <text> [--rest-minutes <N>] [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'split_task_item',
+    summary: '拆分当前卡片：分成今天先做的一项与留到后面的剩余项',
+    examples: [
+      'monorail item split <card-id> --today-content "先写完接口层" --rest-content "补齐剩余测试" --rest-minutes 30',
+    ],
+  },
+  {
+    usage: 'monorail task show <task-id> [--json]',
+    method: 'get_task_details',
+    summary: '查看单个任务的完整详情、子项列表、完成批次 ID（completion_id）与重新打开前置条件',
+    examples: [
+      'monorail task show <task-id> --json',
+    ],
+  },
+  {
+    usage: 'monorail task done <task-id> [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'complete_task',
+    summary: '整张完成背包中的主线或支线任务（含剩余未完成子项并生成完成批次快照，释放背包槽位）',
+    examples: [
+      'monorail task done <task-id>',
+    ],
+  },
+  {
+    usage: 'monorail task reopen <task-id> (--completion-id <uuid> | --legacy) [--make-room <freeze|abandon>:<task-id>] [--operation-id <uuid>] [--expected-state <token>] [--json]',
+    method: 'reopen_task',
+    summary: '重新打开已完成任务并恢复回原主/支线槽位（满格时用 --make-room 显式腾位）',
+    examples: [
+      'monorail task reopen <task-id> --completion-id <completion-id>',
+      'monorail task reopen <task-id> --legacy --make-room freeze:<active-task-id>',
+    ],
+  },
+  {
+    usage: 'monorail recap show [--period week|lastWeek|cycle|month|quarter|year|custom] [--from <YYYY-MM-DD> --to <YYYY-MM-DD>] [--dimension project|tag|source|activity] [--include-idle] [--bucket <id>] [--json]',
+    method: 'get_recap',
+    summary: '读取统计回看数据（7 种周期 × 4 种分组维度、柱状桶筛选、环比对比、已完成事项与进展笔记）',
+    examples: [
+      'monorail recap show --period week --dimension project',
+      'monorail recap show --period custom --from 2026-11-01 --to 2026-11-07 --dimension tag --json',
+    ],
+  },
+  {
+    usage: 'monorail history list [--from-day <YYYY-MM-DD>] [--to-day <YYYY-MM-DD>] [--source manual|system|mcp|cli|automation|all_automation] [--filter-agent <name>] [--method <name>] [--subject-type <type>] [--subject-id <id>] [--operation-id <uuid>] [--json]',
+    method: 'list_operation_history',
+    summary: '列出指定活动日范围内的操作历史记录（只读，含坏行计数 bad_count 与更早记录标记）',
+    examples: [
+      'monorail history list',
+      'monorail history list --from-day 2026-11-01 --to-day 2026-11-07 --source all_automation --json',
     ],
   },
   {
@@ -296,6 +455,15 @@ export function renderHumanSuccess(
       ].join('\n');
     }
 
+    case 'reopen_idea': {
+      const r = result as ApplicationOutput<'reopen_idea'>;
+      return [
+        `${r.data.noop ? '想法已在活跃池' : '已撤销想法完成并放回活跃池'} [${r.data.id}] (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id}`,
+        `正文: ${r.data.text}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
     case 'capture_todo': {
       const r = result as ApplicationOutput<'capture_todo'>;
       const lines = [
@@ -384,6 +552,152 @@ export function renderHumanSuccess(
         `当前模式: ${r.data.timer.mode} | 当前记录: [${r.data.timer.open_entry.project}] ${r.data.timer.open_entry.description || '(无描述)'}`,
         ...formatWarnings(r.warnings),
       ];
+      return lines.join('\n');
+    }
+
+    case 'end_original_task': {
+      const r = result as ApplicationOutput<'end_original_task'>;
+      const lines = [
+        `已结束离开前的原计时 [${r.data.ended_entry_id}]（原卡片=${r.data.ended_card_id ?? '无'}）并将当前活动 [${r.data.promoted_entry_id}] 升级为普通计时 | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        `当前模式: ${r.data.timer.mode} | 当前记录: [${r.data.timer.open_entry.project}] ${r.data.timer.open_entry.description || '(无描述)'}`,
+        ...formatWarnings(r.warnings),
+      ];
+      return lines.join('\n');
+    }
+
+    case 'get_task_plan': {
+      const r = result as ApplicationOutput<'get_task_plan'>;
+      if (!r.enabled || !r.plan) {
+        return `任务板 (${r.which}=${r.resolved_day}): 任务模式未开启 (enabled=false)`;
+      }
+      const lines = [
+        `任务板 (${r.which}=${r.resolved_day}, skip_until_planned=${String(r.plan.skip_until_planned)}, carry_pending=${String(r.plan.carry_pending)}, 可抽候选=${r.plan.drawable_card_ids.length}, 已看过=${r.plan.seen_card_ids.length}):`,
+      ];
+      for (const item of r.plan.items) {
+        lines.push(
+          `  [${item.card_id}] (${item.track}) ${item.title} | 优先级:${item.priority} | 进行中:${String(item.running)} | 今日:${item.minutes_today}m/${item.today_minutes ?? '-'}m | 达标:${String(item.achieved)}`,
+        );
+      }
+      return lines.join('\n');
+    }
+
+    case 'add_plan_item':
+    case 'remove_plan_item':
+    case 'update_plan_item':
+    case 'confirm_plan_carry':
+    case 'skip_today_plan':
+    case 'skip_task_item': {
+      const r = result as ApplicationOutput<'add_plan_item'>;
+      const lines = [
+        `任务板操作完成 (${method}, day=${r.data.day}, which=${r.data.which}, noop=${String(r.data.noop)}, replayed=${String(r.replayed)}) | operation_id=${r.operation_id}`,
+        `当前板子项数: ${r.data.plan.items.length} | 可抽候选: ${r.data.plan.drawable_card_ids.length} | 已看过: ${r.data.plan.seen_card_ids.length}`,
+        ...formatWarnings(r.warnings),
+      ];
+      return lines.join('\n');
+    }
+
+    case 'draw_task_item': {
+      const r = result as ApplicationOutput<'draw_task_item'>;
+      const lines = [
+        `抽卡结果 (day=${r.day}, outcome=${r.outcome}, reset_round=${String(r.reset_round)}, 候选数=${r.candidates.length}):`,
+      ];
+      if (r.card) {
+        lines.push(
+          `  抽中卡片: [${r.card.id}] (${r.card.track}/${r.card.task_name}) ${r.card.content} | 优先级:${r.card.priority}`,
+        );
+      } else if (r.blocked_reason) {
+        lines.push(`  当前不可抽卡: blocked_reason=${r.blocked_reason}`);
+      } else if (r.guide) {
+        lines.push(`  引导提示: guide=${r.guide}`);
+      }
+      return lines.join('\n');
+    }
+
+    case 'complete_task_item': {
+      const r = result as ApplicationOutput<'complete_task_item'>;
+      const lines = [
+        `${r.data.noop ? '子任务本来就已完成' : '已完成子任务'} [${r.data.card.id}] ${r.data.card.content} (stopped_timer=${String(r.data.stopped_timer)}, replayed=${String(r.replayed)}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        ...(r.data.task ? [`所属任务: [${r.data.task.id}] ${r.data.task.name} (${r.data.task.slot}/${r.data.task.status}, 剩余待做:${r.data.task.open_card_count})`] : []),
+        ...formatWarnings(r.warnings),
+      ];
+      return lines.join('\n');
+    }
+
+    case 'reopen_task_item': {
+      const r = result as ApplicationOutput<'reopen_task_item'>;
+      const lines = [
+        `${r.data.noop ? '子任务本来就是待做' : '已取消完成子任务并恢复为待做'} [${r.data.card.id}] ${r.data.card.content} (reopened_parent_task=${String(r.data.reopened_parent_task)}, replayed=${String(r.replayed)}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        ...(r.data.task ? [`所属任务: [${r.data.task.id}] ${r.data.task.name} (${r.data.task.slot}/${r.data.task.status}, 待做:${r.data.task.open_card_count})`] : []),
+        ...formatWarnings(r.warnings),
+      ];
+      return lines.join('\n');
+    }
+
+    case 'keep_going_task_item': {
+      const r = result as ApplicationOutput<'keep_going_task_item'>;
+      return [
+        `已记录进度并放回待做 [${r.data.card.id}] ${r.data.card.content} (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        `进度笔记: ${r.data.card.progress_note || '(空)'}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'split_task_item': {
+      const r = result as ApplicationOutput<'split_task_item'>;
+      return [
+        `已拆分卡片 (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        `今天先做: [${r.data.today_card_id}] ${r.data.today_content} (${r.data.today_minutes ?? '-'}m)`,
+        `剩余留后: [${r.data.rest_card_id}] ${r.data.rest_content} (${r.data.rest_minutes ?? '-'}m)`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'get_task_details': {
+      const r = result as ApplicationOutput<'get_task_details'>;
+      const lines = [
+        `任务详情 [${r.task.id}] ${r.task.name} (${r.task.slot}/${r.task.status}, completion_id=${r.task.completion_id ?? 'null'}, reopen_mode=${r.task.reopen_mode ?? 'null'}, slot_full=${String(r.task.slot_full)}):`,
+      ];
+      for (const item of r.items) {
+        lines.push(`  [${item.id}] (${item.status}/${item.type}) ${item.content}`);
+      }
+      return lines.join('\n');
+    }
+
+    case 'complete_task': {
+      const r = result as ApplicationOutput<'complete_task'>;
+      return [
+        `${r.data.noop ? '任务本来就已完成' : '已整张完成任务'} [${r.data.task.id}] ${r.data.task.name} (completion_id=${r.data.completion_id ?? 'null'}, 本批完成子项=${r.data.affected_card_ids.length}, stopped_timer=${String(r.data.stopped_timer)}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'reopen_task': {
+      const r = result as ApplicationOutput<'reopen_task'>;
+      return [
+        `${r.data.noop ? '任务已在背包进行中' : '已重新打开任务'} [${r.data.task.id}] ${r.data.task.name} (mode=${r.data.reopen_mode}, 恢复子项=${r.data.reopened_card_ids.length}, 待做=${r.data.task.open_card_count}) | operation_id=${r.operation_id} | expected_state=${r.data.expected_state}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'get_recap': {
+      const r = result as ApplicationOutput<'get_recap'>;
+      const lines = [
+        `回看统计 (${r.range.period}: ${r.range.from_day} ~ ${r.range.to_day}, computed_at=${r.computed_at}, 有效时长=${formatDurationMs(r.effective_ms)}, 主线占比=${(r.mainline.permille / 10).toFixed(1)}%):`,
+      ];
+      for (const g of r.groups) {
+        lines.push(`  [${g.key}] ${formatDurationMs(g.ms)} (${(g.permille / 10).toFixed(1)}%, ${g.count}条)`);
+      }
+      return lines.join('\n');
+    }
+
+    case 'list_operation_history': {
+      const r = result as ApplicationOutput<'list_operation_history'>;
+      const lines = [
+        `操作历史 (${r.from_day} ~ ${r.to_day}, 共 ${r.records.length} 条, 损坏行=${r.bad_count}, 更早记录=${String(r.older_before_range)}):`,
+      ];
+      for (const rec of r.records) {
+        lines.push(`  [${rec.at}] (${rec.action}) ${rec.title} — ${rec.summary}`);
+      }
       return lines.join('\n');
     }
   }

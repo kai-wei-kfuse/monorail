@@ -74,7 +74,9 @@
 .home { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
 /* 首页舞台：铺满内容区，启用容器查询供右上角临时活动抽屉按比例缩放 */
 .home-stage { position: relative; display: grid; min-height: 0; container: stage / size; }
-.home-stage > .card { grid-area: 1 / 1; }
+.c-stage { position: relative; display: grid; min-height: 0; container: card / size; }
+.home-stage > .card, .home-stage > .c-stage, .c-stage > .card { grid-area: 1 / 1; }
+.c-stage > .fx { inset: 1px; }
 
 /* 自由记录卡（分开布局的卡区照着计时条显示）：标题为空时的提示；卡头「记到」那一行，弹层要压在标题上面 */
 .title .ph { color: var(--mute-2); }

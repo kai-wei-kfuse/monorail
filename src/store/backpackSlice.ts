@@ -9,10 +9,19 @@ export interface PoolItem {
   /** 期限所在的活动日（按换日时间算，G7 审核 N2） */ dueDay?: string | null;
 }
 export interface PoolTask { id: string; name: string; track: '主线' | '支线'; items: PoolItem[]; defaultProject: string; overLimit: boolean;
-  /** 押注到期（主线），YYYY-MM-DD；做完的项（抽屉详情里灰显） */ betEndsAt?: string | null; doneItems?: PoolItem[] }
+  /** 押注到期（主线），YYYY-MM-DD；做完的项（抽屉详情里灰显） */ betEndsAt?: string | null; doneItems?: PoolItem[];
+  /** 0.3.2（ADR 0022）：任务状态、完成时间、完成批次与重开核验信息 */
+  status?: '进行中' | '冷藏' | '已放弃' | '已完成';
+  completedAt?: string | null;
+  completionId?: string | null;
+  reopenMode?: 'snapshot' | 'task_only';
+  reopenCardIds?: string[];
+  reopenConflictReason?: string | null;
+  reopenConflictCardIds?: string[];
+}
 export interface PoolView {
   mains: PoolTask[]; sides: PoolTask[]; parked: { id: string; name: string; track: '主线' | '支线'; itemCount: number }[];
-  doneSides: string[]; mainMax: number; sideMax: number; mainItems: number;
+  doneTasks: PoolTask[]; mainMax: number; sideMax: number; mainItems: number;
   projects: { name: string; color: string }[]; knownTags: string[]; excessSideIds: string[];
 }
 
@@ -36,6 +45,6 @@ export interface DoneIdeaView {
 export interface ColdIdea { id: string; text: string; needs: string | null; coldSince: string }
 export interface BackpackSlice { tasks: TaskView[]; queue: QueueGroup[]; ideas: IdeaView[]; doneIdeas: DoneIdeaView[]; coldIdeas: ColdIdea[]; pool: PoolView }
 export const initialBackpack: BackpackSlice = { tasks: [], queue: [], ideas: [], doneIdeas: [], coldIdeas: [], pool: {
-  mains: [], sides: [], parked: [], doneSides: [], mainMax: defaults.mainTasks, sideMax: defaults.sideTasks,
+  mains: [], sides: [], parked: [], doneTasks: [], mainMax: defaults.mainTasks, sideMax: defaults.sideTasks,
   mainItems: defaults.mainItems, projects: [], knownTags: [], excessSideIds: [],
 } };

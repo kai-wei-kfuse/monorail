@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed } from './serviceFixture';
-import { createTask, freezeTask, abandonTask, restoreTask, saveCard, reorderQueue } from './backpackService';
-import { start, split, pass, complete } from './cardService';
+import { createTask, freezeTask, abandonTask, restoreTask, completeTask, reopenTask, reopenTaskItem, saveCard, reorderQueue } from './backpackService';
+import { start, split, pass, complete, completeItem } from './cardService';
 import { run } from './commit';
 import { shrinkCard } from '../data/migrations/v030/shrink';
 /** 0.3.0 留下的「已缩小」链：用冻结的 0.3.0 缩小直接写进数据目录（0.3.1 不再产生） */
@@ -12,7 +12,7 @@ async function legacyChild(f: ReturnType<typeof fixture>, parentId: string, id: 
   }, at(), { action: 'test.direct' });
   return id;
 }
-import { insert, resume } from './homeService';
+import { insert, resume, beginPending, startCard } from './homeService';
 import type { CardFields } from '../shared/backpack';
 
 const fields = (taskId: string | null = null): CardFields => ({ content: '做一件事', type: '结果卡', timeboxMinutes: null,
@@ -51,16 +51,17 @@ it('a reduced capacity never evicts existing tasks and an insufficient makeRoom 
   const c = await createTask(f.ctx, { name: 'c', slot: '主线', makeRoom: { id: a, action: '放弃' } }, at());
   expect((await f.ctx.repos.tasks.get(c))!.value.slot_index).toBe(1);
 });
-it.each(['冷藏', '放弃'] as const)('A3 %s while away ends the insert and clears its return target', async action => {
-  const f = fixture(); await seed(f, [card('a', { task_id: 'main' }), card('b')], [task('main')]);
+it.each(['冷藏', '放弃'] as const)('A3 %s while away rejects interrupting the active away task (S2) and preserves unrelated away session', async action => {
+  const f = fixture(); await seed(f, [card('a', { task_id: 'main' }), card('b', { task_id: 'side' })], [task('main'), { ...task('side', '支线'), slot_index: 2 }]);
   await start(f.ctx, 'a', at()); f.clock(at(1)); await insert(f.ctx, 'wc', at(1));
   const before = open(f);
-  await (action === '冷藏' ? freezeTask : abandonTask)(f.ctx, 'main', at(1));
-  expect(open(f).project).toBe('待机');
-  expect(open(f).id).not.toBe(before.id);
-  expect((await getCard(f, 'a')).status).toBe(action === '冷藏' ? '待做' : '已放弃');
-  expect((await f.ctx.repos.state.read()).current_card).toBeNull();
-  await resume(f.ctx, at(1)); expect(open(f)).toMatchObject({ project: '待机', card_id: null });
+  const fn = action === '冷藏' ? freezeTask : abandonTask;
+  await expect(fn(f.ctx, 'main', at(1))).rejects.toThrow('IN_AWAY_ACTIVITY');
+  expect(open(f)).toEqual(before);
+  await fn(f.ctx, 'side', at(1));
+  expect(open(f)).toEqual(before);
+  expect((await getCard(f, 'b')).status).toBe(action === '冷藏' ? '待做' : '已放弃');
+  f.clock(at(2)); await resume(f.ctx, at(2)); expect(open(f)).toMatchObject({ card_id: 'a' });
 });
 it('A3 abandoning a running task stops its timer, preserves completed history, and exposes the next card', async () => {
   const f = fixture(); await seed(f, [card('a', { task_id: 'main' }), card('done', { task_id: 'main', status: '已完成', completed_day: '2026-10-27', completed_track: '主线' }), card('b')], [task('main')]);
@@ -138,4 +139,134 @@ it('0.3.1 新建任务：每一项可以选结果或时间盒（已定 46）；�
   const cards = (await f.ctx.repos.cards.list()).map(e => e.value).filter(c => c.task_id === id).sort((a, b) => a.order - b.order);
   expect(cards.map(c => [c.content, c.type, c.timebox_minutes])).toEqual([['数据结构：线性表', '结果卡', null], ['计算机组成：存储器', '时间盒卡', 90]]);
   await expect(createTask(f.ctx, { name: '坏的', slot: '支线', makeRoom: null, items: [{ content: 'x', type: '时间盒卡', minutes: null }] }, at())).rejects.toThrow('分钟');
+});
+
+it('0.3.2 completeTask & reopenTask: preserves bet_ends_at, snapshots only remaining active items, does not revive shrunk ancestors, and survives 180-day history cleanup', async () => {
+  const f = fixture();
+  const betEndsAt = '2026-11-20T00:00:00.000+08:00';
+  await seed(
+    f,
+    [
+      card('c-early', { task_id: 'main', order: 1, progress_note: '先做完' }),
+      card('c-todo', { task_id: 'main', order: 2, progress_note: '待做笔记' }),
+      card('c-run', { task_id: 'main', order: 3, progress_note: '进行中笔记' }),
+      card('c-shrunk', { task_id: 'main', order: 4, status: '已缩小' }),
+    ],
+    [{ ...task('main'), bet_ends_at: betEndsAt }],
+  );
+
+  // First complete c-early individually, then start c-run and complete the whole task
+  f.clock(at(2)); await completeItem(f.ctx, 'c-early', at(2));
+  f.clock(at(5)); await start(f.ctx, 'c-run', at(5));
+  f.clock(at(10)); const doneRes = await completeTask(f.ctx, 'main', at(10));
+  expect(doneRes.noop).toBe(false);
+  expect(doneRes.affectedCards.map(c => c.id)).toEqual(['c-todo', 'c-run']);
+  expect(open(f).project).toBe('待机');
+
+  const savedTask = (await f.ctx.repos.tasks.get('main'))!.value;
+  expect(savedTask).toMatchObject({
+    status: '已完成',
+    slot: '主线',
+    slot_index: null,
+    bet_ends_at: betEndsAt,
+    completed_at: at(10),
+  });
+  expect(savedTask.completion?.cards.map(c => c.id)).toEqual(['c-todo', 'c-run']);
+  expect(await getCard(f, 'c-todo')).toMatchObject({ status: '已完成', completed_track: '主线', progress_note: '待做笔记' });
+  expect(await getCard(f, 'c-run')).toMatchObject({ status: '已完成', completed_track: '主线', progress_note: '进行中笔记' });
+  expect((await getCard(f, 'c-shrunk')).status).toBe('已缩小');
+
+  // History diff records 完成时间 on task without dumping completion JSON
+  const historyRecords = (await f.ctx.repos.history.readDays('2000-01-01', '2999-12-31')).records;
+  const completeHist = historyRecords.find(r => r.action === 'backpack.completeTask')!;
+  expect(completeHist.changes.map(c => c.field)).toContain('完成时间');
+  expect(JSON.stringify(completeHist)).not.toContain('member_ids');
+
+  // Wipe all operation history (simulating >180 days retention cleanup) — reopenTask still works!
+  await f.ctx.repos.history.removeBefore('2999-12-31');
+
+  f.clock(at(20)); const reopened = await reopenTask(f.ctx, 'main', doneRes.completionId, at(20));
+  expect(reopened).toMatchObject({
+    noop: false,
+    reopenMode: 'snapshot',
+  });
+  expect((await f.ctx.repos.tasks.get('main'))!.value).toMatchObject({
+    status: '进行中',
+    slot: '主线',
+    slot_index: 1,
+    bet_ends_at: betEndsAt,
+    completed_at: null,
+    completion: null,
+  });
+  // Only c-todo and c-run were restored to 待做; c-early stays 已完成!
+  expect((await getCard(f, 'c-early')).status).toBe('已完成');
+  expect((await getCard(f, 'c-todo')).status).toBe('待做');
+  expect((await getCard(f, 'c-run')).status).toBe('待做');
+
+  // 凌晨 02:30（dayBoundaryHour=4 时归前一日）完成任务，之后把 dayBoundaryHour 改为 0，reopenTask 仍按快照记录的完成日比对通过
+  const lateNight = new Date(2026, 9, 28, 2, 30).toISOString();
+  f.clock(lateNight);
+  const nightDone = await completeTask(f.ctx, 'main', lateNight);
+  f.ctx.settings.dayBoundaryHour = 0;
+  const nightReopen = await reopenTask(f.ctx, 'main', nightDone.completionId, lateNight);
+  expect(nightReopen.noop).toBe(false);
+  f.ctx.settings.dayBoundaryHour = 4;
+});
+
+it('0.3.2 reopenTask & reopenTaskItem: enforces dynamic mainItems capacity, makeRoom S2 local timer guards, and single-item reopen from completed task', async () => {
+  const f = fixture();
+  f.ctx.settings.mainItems = 2;
+  await seed(
+    f,
+    [
+      card('c1', { task_id: 'main', order: 1 }),
+      card('c2', { task_id: 'main', order: 2 }),
+      card('c3', { task_id: 'main', order: 3, status: '已完成', completed_at: at(1), completed_day: '2026-10-27', completed_track: '主线' }),
+    ],
+    [task('main')],
+  );
+
+  // Dynamic mainItems = 2 is full (c1, c2 are 待做) -> reopenTaskItem(c3) rejects MAIN_TASK_ITEMS_FULL (S5)
+  f.clock(at(2)); await expect(reopenTaskItem(f.ctx, 'c3', at(2))).rejects.toThrow('MAIN_TASK_ITEMS_FULL');
+
+  // Complete whole task 'main', then create another main task 'occupant' occupying the main slot
+  f.clock(at(5)); const doneMain = await completeTask(f.ctx, 'main', at(5));
+  f.clock(at(6)); const occId = await createTask(f.ctx, { name: '占格主线', slot: '主线', makeRoom: null, items: ['occ-1'] }, at(6));
+  const occCard = (await f.ctx.repos.cards.list()).find(e => e.value.task_id === occId)!.value;
+
+  // Reopen without makeRoom when slot is full -> rejects TASK_CAPACITY_FULL
+  f.clock(at(7));
+  await expect(reopenTask(f.ctx, 'main', doneMain.completionId, at(7))).rejects.toThrow('TASK_CAPACITY_FULL');
+  await expect(reopenTaskItem(f.ctx, 'c1', at(7))).rejects.toThrow('TASK_CAPACITY_FULL');
+
+  // S2: when occupant task is in away/insert or pending start confirmation, makeRoom targeting occupant is rejected!
+  f.clock(at(8)); await start(f.ctx, occCard.id, at(8));
+  f.clock(at(9)); await insert(f.ctx, '回电话', at(9));
+  f.clock(at(10));
+  await expect(reopenTask(f.ctx, 'main', doneMain.completionId, at(10), { id: occId, action: '冷藏' })).rejects.toThrow('IN_AWAY_ACTIVITY');
+  await expect(reopenTaskItem(f.ctx, 'c1', at(10), { id: occId, action: '冷藏' })).rejects.toThrow('IN_AWAY_ACTIVITY');
+
+  f.clock(at(11)); await resume(f.ctx, at(11));
+  f.clock(at(12)); await beginPending(f.ctx, at(12));
+  await expect(reopenTaskItem(f.ctx, 'c1', at(12), { id: occId, action: '冷藏' })).rejects.toThrow('PENDING_START_CONFIRMATION');
+
+  // Clear pending and use reopenTaskItem from completed task with makeRoom -> restores 'main' to slot, clears completion snapshot, and reopens ONLY c1!
+  f.clock(at(13)); await startCard(f.ctx, occCard.id, at(13));
+  f.clock(at(14)); const singleReopen = await reopenTaskItem(f.ctx, 'c1', at(14), { id: occId, action: '冷藏' });
+  expect(singleReopen).toMatchObject({ noop: false, taskReopened: true });
+  expect((await f.ctx.repos.tasks.get(occId))!.value.status).toBe('冷藏');
+  expect((await f.ctx.repos.tasks.get('main'))!.value).toMatchObject({
+    status: '进行中',
+    slot: '主线',
+    completed_at: null,
+    completion: null,
+  });
+  expect((await getCard(f, 'c1')).status).toBe('待做');
+  expect((await getCard(f, 'c2')).status).toBe('已完成');
+  expect((await getCard(f, 'c3')).status).toBe('已完成');
+
+  // Passing makeRoom when already active in backpack rejects MAKE_ROOM_NOT_NEEDED (S4)
+  f.clock(at(15));
+  await expect(reopenTaskItem(f.ctx, 'c1', at(15), { id: occId, action: '冷藏' })).rejects.toThrow('MAKE_ROOM_NOT_NEEDED');
+  await expect(reopenTask(f.ctx, 'main', null, at(15), { id: occId, action: '冷藏' })).rejects.toThrow('MAKE_ROOM_NOT_NEEDED');
 });

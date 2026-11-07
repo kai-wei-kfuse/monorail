@@ -11,6 +11,7 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: native.invoke }));
 vi.mock('react', async importOriginal => ({
   ...await importOriginal<typeof React>(),
   useState: vi.fn((init: unknown) => [typeof init === 'function' ? (init as () => unknown)() : init, vi.fn()]),
+  useRef: vi.fn((init: unknown) => ({ current: init })),
   useEffect: vi.fn(),
 }));
 vi.mock('zustand', async importOriginal => ({

@@ -49,31 +49,34 @@ interface ResolvedWriteMeta {
   expectedState?: string;
 }
 
+type ExpectedStateMode = 'none' | 'required' | 'optional';
+
 async function resolveWriteMeta(
   client: ApplicationClient,
   options: {
     method: ApplicationMethod;
     operationId?: string;
     expectedState?: string;
-    needsExpectedState: boolean;
+    expectedStateMode: ExpectedStateMode;
     signal?: AbortSignal;
   },
 ): Promise<ResolvedWriteMeta> {
-  const { method, operationId: explicitOpId, expectedState: explicitState, needsExpectedState, signal } = options;
+  const { method, operationId: explicitOpId, expectedState: explicitState, expectedStateMode, signal } = options;
 
   if (!explicitOpId) {
     try {
       const ctx = await client.call('get_context', { sections: ['timer'] }, { signal });
       return {
         operationId: ctx.operation_id,
-        expectedState: explicitState ?? (needsExpectedState ? ctx.expected_state : undefined),
+        expectedState:
+          explicitState ?? (expectedStateMode === 'none' ? undefined : ctx.expected_state),
       };
     } catch (error) {
       throw new CliExecutionError(error, { method });
     }
   }
 
-  // Explicit --operation-id provided: follow §5.2 deterministic retry resolution
+  // Explicit --operation-id provided: follow §5.2 & ADR 0023 §2 deterministic retry resolution
   let lookup: ApplicationOutput<'get_operation_result'>;
   try {
     lookup = await client.call('get_operation_result', { operation_id: explicitOpId }, { signal });
@@ -82,7 +85,7 @@ async function resolveWriteMeta(
   }
 
   if (lookup.status === 'committed') {
-    if (!needsExpectedState) {
+    if (expectedStateMode === 'none') {
       return { operationId: explicitOpId };
     }
     if (explicitState !== undefined) {
@@ -97,6 +100,15 @@ async function resolveWriteMeta(
       ((reqArgs as Record<string, unknown>).expected_state as string).trim().length > 0
         ? ((reqArgs as Record<string, unknown>).expected_state as string)
         : undefined;
+
+    if (expectedStateMode === 'optional') {
+      // ADR 0023 §2：optional 方法重放时，回执有 expected_state 就还原原字符串，没有就保持省略；
+      // 不能抛 RECEIPT_INCOMPLETE 或补当前令牌。
+      return {
+        operationId: explicitOpId,
+        ...(receiptExpectedState !== undefined ? { expectedState: receiptExpectedState } : {}),
+      };
+    }
 
     if (!receiptExpectedState) {
       if (lookup.command !== method) {
@@ -123,7 +135,7 @@ async function resolveWriteMeta(
   }
 
   // lookup.status === 'not_found'
-  if (!needsExpectedState) {
+  if (expectedStateMode === 'none') {
     return { operationId: explicitOpId };
   }
   if (explicitState !== undefined) {
@@ -244,7 +256,7 @@ export async function executeCliCommand(
       const meta = await resolveWriteMeta(client, {
         method: 'save_idea',
         operationId: cmd.operationId,
-        needsExpectedState: false,
+        expectedStateMode: 'none',
         signal,
       });
       try {
@@ -273,7 +285,7 @@ export async function executeCliCommand(
       const meta = await resolveWriteMeta(client, {
         method: 'complete_idea',
         operationId: cmd.operationId,
-        needsExpectedState: false,
+        expectedStateMode: 'none',
         signal,
       });
       try {
@@ -284,11 +296,26 @@ export async function executeCliCommand(
       }
     }
 
+    case 'reopen_idea': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'reopen_idea',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call('reopen_idea', { operation_id: meta.operationId, idea_id: cmd.ideaId }, { signal });
+        return { kind: 'ok', json: cmd.json, method: 'reopen_idea', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'reopen_idea', operationId: meta.operationId });
+      }
+    }
+
     case 'capture_todo': {
       const meta = await resolveWriteMeta(client, {
         method: 'capture_todo',
         operationId: cmd.operationId,
-        needsExpectedState: false,
+        expectedStateMode: 'none',
         signal,
       });
       try {
@@ -319,7 +346,7 @@ export async function executeCliCommand(
       const meta = await resolveWriteMeta(client, {
         method: 'add_time_entry',
         operationId: cmd.operationId,
-        needsExpectedState: false,
+        expectedStateMode: 'none',
         signal,
       });
       try {
@@ -352,7 +379,7 @@ export async function executeCliCommand(
         method: 'update_time_entry',
         operationId: cmd.operationId,
         expectedState: cmd.expectedState,
-        needsExpectedState: true,
+        expectedStateMode: 'required',
         signal,
       });
       try {
@@ -387,7 +414,7 @@ export async function executeCliCommand(
         method: 'start_timer',
         operationId: cmd.operationId,
         expectedState: cmd.expectedState,
-        needsExpectedState: true,
+        expectedStateMode: 'required',
         signal,
       });
       try {
@@ -419,7 +446,7 @@ export async function executeCliCommand(
         method: 'start_task_item',
         operationId: cmd.operationId,
         expectedState: cmd.expectedState,
-        needsExpectedState: true,
+        expectedStateMode: 'required',
         signal,
       });
       try {
@@ -447,12 +474,13 @@ export async function executeCliCommand(
     case 'pause_timer':
     case 'resume_timer':
     case 'stop_timer':
-    case 'return_from_break': {
+    case 'return_from_break':
+    case 'end_original_task': {
       const meta = await resolveWriteMeta(client, {
         method: cmd.method,
         operationId: cmd.operationId,
         expectedState: cmd.expectedState,
-        needsExpectedState: true,
+        expectedStateMode: 'required',
         signal,
       });
       try {
@@ -481,7 +509,7 @@ export async function executeCliCommand(
         method: 'start_break',
         operationId: cmd.operationId,
         expectedState: cmd.expectedState,
-        needsExpectedState: true,
+        expectedStateMode: 'required',
         signal,
       });
       try {
@@ -503,6 +531,373 @@ export async function executeCliCommand(
         };
       } catch (error) {
         throw new CliExecutionError(error, { method: 'start_break', operationId: meta.operationId });
+      }
+    }
+
+    case 'get_task_plan': {
+      try {
+        const result = await client.call(
+          'get_task_plan',
+          cmd.day !== undefined ? { day: cmd.day } : {},
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'get_task_plan', result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'get_task_plan' });
+      }
+    }
+
+    case 'add_plan_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'add_plan_item',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'add_plan_item',
+          {
+            operation_id: meta.operationId,
+            day: cmd.day,
+            card_id: cmd.cardId,
+            ...(cmd.priority !== undefined ? { priority: cmd.priority } : {}),
+            ...(cmd.todayMinutes !== undefined ? { today_minutes: cmd.todayMinutes } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'add_plan_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'add_plan_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'remove_plan_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'remove_plan_item',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'remove_plan_item',
+          {
+            operation_id: meta.operationId,
+            day: cmd.day,
+            card_id: cmd.cardId,
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'remove_plan_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'remove_plan_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'update_plan_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'update_plan_item',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'update_plan_item',
+          {
+            operation_id: meta.operationId,
+            day: cmd.day,
+            card_id: cmd.cardId,
+            ...(cmd.priority !== undefined ? { priority: cmd.priority } : {}),
+            ...(cmd.todayMinutes !== undefined ? { today_minutes: cmd.todayMinutes } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'update_plan_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'update_plan_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'confirm_plan_carry': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'confirm_plan_carry',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'confirm_plan_carry',
+          {
+            operation_id: meta.operationId,
+            day: cmd.day,
+            keep_card_ids: cmd.keepCardIds,
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'confirm_plan_carry', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'confirm_plan_carry', operationId: meta.operationId });
+      }
+    }
+
+    case 'skip_today_plan': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'skip_today_plan',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'skip_today_plan',
+          {
+            operation_id: meta.operationId,
+            day: cmd.day,
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'skip_today_plan', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'skip_today_plan', operationId: meta.operationId });
+      }
+    }
+
+    case 'draw_task_item': {
+      try {
+        const result = await client.call('draw_task_item', {}, { signal });
+        return { kind: 'ok', json: cmd.json, method: 'draw_task_item', result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'draw_task_item' });
+      }
+    }
+
+    case 'skip_task_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'skip_task_item',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'skip_task_item',
+          {
+            operation_id: meta.operationId,
+            day: cmd.day,
+            card_id: cmd.cardId,
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'skip_task_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'skip_task_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'complete_task_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'complete_task_item',
+        operationId: cmd.operationId,
+        expectedState: cmd.expectedState,
+        expectedStateMode: 'optional',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'complete_task_item',
+          {
+            operation_id: meta.operationId,
+            ...(meta.expectedState !== undefined ? { expected_state: meta.expectedState } : {}),
+            card_id: cmd.cardId,
+            ...(cmd.note !== undefined ? { note: cmd.note } : {}),
+            ...(cmd.finishEarly !== undefined ? { finish_early: cmd.finishEarly } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'complete_task_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'complete_task_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'reopen_task_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'reopen_task_item',
+        operationId: cmd.operationId,
+        expectedState: cmd.expectedState,
+        expectedStateMode: 'optional',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'reopen_task_item',
+          {
+            operation_id: meta.operationId,
+            ...(meta.expectedState !== undefined ? { expected_state: meta.expectedState } : {}),
+            card_id: cmd.cardId,
+            ...(cmd.makeRoom !== undefined ? { make_room: cmd.makeRoom } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'reopen_task_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'reopen_task_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'keep_going_task_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'keep_going_task_item',
+        operationId: cmd.operationId,
+        expectedState: cmd.expectedState,
+        expectedStateMode: 'required',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'keep_going_task_item',
+          {
+            operation_id: meta.operationId,
+            expected_state: meta.expectedState!,
+            card_id: cmd.cardId,
+            ...(cmd.note !== undefined ? { note: cmd.note } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'keep_going_task_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'keep_going_task_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'split_task_item': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'split_task_item',
+        operationId: cmd.operationId,
+        expectedState: cmd.expectedState,
+        expectedStateMode: 'required',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'split_task_item',
+          {
+            operation_id: meta.operationId,
+            expected_state: meta.expectedState!,
+            card_id: cmd.cardId,
+            today_content: cmd.todayContent,
+            rest_content: cmd.restContent,
+            ...(cmd.restMinutes !== undefined ? { rest_minutes: cmd.restMinutes } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'split_task_item', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'split_task_item', operationId: meta.operationId });
+      }
+    }
+
+    case 'get_task_details': {
+      try {
+        const result = await client.call('get_task_details', { task_id: cmd.taskId }, { signal });
+        return { kind: 'ok', json: cmd.json, method: 'get_task_details', result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'get_task_details' });
+      }
+    }
+
+    case 'complete_task': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'complete_task',
+        operationId: cmd.operationId,
+        expectedState: cmd.expectedState,
+        expectedStateMode: 'optional',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'complete_task',
+          {
+            operation_id: meta.operationId,
+            ...(meta.expectedState !== undefined ? { expected_state: meta.expectedState } : {}),
+            task_id: cmd.taskId,
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'complete_task', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'complete_task', operationId: meta.operationId });
+      }
+    }
+
+    case 'reopen_task': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'reopen_task',
+        operationId: cmd.operationId,
+        expectedState: cmd.expectedState,
+        expectedStateMode: 'optional',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'reopen_task',
+          {
+            operation_id: meta.operationId,
+            ...(meta.expectedState !== undefined ? { expected_state: meta.expectedState } : {}),
+            task_id: cmd.taskId,
+            completion_id: cmd.completionId,
+            ...(cmd.makeRoom !== undefined ? { make_room: cmd.makeRoom } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'reopen_task', operationId: result.operation_id, result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'reopen_task', operationId: meta.operationId });
+      }
+    }
+
+    case 'get_recap': {
+      try {
+        const result = await client.call(
+          'get_recap',
+          {
+            ...(cmd.period !== undefined ? { period: cmd.period } : {}),
+            ...(cmd.from !== undefined ? { from: cmd.from } : {}),
+            ...(cmd.to !== undefined ? { to: cmd.to } : {}),
+            ...(cmd.dimension !== undefined ? { dimension: cmd.dimension } : {}),
+            ...(cmd.includeIdle !== undefined ? { include_idle: cmd.includeIdle } : {}),
+            ...(cmd.bucket !== undefined ? { bucket: cmd.bucket } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'get_recap', result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'get_recap' });
+      }
+    }
+
+    case 'list_operation_history': {
+      try {
+        const result = await client.call(
+          'list_operation_history',
+          {
+            ...(cmd.fromDay !== undefined ? { from_day: cmd.fromDay } : {}),
+            ...(cmd.toDay !== undefined ? { to_day: cmd.toDay } : {}),
+            ...(cmd.source !== undefined ? { source: cmd.source } : {}),
+            ...(cmd.filterAgent !== undefined ? { agent: cmd.filterAgent } : {}),
+            ...(cmd.filterMethod !== undefined ? { method: cmd.filterMethod } : {}),
+            ...(cmd.subjectType !== undefined ? { subject_type: cmd.subjectType } : {}),
+            ...(cmd.subjectId !== undefined ? { subject_id: cmd.subjectId } : {}),
+            ...(cmd.operationId !== undefined ? { operation_id: cmd.operationId } : {}),
+          },
+          { signal },
+        );
+        return { kind: 'ok', json: cmd.json, method: 'list_operation_history', result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'list_operation_history' });
       }
     }
   }

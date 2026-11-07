@@ -32,6 +32,7 @@ export interface MiniWindowPort {
   toggle(): Promise<boolean>; showMain(): Promise<void>;
   isVisible(): Promise<boolean>;
   subscribeVisibility(handler: (visible: boolean) => void): Promise<() => void>;
+  subscribeExplicitClose(handler: () => void): Promise<() => void>;
 }
 export const miniWindow: MiniWindowPort = {
   toggle: () => invoke<boolean>('toggle_mini'),
@@ -48,5 +49,8 @@ export const miniWindow: MiniWindowPort = {
     try { receive(await invoke<MiniVisibility>('read_mini_visibility')); }
     catch (error) { off(); throw error; }
     return off;
+  },
+  subscribeExplicitClose(handler) {
+    return listen('mini-explicit-close', () => handler());
   },
 };

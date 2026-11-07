@@ -136,7 +136,36 @@ interface Execution<T> { data: T; committed_at: string; replayed: boolean; warni
  * intent（ADR 0019 第 5 条）：run / runOperation 必填（E8a3）；execute 内部仍按可选处理，
  * 以便 runTx 之类的测试夹具绕开历史。
  */
-interface ExecuteOptions { operation?: Operation; signal?: AbortSignal; intent?: HistoryIntent }
+interface ExecuteOptions<T = unknown> {
+  operation?: Operation;
+  signal?: AbortSignal;
+  intent?: HistoryIntent;
+  onCommitted?: (value: T, committedAt: string) => void | Promise<void>;
+}
+
+export class PostCommitError<T = unknown> extends Error {
+  readonly committed = true as const;
+  readonly data: T;
+  readonly committed_at: string;
+  readonly warnings: readonly CommitWarning[];
+  readonly projectionFailed: boolean;
+  constructor(data: T, committed_at: string, warnings: readonly CommitWarning[]) {
+    super(`数据已提交，后续处理失败：${warnings.map(w => `${w.phase}: ${w.message}`).join('；')}`);
+    this.name = 'PostCommitError';
+    this.data = data;
+    this.committed_at = committed_at;
+    this.warnings = warnings;
+    this.projectionFailed = warnings.some(w => w.phase === 'projection');
+  }
+}
+
+export function isPostCommitError(error: unknown): error is PostCommitError {
+  return error instanceof PostCommitError || (
+    typeof error === 'object' && error !== null
+    && (error as { committed?: unknown }).committed === true
+    && Array.isArray((error as { warnings?: unknown }).warnings)
+  );
+}
 
 const queueOf = (ctx: Ctx): Queue => {
   const queue = queues.get(ctx);
@@ -146,9 +175,15 @@ const queueOf = (ctx: Ctx): Queue => {
 const blocked = (failure: unknown) => new Error('提交已阻塞；请重启以恢复 journal', { cause: failure });
 
 /** UI callers keep their result type and receive an explicit post-commit error. */
-export function run<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at: string | undefined, intent: HistoryIntent): Promise<T> {
-  return execute(ctx, work, at, { intent }).then(result => {
-    if (result.warnings.length) throw new Error(`数据已提交，后续处理失败：${result.warnings.map(w => `${w.phase}: ${w.message}`).join('；')}`);
+export function run<T>(
+  ctx: Ctx | Transaction,
+  work: (tx: Transaction) => Promise<T>,
+  at: string | undefined,
+  intent: HistoryIntent,
+  options?: { onCommitted?: (value: T, committedAt: string) => void | Promise<void> },
+): Promise<T> {
+  return execute(ctx, work, at, { intent, onCommitted: options?.onCommitted }).then(result => {
+    if (result.warnings.length) throw new PostCommitError(result.data, result.committed_at, result.warnings);
     return result.data;
   });
 }
@@ -161,12 +196,14 @@ export function runOperation<T extends JsonValue>(ctx: Ctx, operation: Operation
 
 /**
  * 串行只读（ADR 0019 第 7 条）：排在同一队列上，看不到写了一半的 journal；不建事务、不写 state.yaml。
- * 队列故障时拒绝。安装更新冻结期间照常可读（读不影响备份）。
+ * 队列故障或最新快照不可用时拒绝。安装更新冻结期间照常可读（读不影响备份）。
  */
-export function readSerial<T>(ctx: Ctx, read: () => Promise<T>): Promise<T> {
+export function readSerial<T>(ctx: Ctx, read: () => Promise<T>, signal?: AbortSignal): Promise<T> {
   const queue = queueOf(ctx);
+  if (signal?.aborted) return Promise.reject(new Error('CANCELLED：请求在进入队列前已取消'));
   const result = queue.tail.then(() => {
-    if (queue.failure) throw blocked(queue.failure);
+    assertQueueHealthy(ctx);
+    if (signal?.aborted) throw new Error('CANCELLED：请求在执行前已取消');
     return read();
   });
   queue.tail = result.then(() => undefined, () => undefined);
@@ -223,7 +260,7 @@ async function postCommit(phase: CommitWarning['phase'], work: () => void | Prom
 }
 
 /** Root contexts enqueue independent actions. Transaction scopes may never enqueue. */
-function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at: string | undefined, options: ExecuteOptions): Promise<Execution<T>> {
+function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T>, at: string | undefined, options: ExecuteOptions<T>): Promise<Execution<T>> {
   if (ctx.scope === 'transaction') throw new Error('事务重入：请调用 InTx 函数');
   const { operation, signal } = options;
   const queue = queues.get(ctx);
@@ -337,6 +374,9 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
     // Older snapshots remain readable during a transaction, but must never masquerade as its committed result.
     queue.snapshotFailure = new Error('Committed projection has not been published');
     const warnings: CommitWarning[] = [];
+    if (options.onCommitted) {
+      await postCommit('onCommitted', () => options.onCommitted!(value, committedAt), warnings);
+    }
     if (settingsWrite) {
       ctx.settings = settings;
       for (const listener of settingsListeners.get(ctx)!) await postCommit('settings', () => listener(settings), warnings);

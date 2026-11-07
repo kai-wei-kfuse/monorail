@@ -1,0 +1,106 @@
+CHECK version
+Version 0.3.2: consistent
+PASS version
+CHECK typescript
+PASS typescript
+CHECK mcp-typescript
+PASS mcp-typescript
+CHECK eslint
+PASS eslint
+CHECK vitest
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+
+ Test Files  99 passed (99)
+      Tests  760 passed (760)
+   Start at  22:57:46
+   Duration  22.75s (tests 57%, import 31%, transform 11%, worker 1%)
+
+    Isolate  99 workers spawned · ~820ms startup each (spawn + environment, per file)
+             at least ~6.56s faster with isolate: false — reuses workers across files instead of one per file
+
+PASS vitest
+CHECK mcp-cli-build
+PASS mcp-cli-build
+CHECK mcp-smoke
+✔ legacy stdio: discovery, save, validation and desktop failures (2412.9331ms)
+✔ legacy http: discovery, save, validation and desktop failures (1803.5899ms)
+✔ modern stdio: discovery, save, validation and desktop failures (2665.9238ms)
+✔ modern http: discovery, save, validation and desktop failures (935.8625ms)
+✔ ApplicationClient validates input before transport and rejects malformed transport responses (3.275ms)
+✔ A3 mixed entrypoints: MCP and CLI share state, replay receipts across entrypoints, and reject stale timer state without silent retry (133.369ms)
+✔ EBUSY is a busy existing host and never starts another desktop process (4.2428ms)
+✔ HTTP rejects untrusted browser origins and Host before business dispatch (47.2198ms)
+✔ pipe client distinguishes setup_required, corrupted config, startup failure, cancellation and coalesced --background launch (91.3443ms)
+✔ self-contained dist-mcp/monorail-mcp.mjs runs from a clean path with spaces and Chinese characters over stdio and HTTP (2186.0235ms)
+✔ Windows independent launcher reports WMI launch failure and preserves literal paths (2592.8741ms)
+✔ Windows independent launcher observes a real target that exits before readiness (3495.0583ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11816.7999
+PASS mcp-smoke
+CHECK cli-smoke
+✔ CLI --help and --version (human and --json) succeed with exit 0 without touching the application client or starting background host (9.8883ms)
+✔ CLI usage validation rejects unknown commands, unknown/duplicate flags, conflicting text sources, missing timezone offsets and file errors with exit code 2 before calling backend (16.338ms)
+✔ CLI reaches all 36 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin (153.1168ms)
+✔ CLI idempotent retry (§5.2) replays committed timer mutations after state advances and rejects conflicting business parameters (3.883ms)
+✔ CLI maps exit codes 3 (business rejection), 4 (environment/setup), 5 (result_unknown + operation_id preservation), and 130 (cancelled before send) (2.2496ms)
+✔ self-contained dist-cli/monorail-cli.mjs and dist-mcp/monorail-mcp.mjs run from a clean directory with spaces and Chinese characters, share state, and CLI bundle excludes @modelcontextprotocol (943.9724ms)
+✔ origin (ADR 0019 §6) travels as an optional top-level request field: per-call wins over the client default, absent stays absent, bad values are dropped instead of failing the call (4.3983ms)
+✔ caller agent (ADR 0019 §6): --agent / MONORAIL_AGENT win over known env variables, otherwise none; every request of one process carries the same origin (2.0772ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1549.1309
+PASS cli-smoke
+CHECK release-tooling
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.2.2
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.2.2
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.3.0-beta.1
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/update-test-v0.1.3
+(node:376) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ publishes signed stable assets for a public repository using the existing tag (15.6279ms)
+✔ publishes signed stable assets for a private repository using the existing tag (6.2745ms)
+✔ publishes product beta release with prerelease=true, latest=false, and product monorail asset naming (5.3431ms)
+✔ keeps update-test release isolated with update-test prefix and channel metadata (6.7914ms)
+✔ rejects mismatched tag, contradictory channel flags, or mismatched installer version (7.0477ms)
+Validated aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; signed build will use tagged commit bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+(node:32988) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ accepts test and release-tool changes (12.9243ms)
+✔ rejects a changed product source (3.0392ms)
+✔ rejects publishing from a recovery build (2.6077ms)
+✔ rejects an unpinned validation ref (2.8541ms)
+✔ rejects a different checked-out commit (2.1479ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 277.783
+PASS release-tooling

@@ -57,7 +57,7 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
       corner={<>
         {s.paused && <button type="button" className="c-link" onClick={actions.continueTimer}>继续计这张卡</button>}
         {/* 〔插入事件〕（用户 2026-11-06）：同〔休息一下〕的样式；点下插入卡马上落下，在插入卡上写名字，回车记下，卡等你回来 */}
-        <button type="button" className="c-rest" title="插一件别的事：插入卡马上落下，在上面写名字；这张卡等你回来" onClick={onInsertEvent ?? writeOther}><Icon name="plus" />插入事件</button>
+        {onInsertEvent && <button type="button" className="c-rest" title="插一件别的事：插入卡马上落下，在上面写名字；这张卡等你回来" onClick={onInsertEvent}><Icon name="plus" />插入事件</button>}
         {corner}
       </>}
       actions={<>
@@ -99,6 +99,7 @@ export function FusedCard({ view, card, cardView, now, look, titleScale, actions
         onRecent={id => E.choose(() => actions.continueEntry(id))} />}
     </div>}
     corner={<>
+      {onInsertEvent && <button type="button" className="c-rest" title="插一件别的事：插入卡马上落下，在插入卡上写名字；原来这件事等你回来" onClick={onInsertEvent}><Icon name="plus" />插入事件</button>}
       {card && write && <button type="button" className="c-link" title="不写了，回到抽到的卡" onClick={back}>回到卡</button>}
       {free && <><span className="c-hint">抽到的「{plainText(card.content)}」还没开始</span>
         <button type="button" className="c-link" onClick={() => actions.startCard(card.id)}>开始这张卡</button></>}

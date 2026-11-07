@@ -1,6 +1,6 @@
-# 单轨（MONORAIL）共享应用接口与 CLI 指南（0.3.0）
+# 单轨（MONORAIL）共享应用接口与 CLI 指南（0.3.2）
 
-当前版本 **0.3.0**。单轨以桌面端单写入者（`ApplicationController`）为核心，向上暴露一套由 [src/shared/application.ts](../../src/shared/application.ts) 统一定义、由 [client/applicationClient.ts](../../client/applicationClient.ts) 强类型校验的 **15 项共享应用方法**，同时驱动两个并列外部适配器：
+当前版本 **0.3.2**。单轨以桌面端单写入者（`ApplicationController`）为核心，向上暴露一套由 [src/shared/application.ts](../../src/shared/application.ts) 统一定义、由 [client/applicationClient.ts](../../client/applicationClient.ts) 强类型校验的 **36 项共享应用方法（26 写、10 读）**，同时驱动两个并列外部适配器：
 
 - **MCP 适配器**（`mcp/` → `dist-mcp/monorail-mcp.mjs`）：面向原生支持 MCP（`2025-11-25` / `2026-07-28`，stdio 或本机 Streamable HTTP）的宿主。详见 [mcp/README.md](../../mcp/README.md)。
 - **CLI 适配器**（`cli/` → `dist-cli/monorail-cli.mjs`）：面向具备命令行/Shell 执行能力的代理、自动化脚本与终端用户。自包含单文件包**不打包** `@modelcontextprotocol/*` 依赖。
@@ -16,7 +16,7 @@
 ## 1. 架构与代码阅读路径（面向新 Session）
 
 1. **权威契约注册表**：[src/shared/application.ts](../../src/shared/application.ts)
-   - `applicationContracts` 将全部 15 个方法名映射到 `{ input, output, readOnly }`。
+   - `applicationContracts` 将全部 36 个方法名映射到 `{ input, output, readOnly }`。
    - `ApplicationMethod`、`ApplicationInput<M>`、`ApplicationOutput<M>` 与 `applicationRequest` 均从同一契约派生，无第二份手写请求/返回类型。
    - `lookupResult`（`get_operation_result`）在 `committed` 分支包含 `request: { method, arguments }`，直接读取持久化回执 `receipts/<uuid>.json` 中的规范化请求参数。
 2. **结构化错误模型**：[src/shared/appError.ts](../../src/shared/appError.ts)
@@ -26,13 +26,13 @@
    - `callDesktop` 负责 Windows Named Pipe 通信、`EBUSY` 与 `ENOENT` 严格区分、以及按 `mcp-host.json` 的单实例 `--background` 按需拉起。
    - Windows 默认启动经 `client/windowsLauncher.ts` 使用 PowerShell/CIM 本机进程服务，让后台独立于 MCP/CLI 宿主清理；临时观察进程保留启动失败/实际退出检测，在就绪或最后一名等待者结束后释放。组件不可用时报 `STARTUP_FAILED`，不静默回退，见 ADR 0015。
 4. **桌面端统一控制器与桥接**：[src/app/applicationController.ts](../../src/app/applicationController.ts) & [src/app/applicationBridge.ts](../../src/app/applicationBridge.ts)
-   - `handleApplicationRequest` 复用 `recordService` / `homeService`、完整 `Snapshot` 以及 `runOperation` / `readOperation`。
+   - `handleApplicationRequest` 复用 `recordService` / `homeService` / `planService` / `dealService` / `cardService` / `backpackService` / `ideaService` / `recapService`、完整 `Snapshot` 以及 `runOperation` / `readOperation` / `readSerial`。
 5. **CLI 入口与命令实现**：[cli/main.ts](../../cli/main.ts)、[cli/commands.ts](../../cli/commands.ts)、[cli/execute.ts](../../cli/execute.ts)、[cli/output.ts](../../cli/output.ts)
    - ESLint（[eslint.config.mjs](../../eslint.config.mjs)）强制隔离：`client/`、`cli/`、`mcp/` 仅能从 `src/shared` 导入共享契约，不能直接碰触 `src/app`、`src/services`、`src/data`；`cli/` 与 `mcp/` 互不依赖。
 
 ---
 
-## 2. CLI 命令对照表（15 个子命令 → 17 个应用方法）
+## 2. CLI 命令对照表（36 个应用方法）
 
 运行方式：
 - 开发源码：`node cli/main.ts <command> ...`（或 `npm run cli -- <command> ...`）
@@ -43,6 +43,7 @@
 | `monorail context` | `get_context` | 可选重复 `--section timer\|pending_actions\|options` |
 | `monorail idea add [<text>]` | `save_idea` | 正文三选一（`<text>` / `--text-file <path>` / `--stdin`），可选 `--needs <text>`、`--operation-id <uuid>` |
 | `monorail idea done <idea-id>` | `complete_idea` | 必填 `<idea-id>`（UUID，通过 `find --kind idea` 获取）；可选 `--operation-id <uuid>`。只有想法池里的想法能标记；已完成的再标记返回 `noop: true`（0.3.0-beta.4，ADR 0020） |
+| `monorail idea reopen <idea-id>` | `reopen_idea` | 必填 `<idea-id>`（UUID）；撤销想法完成并放回活跃池（0.3.2，ADR 0023） |
 | `monorail todo add [<text>]` | `capture_todo` | 正文三选一，可选 `--task-id <id>`、`--due-at <iso>`、`--operation-id <uuid>`；`--blocking` 0.3.1 起不起作用（删除阻塞机制），仍接受以兼容旧脚本 |
 | `monorail find [<query>]` | `find_items` | 可选 `--kind idea\|todo_card\|task\|all`、`--include-archived` |
 | `monorail time summary` | `get_time_summary` | 可选 `--day today\|yesterday\|this_week\|YYYY-MM-DD`、`--day-mode activity\|calendar` |
@@ -56,6 +57,24 @@
 | `monorail timer stop` | `stop_timer` | 可选 `--operation-id <uuid>`、`--expected-state <token>` |
 | `monorail break start [<activity>]` | `start_break` | 正文三选一（活动名称或预设 ID），可选 `--operation-id <uuid>`、`--expected-state <token>` |
 | `monorail break return` | `return_from_break` | 可选 `--operation-id <uuid>`、`--expected-state <token>` |
+| `monorail break end-original` | `end_original_task` | 临时离开期间结束离开前的原计时，当前临时离开升级为普通自由计时（0.3.2） |
+| `monorail plan show` | `get_task_plan` | 可选 `--day today\|tomorrow`；只读查看今天或明天的任务板（0.3.2） |
+| `monorail plan add <card-id>` | `add_plan_item` | 必填 `--day <YYYY-MM-DD>`，可选 `--priority 普通\|高`、`--today-minutes <N>`、`--operation-id <uuid>`（0.3.2） |
+| `monorail plan remove <card-id>` | `remove_plan_item` | 必填 `--day <YYYY-MM-DD>`，可选 `--operation-id <uuid>`（0.3.2） |
+| `monorail plan edit <card-id>` | `update_plan_item` | 必填 `--day <YYYY-MM-DD>`，至少一项 `--priority 普通\|高` 或 `--today-minutes <N>`，可选 `--operation-id <uuid>`（0.3.2） |
+| `monorail plan carry` | `confirm_plan_carry` | 必填 `--day <YYYY-MM-DD>`，以及 `--keep <card-id>...` 或 `--keep-none` 二选一（0.3.2） |
+| `monorail plan skip-today` | `skip_today_plan` | 必填 `--day <YYYY-MM-DD>`；标记今天先不排任务板（0.3.2） |
+| `monorail plan draw` | `draw_task_item` | 只读按权重抽取一张待办事项卡，不自动开始计时（0.3.2） |
+| `monorail plan skip <card-id>` | `skip_task_item` | 必填 `--day <YYYY-MM-DD>`；将当前候选记入本轮已看过（seen），随后可再调用 `plan draw`（0.3.2） |
+| `monorail item done <card-id>` | `complete_task_item` | 完成当前计时/暂停卡片或直接完成背包进行中任务的待做子项；可选 `--note <text>\|--note-file <path>\|--stdin`、`--finish-early`（时间盒未达量确认）、`--operation-id <uuid>`、`--expected-state <token>`（0.3.2，ADR 0022/0023） |
+| `monorail item reopen <card-id>` | `reopen_task_item` | 取消单个已完成子项的完成状态并恢复为待做（父任务已完成时同事务恢复父任务，满格可传 `--make-room freeze\|abandon:<task-id>`）（0.3.2，ADR 0022/0023） |
+| `monorail item keep <card-id>` | `keep_going_task_item` | 当前卡片记录进度笔记并放回待做；可选 `--note <text>\|--note-file <path>\|--stdin`、`--operation-id <uuid>`、`--expected-state <token>`（0.3.2） |
+| `monorail item split <card-id>` | `split_task_item` | 必填 `--today-content <text>`、`--rest-content <text>`，可选 `--rest-minutes <N>`、`--operation-id <uuid>`、`--expected-state <token>`（0.3.2） |
+| `monorail task show <task-id>` | `get_task_details` | 只读查询单个任务详情、全部子项、完成批次 `completion_id` 与重新打开前置条件（0.3.2） |
+| `monorail task done <task-id>` | `complete_task` | 整张完成背包中的主/支线任务（含剩余未完成子项并生成完成批次快照，释放背包槽位）（0.3.2，ADR 0022） |
+| `monorail task reopen <task-id>` | `reopen_task` | 必填 `--completion-id <uuid>` 或 `--legacy`，满格可选 `--make-room freeze\|abandon:<task-id>`；重新打开已完成任务（0.3.2，ADR 0022） |
+| `monorail recap show` | `get_recap` | 只读统计回看；可选 `--period week\|lastWeek\|cycle\|month\|quarter\|year\|custom`（`custom` 必填 `--from` 与 `--to`）、`--dimension project\|tag\|source\|activity`、`--include-idle`、`--bucket <id>`（0.3.2） |
+| `monorail history list` | `list_operation_history` | 只读列出操作历史；可选 `--from-day <YYYY-MM-DD>`、`--to-day <YYYY-MM-DD>`、`--source manual\|system\|mcp\|cli\|automation\|all_automation`、`--filter-agent <name>`、`--method <name>`、`--subject-type <type>`、`--subject-id <id>`、`--operation-id <uuid>`（0.3.2） |
 | `monorail operation get <id>` | `get_operation_result` | 必填 `<id>`（UUID），只读查询持久化回执 |
 
 通用选项：`--help`（`-h`）、`--version`（`-v`）、`--json`。`--help`、`--version` 与本地参数校验错误**不会**连接或启动单轨后台进程。`--help --json` 输出 `{ status: "ok", kind: "help", version, rules, commands }`，其中 `rules` 是上面那段给 agent 的规则（0.3.1 新加的字段）。

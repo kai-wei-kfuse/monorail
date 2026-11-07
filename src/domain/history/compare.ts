@@ -59,7 +59,7 @@ const CARD: Field<Card>[] = [
 ];
 const TASK: Field<Task>[] = [
   ['名称', t => t.name], ['状态', t => t.status], ['槽位', t => t.slot], ['押注到期', t => t.bet_ends_at ? md(t.bet_ends_at) : '（无）'],
-  ['默认项目', t => t.default_project ?? '（无）'],
+  ['默认项目', t => t.default_project ?? '（无）'], ['完成时间', t => t.completed_at ? `${md(t.completed_at)} ${clock(t.completed_at)}` : '（无）'],
 ];
 const REVIEW: Field<Review>[] = [['状态', r => r.status], ['步骤', r => r.step]];
 const RECORD: Field<RecordEntry>[] = [
@@ -168,6 +168,7 @@ export function splitSubject(all: HistoryChange[], ref: { type: HistoryObjectTyp
   let textOf = own[0]?.name ?? '', meta = '';
   if (ref.type === 'entry') { const e = extra.entries.get(ref.id); if (e) { textOf = e.description || '（无描述）'; meta = `${e.project} · ${entryTime(e)}`; } }
   if (ref.type === 'card') { const c = extra.cards.get(ref.id); if (c) { textOf = c.content; meta = c.task_id ? extra.taskNames.get(c.task_id) ?? '' : '不属于任务'; } }
+  if (ref.type === 'task') { const t = extra.taskNames.get(ref.id); if (t) textOf = t; }
   if (ref.type === 'settings') { textOf = SETTING_LABELS[ref.id] ?? ref.id; }
   if (!textOf && !own.length) return { subject: null, changes: all, effects: [] };
   return { subject: { type: ref.type, id: ref.id, text: cut(textOf, 60), meta }, changes: own, effects: rest };

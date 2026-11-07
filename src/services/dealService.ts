@@ -21,20 +21,23 @@ export function refreshInTx(tx: Transaction): void {
 
 export const refresh = (ctx: Ctx, at: string) => run(ctx, async tx => refreshInTx(tx), at, { action: 'deal.refresh' });
 
+export async function drawFromPlanInSerial(ctx: Ctx, at = ctx.now()): Promise<PickResult> {
+  const snap = ctx.snapshot();
+  if (!snap) throw new Error('SNAPSHOT_UNAVAILABLE：单轨还没准备好');
+  if (!snap.settings.taskMode) throw new Error('TASK_MODE_OFF：任务模式已关闭，不能抽卡');
+  const day = activityDay(at, snap.settings.dayBoundaryHour);
+  const { state } = snap, plan = await ctx.repos.plans.read(day), entries = ctx.repos.times.snapshot();
+  const open = entries.find(entry => entry.id === state.open_entry) ?? null;
+  const resume = state.resume_entry_id ? entries.find(entry => entry.id === state.resume_entry_id) ?? null : null;
+  return pickFromPlan({ plan: plan.value, cards: snap.cards, tasks: snap.tasks, entries,
+    boundaryHour: snap.settings.dayBoundaryHour, at, activeCard: activeCardOf(open, resume),
+    inserting: insertState(open, resume) !== null, legacyRest: state.rest !== null, random: (ctx.random ?? Math.random)() });
+}
+
 /**
  * 从今天的板子抽一张（ADR 0021 第 2 条）：排在提交队列上只读，不写盘、不记历史。
  * 界面拿 candidates 做翻卡；〔开始〕走 homeService.startCard，〔换一张〕走 planService.skipCard。
  */
-export function drawFromPlan(ctx: Ctx, at = ctx.now()): Promise<PickResult> {
-  return readSerial(ctx, async () => {
-    const day = activityDay(at, ctx.settings.dayBoundaryHour), snap = ctx.snapshot();
-    if (!snap) throw new Error('SNAPSHOT_UNAVAILABLE：单轨还没准备好');
-    const { state } = snap, plan = await ctx.repos.plans.read(day), entries = ctx.repos.times.snapshot();
-    const cards = snap.cards.map(value => ({ value })), tasks = snap.tasks.map(value => ({ value }));
-    const open = entries.find(entry => entry.id === state.open_entry) ?? null;
-    const resume = state.resume_entry_id ? entries.find(entry => entry.id === state.resume_entry_id) ?? null : null;
-    return pickFromPlan({ plan: plan.value, cards: cards.map(c => c.value), tasks: tasks.map(t => t.value), entries,
-      boundaryHour: ctx.settings.dayBoundaryHour, at, activeCard: activeCardOf(open, resume),
-      inserting: insertState(open, resume) !== null, legacyRest: state.rest !== null, random: (ctx.random ?? Math.random)() });
-  });
+export function drawFromPlan(ctx: Ctx, at = ctx.now(), signal?: AbortSignal): Promise<PickResult> {
+  return readSerial(ctx, () => drawFromPlanInSerial(ctx, at), signal);
 }

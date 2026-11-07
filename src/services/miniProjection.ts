@@ -1,6 +1,7 @@
-import type { MiniSnapshot } from '../platform/windowBus';
+import type { MiniInsertDraft, MiniSnapshot } from '../platform/windowBus';
 import type { SuggestData } from '../shared/suggest';
 import type { Snapshot } from './commit';
+import { timerStateToken } from './homeService';
 import { suggestSource } from './suggestSource';
 
 /** 小窗最近的记录最多发这么多条（去重后）：每秒心跳都发，不发一年的全部条目（0.3.0-beta.4 D1）。 */
@@ -17,16 +18,34 @@ function miniSuggest(snapshot: Snapshot): SuggestData {
 }
 
 /** epoch 是主窗口会话世代（Ctx.mainEpoch），revision 是这个会话里的提交序号。 */
-export function projectMini(snapshot: Snapshot, epoch: number): MiniSnapshot {
+export function projectMini(
+  snapshot: Snapshot,
+  epoch: number,
+  options?: { viewSeq?: number; insertDraft?: MiniInsertDraft | null },
+): MiniSnapshot {
   const { home, cards, settings } = snapshot;
   const card = cards.find(card => card.id === home.card?.id);
-  return structuredClone({ epoch, revision: home.dataVersion, entryId: home.entry?.id ?? null, cardId: home.card?.id ?? null,
-    pending_id: home.pending?.id ?? null, entry: home.entry, pending: home.pending, resumeDescription: home.resumeDescription,
+  const open = snapshot.entries.find(e => e.id === snapshot.state.open_entry) ?? null;
+  const currentCard = cards.find(c => c.id === snapshot.state.current_card) ?? null;
+  const token = timerStateToken(snapshot.state, open, currentCard);
+  const draft = options?.insertDraft ?? null;
+  return structuredClone({
+    epoch,
+    ...(options?.viewSeq !== undefined ? { viewSeq: options.viewSeq } : {}),
+    revision: home.dataVersion,
+    entryId: home.entry?.id ?? null,
+    cardId: home.card?.id ?? null,
+    pending_id: home.pending?.id ?? null,
+    timerStateToken: token,
+    canInsert: Boolean(home.canInsert) && draft === null,
+    insertDraft: draft,
+    entry: home.entry, pending: home.pending, resumeDescription: home.resumeDescription,
     card: card && home.card ? { id: card.id, content: card.content, status: home.card.status, project: card.project, tags: card.tags,
       goalMinutes: home.card.goalMinutes } : null,
     closedEffectiveMs: home.closedEffectiveMs, currentSegStartedAt: home.currentSegStartedAt,
     closedTodayMs: home.closedTodayMs, todaySegStartedAt: home.todaySegStartedAt, todayGoal: home.todayGoal, awayActivity: home.awayActivity, looseIdle: home.looseIdle,
     inserting: home.insert ? { originalTitle: home.insert.over.title, name: home.insert.name, paused: home.insert.paused, canContinue: home.insert.canContinue, closedMs: home.insert.closedMs } : null,
     projects: snapshot.backpack.pool.projects, knownTags: home.knownTags, accent: settings.accent, miniMode: settings.miniMode,
-    suggest: miniSuggest(snapshot) });
+    suggest: miniSuggest(snapshot),
+  });
 }

@@ -6,9 +6,12 @@ import { BagDrawer } from '../pages/home/drawer/BagDrawer';
 import type { BagActions, BagData } from '../pages/home/drawer/BagDrawer';
 import { FlipDeal } from '../pages/home/drawer/FlipDeal';
 import type { FlipCard } from '../pages/home/drawer/FlipDeal';
+import { cardView } from '../pages/home/HomePage';
+import type { TaskCardView } from '../pages/home/TaskCard';
 import { Dialog } from '../ui/overlay/Dialog';
 import { Button } from '../ui/controls/Button';
 import { motionLevel } from '../ui/effects/animate';
+import { isPostCommitError } from '../services/commit';
 import type { Ctx } from '../services/commit';
 import * as backpack from '../services/backpackService';
 import * as ideas from '../services/ideaService';
@@ -16,28 +19,64 @@ import * as preset from '../services/presetService';
 import * as plan from '../services/planService';
 import * as deal from '../services/dealService';
 import { startCard } from '../services/homeService';
-import { pass } from '../services/cardService';
+import { checkComplete, completeItem, pass } from '../services/cardService';
 import { changeLists } from '../services/settingsService';
 import type { HistorySource } from '../shared/history';
 
 const HOME: HistorySource = { kind: 'manual', via: 'main', page: 'home' };
 type Ask = { kind: 'plan' } | { kind: 'done' } | { kind: 'blocked'; reason: 'inserting' | 'rest' } | { kind: 'carry' } | null;
 
+export interface BagStartPresentation {
+  id: string;
+  cardId: string;
+  at: string;
+  previousView: TaskCardView | null;
+}
+
 /**
  * 背包抽屉和抽卡的接线（ADR 0021 第 2 条）：数据来自 store 的 backpack / plan 投影，动作走 backpack / plan / idea / deal service。
- * 取代原来的背包页（BackpackScreen）。抽卡：drawFromPlan 只读拿结果，翻卡演完点〔开始〕走 startCard，〔换一张〕走 skipCard 再抽一次。
+ * 取代原来的背包页（BackpackScreen）。抽卡：drawFromPlan 只读拿结果，翻卡演完点〔开始〕走 startFromBag，〔换一张〕走 skipCard 再抽一次。
  */
-export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report, onInfo, children }:
+export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, onBagStarted, report, onInfo, children }:
   { ctx: Ctx; open: boolean; onOpen: () => void; onClose: () => void;
     /** 外壳给的抽卡请求（首页〔今日任务板〕旁的抽卡、板子底部〔抽一张〕）：每次变成新值就抽一次 */ drawAt: string | null; onDrawn: () => void;
+    onBagStarted?: (req: BagStartPresentation) => void;
     report: (error: unknown) => void; onInfo?: (title: string, text: string) => void; children: ReactNode }) {
   const view = useStore(appStore, s => s.backpack), planView = useStore(appStore, s => s.plan), home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   // 设置从 store 读：改了设置就跟着重新渲染（不靠别的投影顺带刷新）
   const settings = useStore(appStore, s => s.settings);
   const [ask, setAsk] = useState<Ask>(null), [flip, setFlip] = useState<{ pick: FlipCard; pool: FlipCard[]; from: DOMRect | null; key: string } | null>(null);
   const [lastDraw, setLastDraw] = useState<string | null>(null);
+  const [startingRef] = useState(() => ({ current: false }));
   const now = () => new Date().toISOString();
   const call = (work: () => Promise<unknown>) => { void work().catch(report); };
+
+  const startFromBag = (cardId: string, at = now()) => {
+    if (startingRef.current) return;
+    startingRef.current = true;
+    const previousView = cardView(appStore.getState().home, Date.parse(at));
+    void (async () => {
+      try {
+        await startCard(ctx, cardId, at);
+        setFlip(null);
+        onClose();
+        if (motionLevel() !== 'off') onBagStarted?.({ id: crypto.randomUUID(), cardId, at, previousView });
+      } catch (error) {
+        if (isPostCommitError(error)) {
+          report(error);
+          setFlip(null);
+          onClose();
+          if (!error.projectionFailed && motionLevel() !== 'off') {
+            onBagStarted?.({ id: crypto.randomUUID(), cardId, at, previousView });
+          }
+        } else {
+          report(error);
+        }
+      } finally {
+        startingRef.current = false;
+      }
+    })();
+  };
 
   const flipCard = (id: string): FlipCard => {
     const row = planView.today.rows.find(r => r.cardId === id), c = cards.find(x => x.id === id);
@@ -55,7 +94,7 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
     if (result.kind === 'done') { setAsk({ kind: 'done' }); return; }
     if (result.kind === 'guide') { onInfo?.('背包里还没有能做的事', '先在背包里新建一个任务，再排进今天。'); onOpen(); return; }
     // 动效关闭：不翻，直接开始（§11.15）
-    if (motionLevel() === 'off') { await startCard(ctx, result.card.id, now()); return; }
+    if (motionLevel() === 'off') { startFromBag(result.card.id, now()); return; }
     setFlip({ pick: flipCard(result.card.id), pool: result.candidates.map(c => flipCard(c.card.id)), from, key: at });
   });
   // 外壳每次给一个新的 drawAt 就抽一次（G7 审核 N1：放进 effect，不在渲染里发请求）
@@ -66,6 +105,9 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
     pool: view.pool, tasks: view.tasks, queue: view.queue, ideas: view.ideas, doneIdeas: view.doneIdeas, plan: planView,
     ideaLimit: settings.ideaPoolLimit, defaultTimebox: settings.timeboxDefaultMinutes, knownTags: view.pool.knownTags,
     drawable: planView.today.drawable.length, inserting: !!home.insert, taskMode: settings.taskMode,
+    interruptedCardId: home.insert?.over.kind === 'card' ? home.insert.over.cardId : null,
+    pendingCardId: home.pending && home.card ? home.card.id : null,
+    activeOrPausedCardId: home.card?.id ?? null,
     now: home.insert ? { title: home.insert.name, startedAt: home.insert.startedAt ?? new Date().toISOString() }
       : running ? { title: home.card?.status === '进行中' ? home.card.content : running.description, startedAt: running.startedAt } : null,
   };
@@ -73,13 +115,21 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
     planAdd: (day, cardId, priority, todayMinutes) => call(() => plan.add(ctx, day, { cardId, priority, todayMinutes }, now())),
     planRemove: (day, cardId) => call(() => plan.remove(ctx, day, cardId, now())),
     confirmCarry: keep => call(() => plan.confirmCarry(ctx, keep, now())),
-    start: cardId => call(() => startCard(ctx, cardId, now())),
+    start: cardId => startFromBag(cardId, now()),
     draw: () => { onClose(); draw(now()); },
     createTask: draft => call(() => backpack.createTask(ctx, draft, now())),
     addItem: (taskId, content) => call(() => backpack.addItem(ctx, taskId, content, now())),
     freezeTask: id => call(() => backpack.freezeTask(ctx, id, now())),
     abandonTask: id => call(() => backpack.abandonTask(ctx, id, now())),
     restoreTask: (id, slot, makeRoom) => call(() => backpack.restoreTask(ctx, id, slot, now(), makeRoom)),
+    completeTask: id => call(() => backpack.completeTask(ctx, id, now())),
+    reopenTask: (id, makeRoom) => call(() => {
+      const doneTask = view.pool.doneTasks.find(t => t.id === id);
+      return backpack.reopenTask(ctx, id, doneTask?.completionId ?? null, now(), makeRoom);
+    }),
+    completeItem: (cardId, finishEarly) => call(() => completeItem(ctx, cardId, now(), { finishEarly })),
+    reopenItem: (cardId, makeRoom) => call(() => backpack.reopenTaskItem(ctx, cardId, now(), makeRoom)),
+    checkCompleteItem: cardId => checkComplete(ctx, cardId, now()),
     saveCard: (cardId, fields) => call(() => backpack.saveCard(ctx, cardId, fields, now())),
     pass: cardId => call(() => pass(ctx, cardId, now())),
     convertIdea: (ideaId, input) => call(() => ideas.convertIdeaToTask(ctx, ideaId, input, now())),
@@ -95,7 +145,7 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, report,
   return <>
     <BagDrawer open={open} onClose={onClose} data={data} actions={actions}>{children}</BagDrawer>
     {flip && <FlipDeal key={flip.key} pick={flip.pick} pool={flip.pool} from={flip.from} onCancel={() => setFlip(null)}
-      onStart={() => { const id = flip.pick.id; setFlip(null); call(() => startCard(ctx, id, now())); }}
+      onStart={() => startFromBag(flip.pick.id, now())}
       onAgain={() => { const id = flip.pick.id; setFlip(null); call(async () => { await plan.skipCard(ctx, id, now()); draw(now()); }); }} />}
     {ask?.kind === 'plan' && <Dialog en="PLAN FIRST" title="今天还没排" onClose={() => setAsk(null)}
       footer={<><Button onClick={() => { setAsk(null); call(async () => { await plan.skipToday(ctx, now()); draw(now()); }); }}>这次先不排</Button>

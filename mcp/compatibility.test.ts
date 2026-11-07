@@ -5,7 +5,7 @@ import { syncBuiltinESMExports } from 'node:module';
 import { EventEmitter } from 'node:events';
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
-import { copyFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer as createPipeServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -18,7 +18,16 @@ import { StdioClientTransport as LegacyStdio } from '@modelcontextprotocol/sdk/c
 import { StreamableHTTPClientTransport as LegacyHttp } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Client, StreamableHTTPClientTransport, isCallToolResult } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
-import { contextResult, findItemsResult, lookupResult, saveIdeaResult, timerMutationResult } from '../src/shared/application.ts';
+import {
+  applicationContracts,
+  completeTaskItemResult,
+  contextResult,
+  findItemsResult,
+  lookupResult,
+  saveIdeaResult,
+  timerMutationResult,
+  type ApplicationMethod,
+} from '../src/shared/application.ts';
 import { startHttp } from './http.ts';
 import { createServer } from './server.ts';
 import { createApplicationClient, createPipeApplicationClient } from '../client/applicationClient.ts';
@@ -29,6 +38,7 @@ import { AGENT_RULES } from '../src/shared/agentRules.ts';
 
 const main = fileURLToPath(new URL('./main.ts', import.meta.url));
 const bundledEntry = fileURLToPath(new URL('../dist-mcp/monorail-mcp.mjs', import.meta.url));
+const rustBridgePath = fileURLToPath(new URL('../src-tauri/src/mcp_bridge.rs', import.meta.url));
 const toolNames = [
   'get_context',
   'get_operation_result',
@@ -47,6 +57,25 @@ const toolNames = [
   'update_time_entry',
   'add_time_entry',
   'complete_idea',
+  'reopen_idea',
+  'get_task_plan',
+  'add_plan_item',
+  'remove_plan_item',
+  'update_plan_item',
+  'confirm_plan_carry',
+  'skip_today_plan',
+  'draw_task_item',
+  'skip_task_item',
+  'complete_task_item',
+  'reopen_task_item',
+  'keep_going_task_item',
+  'split_task_item',
+  'end_original_task',
+  'get_task_details',
+  'complete_task',
+  'reopen_task',
+  'get_recap',
+  'list_operation_history',
 ];
 
 // Controlled desktop peer: real Node streams and Windows pipe, no production fallback.
@@ -95,6 +124,23 @@ for (const era of ['legacy', 'modern'] as const) for (const transportKind of ['s
       const client = era === 'legacy' ? legacy : modern;
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map(t => t.name), toolNames);
+      assert.equal(tools.length, 36);
+      assert.deepEqual(new Set(toolNames), new Set(Object.keys(applicationContracts)));
+      for (const tool of tools) {
+        const contract = applicationContracts[tool.name as ApplicationMethod];
+        assert.ok(contract, `missing contract for ${tool.name}`);
+        assert.equal(Boolean(tool.annotations?.readOnlyHint), contract.readOnly, `readOnlyHint mismatch for ${tool.name}`);
+        assert.equal(Boolean(tool.annotations?.idempotentHint), !contract.readOnly, `idempotentHint mismatch for ${tool.name}`);
+      }
+      const rustSrc = readFileSync(rustBridgePath, 'utf8');
+      const rustListMatch = /pub const READ_ONLY_METHODS: &\[&str\] = &\[([\s\S]*?)\];/.exec(rustSrc);
+      assert.ok(rustListMatch, 'READ_ONLY_METHODS must exist in src-tauri/src/mcp_bridge.rs');
+      const rustReadOnly = [...rustListMatch[1].matchAll(/"([^"]+)"/g)].map(m => m[1]).sort();
+      const tsReadOnly = (Object.entries(applicationContracts) as Array<[ApplicationMethod, { readOnly: boolean }]>)
+        .filter(([, c]) => c.readOnly)
+        .map(([m]) => m)
+        .sort();
+      assert.deepEqual(rustReadOnly, tsReadOnly);
       // 0.3.1 G8：握手说明和 get_context 描述带给 agent 的规则
       assert.equal(client.getInstructions(), AGENT_RULES);
       assert.ok(tools.find(t => t.name === 'get_context')?.description?.includes(AGENT_RULES));
@@ -345,6 +391,87 @@ test('A3 mixed entrypoints: MCP and CLI share state, replay receipts across entr
           next_operation_id: randomUUID(),
         };
       }
+      if (req.method === 'complete_task_item') {
+        const opId = req.arguments.operation_id.toLowerCase();
+        const normArgs: Record<string, unknown> = {
+          ...(req.arguments.expected_state !== undefined ? { expected_state: req.arguments.expected_state } : {}),
+          card_id: req.arguments.card_id,
+          ...(req.arguments.note !== undefined ? { note: req.arguments.note } : {}),
+          ...(req.arguments.finish_early !== undefined ? { finish_early: req.arguments.finish_early } : {}),
+        };
+        const existing = receipts.get(opId);
+        if (existing) {
+          if (existing.command !== 'complete_task_item' || JSON.stringify(existing.arguments) !== JSON.stringify(normArgs)) {
+            throw new ApplicationError({
+              status: 'error',
+              code: 'OPERATION_CONFLICT',
+              category: 'not_executed',
+              message: 'OPERATION_CONFLICT：同一 operation_id 参数不一致',
+              next_step: '使用新 operation_id',
+            });
+          }
+          return {
+            status: 'committed',
+            operation_id: opId,
+            data: existing.data,
+            committed_at: existing.committed_at,
+            replayed: true,
+            warnings: [],
+            next_operation_id: randomUUID(),
+          };
+        }
+        const data = {
+          noop: false,
+          stopped_timer: false,
+          card: {
+            id: req.arguments.card_id,
+            content: '待做子项',
+            status: '已完成' as const,
+            completed_at: now,
+            completed_day: '2026-11-03',
+            completed_track: '主线' as const,
+            progress_note: req.arguments.note ?? '',
+          },
+          task: {
+            id: 'task-1',
+            name: '主线任务',
+            slot: '主线' as const,
+            status: '进行中' as const,
+            open_card_count: 1,
+          },
+          expected_state: expectedState,
+          timer: {
+            mode: timerMode,
+            expected_state: expectedState,
+            open_entry: {
+              id: 'e1',
+              description: timerMode === 'running' ? '混合计时' : '',
+              project: timerMode === 'running' ? '学习' : '待机',
+              tags: [],
+              started_at: now,
+              ended_at: null,
+              card_id: null,
+              kind: timerMode === 'paused' ? '暂停' : '普通',
+              source: '计时',
+            },
+            paused_target: null,
+            pending: null,
+            current_card: null,
+            rest: null,
+            allowed_actions: ['start_timer', 'pause_timer', 'stop_timer'],
+          },
+        };
+        receipts.set(opId, { command: 'complete_task_item', arguments: normArgs, data, committed_at: now });
+        return {
+          status: 'committed',
+          operation_id: opId,
+          data,
+          committed_at: now,
+          replayed: false,
+          warnings: [],
+          next_operation_id: randomUUID(),
+        };
+      }
       throw new Error(`Unsupported in test: ${req.method}`);
     },
   });
@@ -461,6 +588,71 @@ test('A3 mixed entrypoints: MCP and CLI share state, replay receipts across entr
       3,
     );
     assert.equal(JSON.parse(staleOut).error.code, 'STATE_CHANGED');
+
+    // 4. Optional expected_state cross-entrypoint replay (ADR 0023 §2):
+    // 4a. MCP submits complete_task_item WITHOUT expected_state -> timer state advances -> CLI replays same --operation-id without --expected-state and succeeds!
+    const mcpItemOpId = randomUUID();
+    const mcpItemRes = await mcpClient.callTool({
+      name: 'complete_task_item',
+      arguments: { operation_id: mcpItemOpId, card_id: 'card-todo-1', note: '直接完成待做子项' },
+    });
+    assert.ok(isCallToolResult(mcpItemRes));
+    assert.equal(completeTaskItemResult.parse(mcpItemRes.structuredContent).replayed, false);
+
+    // Advance timer state via CLI
+    assert.equal(
+      await runCli(['timer', 'stop', '--json'], { createClient: () => baseClient, writeStdout: () => {} }),
+      0,
+    );
+
+    let cliItemReplayOut = '';
+    assert.equal(
+      await runCli(['item', 'done', 'card-todo-1', '--note', '直接完成待做子项', '--operation-id', mcpItemOpId, '--json'], {
+        createClient: () => baseClient,
+        writeStdout: t => { cliItemReplayOut += t; },
+      }),
+      0,
+    );
+    assert.equal(completeTaskItemResult.parse(JSON.parse(cliItemReplayOut).result).replayed, true);
+
+    // Passing an explicit --expected-state when original receipt had none -> OPERATION_CONFLICT (exit 3)
+    let cliItemExplicitTokenConflictOut = '';
+    assert.equal(
+      await runCli(['item', 'done', 'card-todo-1', '--note', '直接完成待做子项', '--operation-id', mcpItemOpId, '--expected-state', 'ts1:explicit', '--json'], {
+        createClient: () => baseClient,
+        writeStdout: t => { cliItemExplicitTokenConflictOut += t; },
+      }),
+      3,
+    );
+    assert.equal(JSON.parse(cliItemExplicitTokenConflictOut).error.code, 'OPERATION_CONFLICT');
+
+    // 4b. CLI submits complete_task_item (auto-fetches expected_state) -> timer state advances -> CLI replays same --operation-id and restores original expected_state
+    const cliItemOpId = randomUUID();
+    let cliItemFirstOut = '';
+    assert.equal(
+      await runCli(['item', 'done', 'card-todo-2', '--operation-id', cliItemOpId, '--json'], {
+        createClient: () => baseClient,
+        writeStdout: t => { cliItemFirstOut += t; },
+      }),
+      0,
+    );
+    assert.equal(completeTaskItemResult.parse(JSON.parse(cliItemFirstOut).result).replayed, false);
+
+    // Advance timer state
+    assert.equal(
+      await runCli(['timer', 'start', '推进状态', '--json'], { createClient: () => baseClient, writeStdout: () => {} }),
+      0,
+    );
+
+    let cliItemSecondOut = '';
+    assert.equal(
+      await runCli(['item', 'done', 'card-todo-2', '--operation-id', cliItemOpId, '--json'], {
+        createClient: () => baseClient,
+        writeStdout: t => { cliItemSecondOut += t; },
+      }),
+      0,
+    );
+    assert.equal(completeTaskItemResult.parse(JSON.parse(cliItemSecondOut).result).replayed, true);
   } finally {
     await mcpClient.close();
     await http.close();

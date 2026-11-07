@@ -35,8 +35,11 @@ export function playResumeIntro(card: ParentNode) {
   revealLines($$(card, 'title').map(el => el), 0).forEach(a => a && (a.effect as KeyframeEffect).updateTiming({ duration: 320 }));
 }
 
-/** 再抽一张的擦除退场时：新标题重新升起，竖条再弹一次（§8.3 第 5 条）。 */
+/** 背包开始计时的擦除退场（或简化淡入）时：新标题重新升起，竖条再弹一次（§8.3 第 5 条，ADR 0025）。 */
 export function playAfterWipe(card: ParentNode) {
+  const level = motionLevel();
+  if (level === 'off') return;
+  if (level === 'reduced') { fadeIn($(card, 'card'), 220); return; }
   revealLines($$(card, 'title'), 0);
   popBars(bars(card), 0);
 }

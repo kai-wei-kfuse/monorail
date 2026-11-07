@@ -1,0 +1,520 @@
+﻿=== 0.3.2 Verification Suite Run (2026-11-07T21:39:22.5387773+08:00) ===
+
+--- version:check ---
+Version 0.3.2: consistent
+
+EXIT_CODE=0
+
+--- tsc --noEmit ---
+
+EXIT_CODE=0
+
+--- mcp:check ---
+
+EXIT_CODE=0
+
+--- eslint src client cli mcp ---
+
+EXIT_CODE=0
+
+--- review-regressions ---
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90mC:/Users/kai_wei/Documents/1026(4)/app[39m
+
+ [32m✓[39m evidence/0.3.2-review-regressions.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 175[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 21:39:51
+[2m   Duration [22m 941ms[2m (import 44%, transform 29%, tests 25%, worker 1%)[22m
+
+
+EXIT_CODE=0
+
+--- vitest run ---
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90mC:/Users/kai_wei/Documents/1026(4)/app[39m
+
+[90mstdout[2m | src/domain/review/recap.perf.test.ts[2m > [22m[2mone year of entries aggregates within a generous bound; prints the measured times
+[22m[39mRECAP_PERF entries=10220 {"prepare":87,"year/project":73,"year/activity":74,"quarter/tag":28,"week/source":6}
+
+ [32m✓[39m src/domain/review/recap.perf.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1395[2mms[22m[39m
+   [33m[2m✓[22m[39m one year of entries aggregates within a generous bound; prints the measured times[33m 1380[2mms[22m[39m
+ [32m✓[39m src/services/cardService.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 1504[2mms[22m[39m
+ [32m✓[39m src/services/reviewTiming.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 1548[2mms[22m[39m
+ [32m✓[39m src/services/backpackService.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 2106[2mms[22m[39m
+ [32m✓[39m src/services/reviewService.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 2281[2mms[22m[39m
+   [33m[2m✓[22m[39m new ideas persist and arena cannot advance until every excess idea is resolved[33m 382[2mms[22m[39m
+ [32m✓[39m src/services/insert.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 2292[2mms[22m[39m
+ [32m✓[39m src/app/applicationController.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 2105[2mms[22m[39m
+   [33m[2m✓[22m[39m M6 & M7: executes full timer lifecycle, break/return, manual backfill, time summary and enforces preconditions[33m 701[2mms[22m[39m
+   [33m[2m✓[22m[39m 0.3.2 Module B & C: complete_task_item (todo & timebox finish_early & optional expected_state replay), keep_going, split, end_original_task, complete_task & reopen_task[33m 391[2mms[22m[39m
+ [32m✓[39m src/services/homeService.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 1317[2mms[22m[39m
+   [33m[2m✓[22m[39m ADR 0006: projects resumeEntry across consecutive/paused inserts, recomputes partial/full readout overwrite, and preserves claim/pending rules[33m 351[2mms[22m[39m
+ [32m✓[39m src/services/commit.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 3878[2mms[22m[39m
+   [33m[2m✓[22m[39m 20 rapid start/complete pairs keep sequence unique and effective intervals disjoint[33m 3186[2mms[22m[39m
+ [32m✓[39m src/data/migrations/v2.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 785[2mms[22m[39m
+   [33m[2m✓[22m[39m recovers after every write boundary without a mixed schema or overwritten backup[33m 489[2mms[22m[39m
+ [32m✓[39m src/services/ideaService.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 942[2mms[22m[39m
+[90mstdout[2m | src/services/history.perf.test.ts[2m > [22m[2m180 days of history and a burst of quick-bar records stay within a generous bound; prints the measured times
+[22m[39mHISTORY_PERF {"times":{"absorb50":939,"list7":20,"list180":301,"recent5":7},"counts":{"absorb50.reads":4562,"absorb50.heapMB":4,"queueWaitMs":939,"list7.reads":261,"list7.heapMB":5,"list180.reads":5451,"list180.heapMB":18,"recent5.reads":81,"recent5.heapMB":2}}
+
+ [32m✓[39m src/app/historyActions.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 1096[2mms[22m[39m
+ [32m✓[39m src/services/history.perf.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 4431[2mms[22m[39m
+   [33m[2m✓[22m[39m 180 days of history and a burst of quick-bar records stay within a generous bound; prints the measured times[33m 4429[2mms[22m[39m
+ [32m✓[39m src/services/timeEditService.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 772[2mms[22m[39m
+ [32m✓[39m src/services/homeProjection.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 847[2mms[22m[39m
+ [32m✓[39m src/pages/settings/settings.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 4800[2mms[22m[39m
+   [32m✓[39m settings defaults & UI [2m(6)[22m
+     [33m[2m✓[22m[39m MCP JSON 与 PowerShell 命令生成对含中文、空格、括号、$、反引号与单引号路径安全转义且不触发插值[33m 4529[2mms[22m[39m
+ [32m✓[39m src/data/migrations/v030/compat.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 2222[2mms[22m[39m
+   [32m✓[39m 0.3.1 / 0.3.0 (23d6240) / 0.2.5 (c5a74d8) 读 0.3.2 完成任务数据（ADR 0022 §8 兼容锁定） [2m(4)[22m
+     [33m[2m✓[22m[39m ④ git tag 历史核对：v0.2.5 / v0.3.0 / v0.3.1 的 taskSchema、cardSchema 与 MdRepo 读写实现同本测试一致[33m 1980[2mms[22m[39m
+ [32m✓[39m src/services/history.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 449[2mms[22m[39m
+ [32m✓[39m src/services/n3.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 438[2mms[22m[39m
+ [32m✓[39m src/services/trackingMode.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 699[2mms[22m[39m
+ [32m✓[39m src/services/n4.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 926[2mms[22m[39m
+   [33m[2m✓[22m[39m first split replaces an untracked marked placeholder, including at capacity, but retains tracked work[33m 322[2mms[22m[39m
+ [32m✓[39m src/app/updateTimeEntry.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 717[2mms[22m[39m
+   [33m[2m✓[22m[39m 改已结束记录的时间和内容：时段、描述、项目、标签都能改；新时段盖住的记录在 overlaps 里；记历史 auto.update_time_entry[33m 519[2mms[22m[39m
+ [32m✓[39m src/services/settingsService.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 534[2mms[22m[39m
+ [32m✓[39m src/services/planService.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1022[2mms[22m[39m
+ [32m✓[39m src/services/scheduler.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 464[2mms[22m[39m
+ [32m✓[39m src/services/recordService.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 364[2mms[22m[39m
+ [32m✓[39m src/services/dealService.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 421[2mms[22m[39m
+ [32m✓[39m src/services/todayReadout.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 510[2mms[22m[39m
+ [32m✓[39m src/services/commitContract.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 229[2mms[22m[39m
+ [32m✓[39m src/services/operation.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 239[2mms[22m[39m
+ [32m✓[39m src/services/recapService.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 237[2mms[22m[39m
+ [32m✓[39m src/pages/home/fused.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 272[2mms[22m[39m
+ [32m✓[39m src/services/degradeService.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 171[2mms[22m[39m
+ [32m✓[39m src/app/bootstrap.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 337[2mms[22m[39m
+ [32m✓[39m src/app/recapBoard.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 236[2mms[22m[39m
+ [32m✓[39m src/data/timelogV2Repo.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 169[2mms[22m[39m
+ [32m✓[39m src/app/actions.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 420[2mms[22m[39m
+ [32m✓[39m src/app/readoutRegression.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 765[2mms[22m[39m
+   [33m[2m✓[22m[39m migrates a restart snapshot with B away without counting A or the interruption[33m 732[2mms[22m[39m
+ [32m✓[39m src/domain/review/recap.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+ [32m✓[39m src/data/mdRepo.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 101[2mms[22m[39m
+ [32m✓[39m src/data/settingsRepo.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 281[2mms[22m[39m
+ [32m✓[39m src/services/updateService.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 142[2mms[22m[39m
+ [32m✓[39m src/ui/effects/effects.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m src/services/entityChanges.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 143[2mms[22m[39m
+ [32m✓[39m src/pages/home/insertCard.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 124[2mms[22m[39m
+ [32m✓[39m src/services/mini.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 10215[2mms[22m[39m
+   [33m[2m✓[22m[39m late pause/edit/complete commands for A reject after switching to B, without writing[33m 407[2mms[22m[39m
+   [33m[2m✓[22m[39m D1 recent entries sent to the mini window are capped after deduplication[33m 8169[2mms[22m[39m
+   [33m[2m✓[22m[39m ADR 0024: coordinator enforces single draft, rejects concurrent begin, survives unrelated commits, invalidates on timer change, and routes mini commands with monotonic viewSeq[33m 780[2mms[22m[39m
+ [32m✓[39m src/pages/home/awayDrawer.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m src/data/journal.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 90[2mms[22m[39m
+ [32m✓[39m src/domain/timeline/insert.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/widgets/history/model.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m src/app/shell/quickActs.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m src/pages/calendar/grid.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 61[2mms[22m[39m
+ [32m✓[39m src/data/fs.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32m✓[39m src/widgets/UpdatePanel.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32m✓[39m src/domain/timeline/stats.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 87[2mms[22m[39m
+ [32m✓[39m src/data/schemas.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32m✓[39m src/data/timelogIndex.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 66[2mms[22m[39m
+ [32m✓[39m src/pages/home/title.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/domain/task/complete.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32m✓[39m src/shared/duration.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/data/frontmatter.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m src/pages/calendar/entryPopover.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/pages/home/drawer/todayBoard.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m src/pages/list/listGroups.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m src/platform/miniWindow.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/domain/timeline/day.dst.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 93[2mms[22m[39m
+ [32m✓[39m src/domain/timeline/recap.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m src/pages/home/wipeBagStart.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m src/pages/home/timerView.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/services/insertEntrypoints.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/ui/controls/dateRange.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/data/migrations/v1/effective.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/app/shell/StatusBlock.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32m✓[39m src/domain/card/card.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/services/tracking/api.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/domain/history/compare.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/platform/recapView.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/ui/controls/controls.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/services/updateController.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/domain/timeline/entry.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/shared/time.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/domain/picker/pick.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/plan/plan.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/pages/home/manualRange.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/domain/review/schedule.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/widgets/cardProgress.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/domain/record/record.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/domain/reminders.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/pages/home/suggestions.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/platform/windowBus.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/ui/controls/picker.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/domain/task/pool.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/domain/degrade/refusal.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/shared/tags.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/pages/home/cardArea.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/pages/home/reorder.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/ui/effects/reveal.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/app/miniSession.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/pages/review/ReviewPage.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m99 passed[39m[22m[90m (99)[39m
+[2m      Tests [22m [1m[32m760 passed[39m[22m[90m (760)[39m
+[2m   Start at [22m 21:39:53
+[2m   Duration [22m 16.74s[2m (tests 51%, import 29%, transform 18%, worker 1%)[22m
+
+[2m    Isolate [22m [33m99 workers spawned[39m[2m · ~515ms startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~4.12s faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+
+
+EXIT_CODE=0
+
+--- mcp:build ---
+
+EXIT_CODE=0
+
+--- vite build --mode verify ---
+[36mvite v7.3.7 [32mbuilding client environment for verify...[36m[39m
+transforming...
+node : [33mnode_modules/zod/v4/core/util.js (400:0): A comment
+At line:21 char:39
++ ... e verify" { node .\node_modules\vite\bin\vite.js build --m
+ode verify  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([33mnode_modul... 
+   0:0): A comment:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a t
+op-level initializer that contains a member access on `Number`, 
+so the bare object literal survived into every bundle."
+
+in "node_modules/zod/v4/core/util.js" contains an annotation tha
+t Rollup cannot interpret due to the position of the comment. Th
+e comment will be removed to avoid issues.[39m
+[33mnode_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rath
+er than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument i
+nterpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `dat
+e` into every bundle. */"
+
+in "node_modules/zod/v4/core/regexes.js" contains an annotation 
+that Rollup cannot interpret due to the position of the comment.
+ The comment will be removed to avoid issues.[39m
+[32m✓[39m 521 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mmini.html                                                  [39m[1m[2m  0.45 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+[2mdist/[22m[32mindex.html                                                 [39m[1m[2m  0.50 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+[2mdist/[22m[32massets/jetbrains-mono-greek-400-normal-C190GLew.woff2      [39m[1m[2m  4.23 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-cyrillic-400-normal-BEIGL1Tu.woff2   [39m[1m[2m  5.33 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-vietnamese-400-normal-CqNFfHCs.woff  [39m[1m[2m  5.37 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-greek-400-normal-B9oWc5Lo.woff       [39m[1m[2m  5.66 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-cyrillic-400-normal-ugxPyKxw.woff    [39m[1m[2m  6.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-ext-400-normal-Bc8Ftmh3.woff2  [39m[1m[2m  7.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.7d084b054b54abc1.55-D-niG1Cm.woff2         [39m[1m[2m  8.42 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-ext-400-normal-fXTG6kC5.woff   [39m[1m[2m 10.13 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2      [39m[1m[2m 21.17 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.ca620abda1b076bd.53-BGSdC53c.woff2         [39m[1m[2m 22.79 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.4f81f745e2c3159d.51-Dh0pBHy9.woff2         [39m[1m[2m 24.80 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.517a94fe8dd5692a.54-ChdNRa0W.woff2         [39m[1m[2m 25.60 kB[22m[1m[22m
+[2mdist/[22m[32massets/saira-vietnamese-wdth-normal-Dabr_kLY.woff2         [39m[1m[2m 26.80 kB[22m[1m[22m
+[2mdist/[22m[32massets/jetbrains-mono-latin-400-normal-6-qcROiO.woff       [39m[1m[2m 27.50 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.d525a1349c7ec9e4.52-Cv3HvKJa.woff2         [39m[1m[2m 29.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.16240990c6f7f7dd.0-hYNu36zK.woff2          [39m[1m[2m 50.04 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.3ee7f36171786397.50-B2mtXAXw.woff2         [39m[1m[2m 50.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.1fa3a293a561985c.1-Ik97Bnim.woff2          [39m[1m[2m 60.19 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.235af3ebfd0343d5.2-9YwKK7yC.woff2          [39m[1m[2m 66.63 kB[22m[1m[22m
+[2mdist/[22m[32massets/saira-latin-ext-wdth-normal-3Ba4ICIc.woff2          [39m[1m[2m 67.19 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.53744263f2939586.3-DT-x9XRC.woff2          [39m[1m[2m 68.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.8ac4bbc96a6db0e2.4-CLvgMvHJ.woff2          [39m[1m[2m 70.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.0915b4d5a6f0ee33.49-LMn5Q4GP.woff2         [39m[1m[2m 71.49 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.73924789affc3080.5-O0rdDs3A.woff2          [39m[1m[2m 72.45 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.52728aa7bc854270.6-BmPMmo-Q.woff2          [39m[1m[2m 75.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.d77855c75a78e271.7-C_C7j9eS.woff2          [39m[1m[2m 78.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.18220753c89aeaa7.9-ClfyzM_W.woff2          [39m[1m[2m 78.57 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c06909dbc78c83aa.8-9EM0gbMF.woff2          [39m[1m[2m 78.63 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.91d6994ea01c40e1.10-DEcCGd-1.woff2         [39m[1m[2m 79.27 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a597bc0d89a7e9de.12-BbvMbbeG.woff2         [39m[1m[2m 81.58 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.4432f1e8b9c6afb6.11-4ZdC0IHJ.woff2         [39m[1m[2m 81.85 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.799303268bd0a8c8.13-DwvW2pYT.woff2         [39m[1m[2m 81.90 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c626836af9104d5f.16-Cn-uDijZ.woff2         [39m[1m[2m 81.99 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.00d0682c24b9e852.15-2e6f7JpF.woff2         [39m[1m[2m 82.13 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.7f4670c6ddefc0b7.17-JNBV3-bJ.woff2         [39m[1m[2m 82.51 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.353f733c1a9d24dd.14-DsPHSW78.woff2         [39m[1m[2m 82.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.cfcb48d0933e0ec5.20-DtJGSCz-.woff2         [39m[1m[2m 84.14 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a068ef4539a6cd96.23-2lDk_Pzi.woff2         [39m[1m[2m 84.37 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.868ff10381a4fff7.21-COM3rrf8.woff2         [39m[1m[2m 84.86 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.e4ea5bc4c8993992.25-QCrSaZfC.woff2         [39m[1m[2m 86.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.0aa19e2394367e45.28-BA6TmvoL.woff2         [39m[1m[2m 86.86 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.8739e6cdf2007d9e.18-CW9JsvXP.woff2         [39m[1m[2m 86.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.30106979750ad8e7.27-COo67qta.woff2         [39m[1m[2m 86.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.184e5227db3e935f.22--LBj-Hb3.woff2         [39m[1m[2m 87.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.3581642e24f576d7.26-DFSukXV9.woff2         [39m[1m[2m 88.72 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.e2fb4df3666402bd.30-CBTjEOGS.woff2         [39m[1m[2m 89.14 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a397ccbbda85fd60.19-Drtf84UU.woff2         [39m[1m[2m 89.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.43a930e968cb0514.29-D4pA0GF5.woff2         [39m[1m[2m 90.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.77773797e06e14c0.24-CIwq3smS.woff2         [39m[1m[2m 90.75 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.92c0f158f1d0c43b.32-D_nHOWsY.woff2         [39m[1m[2m 91.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.f08d1f83ff0dabdd.31-B-qHDOHs.woff2         [39m[1m[2m 94.47 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c6c390a740763363.34-5N4-3NiL.woff2         [39m[1m[2m 96.60 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.081b771213563eae.33-DNyn2Gkt.woff2         [39m[1m[2m 96.80 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.5ebd323d44595044.36-Geeq6vWV.woff2         [39m[1m[2m 97.57 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.b8965049ba77d8e5.35-CKrADHFj.woff2         [39m[1m[2m 98.46 kB[22m[1m[22m
+[2mdist/[22m[32massets/saira-latin-wdth-normal-X2eA-qfZ.woff2              [39m[1m[2m 98.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.aa995a1ea7837593.37-BOzYTkrh.woff2         [39m[1m[2m 99.85 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.00ed8f01da81647e.47-il558wcj.woff2         [39m[1m[2m 99.99 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.d6a0497045ed1170.38-B1422lRy.woff2         [39m[1m[2m101.42 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.def9fc53240b0bba.40-CCG-FJFi.woff2         [39m[1m[2m102.89 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.b666094020110d0a.45-DXPbajQH.woff2         [39m[1m[2m103.29 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.a3d4bcfd8dba2e50.44-VKMPAliQ.woff2         [39m[1m[2m103.43 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.bc2b7bd40e327658.46-B-h4q1nN.woff2         [39m[1m[2m104.93 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.c4a48795fdedf3a5.42-DbwfVnRu.woff2         [39m[1m[2m105.62 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.71c7e77bac6a2786.39-CPjeTgzL.woff2         [39m[1m[2m106.03 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.ef133bbc03cec415.43-i4UGVXA_.woff2         [39m[1m[2m106.40 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.182a224825bf167c.41-CYo6GT10.woff2         [39m[1m[2m108.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/MiSansVF.4f3d21c8b761cd08.48-BF9KcnIc.woff2         [39m[1m[2m109.83 kB[22m[1m[22m
+[2mdist/[22m[35massets/main-Dw2-4TSO.css                                   [39m[1m[2m109.76 kB[22m[1m[22m[2m │ gzip:  19.72 kB[22m
+[2mdist/[22m[35massets/base-T22FMVja.css                                   [39m[1m[2m127.71 kB[22m[1m[22m[2m │ gzip:  46.01 kB[22m
+[2mdist/[22m[36massets/quickbar-C566Vh0Q.js                                [39m[1m[2m  0.43 kB[22m[1m[22m[2m │ gzip:   0.28 kB[22m
+[2mdist/[22m[36massets/main-v2j4FvdD.js                                    [39m[1m[2m  4.23 kB[22m[1m[22m[2m │ gzip:   1.87 kB[22m
+[2mdist/[22m[36massets/index-DaWUOkos.js                                   [39m[1m[2m  7.61 kB[22m[1m[22m[2m │ gzip:   2.03 kB[22m
+[2mdist/[22m[36massets/mini-DQEElOye.js                                    [39m[1m[2m 14.45 kB[22m[1m[22m[2m │ gzip:   5.85 kB[22m
+[2mdist/[22m[36massets/base-CkeVLuig.js                                    [39m[1m[2m355.93 kB[22m[1m[22m[2m │ gzip: 109.16 kB[22m
+[2mdist/[22m[36massets/main-CUFeeBJA.js                                    [39m[1m[33m659.01 kB[39m[22m[2m │ gzip: 211.69 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consi
+der:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunkin
+g: https://rollupjs.org/configuration-options/#output-manualchun
+ks
+- Adjust chunk size limit for this warning via build.chunkSizeWa
+rningLimit.[39m
+[32m✓ built in 5.54s[39m
+
+EXIT_CODE=0
+
+--- mcp:smoke ---
+node : node:internal/modules/cjs/loader:1451
+At line:22 char:24
++ Run-Step "mcp:smoke" { node scripts/smoke-mcp.mjs }
++                        ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modu 
+   les/cjs/loader:1451:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\Users\kai_wei\Documents\1026(4)\ap
+p\scripts\smoke-mcp.mjs'
+    at Module._resolveFilename (node:internal/modules/cjs/loader
+:1448:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1059
+:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:
+1064:22)
+    at Module._load (node:internal/modules/cjs/loader:1234:25)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14
+)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/
+modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.13.1
+
+EXIT_CODE=1
+
+--- mcp:smoke ---
+node : node:internal/modules/cjs/loader:1451
+At line:13 char:24
++ Run-Step "mcp:smoke" { node mcp/smoke.mjs }
++                        ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modu 
+   les/cjs/loader:1451:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\Users\kai_wei\Documents\1026(4)\ap
+p\mcp\smoke.mjs'
+    at Module._resolveFilename (node:internal/modules/cjs/loader
+:1448:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1059
+:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:
+1064:22)
+    at Module._load (node:internal/modules/cjs/loader:1234:25)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14
+)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/
+modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.13.1
+
+EXIT_CODE=1
+
+--- mcp:smoke ---
+node : node:internal/modules/cjs/loader:1451
+At line:13 char:24
++ Run-Step "mcp:smoke" { node scripts/mcp-smoke.mjs }
++                        ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modu 
+   les/cjs/loader:1451:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\Users\kai_wei\Documents\1026(4)\ap
+p\scripts\mcp-smoke.mjs'
+    at Module._resolveFilename (node:internal/modules/cjs/loader
+:1448:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1059
+:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:
+1064:22)
+    at Module._load (node:internal/modules/cjs/loader:1234:25)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14
+)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/
+modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.13.1
+
+EXIT_CODE=1
+
+--- mcp:smoke ---
+✔ legacy stdio: discovery, save, validation and desktop failures (1638.8796ms)
+✔ legacy http: discovery, save, validation and desktop failures (1370.8476ms)
+✔ modern stdio: discovery, save, validation and desktop failures (2416.2394ms)
+✔ modern http: discovery, save, validation and desktop failures (749.0479ms)
+✔ ApplicationClient validates input before transport and rejects malformed transport responses (1.4053ms)
+✔ A3 mixed entrypoints: MCP and CLI share state, replay receipts across entrypoints, and reject stale timer state without silent retry (65.5882ms)
+✔ EBUSY is a busy existing host and never starts another desktop process (2.8947ms)
+✔ HTTP rejects untrusted browser origins and Host before business dispatch (26.4719ms)
+✔ pipe client distinguishes setup_required, corrupted config, startup failure, cancellation and coalesced --background launch (85.5117ms)
+✔ self-contained dist-mcp/monorail-mcp.mjs runs from a clean path with spaces and Chinese characters over stdio and HTTP (2172.2512ms)
+✔ Windows independent launcher reports WMI launch failure and preserves literal paths (1890.6842ms)
+✔ Windows independent launcher observes a real target that exits before readiness (2969.2296ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9325.39
+
+EXIT_CODE=0
+
+--- cli:smoke ---
+✔ CLI --help and --version (human and --json) succeed with exit 0 without touching the application client or starting background host (5.2626ms)
+✔ CLI usage validation rejects unknown commands, unknown/duplicate flags, conflicting text sources, missing timezone offsets and file errors with exit code 2 before calling backend (9.9721ms)
+✔ CLI reaches all 36 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin (76.1639ms)
+✔ CLI idempotent retry (§5.2) replays committed timer mutations after state advances and rejects conflicting business parameters (2.4888ms)
+✔ CLI maps exit codes 3 (business rejection), 4 (environment/setup), 5 (result_unknown + operation_id preservation), and 130 (cancelled before send) (1.2905ms)
+✔ self-contained dist-cli/monorail-cli.mjs and dist-mcp/monorail-mcp.mjs run from a clean directory with spaces and Chinese characters, share state, and CLI bundle excludes @modelcontextprotocol (819.9012ms)
+✔ origin (ADR 0019 §6) travels as an optional top-level request field: per-call wins over the client default, absent stays absent, bad values are dropped instead of failing the call (3.7704ms)
+✔ caller agent (ADR 0019 §6): --agent / MONORAIL_AGENT win over known env variables, otherwise none; every request of one process carries the same origin (1.977ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1280.5281
+
+EXIT_CODE=0
+
+--- cargo test --lib ---
+cargo :    Compiling pixel-record v0.3.2 (C:\Users\kai_wei\Docum
+ents\1026(4)\app\src-tauri)
+At line:15 char:31
++ ... test --lib" { cargo test --manifest-path src-tauri/Cargo.t
+oml --lib }
++                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Compiling pi... 
+   \app\src-tauri):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    Finished `test` profile [unoptimized + debuginfo] target(s) 
+in 11.98s
+     Running unittests src\lib.rs (src-tauri\target\debug\deps\p
+ixel_record_lib-8bac0cb75df00b90.exe)
+
+running 45 tests
+test mcp_bridge::tests::read_only_methods_are_distinguished_from_writes ... ok
+test mcp_bridge::tests::reload_or_destroy_during_active_write_locks_host_lost_and_reports_unknown ... ok
+test mini_window::tests::clamp_to_work_area_keeps_window_above_taskbar_and_inside_monitor ... ok
+test mini_visibility::tests::failed_attachment_releases_the_callback ... ok
+test mcp_bridge::tests::clean_reconnect_advances_generation_and_isolates_stale_replies ... ok
+test mcp_bridge::tests::phase_updates_persist_before_any_subscriber_attaches ... ok
+test mini_window::tests::resize_border_child_cannot_start_a_vertical_resize ... ok
+test private_release::tests::credentials_only_go_to_the_configured_https_asset_api ... ok
+test mini_window::tests::popup_opens_down_when_it_fits_and_flips_up_only_when_above_is_roomier ... ok
+test mini_window::tests::resize_hits_disable_vertical_edges_and_keep_corners_horizontal ... ok
+test private_release::tests::manifest_validation_checks_version_match_channel_contradiction_and_legacy_compatibility_table ... ok
+test mini_window::tests::geometry_round_trip_and_corruption_are_explicit ... ok
+test private_release::tests::semver_ordering_ranks_beta_10_above_beta_9_and_stable_above_same_base_beta ... ok
+test private_release::tests::single_target_comparator_allows_downgrade_only_for_permitted_compatible_stable_target ... ok
+test quick_save::tests::migration_blocks_new_saves_and_preserves_existing_sessions ... ok
+test main_session::tests::epochs_are_positive_and_strictly_increasing_even_across_threads ... ok
+test private_release::tests::paginated_unordered_releases_filter_drafts_test_tags_and_contradictory_flags ... ok
+test reminders::tests::delivered_ids_are_not_due_again ... ok
+test reminders::tests::prune_keeps_only_planned_ids ... ok
+test attachments::tests::rejects_bad_record_ids_and_empty_names ... ok
+test update_backup::tests::sha256_matches_nist_vectors ... ok
+test recap_view::tests::missing_file_reads_as_defaults_without_a_notice ... ok
+test attachments::tests::names_cannot_escape_and_are_deduplicated ... ok
+test power::tests::owner_locked_snapshot_remains_immutable_when_subsequent_heartbeat_or_power_events_write_to_disk ... ok
+test update_state::tests::busy_phases_reject_channel_switch_and_preserve_active_operation ... ok
+test update_state::tests::downgrade_requires_matching_explicit_stable_return_permit_and_invalidates_on_channel_change ... ok
+test recap_view::tests::corrupt_file_reads_as_defaults_and_is_reported ... ok
+test update_state::tests::switching_channel_clears_available_or_ready_candidates_and_bytes ... ok
+test windows::tests::failed_auto_hide_install_releases_the_callback ... ok
+test windows::tests::normalization_only_replaces_whole_modifier_tokens ... ok
+test windows::tests::other_registration_errors_keep_their_details ... ok
+test windows::tests::registration_conflict_preserves_the_displayed_win_name ... ok
+test windows::tests::win_modifier_matches_super ... ok
+test windows::tests::win_modifier_order_does_not_change_the_shortcut ... ok
+test mini_visibility::tests::actual_hwnd_show_hide_and_destroy_notify_without_focus_or_polling ... ok
+test update_channel::tests::missing_channel_file_defaults_to_stable_without_auto_enrolling_beta_builds ... ok
+test update_channel::tests::corrupted_channel_file_reports_explicit_error_instead_of_silently_resetting ... ok
+test update_backup::tests::unrecovered_journal_file_blocks_backup_and_install ... ok
+test mcp_bridge::tests::resolve_and_read_host_metadata_verify_existing_files_without_guessing ... ok
+test update_channel::tests::channel_preference_persists_atomically_across_restarts ... ok
+test recap_view::tests::round_trip_replaces_the_file_atomically_and_rejects_non_objects ... ok
+test update_backup::tests::owner_locked_config_snapshots_isolate_backup_from_concurrent_disk_mutations_in_lifecycle_and_reminders ... ok
+test update_backup::tests::preserves_nested_directories_named_backups_inside_data_and_never_overwrites_same_timestamp_backup ... ok
+test update_backup::tests::creates_and_verifies_complete_backup_including_attachments_receipts_and_config_without_recursion ... ok
+test windows::tests::quickbar_stays_visible_during_drag_and_hides_only_on_deactivation ... ok
+
+test result: ok. 45 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+
+EXIT_CODE=0

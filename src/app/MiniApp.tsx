@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { plainText } from '../ui/marks/MarkedText';
-import type { MouseEvent } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
 import { fitMiniWindow, miniWindowSizes } from '../platform/miniWindow';
@@ -41,6 +41,10 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   const [lastAt, setLastAt] = useState<number | null>(null), mountedAt = useRef(Date.now());
   const [now, setNow] = useState(Date.now());
   const [edit, setEdit] = useState<Edit | null>(null);
+  const [insertForm, setInsertForm] = useState<{ draftId: string; text: string; project: string } | null>(null);
+  const [committingDraft, setCommittingDraft] = useState(false);
+  const insertInputRef = useRef<HTMLInputElement>(null);
+  const ownerSession = useRef(crypto.randomUUID()).current;
   const [catOpen, setCatOpen] = useState(false), [popFit, setPopFit] = useState<{ up: boolean; max: number } | null>(null);
   const [note, setNote] = useState<ReadoutNote | null>(null), [error, setError] = useState<string | null>(null);
   const waiting = useRef(new Map<string, (outcome: MiniOutcome) => void>()), root = useRef<HTMLDivElement>(null);
@@ -56,16 +60,28 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
       const previous = epoch.current;
       epoch.current = s.epoch;
       if (isNewSession(previous, s.epoch)) {
-        setEdit(null); setCatOpen(false); setNote(null); setError(null);
+        setEdit(null); setInsertForm(null); setCommittingDraft(false); setCatOpen(false); setNote(null); setError(null);
         const pending = [...waiting.current.values()]; waiting.current.clear();
         pending.forEach(resolve => resolve({ kind: 'error', message: RELOADED_MESSAGE }));
+      }
+      if (s.insertDraft) {
+        setEdit(null);
+        if (s.insertDraft.owner === 'mini' && s.insertDraft.ownerSession === ownerSession) {
+          setInsertForm(prev => prev && prev.draftId === s.insertDraft!.id ? prev : { draftId: s.insertDraft!.id, text: '', project: '未分类' });
+        } else {
+          setInsertForm(null);
+          setCatOpen(false);
+        }
+      } else {
+        setInsertForm(null);
+        setCommittingDraft(false);
       }
       latest.current = s; setSnap(s); setLastAt(Date.now()); document.documentElement.style.setProperty('--yellow', s.accent);
     };
     const offs = Promise.all([
       bus.onSnapshot(onSnapshot),
       bus.onReply(r => { waiting.current.get(r.requestId)?.(r.outcome); waiting.current.delete(r.requestId); }),
-    ]).then(async fns => { if (alive) await bus.ready(); return fns; });
+    ]).then(async fns => { if (alive) await bus.ready(ownerSession); return fns; });
     return () => { alive = false; void offs.then(fns => fns.forEach(f => f())); };
   }, [bus]);
 
@@ -81,15 +97,21 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
   useEffect(() => {
     if (!catOpen) return;
     const away = (e: PointerEvent) => { if (!(e.target as Element | null)?.closest?.('.mini-pop, .mini-cat, .mini-pick')) setCatOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setCatOpen(false); };
+    const esc = (e: globalThis.KeyboardEvent) => { if (e.key === 'Escape') setCatOpen(false); };
     document.addEventListener('pointerdown', away); document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
   }, [catOpen]);
 
+  useEffect(() => {
+    if (insertForm) insertInputRef.current?.focus({ preventScroll: true });
+  }, [insertForm?.draftId]);
+
   const hasSnap = !!snap, mode = snap?.miniMode ?? 'mini';
   const stale = miniUnresponsive(lastAt, mountedAt.current, now);
-  const writingNew = !!edit && !edit.rename;
-  const popKind: 'cat' | 'suggest' | null = catOpen ? 'cat' : writingNew ? 'suggest' : null;
+  const draft = snap?.insertDraft ?? null;
+  const isDraftOwner = !!draft && draft.owner === 'mini' && draft.ownerSession === ownerSession;
+  const writingNew = !draft && !!edit && !edit.rename;
+  const popKind: 'cat' | 'suggest' | null = catOpen && (!draft || isDraftOwner) ? 'cat' : writingNew ? 'suggest' : null;
   const prevMode = useRef<'mini' | 'tiny' | null>(null), targetW = useRef<number>(miniWindowSizes.mini.width), inFlight = useRef(false);
   const lastFit = useRef('');
   // 窗口宽高所有权：仅在模式实际切换（mini <-> tiny）时重置为默认宽度，首份快照及平时保留用户当前宽度；
@@ -124,7 +146,7 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     const inner = el.querySelector('.mini-pop > *');
     if (inner) ro.observe(inner);
     return () => ro.disconnect();
-  }, [hasSnap, mode, stale, error, note, popKind]);
+  }, [hasSnap, mode, stale, error, note, popKind, Boolean(draft)]);
 
   const base = edit?.snap ?? snap;
   const send: Send = (command, at = new Date().toISOString()) => new Promise(resolve => {
@@ -153,41 +175,101 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     : snap.closedEffectiveMs + (snap.currentSegStartedAt ? now - Date.parse(snap.currentSegStartedAt) : 0);
   // 插入的事：读数是前面几段 + 开着的这一段；暂停时停在前面几段之和，不归零（同首页插入卡，用户 2026-11-06）
   const insClosed = snap.inserting?.closedMs ?? 0;
-  const total = c ? today + (c.status === '待做' ? pend : 0)
+  const total = draft ? Math.max(0, now - Date.parse(draft.at))
+    : c ? today + (c.status === '待做' ? pend : 0)
     : pending ? pend : snap.looseIdle ? 0 : snap.inserting?.paused ? insClosed : entry ? (snap.inserting ? insClosed : 0) + now - Date.parse(entry.startedAt) : 0;
-  const progress = cardProgress(total, c ? (snap.todayGoal ?? c.goalMinutes) : null, !!running, away);
+  const progress = cardProgress(total, !draft && c ? (snap.todayGoal ?? c.goalMinutes) : null, draft ? true : !!running, draft ? true : away);
   // 插入的事暂停时：写「已暂停：插入的那件事」，〔继续〕继续插入的事（不是回到原来那张）
-  const title = c ? c.content : pending ? '待确认' : running ? running.description : snap.inserting?.paused ? `已暂停：${snap.inserting.name}` : resumeDescription ? `已暂停：${resumeDescription}` : snap.looseIdle ? '没在计时' : '待机';
+  const title = draft ? (isDraftOwner ? '' : '正在主窗口写插入事件')
+    : c ? c.content : pending ? '待确认' : running ? running.description : snap.inserting?.paused ? `已暂停：${snap.inserting.name}` : resumeDescription ? `已暂停：${resumeDescription}` : snap.looseIdle ? '没在计时' : '待机';
   const currentProject = c?.project ?? running?.project ?? '未分类';
-  // 分类：写新事件时是先选的那个；否则是正在计的这一条（是卡时改的是卡）。待机且不在写时没有
-  const catValue = writingNew ? edit!.project : c || running ? currentProject : null;
+  // 分类：写草稿（本窗 owner）或写新事件时是先选的那个；否则是正在计的这一条（是卡时改的是卡）。镜像或待机且不在写时没有
+  const catValue = draft ? (isDraftOwner ? (insertForm?.project ?? '未分类') : null)
+    : writingNew ? edit!.project : c || running ? currentProject : null;
   const color = (name: string) => snap.projects.find(p => p.name === name)?.color ?? 'var(--mute-2)';
   const pickProject = (project: string) => {
     setCatOpen(false);
+    if (draft && isDraftOwner) {
+      setInsertForm(f => f ? { ...f, project } : { draftId: draft.id, text: '', project });
+      queueMicrotask(() => insertInputRef.current?.focus({ preventScroll: true }));
+      return;
+    }
     if (writingNew) { setEdit({ ...edit!, project }); return; }
     const s = latest.current ?? snap;
     if (c) act({ type: 'editCard', revision: s.revision, cardId: c.id, content: c.content, project });
     else if (running) act({ type: 'editOpen', revision: s.revision, pending_id: s.pending_id, patch: { project } });
   };
-  const toggleCat = (e: MouseEvent) => { keep(e); setCatOpen(o => !o); };
+  const draftBusy = draft?.phase === 'committing' || committingDraft;
+  const toggleCat = (e: MouseEvent) => { keep(e); if (!draftBusy) setCatOpen(o => !o); };
   const meta = catValue !== null
-    ? <>记到 <button type="button" className="mini-pick" id="mini-project" aria-haspopup="listbox" aria-expanded={catOpen} title={`分类：${catValue}`}
+    ? <>记到 <button type="button" className="mini-pick" id="mini-project" aria-haspopup="listbox" aria-expanded={catOpen} disabled={draftBusy} title={`分类：${catValue}`}
       onMouseDown={toggleCat}><i style={{ background: color(catValue) }} />{catValue}</button></>
+    : draft ? `插在「${plainText(draft.originalTitle)}」中间`
     : snap.inserting ? `插在「${plainText(snap.inserting.originalTitle)}」中间` : '没有在做的事';
-  const cat = catValue !== null && <button type="button" className="mini-cat" id="mini-cat" aria-haspopup="listbox" aria-expanded={catOpen}
+  const cat = catValue !== null && <button type="button" className="mini-cat" id="mini-cat" aria-haspopup="listbox" aria-expanded={catOpen} disabled={draftBusy}
     title={`分类：${catValue}（点开切换）`} onMouseDown={toggleCat}><i style={{ background: color(catValue) }} /><span>{catValue}</span></button>;
   const overText = progress.overMs > 0 ? `+${formatReadout(progress.overMs, 'mmss')}` : null;
-  const stateEn = pending ? 'PENDING' : snap.inserting ? (snap.inserting.paused ? 'PAUSED' : 'INSERT') : !running ? (resumeDescription ? 'PAUSED' : snap.looseIdle ? 'NOT TIMING' : 'IDLE') : away ? 'INSERT' : overText ?? 'RUNNING';
+  const stateEn = draft ? 'INSERT' : pending ? 'PENDING' : snap.inserting ? (snap.inserting.paused ? 'PAUSED' : 'INSERT') : !running ? (resumeDescription ? 'PAUSED' : snap.looseIdle ? 'NOT TIMING' : 'IDLE') : away ? 'INSERT' : overText ?? 'RUNNING';
 
-  // 点名字就地变成透明输入框：待机时和点主窗口输入框一样，从这一刻起计时（待确认）
+  const beginInsertDraft = () => {
+    if (!snap.canInsert || draft || !snap.timerStateToken) return;
+    setNote(null); setError(null); setCatOpen(false);
+    act({ type: 'beginInsertDraft', ownerSession, expectedTimer: snap.timerStateToken });
+  };
+  const cancelInsertDraft = () => {
+    if (!draft || draftBusy) return;
+    setCatOpen(false); setError(null);
+    act({ type: 'cancelInsertDraft', draftId: draft.id });
+  };
+  const submitInsertDraft = async () => {
+    if (!draft || !isDraftOwner || draftBusy || stale) return;
+    const raw = (insertForm?.text ?? '').trim();
+    const parsed = parseEntryText(raw, snap.projects.map(o => o.name));
+    if (!parsed.description.trim()) return;
+    setCatOpen(false); setError(null); setCommittingDraft(true);
+    const started = epoch.current ?? -1;
+    try {
+      const outcome = await send({
+        type: 'commitInsertDraft',
+        draftId: draft.id,
+        ownerSession,
+        text: raw,
+        project: insertForm?.project ?? '未分类',
+      }, draft.at);
+      guard.bind(started, (o: MiniOutcome) => {
+        if (o.kind === 'error') {
+          setError(o.message);
+          queueMicrotask(() => insertInputRef.current?.focus({ preventScroll: true }));
+        } else {
+          setError(null);
+        }
+      })(outcome);
+    } finally {
+      setCommittingDraft(false);
+    }
+  };
+  const onInsertKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) return;
+    if (e.key === 'Escape') {
+      e.preventDefault(); e.stopPropagation();
+      if (catOpen) { setCatOpen(false); return; }
+      cancelInsertDraft();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      void submitInsertDraft();
+    }
+  };
+
+  // 点名字就地变成透明输入框：待机时和点主窗口输入框一样，从这一刻起计时（待确认）。插入草稿期间禁用普通改名。
   const openEdit = () => {
+    if (draft) return;
     setNote(null); setError(null); setCatOpen(false); chosen.current = false;
     const startedHere = !running && !pending;
     if (startedHere) act({ type: 'beginPending', pending_id: null });
     const cardRun = snap.card && snap.entry?.cardId === snap.card.id ? snap.card : null;
     const editingRun = !!(snap.entry && snap.entry.project !== '待机') && !snap.pending;
-    const draft = cardRun ? cardRun.content : editingRun ? snap.entry!.description : '';
-    setEdit({ startedHere, snap, draft, rename: !!cardRun || editingRun, project: '未分类' });
+    const initialDraft = cardRun ? cardRun.content : editingRun ? snap.entry!.description : '';
+    setEdit({ startedHere, snap, draft: initialDraft, rename: !!cardRun || editingRun, project: '未分类' });
   };
   const closeEdit = (keepIt: boolean) => {
     if (!edit) return;
@@ -226,8 +308,8 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
     const o = await send({ type: 'setReadout', revision: s.revision, pending_id: s.pending_id, target: req.target, milliseconds: req.milliseconds, seen: seen ?? null }, req.at);
     return o.kind === 'confirm' ? { kind: 'confirm', hit: o.hit, plan: o.plan } : o.kind === 'error' ? { kind: 'error', message: o.message } : { kind: 'done', hit: [] };
   };
-  const canEditTime = !!running || !!pending || (!!entry && !resumeDescription);
-  const target = () => pending ? { mode: 'pending' as const, id: pending.id }
+  const canEditTime = !draft && (!!running || !!pending || (!!entry && !resumeDescription));
+  const target = () => draft ? null : pending ? { mode: 'pending' as const, id: pending.id }
     : c && running ? { mode: snap.closedTodayMs !== undefined ? 'refToday' as const : 'ref' as const, id: c.id }
     // 插入的事：读数是累计，改也按累计改（G7 收尾审核 P2-1）
     : running ? { mode: snap.inserting && !snap.inserting.paused ? 'insertRun' as const : 'entry' as const, id: running.id }
@@ -240,21 +322,45 @@ export function MiniApp({ bus = miniWindowBus, onClose = () => getCurrentWindow(
       onRecent={id => choose({ type: 'continueEntry', targetEntryId: id })} />
     : null;
 
+  const draftText = insertForm?.text ?? '';
+  const draftCanConfirm = isDraftOwner && !stale && !draftBusy && Boolean(parseEntryText(draftText.trim(), snap.projects.map(o => o.name)).description.trim());
+  const draftCaption = draft
+    ? (isDraftOwner ? `插在「${plainText(draft.originalTitle)}」中间 · Enter 记下 · Esc 撤回` : `插在「${plainText(draft.originalTitle)}」中间 · 正在主窗口输入`)
+    : null;
+
   return <div ref={root}>
-    <MiniWindow mode={mode} strip={c ? '卡' : '—'} meta={meta} cat={cat || undefined} title={title} stateEn={stateEn} miniFilled={progress.miniFilled} running={!!running} off={!!snap.looseIdle && !pending} topoDepth={0}
-      paused={!running} canResume={snap.inserting?.paused ? snap.inserting.canContinue : !!resumeDescription}
+    <MiniWindow mode={mode} strip={draft ? '插' : c ? '卡' : '—'} meta={meta} cat={cat || undefined} title={title} titleDisabled={!!draft}
+      stateEn={stateEn} miniFilled={progress.miniFilled} running={draft ? true : !!running} off={!draft && !!snap.looseIdle && !pending} topoDepth={0}
+      paused={!draft && !running} canResume={snap.inserting?.paused ? snap.inserting.canContinue : !!resumeDescription}
+      onInsert={snap.canInsert && !draft ? beginInsertDraft : undefined}
+      draftActions={draft ? {
+        isOwner: isDraftOwner,
+        canConfirm: draftCanConfirm,
+        busy: draftBusy,
+        onConfirm: () => void submitInsertDraft(),
+        onCancel: cancelInsertDraft,
+      } : undefined}
       onBack={snap.inserting ? () => act({ type: 'backToTask' }) : undefined}
       backTitle={snap.inserting ? `回到「${plainText(snap.inserting.originalTitle)}」` : undefined}
       onPause={() => act({ type: 'pause' })} onResume={() => act({ type: 'resume' })}
       onComplete={c && c.status === '进行中' ? () => act({ type: 'complete', cardId: c.id }) : undefined}
-      onClose={() => void onClose().catch(e => setError(`小窗没能关闭：${String(e)}`))} onTitle={openEdit}
-      titleInput={edit && <InlineInput id="mini-name" className="mini-title-in" aria-label="名称"
-        placeholder="I am working on…" value={edit.draft}
-        onChange={draft => { setEdit({ ...edit, draft }); if (catOpen) setCatOpen(false); }}
-        onDone={closeEdit} />}
+      closeTitle={isDraftOwner ? '关闭小窗口并撤回草稿' : '关闭小窗口'}
+      onClose={() => {
+        if (draft && isDraftOwner && draft.phase === 'editing') act({ type: 'cancelInsertDraft', draftId: draft.id });
+        void onClose().catch(e => setError(`小窗没能关闭：${String(e)}`));
+      }}
+      onTitle={openEdit}
+      titleInput={draft && isDraftOwner ? <input ref={insertInputRef} id="mini-insert-name" className="mini-title-in" aria-label="插入事件名称"
+        autoComplete="off" placeholder="写插入事件，回车记下…" value={draftText} readOnly={draftBusy}
+        onChange={e => { const v = e.target.value; setInsertForm(f => f ? { ...f, text: v } : { draftId: draft.id, text: v, project: '未分类' }); if (catOpen) setCatOpen(false); }}
+        onKeyDown={onInsertKeyDown} />
+        : edit && <InlineInput id="mini-name" className="mini-title-in" aria-label="名称"
+          placeholder="I am working on…" value={edit.draft}
+          onChange={draftVal => { setEdit({ ...edit, draft: draftVal }); if (catOpen) setCatOpen(false); }}
+          onDone={closeEdit} />}
       digits={<TimeField key={snap.epoch} id="mini-elapsed" kind="mmss" shown={total} disabled={!canEditTime} target={target} submit={submit}
         onNote={guard.bind(snap.epoch, setNote)}>{formatReadout(total, 'mmss')}</TimeField>}
-      caption={stale ? '主窗口未响应' : error ? error : note ? <HitNote note={note} /> : null}
+      caption={stale ? '主窗口未响应' : error ? error : note ? <HitNote note={note} /> : draftCaption}
       pop={pop} popUp={!!pop && !!popFit?.up} popStyle={pop && popFit ? { maxHeight: popFit.max } : undefined} />
   </div>;
 }

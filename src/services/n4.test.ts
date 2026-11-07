@@ -60,7 +60,7 @@ it('side tasks complete automatically, main tasks stay active; freezing and rest
   await startCard(f.ctx, c.id, at()); await freezeTask(f.ctx, id, at());
   expect(open(f).project).toBe('待机'); expect(f.publish.mock.calls.at(-1)![0].backpack.pool.parked[0]).toMatchObject({ id, itemCount: 1 });
   await restoreTask(f.ctx, id, '支线', at()); await startCard(f.ctx, c.id, at()); await complete(f.ctx, c.id, at(), '完成');
-  expect(f.publish.mock.calls.at(-1)![0].backpack.pool.doneSides).toEqual(['支线']);
+  expect(f.publish.mock.calls.at(-1)![0].backpack.pool.doneTasks.map(t => t.name)).toEqual(['支线']);
   await seed(f, [card('main-card', { task_id: 'main' })], [task('main')]); await startCard(f.ctx, 'main-card', at()); await complete(f.ctx, 'main-card', at(), '完成');
   expect((await f.ctx.repos.tasks.get('main'))!.value.status).toBe('进行中');
 });

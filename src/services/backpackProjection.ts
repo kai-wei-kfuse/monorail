@@ -2,6 +2,7 @@ import type { Card } from '../domain/card/card';
 import { activityDay } from '../domain/timeline/day';
 import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
+import { verifyTaskReopen } from '../domain/task/complete';
 import type { RecordEntry } from '../domain/record/record';
 import type { BackpackSlice, QueueCard, PoolTask } from '../store/backpackSlice';
 import type { TimeEntry } from '../domain/timeline/entry';
@@ -34,16 +35,43 @@ export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEnt
   const poolTask = (task: Task): PoolTask => {
     const ordered = cards.filter(card => card.task_id === task.id).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
     const items = ordered.filter(card => card.status === '待做' || card.status === '进行中').map(itemOf);
-    return { id: task.id, name: task.name, track: task.slot, defaultProject: task.default_project ?? '未分类', items,
+    const completion = task.status === '已完成' ? (task.completion ?? null) : null;
+    const reopenCheck = task.status === '已完成' ? verifyTaskReopen(task, cards, completion?.id ?? null) : null;
+    return {
+      id: task.id,
+      name: task.name,
+      track: task.slot,
+      defaultProject: task.default_project ?? '未分类',
+      items,
       overLimit: task.slot === '主线' && items.length > settings.mainItems,
-      betEndsAt: task.bet_ends_at ? task.bet_ends_at.slice(0, 10) : null, doneItems: ordered.filter(card => card.status === '已完成').map(itemOf) };
+      betEndsAt: task.bet_ends_at ? task.bet_ends_at.slice(0, 10) : null,
+      doneItems: ordered.filter(card => card.status === '已完成').map(itemOf),
+      status: task.status,
+      completedAt: task.status === '已完成' ? (task.completed_at ?? completion?.at ?? null) : null,
+      completionId: completion?.id ?? null,
+      reopenMode: task.status === '已完成' ? (completion ? 'snapshot' : 'task_only') : undefined,
+      reopenCardIds: completion ? completion.cards.map(c => c.id) : [],
+      reopenConflictReason: reopenCheck && !reopenCheck.ok ? reopenCheck.reason : null,
+      reopenConflictCardIds: reopenCheck && !reopenCheck.ok ? reopenCheck.conflictCardIds : [],
+    };
   };
   const sides = orderedTasks.filter(task => inBackpack(task) && task.slot === '支线').map(poolTask);
+  const doneTasks = orderedTasks
+    .filter(task => task.status === '已完成')
+    .sort((a, b) => {
+      const atA = a.completed_at ?? a.completion?.at ?? null;
+      const atB = b.completed_at ?? b.completion?.at ?? null;
+      if (atA && atB) return atB.localeCompare(atA) || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id);
+      if (atA) return -1;
+      if (atB) return 1;
+      return 0;
+    })
+    .map(poolTask);
   return {
     pool: {
       mains: orderedTasks.filter(task => inBackpack(task) && task.slot === '主线').map(poolTask), sides,
       parked: orderedTasks.filter(task => task.status === '冷藏').map(task => ({ id: task.id, name: task.name, track: task.slot, itemCount: active.filter(card => card.task_id === task.id).length })),
-      doneSides: orderedTasks.filter(task => task.status === '已完成' && task.slot === '支线').map(task => task.name),
+      doneTasks,
       mainMax: settings.mainTasks, sideMax: settings.sideTasks, mainItems: settings.mainItems, projects: projectOptions(settings.lists.projects),
       knownTags: knownTags([...entries, ...settings.lists.presets, ...cards], settings.lists.tags), excessSideIds: sides.slice(settings.sideTasks).map(task => task.id),
     },

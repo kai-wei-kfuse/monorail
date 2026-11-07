@@ -1,10 +1,10 @@
 import { expect, it } from 'vitest';
 import { at, card, fixture, getCard, open, task, seed, entries } from './serviceFixture';
-import { start, complete, checkComplete, checkSplit, split, pass, editContent } from './cardService';
+import { start, complete, completeItem, checkComplete, checkSplit, split, pass, editContent } from './cardService';
 import { run } from './commit';
 import { shrinkCard } from '../data/migrations/v030/shrink';
 import type { Card } from '../domain/card/card';
-import { insert, backfillRange } from './homeService';
+import { insert, backfillRange, startFree, startCard, pause, beginPending } from './homeService';
 import { cardMilliseconds } from '../domain/timeline/stats';
 
 const halves = { todayContent: '先做一小步', restContent: '剩下的', restMinutes: null };
@@ -175,4 +175,89 @@ it('拆出来的 rest 落在原卡和后一张之间，不改别的卡的顺序�
   const orders = Object.fromEntries((await f.ctx.repos.cards.list()).map(e => [e.value.id, e.value.order]));
   expect(orders).toMatchObject({ a: 3, x: 4, b: 7 });
   expect(orders[rest]).toBeGreaterThan(3); expect(orders[rest]).toBeLessThan(4);
+});
+
+it('0.3.2 completeItem completes a 待做 sub-task without disturbing running free timer or another task, and auto-completes side task on last item with idempotent noop', async () => {
+  const f = fixture();
+  await seed(
+    f,
+    [
+      card('m1', { task_id: 'main', progress_note: '原笔记' }),
+      card('m2', { task_id: 'main', order: 2 }),
+      card('s1', { task_id: 'side', order: 3 }),
+    ],
+    [
+      task('main'),
+      { ...task('side'), slot: '支线', slot_index: 2, bet_ends_at: null },
+    ],
+  );
+  await startFree(f.ctx, { description: '写周报', project: '生活', tags: [] }, at());
+  const openBefore = open(f);
+
+  const res1 = await completeItem(f.ctx, 'm1', at(5));
+  expect(res1.noop).toBe(false);
+  expect(await getCard(f, 'm1')).toMatchObject({
+    status: '已完成',
+    completed_at: at(5),
+    completed_track: '主线',
+    progress_note: '原笔记',
+  });
+  expect(open(f)).toEqual(openBefore);
+
+  // Side task last item auto-completes the side task; repeating completeItem is still an idempotent noop (S4)
+  const resSide = await completeItem(f.ctx, 's1', at(10));
+  expect(resSide.noop).toBe(false);
+  expect((await f.ctx.repos.tasks.get('side'))!.value).toMatchObject({
+    status: '已完成',
+    slot_index: null,
+    completed_at: at(10),
+    completion: null,
+  });
+  const resSideRepeat = await completeItem(f.ctx, 's1', at(15));
+  expect(resSideRepeat.noop).toBe(true);
+  expect((await getCard(f, 's1')).completed_at).toBe(at(10));
+});
+
+it('0.3.2 completeItem enforces TIMEBOX_NOT_REACHED (running and card-paused), IN_AWAY_ACTIVITY, and PENDING_START_CONFIRMATION on current home card', async () => {
+  const f = fixture();
+  await seed(
+    f,
+    [
+      card('tb', { task_id: 'main', type: '时间盒卡', timebox_minutes: 30 }),
+      card('todo', { task_id: 'main', order: 2, type: '时间盒卡', timebox_minutes: 45 }),
+    ],
+    [task('main')],
+  );
+  // Unstarted timebox completes directly without finishEarly
+  f.clock(at(1)); await completeItem(f.ctx, 'todo', at(1));
+  expect((await getCard(f, 'todo')).status).toBe('已完成');
+
+  // Running timebox requires finishEarly when remainingMinutes > 0
+  f.clock(at(2)); await start(f.ctx, 'tb', at(2));
+  f.clock(at(12));
+  await expect(completeItem(f.ctx, 'tb', at(12))).rejects.toThrow('TIMEBOX_NOT_REACHED');
+
+  // Card-paused timebox also requires finishEarly (S5)
+  await pause(f.ctx, at(12));
+  f.clock(at(13));
+  await expect(completeItem(f.ctx, 'tb', at(13))).rejects.toThrow('TIMEBOX_NOT_REACHED');
+
+  // Resume and enter away/insert -> rejects IN_AWAY_ACTIVITY
+  f.clock(at(14)); await start(f.ctx, 'tb', at(14));
+  f.clock(at(15)); await insert(f.ctx, '倒水', at(15));
+  f.clock(at(16));
+  await expect(completeItem(f.ctx, 'tb', at(16), { finishEarly: true })).rejects.toThrow('IN_AWAY_ACTIVITY');
+
+  // Return to card and enter pending start confirmation -> rejects PENDING_START_CONFIRMATION
+  f.clock(at(17)); await start(f.ctx, 'tb', at(17));
+  f.clock(at(18)); await beginPending(f.ctx, at(18));
+  await expect(completeItem(f.ctx, 'tb', at(18), { finishEarly: true })).rejects.toThrow('PENDING_START_CONFIRMATION');
+
+  // Clear pending by starting again and complete with finishEarly: true
+  f.clock(at(19)); await startCard(f.ctx, 'tb', at(19));
+  f.clock(at(20));
+  const done = await completeItem(f.ctx, 'tb', at(20), { finishEarly: true, note: '提前做完' });
+  expect(done.noop).toBe(false);
+  expect(await getCard(f, 'tb')).toMatchObject({ status: '已完成', progress_note: '提前做完' });
+  expect(open(f).project).toBe('待机');
 });

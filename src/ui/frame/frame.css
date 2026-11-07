@@ -26,6 +26,7 @@
 .wc.pin[aria-pressed="true"] { color: var(--ink); background: var(--yellow); }
 
 .dock { position: relative; z-index: 5; display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--bar-bg); border-top: 1px solid var(--line); }
+.dock-actions { display: flex; align-items: center; gap: 6px; }
 .dock-right { margin-left: auto; display: flex; align-items: center; gap: 18px; font: 330 12px/1 var(--f-cn); color: var(--mute); letter-spacing: .04em; }
 /* v0.3 多了日历、列表两页：窗口不够宽时先收起英文小字、收窄间距，中文不换行（最小宽 960 时六个标签加状态块放得下） */
 @media (max-width: 1240px) {

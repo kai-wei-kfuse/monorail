@@ -9,11 +9,25 @@ import {
   addTimeEntryResult,
   captureTodoResult,
   completeIdeaResult,
+  completeTaskItemResult,
+  completeTaskResult,
   contextResult,
+  drawTaskItemResult,
+  endOriginalTaskResult,
   findItemsResult,
+  getRecapResult,
+  getTaskDetailsResult,
+  getTaskPlanResult,
+  keepGoingTaskItemResult,
+  listOperationHistoryResult,
   listTimeEntriesResult,
   lookupResult,
+  planMutationResult,
+  reopenIdeaResult,
+  reopenTaskItemResult,
+  reopenTaskResult,
   saveIdeaResult,
+  splitTaskItemResult,
   timeSummaryResult,
   timerMutationResult,
 } from '../shared/application';
@@ -504,7 +518,7 @@ it('0.3.1 MCP：插入的事暂停了时 pause noop、resume 继续插入的事�
   f.clock(at(15)); await call('pause_timer');
   const paused = await ctx();
   expect(paused.timer).toMatchObject({ mode: 'away', away_paused: true, paused_target: { card_id: 'c1' } });
-  expect(paused.timer?.allowed_actions).toEqual(expect.arrayContaining(['resume_timer', 'return_from_break']));
+  expect(paused.timer?.allowed_actions).toEqual(expect.arrayContaining(['resume_timer', 'return_from_break', 'end_original_task']));
   expect(paused.timer?.allowed_actions).not.toContain('pause_timer');
   expect(timerMutationResult.parse(await call('pause_timer')).data).toMatchObject({ noop: true, reason: 'already_paused' });
   await expect(call('stop_timer')).rejects.toThrow('IN_AWAY_ACTIVITY');
@@ -512,4 +526,359 @@ it('0.3.1 MCP：插入的事暂停了时 pause noop、resume 继续插入的事�
   f.clock(at(20));
   expect(timerMutationResult.parse(await call('resume_timer')).data.timer).toMatchObject({ mode: 'away', away_paused: false, open_entry: { description: '上厕所', kind: '插入' } });
   expect((await getCard(f, 'c1')).status).toBe('进行中');
+});
+
+it('0.3.2 Module A: get_task_plan, add/update/remove_plan_item, confirm_plan_carry, skip_today_plan, draw_task_item, and 3-card skip_task_item round reset', async () => {
+  const f = fixture();
+  await seed(
+    f,
+    [
+      card('c1', { task_id: 'main', content: '主线一', type: '时间盒卡', timebox_minutes: 60, order: 1 }),
+      card('c2', { task_id: 'main', content: '主线二', order: 2 }),
+      card('c3', { task_id: 'side', content: '支线三', order: 3 }),
+    ],
+    [
+      task('main'),
+      { ...task('side'), slot: '支线', slot_index: 2, bet_ends_at: null },
+    ],
+  );
+
+  const plan0 = getTaskPlanResult.parse(await handleApplicationRequest(f.ctx, { method: 'get_task_plan', arguments: { day: 'today' } }));
+  expect(plan0.enabled).toBe(true);
+  const today = plan0.resolved_day;
+  expect(plan0.plan?.items).toEqual([]);
+
+  // Need plan before skip_today_plan
+  const draw0 = drawTaskItemResult.parse(await handleApplicationRequest(f.ctx, { method: 'draw_task_item', arguments: {} }));
+  expect(draw0.outcome).toBe('need_plan');
+
+  // Wrong day rejected with PLAN_DAY_CHANGED
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'skip_today_plan',
+    arguments: { operation_id: crypto.randomUUID(), day: '2099-01-01' },
+  })).rejects.toThrow('PLAN_DAY_CHANGED');
+
+  // skip_today_plan enables drawing from all 3 backpack cards; skip_task_item accumulates seen across 3 cards then resets round
+  const skippedToday = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'skip_today_plan',
+    arguments: { operation_id: crypto.randomUUID(), day: today },
+  }));
+  expect(skippedToday.data.plan.skip_until_planned).toBe(true);
+  expect(skippedToday.data.plan.drawable_card_ids).toEqual(['c1', 'c2', 'c3']);
+
+  const s1 = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'skip_task_item',
+    arguments: { operation_id: crypto.randomUUID(), day: today, card_id: 'c1' },
+  }));
+  expect(s1.data.plan.seen_card_ids).toEqual(['c1']);
+
+  const s2 = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'skip_task_item',
+    arguments: { operation_id: crypto.randomUUID(), day: today, card_id: 'c2' },
+  }));
+  expect(s2.data.plan.seen_card_ids).toEqual(['c1', 'c2']);
+
+  const s3 = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'skip_task_item',
+    arguments: { operation_id: crypto.randomUUID(), day: today, card_id: 'c3' },
+  }));
+  // All 3 candidates seen -> round resets to [c3]
+  expect(s3.data.plan.seen_card_ids).toEqual(['c3']);
+
+  // Adding first item to today clears skip_until_planned
+  const added = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'add_plan_item',
+    arguments: { operation_id: crypto.randomUUID(), day: today, card_id: 'c1', priority: '高', today_minutes: 45 },
+  }));
+  expect(added.data.plan.skip_until_planned).toBe(false);
+  expect(added.data.plan.items).toEqual([expect.objectContaining({ card_id: 'c1', priority: '高', today_minutes: 45 })]);
+
+  const updated = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'update_plan_item',
+    arguments: { operation_id: crypto.randomUUID(), day: today, card_id: 'c1', priority: '普通', today_minutes: 30 },
+  }));
+  expect(updated.data.noop).toBe(false);
+  expect(updated.data.plan.items[0]).toMatchObject({ card_id: 'c1', priority: '普通', today_minutes: 30 });
+
+  const draw1 = drawTaskItemResult.parse(await handleApplicationRequest(f.ctx, { method: 'draw_task_item', arguments: {} }));
+  expect(draw1.outcome).toBe('card');
+  expect(draw1.card).toMatchObject({ id: 'c1', today_minutes: 30, goal_minutes: 60 });
+
+  const removed = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'remove_plan_item',
+    arguments: { operation_id: crypto.randomUUID(), day: today, card_id: 'c1' },
+  }));
+  expect(removed.data.noop).toBe(false);
+  expect(removed.data.plan.items).toEqual([]);
+
+  // Seed carried items and confirm carry
+  await run(f.ctx, async tx => {
+    const p = structuredClone(tx.todayPlan);
+    p.items = [
+      { card_id: 'c1', priority: '普通', today_minutes: 30, added_at: tx.at, carried: true },
+      { card_id: 'c2', priority: '高', today_minutes: null, added_at: tx.at, carried: true },
+    ];
+    p.carried_confirmed = false;
+    tx.savePlan(p);
+  }, undefined, { action: 'test.direct' });
+
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'skip_task_item',
+    arguments: { operation_id: crypto.randomUUID(), day: today, card_id: 'c1' },
+  })).rejects.toThrow('CARRY_CONFIRMATION_REQUIRED');
+
+  const carried = planMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'confirm_plan_carry',
+    arguments: { operation_id: crypto.randomUUID(), day: today, keep_card_ids: ['c2'] },
+  }));
+  expect(carried.data.plan.carry_pending).toBe(false);
+  expect(carried.data.plan.items.map(i => i.card_id)).toEqual(['c2']);
+});
+
+it('0.3.2 Module B & C: complete_task_item (todo & timebox finish_early & optional expected_state replay), keep_going, split, end_original_task, complete_task & reopen_task', async () => {
+  const f = fixture();
+  await seed(
+    f,
+    [
+      card('c1', { task_id: 'main', content: '时间盒任务', type: '时间盒卡', timebox_minutes: 60, order: 1 }),
+      card('c2', { task_id: 'main', content: '待做子任务', progress_note: '原笔记', order: 2 }),
+      card('c3', { task_id: 'side', content: '支线事项', order: 3 }),
+    ],
+    [
+      task('main'),
+      { ...task('side'), slot: '支线', slot_index: 2, bet_ends_at: null },
+    ],
+  );
+
+  // 1. Direct completion of 待做 sub-task without expected_state; later timer changes; same operation_id replays cleanly!
+  const directDoneOpId = crypto.randomUUID();
+  const directDone = completeTaskItemResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'complete_task_item',
+    arguments: { operation_id: directDoneOpId, card_id: 'c2' },
+  }));
+  expect(directDone.data).toMatchObject({
+    noop: false,
+    stopped_timer: false,
+    card: { id: 'c2', status: '已完成', progress_note: '原笔记' },
+  });
+
+  // Start c1
+  const ctx1 = contextResult.parse(await handleApplicationRequest(f.ctx, { method: 'get_context', arguments: {} }));
+  const started = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'start_task_item',
+    arguments: { operation_id: ctx1.operation_id, expected_state: ctx1.expected_state, card_id: 'c1' },
+  }));
+  expect(started.data.timer.allowed_actions).toEqual(
+    expect.arrayContaining(['complete_task_item', 'keep_going_task_item', 'split_task_item']),
+  );
+
+  // Replay directDoneOpId AFTER timer state changed — must succeed with replayed=true!
+  const directReplay = completeTaskItemResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'complete_task_item',
+    arguments: { operation_id: directDoneOpId, card_id: 'c2' },
+  }));
+  expect(directReplay.replayed).toBe(true);
+  // Replay with an explicit expected_state when original had none -> OPERATION_CONFLICT
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'complete_task_item',
+    arguments: { operation_id: directDoneOpId, expected_state: started.data.expected_state, card_id: 'c2' },
+  })).rejects.toThrow('OPERATION_CONFLICT');
+
+  // 2. Completing running c1 without expected_state -> STATE_REQUIRED; without finish_early -> TIMEBOX_NOT_REACHED
+  f.clock(at(10));
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'complete_task_item',
+    arguments: { operation_id: crypto.randomUUID(), card_id: 'c1' },
+  })).rejects.toThrow('STATE_REQUIRED');
+
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'complete_task_item',
+    arguments: { operation_id: crypto.randomUUID(), expected_state: started.data.expected_state, card_id: 'c1' },
+  })).rejects.toThrow('TIMEBOX_NOT_REACHED');
+
+  // 3. Pause c1 -> paused card still allows split_task_item and keep_going_task_item
+  const paused = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'pause_timer',
+    arguments: { operation_id: crypto.randomUUID(), expected_state: started.data.expected_state },
+  }));
+  expect(paused.data.timer.allowed_actions).toEqual(
+    expect.arrayContaining(['complete_task_item', 'keep_going_task_item', 'split_task_item']),
+  );
+
+  const splitRes = splitTaskItemResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'split_task_item',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      expected_state: paused.data.expected_state,
+      card_id: 'c1',
+      today_content: '今天前半',
+      rest_content: '后面剩余',
+      rest_minutes: 20,
+    },
+  }));
+  expect(splitRes.data).toMatchObject({
+    today_card_id: 'c1',
+    today_content: '今天前半',
+    rest_content: '后面剩余',
+    today_minutes: 30,
+    rest_minutes: 20,
+  });
+
+  const kept = keepGoingTaskItemResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'keep_going_task_item',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      expected_state: splitRes.data.expected_state,
+      card_id: 'c1',
+      note: '先做到第 2 节',
+    },
+  }));
+  expect(kept.data.card).toMatchObject({ id: 'c1', status: '待做', progress_note: '先做到第 2 节' });
+  expect(kept.data.timer.mode).toBe('idle');
+
+  // 4. Start c1 again, insert break, then end_original_task promotes break to ordinary free timer and releases c1 to 待做
+  f.clock(at(12));
+  const restarted = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'start_task_item',
+    arguments: { operation_id: crypto.randomUUID(), expected_state: kept.data.expected_state, card_id: 'c1' },
+  }));
+  f.clock(at(15));
+  const away = timerMutationResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'start_break',
+    arguments: { operation_id: crypto.randomUUID(), expected_state: restarted.data.expected_state, activity: '接电话' },
+  }));
+  expect(away.data.timer.allowed_actions).toContain('end_original_task');
+  f.clock(at(18));
+  const endedOrig = endOriginalTaskResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'end_original_task',
+    arguments: { operation_id: crypto.randomUUID(), expected_state: away.data.expected_state },
+  }));
+  expect(endedOrig.data).toMatchObject({
+    ended_card_id: 'c1',
+    timer: { mode: 'running', open_entry: { description: '接电话', kind: '普通' } },
+  });
+  expect((await getCard(f, 'c1')).status).toBe('待做');
+
+  // 5. Complete whole task `main` while free timer is running (does not touch timer -> expected_state optional!)
+  const doneTask = completeTaskResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'complete_task',
+    arguments: { operation_id: crypto.randomUUID(), task_id: 'main' },
+  }));
+  expect(doneTask.data).toMatchObject({
+    noop: false,
+    stopped_timer: false,
+    freed_slot: { slot: '主线', slot_index: 1 },
+    task: { id: 'main', status: '已完成' },
+  });
+  expect(doneTask.data.affected_card_ids).toEqual(['c1', splitRes.data.rest_card_id]);
+
+  // 6. get_task_details returns completion_id, reopen_mode=snapshot_batch, and batch flags
+  const details = getTaskDetailsResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'get_task_details',
+    arguments: { task_id: 'main' },
+  }));
+  expect(details.task).toMatchObject({
+    id: 'main',
+    status: '已完成',
+    completion_id: doneTask.data.completion_id,
+    reopen_mode: 'snapshot_batch',
+    reopen_card_ids: ['c1', splitRes.data.rest_card_id],
+    slot_full: false,
+  });
+  // Passing completion_id: null (--legacy) when snapshot exists must reject TASK_COMPLETION_CHANGED
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'reopen_task',
+    arguments: { operation_id: crypto.randomUUID(), task_id: 'main', completion_id: null },
+  })).rejects.toThrow('TASK_COMPLETION_CHANGED');
+
+  // Reopen task with completion_id restores only batch items (c2 stays 已完成)
+  const reopenedTask = reopenTaskResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'reopen_task',
+    arguments: { operation_id: crypto.randomUUID(), task_id: 'main', completion_id: doneTask.data.completion_id },
+  }));
+  expect(reopenedTask.data).toMatchObject({
+    noop: false,
+    reopen_mode: 'snapshot_batch',
+    reopened_card_ids: ['c1', splitRes.data.rest_card_id],
+    task: { id: 'main', status: '进行中', slot_index: 1, open_card_count: 2 },
+  });
+  expect((await getCard(f, 'c2')).status).toBe('已完成');
+
+  // Reopen single item c2 via reopen_task_item
+  const reopenedC2 = reopenTaskItemResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'reopen_task_item',
+    arguments: { operation_id: crypto.randomUUID(), card_id: 'c2' },
+  }));
+  expect(reopenedC2.data).toMatchObject({
+    noop: false,
+    reopened_parent_task: false,
+    card: { id: 'c2', status: '待做', progress_note: '原笔记' },
+    task: { id: 'main', open_card_count: 3 },
+  });
+});
+
+it('0.3.2 Module C & D: reopen_idea, get_recap (bucket validation & cached computed_at), and list_operation_history filtering', async () => {
+  const f = fixture();
+  await seed(f, []);
+  await createProject(f.ctx, '研发', at());
+
+  const saved = saveIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'save_idea',
+    arguments: { operation_id: crypto.randomUUID(), text: '可恢复的想法' },
+    origin: { kind: 'mcp', agent: { name: 'Cursor', version: '1.0', detected_by: 'clientInfo' } },
+  }));
+  await handleApplicationRequest(f.ctx, {
+    method: 'complete_idea',
+    arguments: { operation_id: crypto.randomUUID(), idea_id: saved.data.id },
+    origin: { kind: 'cli', agent: { name: 'Codex', detected_by: 'env' } },
+  });
+
+  const reopenedIdea = reopenIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'reopen_idea',
+    arguments: { operation_id: crypto.randomUUID(), idea_id: saved.data.id },
+    origin: { kind: 'cli', agent: { name: 'Codex', detected_by: 'env' } },
+  }));
+  expect(reopenedIdea.data).toEqual({ id: saved.data.id, text: '可恢复的想法', pool: '活跃池', noop: false });
+  const noopIdea = reopenIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'reopen_idea',
+    arguments: { operation_id: crypto.randomUUID(), idea_id: saved.data.id },
+  }));
+  expect(noopIdea.data.noop).toBe(true);
+
+  f.clock(at(35));
+  await handleApplicationRequest(f.ctx, {
+    method: 'add_time_entry',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      description: '写自动化测试',
+      start: at(0),
+      end: at(30),
+      project: '研发',
+      tags: ['测试'],
+    },
+  });
+
+  const recap = getRecapResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'get_recap',
+    arguments: { period: 'week', dimension: 'project' },
+  }));
+  expect(recap.computed_at).toBe(at(35));
+  expect(recap.effective_ms).toBe(30 * 60000);
+  expect(recap.groups.map(g => g.key)).toContain('研发');
+
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'get_recap',
+    arguments: { period: 'week', dimension: 'project', bucket: 'non-existent-bucket' },
+  })).rejects.toThrow('INVALID_BUCKET');
+
+  const history = listOperationHistoryResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'list_operation_history',
+    arguments: { source: 'all_automation', agent: 'Codex', method: 'reopen_idea' },
+  }));
+  expect(history.records).toHaveLength(1);
+  expect(history.records[0]).toMatchObject({
+    action: 'auto.reopen_idea',
+    method: 'reopen_idea',
+    subject: { type: 'record', id: saved.data.id },
+  });
 });

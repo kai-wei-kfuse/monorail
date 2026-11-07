@@ -14,8 +14,8 @@ export interface SlotTask { id: string; name: string; slot: BackpackSlot; slotIn
 export type TaskSlot = TaskDraft['slot'];
 export type { TaskDraft };
 
-/** 满格时先腾位置：列出这一格里的任务，每个都可以选「冷藏」或「放弃」。新建任务和放回背包共用。 */
-function MakeRoomPicker({ slot, candidates, value, onChange }:
+/** 满格时先腾位置：列出这一格里的任务，每个都可以选「冷藏」或「放弃」。新建任务、放回背包和重新打开已完成任务共用。 */
+export function MakeRoomPicker({ slot, candidates, value, onChange }:
   { slot: BackpackSlot; candidates: SlotTask[]; value: MakeRoom | null; onChange: (room: MakeRoom) => void }) {
   return <div className="fm-f">
     <span>{slot}格满了，先冷藏或放弃一个</span>

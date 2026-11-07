@@ -99,6 +99,8 @@ export interface RecapPrevious {
 }
 
 export interface RecapResult {
+  /** 计算本结果时的原时刻（ADR 0023 §5） */
+  asOf?: string;
   range: RecapRange;
   /** asOf 所在的活动日；最早一条记录所在的活动日（首次使用日与最早条目里更早的，自定义日期的可选下限）；上次完成回顾的时刻 */
   today: string; earliestDay: string | null; lastReviewAt: string | null;

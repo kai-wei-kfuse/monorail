@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ActionButton } from '../../ui/controls/Button';
 import { ProjectPicker } from '../../ui/controls/ProjectPicker';
 import { TagPicker } from '../../ui/controls/TagPicker';
+import { Icon } from '../../ui/icons/Icon';
 import { plainText } from '../../ui/marks/MarkedText';
 import { formatReadout } from '../../shared/duration';
 import { cardProgress } from '../../widgets/cardProgress';
@@ -21,8 +22,9 @@ const hms = (iso: string) => `${hm(iso)}:${pad(new Date(iso).getSeconds())}`;
  * draft 是计时条里正在写的字；over 是抽到还没开始的卡。正在计自己写的事时，双击标题改名，「记到」一行点一下就改，读数点一下直接改。
  * 待确认和暂停中，「记到」一行跟着计时条，这里不能改。
  */
-export function FreeCard({ view, draft, over, now, look, titleScale, actions }:
-  { view: TimerView; draft: string | null; over: { id: string; content: string } | null; now: number; look: CardLook; titleScale: number; actions: TimerActions }) {
+export function FreeCard({ view, draft, over, now, look, titleScale, actions, onInsertEvent }:
+  { view: TimerView; draft: string | null; over: { id: string; content: string } | null; now: number; look: CardLook; titleScale: number; actions: TimerActions;
+    onInsertEvent?: () => void }) {
   const [note, setNote] = useState<ReadoutNote | null>(null);
   const { entry, pending, paused } = view;
   const running = entry && !view.idle ? entry : null, away = !!view.away || running?.kind === '插入';
@@ -35,6 +37,7 @@ export function FreeCard({ view, draft, over, now, look, titleScale, actions }:
   const editable = running && !pending && !away ? running : null;
 
   const corner = <>
+    {onInsertEvent && <button type="button" className="c-rest" title="插一件别的事：插入卡马上落下，在插入卡上写名字；原来这件事等你回来" onClick={onInsertEvent}><Icon name="plus" />插入事件</button>}
     {over && !pending && <><span className="c-hint">抽到的「{plainText(over.content)}」还没开始</span>
       <button type="button" className="c-link" onClick={() => actions.startCard(over.id)}>开始这张卡</button></>}
     {over && pending && <span className="c-hint">写好后「{plainText(over.content)}」放回卡池；清空输入框就回到卡</span>}

@@ -14,9 +14,9 @@ export function putInBackpack(task: Task, slot: BackpackSlot, tasks: Task[], set
   let index = 1;
   while (used.has(index)) index++;
   const end = new Date(at); end.setDate(end.getDate() + settings.betWeeks * 7);
-  return { ...task, slot, slot_index: inBackpack(task) ? task.slot_index : index, status: '进行中', bet_ends_at: slot === '主线' ? end.toISOString() : null };
+  return { ...task, slot, slot_index: inBackpack(task) ? task.slot_index : index, status: '进行中', bet_ends_at: slot === '主线' ? end.toISOString() : null, completed_at: null, completion: null };
 }
 
 export function leaveBackpack(task: Task, status: '冷藏' | '已放弃'): Task {
-  return { ...task, slot_index: null, status, bet_ends_at: null };
+  return { ...task, slot_index: null, status, bet_ends_at: null, completed_at: null, completion: null };
 }

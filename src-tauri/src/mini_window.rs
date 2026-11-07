@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path, sync::{Arc, atomic::{AtomicBool, Ordering}, mpsc}};
-use tauri::{Manager, PhysicalPosition, PhysicalSize, WebviewWindow, WindowEvent};
+use tauri::{Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindow, WindowEvent};
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
     UI::{Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass},
@@ -222,7 +222,11 @@ fn create(app: &tauri::AppHandle) -> Result<WebviewWindow, String> {
                 api.prevent_close();
                 let _ = collapse(&target);
                 let _ = save_geometry(&target, false);
-                target.hide().map_err(|e| e.to_string())
+                let hidden = target.hide().map_err(|e| e.to_string());
+                if hidden.is_ok() {
+                    let _ = target.app_handle().emit_to("main", "mini-explicit-close", ());
+                }
+                hidden
             }
             WindowEvent::Resized(_) if !in_sizemove.load(Ordering::SeqCst) => save_geometry(&target, false),
             _ => Ok(()),
@@ -247,6 +251,7 @@ fn toggle(app: &tauri::AppHandle) -> Result<bool, String> {
         collapse(&window)?;
         save_geometry(&window, false)?;
         window.hide().map_err(|e| e.to_string())?;
+        let _ = app.emit_to("main", "mini-explicit-close", ());
         Ok(false)
     } else {
         save_geometry(&window, false)?;

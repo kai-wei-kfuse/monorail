@@ -94,7 +94,7 @@ const CLI_EXAMPLE_SPECS: ReadonlyArray<{ id: string; title: string; desc: string
   {
     id: 'help',
     title: '查看命令行帮助',
-    desc: '查看全部 14 个子命令与参数说明；本地帮助查询不会连接或拉起单轨后台进程。',
+    desc: '查看全部 34 个子命令（对应 36 项应用方法）与参数说明；本地帮助查询不会连接或拉起单轨后台进程。',
     args: ['--help'],
   },
 ];
@@ -109,24 +109,24 @@ export function buildCliExamples(cliEntryPath: string | null): CliCommandExample
 
 export const CAPABILITY_CATEGORIES: ReadonlyArray<{ title: string; methods: string; summary: string }> = [
   {
-    title: '状态与回执查询（只读）',
-    methods: 'get_context · get_operation_result',
-    summary: '读取当前计时状态、累积未消除通知（pending_actions）、可用项目与标签；按 operation_id 查询操作是否已在本地持久化提交。',
+    title: '状态、回执与操作历史（只读）',
+    methods: 'get_context · get_operation_result · list_operation_history',
+    summary: '读取当前计时状态、累积未消除通知（pending_actions）、可用项目与标签；按 operation_id 查询持久化提交回执；按活动日、来源、调用方、方法与主体筛选操作历史（含坏行计数 bad_count）。',
   },
   {
-    title: '想法与待办管理',
-    methods: 'save_idea · complete_idea · capture_todo · find_items',
-    summary: '保存想法至想法池；把做到了的想法标记为已完成（进入想法池的「已完成」列表，可在单轨里撤销）；捕获待办记录并生成事项卡片（缺省归入单事项支线任务）；按关键词与类别（idea / todo_card / task / all）检索现有条目。',
+    title: '任务板与抽卡（A）',
+    methods: 'get_task_plan · add_plan_item · remove_plan_item · update_plan_item · confirm_plan_carry · skip_today_plan · draw_task_item · skip_task_item',
+    summary: '读取今天或明天的任务板（实时计算今日已计分钟、达标状态与可抽候选）；排入、移出或修改任务板项；确认昨日未完成带入；今天先不排、按权重只读抽卡以及换一张（记入本轮 seen）。',
   },
   {
-    title: '计时与临时离开控制',
-    methods: 'start_timer · start_task_item · pause_timer · resume_timer · stop_timer · start_break · return_from_break',
-    summary: '开始或切换自由活动计时、对指定待办事项卡片开始计时、暂停与恢复计时、停止计时回到待机，以及插入临时离开活动并在结束后恢复原活动。',
+    title: '想法、待办、子任务与整张任务（B & C）',
+    methods: 'save_idea · complete_idea · reopen_idea · capture_todo · find_items · get_task_details · complete_task_item · reopen_task_item · keep_going_task_item · split_task_item · complete_task · reopen_task',
+    summary: '保存/完成/撤销完成想法；捕获待办并入包；检索条目与查看任务详情（含 completion_id）；完成当前计时卡或待做子项、取消完成子项恢复待做（支持主线容量校验与父任务同事务恢复）、记录进度接着做、拆分卡片；整张完成主/支线任务与按快照批次重新打开（满格支持显式 make_room 腾位）。',
   },
   {
-    title: '时间统计与记录补录',
-    methods: 'get_time_summary · list_time_entries · add_time_entry · update_time_entry',
-    summary: '按日或周汇总时间使用情况（严格区分非待机覆盖、待机与未记录空白）、按带时区起止时间查询明细、补录过去已完成的时间记录、修改已有记录的时间和内容（规则同日历，不能删除）。',
+    title: '计时、临时离开、时间记录与统计回看（B & D）',
+    methods: 'start_timer · start_task_item · pause_timer · resume_timer · stop_timer · start_break · return_from_break · end_original_task · get_time_summary · list_time_entries · add_time_entry · update_time_entry · get_recap',
+    summary: '开始自由计时或卡片计时、暂停/恢复/停止、插入临时离开与返回原活动或直接结束原任务；按日/周汇总时间、查询明细、补录与修改时间记录；读取 7 种周期 × 4 种维度的完整统计回看（get_recap）。',
   },
 ];
 

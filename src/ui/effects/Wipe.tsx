@@ -8,7 +8,7 @@ import './effects.css';
  * 停 420ms → 向右退出 → onDone（调用方卸载它，并让新标题升起、竖条再弹一次）。
  * 非「完整」动效等级下立即依次回调 onCovered、onDone。
  */
-export function Wipe({ no, en = 'NEXT CARD', cn = '再抽一张', meta, title, onCovered, onDone }:
+export function Wipe({ no, en = 'START TASK', cn = '开始计时', meta, title, onCovered, onDone }:
   { no: string; en?: string; cn?: string; meta: string; title: string; onCovered: () => void; onDone: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const cb = useRef({ onCovered, onDone });

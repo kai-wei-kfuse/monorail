@@ -36,3 +36,8 @@ it('the first snapshot of a subscription is accepted whatever arrives first', as
   expect(await feed([[4, 0], [3, 50]])).toEqual([[4, 0]]);
   expect(acceptMiniSnapshot(null, { epoch: 0, revision: 0 })).toBe(true);
 });
+it('when viewSeq is present on both snapshots in the same epoch, requires strictly increasing viewSeq even if revision is equal', () => {
+  expect(acceptMiniSnapshot({ epoch: 1, revision: 5, viewSeq: 2 }, { epoch: 1, revision: 5, viewSeq: 3 })).toBe(true);
+  expect(acceptMiniSnapshot({ epoch: 1, revision: 5, viewSeq: 3 }, { epoch: 1, revision: 5, viewSeq: 3 })).toBe(false);
+  expect(acceptMiniSnapshot({ epoch: 1, revision: 5, viewSeq: 3 }, { epoch: 1, revision: 5, viewSeq: 2 })).toBe(false);
+});

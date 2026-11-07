@@ -1,6 +1,6 @@
 # 单轨（MONORAIL）MCP 服务
 
-版本号以 `package.json` 为准。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 17 项核心工具（0.3.0-beta.4 加 `complete_idea`，0.3.1 加 `update_time_entry`）。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
+版本号以 `package.json` 为准。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 36 项核心工具（26 写、10 读；0.3.0-beta.4 加 `complete_idea`，0.3.1 加 `update_time_entry`，0.3.2 补齐 A–D 全量能力共新增 19 项工具）。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
 
 ## 给 agent 的规则（0.3.1）
 
@@ -8,13 +8,15 @@
 
 这段话在 MCP 握手的 `instructions` 里，也写在 `get_context` 工具描述的末尾；文案只有一份，在 [src/shared/agentRules.ts](../src/shared/agentRules.ts)。这只是提示词层面的约束，挡不住执意绕过的 agent。
 
-## 工具清单（M4–M8 & A1–A4）
+## 工具清单（M4–M8、A1–A4 & 0.3.2 A–D 全量，共 36 项）
 
 | 工具名 | 类型 | 作用与核心契约 |
 |---|---|---|
 | `get_context` | 只读 | 获取当前计时状态、待处理通知（`pending_actions`，含累积未消除的离线追问、空闲追问等）、可选项目/标签/快捷离开项、今日任务板（`today_plan`，0.3.1），并签发 `operation_id` 与 `expected_state`。`today_plan` 为 `null` 表示任务模式关掉了；今天还没排是 `items: []`，不是 `null`。（代码里快照缺板子时也给 `null`，但每次提交发布的快照都带板子，启动完成前 `get_context` 直接报 `APP_NOT_READY`，所以正常运行时只有任务模式关掉这一种情况。） |
 | `get_operation_result` | 只读 | 按 `operation_id` 核对操作是否已在 journal 中持久化落盘（`committed` / `not_found`）；`committed` 额外返回持久化规范化请求 `request: { method, arguments }`。 |
 | `save_idea` | 幂等写 | 保存文字到想法池（支持多行与 `#标签`、可选 `needs`），不创建任务、不开始计时。 |
+| `complete_idea` | 幂等写 | 把想法池里的一个想法（`idea_id`，先用 `find_items` 查到）标记为已完成，进入想法池的「已完成」列表；已完成的再标记返回 `noop: true`；冷库、已转任务的报 `IDEA_NOT_ACTIVE`（0.3.0-beta.4，ADR 0020）。`find_items` 的想法 `pool` 多一个值「已完成」。 |
+| `reopen_idea` | 幂等写 | 撤销想法的完成状态并放回活跃池（0.3.2，ADR 0023）。 |
 | `capture_todo` | 幂等写 | 捕捉待办记录并在同一事务生成待办卡片（缺省归入单事项支线任务，可选传入背包中已有 `task_id`），不改变当前计时。 |
 | `find_items` | 只读 | 按关键词和类别（`idea` / `todo_card` / `task` / `all`）检索；多项命中时 `ambiguous=true`，不替用户猜测首个 ID。 |
 | `get_time_summary` | 只读 | 统计 `today` / `yesterday` / `this_week` / `YYYY-MM-DD`（活动日或自然日）；`non_idle_covered_ms + idle_ms + untracked_ms = interval_elapsed_ms`，并另报并行重复累计量 `overlap_excess_ms`。 |
@@ -26,9 +28,26 @@
 | `stop_timer` | 幂等写 | 停止当前计时（或清除已暂停会话）并回到普通待机，同时释放进行中的卡片。 |
 | `start_break` | 幂等写 | 插入短暂临时离开活动（如「上厕所」「吃饭」），底层原活动保留为返回目标。 |
 | `return_from_break` | 幂等写 | 结束当前临时离开活动（`kind=插入`），恢复原活动/卡片（若从待机插入则回到待机）。 |
+| `end_original_task` | 幂等写 | 临时离开期间直接结束离开前的原计时，当前临时离开升级为普通自由计时（0.3.2）。 |
 | `add_time_entry` | 幂等写 | 手动补录过去已完成的时间段（`start`/`end`），保留并行记录语义并返回重叠明细（`overlaps`）。 |
 | `update_time_entry` | 幂等写 | 修改一条已有计时记录（`entry_id` 来自 `list_time_entries`）的 `start` / `end` / `description` / `project` / `tags`，至少改一项；需传 `operation_id` 与 `expected_state`。规则同单轨日历：正在计时的只能改开始（传 `end` 报 `ENTRY_RUNNING`）；来自卡的记录，描述和项目要在卡上改（报 `ENTRY_FROM_CARD`）；`tags` 整体替换；开着的待机不能改描述和项目（报 `ENTRY_IS_IDLE`，要开始做事请用 `start_timer`）。返回的 `overlaps` 是新时段和这些已有记录重叠（并行保留，不改它们；被盖住的待机会让出来）。不能删除记录（0.3.1，ADR 0021）。 |
-| `complete_idea` | 幂等写 | 把想法池里的一个想法（`idea_id`，先用 `find_items` 查到）标记为已完成，进入想法池的「已完成」列表；已完成的再标记返回 `noop: true`；冷库、已转任务的报 `IDEA_NOT_ACTIVE`（0.3.0-beta.4，ADR 0020）。`find_items` 的想法 `pool` 多一个值「已完成」。 |
+| `get_task_plan` | 只读 | 读取今天或明天的任务板（`day: 'today' \| 'tomorrow'`），结合当前计时索引实时计算 `minutes_today`、`achieved` 与 `drawable_card_ids`（0.3.2）。 |
+| `add_plan_item` | 幂等写 | 将背包进行中任务的待做卡片排进指定活动日（`YYYY-MM-DD`）的任务板（可选 `priority`、`today_minutes`）（0.3.2）。 |
+| `remove_plan_item` | 幂等写 | 从指定活动日（`YYYY-MM-DD`）的任务板移出卡片（0.3.2）。 |
+| `update_plan_item` | 幂等写 | 修改指定活动日（`YYYY-MM-DD`）任务板上某张卡的优先级或当天目标分钟数（0.3.2）。 |
+| `confirm_plan_carry` | 幂等写 | 确认今日任务板上的昨日未完成带入项（显式传入保留卡片列表 `keep_card_ids`，全部移出传 `[]`）（0.3.2）。 |
+| `skip_today_plan` | 幂等写 | 标记今天先不排任务板（`skip_until_planned=true`），允许直接按全背包规则抽卡（0.3.2）。 |
+| `draw_task_item` | 只读 | 按今日任务板或全背包规则加权随机抽取一张待办事项卡片（只读，不修改 `current_card`，不自动开始计时）（0.3.2）。 |
+| `skip_task_item` | 幂等写 | 换一张：把当前候选卡片记入本轮 `seen_card_ids`（若已看遍则开启新一轮），随后可再调用 `draw_task_item`（0.3.2）。 |
+| `complete_task_item` | 幂等写 | 完成当前计时/暂停卡片或直接完成背包进行中任务的待做子项（时间盒未达量须 `finish_early=true`；当目标涉及当前计时时要求 `expected_state`）（0.3.2，ADR 0022/0023）。 |
+| `reopen_task_item` | 幂等写 | 取消单个已完成子项的完成状态并恢复为待做（校验主线容量上限；若父任务已完成则同事务恢复父任务，满格支持 `make_room` 显式腾位）（0.3.2，ADR 0022/0023）。 |
+| `keep_going_task_item` | 幂等写 | 当前卡片接着做：记录进度笔记、停止计时并将卡片放回待做（0.3.2）。 |
+| `split_task_item` | 幂等写 | 拆分当前卡片为今天先做的一项与留到后面的剩余项（时间盒卡可指定 `rest_minutes`）（0.3.2）。 |
+| `get_task_details` | 只读 | 读取单个任务的完整详情、全部子项、完成批次 `completion_id` 与重新打开前置条件（0.3.2）。 |
+| `complete_task` | 幂等写 | 整张完成背包中的主线或支线任务（含剩余未完成子项并生成完成批次快照，释放背包槽位）（0.3.2，ADR 0022）。 |
+| `reopen_task` | 幂等写 | 重新打开已完成任务并恢复回原主/支线槽位（通过 `completion_id` 恢复本批子项，无快照旧任务传 `null`；满格支持 `make_room`）（0.3.2，ADR 0022）。 |
+| `get_recap` | 只读 | 读取统计回看数据（7 种周期 × 4 种维度、自定义起止日期、柱状桶筛选、环比对比、已完成事项与进展笔记）（0.3.2）。 |
+| `list_operation_history` | 只读 | 读取指定活动日范围内的操作历史记录（支持按来源、调用方、方法、主体与 `operation_id` 筛选，返回 `bad_count` 与 `older_before_range`）（0.3.2）。 |
 
 ## 运行与配置
 

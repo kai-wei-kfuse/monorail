@@ -33,10 +33,11 @@ describe('今日任务板（G2）', () => {
     expect(last.action).toBe('plan.add');
   });
 
-  it('同一张卡不能排两次；离开背包的卡不能排', async () => {
+  it('同一张卡不能排两次；离开背包的卡不能排；结果卡填数字 todayMinutes 报错拒绝', async () => {
     const f = await setup();
     await plan.add(f.ctx, 'today', { cardId: 'c1', priority: '普通' }, at(1));
     await expect(plan.add(f.ctx, 'today', { cardId: 'c1', priority: '普通' }, at(2))).rejects.toThrow('已经在今天');
+    await expect(plan.add(f.ctx, 'today', { cardId: 'c2', priority: '普通', todayMinutes: 30 }, at(2))).rejects.toThrow('结果卡不填今天的量');
     await runTx(f.ctx, async tx => { tx.saveCard({ ...tx.cards.find(c => c.id === 'c3')!, status: '已放弃' }); });
     await expect(plan.add(f.ctx, 'today', { cardId: 'c3', priority: '普通' }, at(3))).rejects.toThrow('不在背包');
   });
