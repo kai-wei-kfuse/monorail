@@ -1,0 +1,1 @@
+PASS: live stable, beta and return-to-stable all select v0.3.3; old 0.3.2 selector accepts manifest schema 3 via readable [2,3]; upgrades from 0.2.5, 0.3.0, 0.3.1 and 0.3.0-beta.3 accepted; 0.3.3 does not re-offer itself

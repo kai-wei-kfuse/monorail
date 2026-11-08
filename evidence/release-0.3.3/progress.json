@@ -1,0 +1,11 @@
+{
+  "version": "0.3.3",
+  "tag": "v0.3.3",
+  "sourceCommit": "d1f4e76dc7d3be74cee2a8f53dfe3504754df7ff",
+  "runId": 42501830508,
+  "ciUrl": "https://github.com/kai-wei-kfuse/monorail/actions/runs/42501830508",
+  "state": "published_and_verified",
+  "installerExecuted": false,
+  "dailyInstallationUpdated": false,
+  "releaseUrl": "https://github.com/kai-wei-kfuse/monorail/releases/tag/v0.3.3"
+}
