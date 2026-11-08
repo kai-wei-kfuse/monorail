@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-focus-dirty-window"
+description = "Enables the focus_dirty_window command without any pre-configured scope."
+commands.allow = ["focus_dirty_window"]
+
+[[permission]]
+identifier = "deny-focus-dirty-window"
+description = "Denies the focus_dirty_window command without any pre-configured scope."
+commands.deny = ["focus_dirty_window"]

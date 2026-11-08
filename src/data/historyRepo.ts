@@ -14,7 +14,7 @@ const change = z.strictObject({ type: z.enum(['entry', 'card', 'task', 'record',
 const agent = z.strictObject({ name: z.string().nullable(), raw: z.string().optional(), version: z.string().optional(),
   detected_by: z.enum(['mcp_handshake', 'env', 'flag', 'none']), evidence: z.string().optional() });
 const source = z.union([
-  z.strictObject({ kind: z.literal('manual'), via: z.enum(['main', 'mini', 'quickbar']), page: z.string().optional() }),
+  z.strictObject({ kind: z.literal('manual'), via: z.enum(['main', 'mini', 'quickbar', 'idea-window']), page: z.string().optional() }),
   z.strictObject({ kind: z.literal('system'), trigger: z.enum(['dayChange', 'resume', 'reconcile']) }),
   z.strictObject({ kind: z.enum(['mcp', 'cli', 'automation']), agent }),
 ]);

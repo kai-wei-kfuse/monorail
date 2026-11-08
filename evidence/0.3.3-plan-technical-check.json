@@ -1,0 +1,76 @@
+{
+  "verified_at": "2026-11-08T03:45:55.484Z",
+  "scope": "Plan v0.3 algorithm/examples only; not implemented migration or UI acceptance",
+  "mapping_cases": [
+    {
+      "name": "single mirror",
+      "passed": true
+    },
+    {
+      "name": "multiline mirror",
+      "passed": true
+    },
+    {
+      "name": "empty first line",
+      "passed": true
+    },
+    {
+      "name": "trailing newline",
+      "passed": true
+    },
+    {
+      "name": "empty body",
+      "passed": true
+    },
+    {
+      "name": "line append",
+      "passed": true
+    },
+    {
+      "name": "word prefix is distinct",
+      "passed": true
+    },
+    {
+      "name": "distinct body",
+      "passed": true
+    },
+    {
+      "name": "body only",
+      "passed": true
+    },
+    {
+      "name": "whitespace title with body",
+      "passed": true
+    },
+    {
+      "name": "CRLF",
+      "passed": true
+    },
+    {
+      "name": "single CR",
+      "passed": true
+    },
+    {
+      "name": "Markdown delimiters",
+      "passed": true
+    },
+    {
+      "name": "attachment only",
+      "passed": true
+    },
+    {
+      "name": "blank content",
+      "passed": true
+    }
+  ],
+  "legacy_schema_examples": "passed",
+  "tag_compatibility": "passed",
+  "content_validity": "passed",
+  "revision_changed_fields": 5,
+  "revision_excluded_fields": 8,
+  "limitations": [
+    "Proposed mapper is checked inline; product implementation does not yet exist",
+    "No user data read",
+    "No installed EXE or browser acceptance run"
+  ]
+}

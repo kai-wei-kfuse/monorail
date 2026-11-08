@@ -690,11 +690,140 @@ export const listOperationHistoryResult = z.strictObject({
   })),
 });
 
+// ---------- 0.3.3 想法标题/Markdown 详情与多主线自动化同版契约（ADR 0026 / ADR 0029，新增 5 方法：4 写、1 读，合计 41 方法） ----------
+
+export const ideaSummarySchema = z.strictObject({
+  id: z.uuid(),
+  title: z.string(),
+  tags: z.array(z.string()),
+  needs: z.string().nullable(),
+  attachments: z.array(z.string()),
+  pool: z.enum(['活跃池', '冷库', '已转任务', '已完成']),
+  created_at: iso,
+  last_touched_at: iso,
+  has_details: z.boolean(),
+  record_revision: nonEmpty,
+});
+export const ideaDocumentSchema = ideaSummarySchema.extend({
+  details_markdown: z.string(),
+}).strict();
+
+export const createIdeaInput = z.strictObject({
+  operation_id: operationId.describe('复制自 get_context 或上次写结果的 next_operation_id；重试沿用原 ID'),
+  title: z.string().refine(s => !s.includes('\n') && !s.includes('\r'), '想法标题必须是单行文本，不能包含换行')
+    .describe('单行想法标题（支持 #标签；仅写详情时可传空字符串 ""）'),
+  details_markdown: z.string().optional().describe('可选：Markdown 详情正文（多行原样保存，仅归一换行，不自动 trim）'),
+  needs: z.string().nullable().optional().describe('可选：这个想法满足什么需要（空白折算为 null）'),
+}).refine(
+  v => v.title.trim().length > 0 || (v.details_markdown ?? '').trim().length > 0,
+  '想法标题或详情至少需要有一项非空白内容',
+);
+export const createIdeaData = z.strictObject({
+  idea: ideaSummarySchema,
+});
+export const createIdeaResult = committedEnvelope(createIdeaData);
+
+export const getIdeaDetailsInput = z.strictObject({
+  idea_id: z.uuid().describe('要读取完整详情的想法 ID'),
+});
+export const getIdeaDetailsResult = z.strictObject({
+  idea: ideaDocumentSchema,
+  operation_id: operationId.describe('签发给后续 update_idea / convert_idea_to_task 的新操作 ID（不落盘）'),
+  as_of: iso,
+});
+
+export const updateIdeaInput = z.strictObject({
+  operation_id: operationId.describe('复制自 get_idea_details、get_context 或上次写结果的 next_operation_id；重试沿用原 ID'),
+  idea_id: z.uuid().describe('要修改的想法 ID'),
+  record_revision: nonEmpty.describe('内容修订令牌（来自 get_idea_details 或上次写结果的 idea.record_revision）'),
+  title: z.string().refine(s => !s.includes('\n') && !s.includes('\r'), '想法标题必须是单行文本，不能包含换行')
+    .optional().describe('可选：新的单行标题（省略表示保持原值）'),
+  details_markdown: z.string().optional().describe('可选：新的 Markdown 详情正文（省略表示保持原值；传空字符串 "" 表示明确清空详情）'),
+  needs: z.string().nullable().optional().describe('可选：新的需要字段（省略表示保持原值；传 null 或空字符串表示清空）'),
+}).refine(
+  v => v.title !== undefined || v.details_markdown !== undefined || v.needs !== undefined,
+  '至少要修改一项：title、details_markdown、needs',
+);
+export const updateIdeaData = z.strictObject({
+  idea: ideaSummarySchema,
+  noop: z.boolean().describe('true 表示显式传入的字段与当前语义内容完全一致，未产生重复写入'),
+});
+export const updateIdeaResult = committedEnvelope(updateIdeaData);
+
+export const taskItemInputSchema = z.strictObject({
+  content: z.string().trim().min(1, '待办事项内容不能为空').describe('事项内容（非空白字符串，支持 #标签）'),
+  type: z.enum(['结果卡', '时间盒卡']).describe('卡片类型：结果卡或时间盒卡'),
+  timebox_minutes: z.number().int().positive().nullable().describe('时间盒卡目标分钟数（正整数）；结果卡必须为 null'),
+}).refine(
+  v => (v.type === '结果卡' ? v.timebox_minutes === null : v.timebox_minutes !== null && Number.isInteger(v.timebox_minutes) && v.timebox_minutes > 0),
+  '结果卡的 timebox_minutes 必须为 null，时间盒卡的 timebox_minutes 必须为正整数分钟',
+);
+export type TaskItemInput = z.infer<typeof taskItemInputSchema>;
+
+export const taskMutationSummarySchema = z.strictObject({
+  id: nonEmpty,
+  name: nonEmpty,
+  slot: z.enum(['主线', '支线']),
+  slot_index: z.number().int().positive().nullable(),
+  status: z.enum(['进行中', '冷藏', '已放弃', '已完成']),
+  created_at: iso,
+  completed_at: iso.nullable(),
+  bet_ends_at: z.iso.date().nullable(),
+  default_project: z.string().nullable(),
+});
+export type TaskMutationSummary = z.infer<typeof taskMutationSummarySchema>;
+
+export const createTaskInput = z.strictObject({
+  operation_id: operationId.describe('复制自 get_context 或上次写结果的 next_operation_id；重试沿用原 ID'),
+  name: z.string().trim().min(1, '任务名称不能为空').describe('任务名称'),
+  slot: z.enum(['主线', '支线']).describe('放入的背包槽位：主线或支线'),
+  default_project: z.string().trim().min(1).nullable().optional().describe('可选：已有项目名称或 null（省略规范化为 null）'),
+  items: z.array(taskItemInputSchema).min(1, '显式传入 items 时至少需要包含一项事项；如需创建空任务请省略 items')
+    .optional().describe('可选：初始事项列表；省略时明确创建空任务'),
+});
+export const createTaskData = z.strictObject({
+  task: taskMutationSummarySchema,
+  created_card_ids: z.array(nonEmpty),
+});
+export const createTaskResult = committedEnvelope(createTaskData);
+
+export const convertIdeaTargetSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('existing_task'),
+    task_id: nonEmpty.describe('要放入的现有背包进行中任务 ID'),
+  }),
+  z.strictObject({
+    kind: z.literal('new_task'),
+    name: z.string().trim().min(1, '任务名称不能为空').describe('新建任务名称'),
+    slot: z.enum(['主线', '支线']).describe('新建任务所属槽位：主线或支线'),
+    default_project: z.string().trim().min(1).nullable().optional().describe('可选：已有项目名称或 null'),
+  }),
+]);
+export const convertIdeaToTaskInput = z.strictObject({
+  operation_id: operationId.describe('复制自 get_idea_details、get_context 或上次写结果的 next_operation_id；重试沿用原 ID'),
+  idea_id: z.uuid().describe('要转为任务事项的想法 ID'),
+  record_revision: nonEmpty.describe('内容修订令牌（来自 get_idea_details 或上次写结果的 idea.record_revision）'),
+  target: convertIdeaTargetSchema.describe('转换目标：放入现有背包任务（existing_task）或同事务新建主/支线任务（new_task）'),
+  items: z.array(taskItemInputSchema).min(1, '至少需要提供一项转换后的任务事项').describe('转换生成的任务事项列表（至少一项）'),
+});
+export const convertIdeaToTaskData = z.strictObject({
+  idea: ideaSummarySchema,
+  task: taskMutationSummarySchema,
+  created_card_ids: z.array(nonEmpty),
+  created_new_task: z.boolean(),
+});
+export const convertIdeaToTaskResult = committedEnvelope(convertIdeaToTaskData);
+
 export const applicationContracts = {
   get_context: { input: contextInput, output: contextResult, readOnly: true },
   get_operation_result: { input: lookupInput, output: lookupResult, readOnly: true },
   save_idea: { input: ideaInput, output: saveIdeaResult, readOnly: false },
+  create_idea: { input: createIdeaInput, output: createIdeaResult, readOnly: false },
+  get_idea_details: { input: getIdeaDetailsInput, output: getIdeaDetailsResult, readOnly: true },
+  update_idea: { input: updateIdeaInput, output: updateIdeaResult, readOnly: false },
   capture_todo: { input: captureTodoInput, output: captureTodoResult, readOnly: false },
+  create_task: { input: createTaskInput, output: createTaskResult, readOnly: false },
+  convert_idea_to_task: { input: convertIdeaToTaskInput, output: convertIdeaToTaskResult, readOnly: false },
   find_items: { input: findItemsInput, output: findItemsResult, readOnly: true },
   get_time_summary: { input: timeSummaryInput, output: timeSummaryResult, readOnly: true },
   list_time_entries: { input: listTimeEntriesInput, output: listTimeEntriesResult, readOnly: true },
@@ -757,7 +886,12 @@ const origin = callerOrigin.optional().catch(undefined);
 export const ideaRequest = z.strictObject({ method: z.literal('save_idea'), arguments: ideaInput, origin });
 export const applicationRequest = z.discriminatedUnion('method', [
   ideaRequest,
+  z.strictObject({ method: z.literal('create_idea'), arguments: createIdeaInput, origin }),
+  z.strictObject({ method: z.literal('get_idea_details'), arguments: getIdeaDetailsInput, origin }),
+  z.strictObject({ method: z.literal('update_idea'), arguments: updateIdeaInput, origin }),
   z.strictObject({ method: z.literal('capture_todo'), arguments: captureTodoInput, origin }),
+  z.strictObject({ method: z.literal('create_task'), arguments: createTaskInput, origin }),
+  z.strictObject({ method: z.literal('convert_idea_to_task'), arguments: convertIdeaToTaskInput, origin }),
   z.strictObject({ method: z.literal('find_items'), arguments: findItemsInput, origin }),
   z.strictObject({ method: z.literal('get_context'), arguments: contextInput, origin }),
   z.strictObject({ method: z.literal('get_time_summary'), arguments: timeSummaryInput, origin }),

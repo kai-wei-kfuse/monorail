@@ -61,10 +61,46 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
   {
     usage: 'monorail idea add [<text>] [--text-file <path> | --stdin] [--needs <text>] [--operation-id <uuid>] [--json]',
     method: 'save_idea',
-    summary: '保存想法到活跃池（支持多行中文与 #标签）',
+    summary: '保存想法到活跃池（兼容多行输入：首行拆为标题、其余行进入详情；结构化创建请用 idea create）',
     examples: [
       'monorail idea add "做一个命令行入口 #产品"',
       'monorail idea add --text-file ./note.txt --needs "减少切换开销"',
+    ],
+  },
+  {
+    usage: 'monorail idea create [--title <title>] [--details-file <path> | --details-stdin] [--needs <text>] [--operation-id <uuid>] [--json]',
+    method: 'create_idea',
+    summary: '按单行标题与可选多行 Markdown 详情创建想法（不触发计时，返回 IdeaSummary 与 record_revision）',
+    examples: [
+      'monorail idea create --title "重写编译后端 #编译器" --details-file ./idea-details.md --needs "整块下午"',
+      'Get-Content -Raw -Encoding utf8 ./idea-details.md | monorail idea create --title "参考资料 #阅读" --details-stdin',
+    ],
+  },
+  {
+    usage: 'monorail idea show <idea-id> [--json]',
+    method: 'get_idea_details',
+    summary: '只读读取单条想法的标题、完整 Markdown 详情（details_markdown）、修订令牌（record_revision）与新操作 ID',
+    examples: [
+      'monorail idea show <idea-id> --json',
+    ],
+  },
+  {
+    usage: 'monorail idea edit <idea-id> [--title <title>] [--details-file <path> | --details-stdin | --clear-details] [--needs <text> | --clear-needs] [--record-revision <token>] [--operation-id <uuid>] [--json]',
+    method: 'update_idea',
+    summary: '修改想法的标题、Markdown 详情或需要字段（省略项保持原值；--clear-details 清空详情；校验 record_revision）',
+    examples: [
+      'monorail idea edit <idea-id> --title "更新后的单行标题 #标签"',
+      'monorail idea edit <idea-id> --details-file ./updated.md --record-revision <rev>',
+      'monorail idea edit <idea-id> --clear-details --clear-needs',
+    ],
+  },
+  {
+    usage: 'monorail idea convert <idea-id> (--task-id <task-id> | --new-task-name <name> --slot 主线|支线) (--item <content> ... | --items-file <path> | --items-stdin) [--default-project <name>] [--record-revision <token>] [--operation-id <uuid>] [--json]',
+    method: 'convert_idea_to_task',
+    summary: '将想法转化为任务事项（可放入指定现有主/支线任务或同事务新建任务；原想法完整详情保留并标为已转任务，不自动开始计时）',
+    examples: [
+      'monorail idea convert <idea-id> --task-id <main-task-id> --item "先整理接口契约" --item "补齐回归测试"',
+      'monorail idea convert <idea-id> --new-task-name "推进第二主线" --slot 主线 --items-file ./items.json',
     ],
   },
   {
@@ -286,6 +322,15 @@ export const CLI_HELP_COMMANDS: HelpCommandItem[] = [
     ],
   },
   {
+    usage: 'monorail task create --name <name> --slot 主线|支线 [--default-project <name>] [--item <content> ... | --items-file <path> | --items-stdin] [--operation-id <uuid>] [--json]',
+    method: 'create_task',
+    summary: '新建一张背包进行中主线或支线任务（省略事项创建空任务；重复 --item 生成结果卡；--items-file/--items-stdin 传 TaskItemInput[] JSON 支持时间盒卡；不自动开始计时）',
+    examples: [
+      'monorail task create --name "第二主线：编译器实验" --slot 主线 --item "搭建词法分析器"',
+      'monorail task create --name "阅读清单" --slot 支线 --items-file ./task-items.json',
+    ],
+  },
+  {
     usage: 'monorail task show <task-id> [--json]',
     method: 'get_task_details',
     summary: '查看单个任务的完整详情、子项列表、完成批次 ID（completion_id）与重新打开前置条件',
@@ -359,6 +404,21 @@ export function renderHelpText(): string {
     '  1. 位置参数：monorail idea add "正文内容"',
     '  2. 文件读取：monorail idea add --text-file ./content.txt',
     '  3. 标准输入：cat ./content.txt | monorail idea add --stdin',
+    '',
+    '想法 Markdown 长详情与任务事项输入（PowerShell UTF-8 文件 / stdin 与 MCP JSON 示例）：',
+    '  - 详情把 Markdown 当字面内容传输，请使用 --details-file <path> 或 UTF-8 --details-stdin，不要拼成多行 shell 字符串：',
+    '    Set-Content -Path ./details.md -Value "第一段说明`n- https://example.com`n#标签" -Encoding utf8',
+    '    monorail idea create --title "想法标题 #架构" --details-file ./details.md',
+    '    Get-Content -Raw -Encoding utf8 ./details.md | monorail idea edit <idea-id> --details-stdin',
+    '  - 编辑省略字段表示保持原值，--clear-details（MCP 传 details_markdown: ""）表示明确清空详情；重试携带原 --operation-id 会自动从已提交回执恢复原 record_revision。',
+    '  - 任务创建 / 想法转任务不会隐式排今日计划或自动开始计时：',
+    '    重复 --item 映射为结果卡（timebox_minutes=null）；时间盒卡或多行事项通过 --items-file / --items-stdin 传 JSON：',
+    '    [{"content":"精读论文第 3 节","type":"时间盒卡","timebox_minutes":45},{"content":"写出实验总结","type":"结果卡","timebox_minutes":null}]',
+    '  - 对应 MCP 工具 JSON 示例：',
+    '    create_idea: {"operation_id":"<uuid>","title":"想法标题","details_markdown":"多行 Markdown 正文","needs":"安静下午"}',
+    '    update_idea: {"operation_id":"<uuid>","idea_id":"<uuid>","record_revision":"ir3:...","details_markdown":""}',
+    '    create_task: {"operation_id":"<uuid>","name":"第二主线","slot":"主线","items":[{"content":"第一项","type":"结果卡","timebox_minutes":null}]}',
+    '    convert_idea_to_task: {"operation_id":"<uuid>","idea_id":"<uuid>","record_revision":"ir3:...","target":{"kind":"existing_task","task_id":"<task-id>"},"items":[{"content":"落地实现","type":"结果卡","timebox_minutes":null}]}',
     '',
     '结构化输出与幂等重试：',
     '  - 传入 --json 时，stdout 仅输出一个完整 JSON 对象：',
@@ -460,6 +520,50 @@ export function renderHumanSuccess(
       return [
         `${r.data.noop ? '想法已在活跃池' : '已撤销想法完成并放回活跃池'} [${r.data.id}] (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id}`,
         `正文: ${r.data.text}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'create_idea': {
+      const r = result as ApplicationOutput<'create_idea'>;
+      return [
+        `已创建想法 [${r.data.idea.id}] (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id} | record_revision=${r.data.idea.record_revision}`,
+        `标题: ${r.data.idea.title || '(仅详情)'} | 含详情: ${String(r.data.idea.has_details)} | 标签: ${r.data.idea.tags.join('、') || '无'}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'get_idea_details': {
+      const r = result as ApplicationOutput<'get_idea_details'>;
+      return [
+        `想法详情 [${r.idea.id}] (${r.idea.pool}) | record_revision=${r.idea.record_revision} | operation_id=${r.operation_id}`,
+        `标题: ${r.idea.title || '(无标题)'} | 需要: ${r.idea.needs ?? '无'} | 标签: ${r.idea.tags.join('、') || '无'}`,
+        `详情 (has_details=${String(r.idea.has_details)}):`,
+        r.idea.details_markdown || '(无详情)',
+      ].join('\n');
+    }
+
+    case 'update_idea': {
+      const r = result as ApplicationOutput<'update_idea'>;
+      return [
+        `${r.data.noop ? '想法内容无变化 (noop=true)' : '已更新想法'} [${r.data.idea.id}] (${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id} | record_revision=${r.data.idea.record_revision}`,
+        `标题: ${r.data.idea.title || '(仅详情)'} | 含详情: ${String(r.data.idea.has_details)} | 需要: ${r.data.idea.needs ?? '无'}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'create_task': {
+      const r = result as ApplicationOutput<'create_task'>;
+      return [
+        `已创建${r.data.task.slot}任务 [${r.data.task.id}]「${r.data.task.name}」(槽位=${r.data.task.slot_index ?? '-'}, 初始事项=${r.data.created_card_ids.length}, ${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id}`,
+        ...formatWarnings(r.warnings),
+      ].join('\n');
+    }
+
+    case 'convert_idea_to_task': {
+      const r = result as ApplicationOutput<'convert_idea_to_task'>;
+      return [
+        `已将想法 [${r.data.idea.id}] 转为任务事项 → ${r.data.task.slot}任务 [${r.data.task.id}]「${r.data.task.name}」(新建任务=${String(r.data.created_new_task)}, 生成卡片=${r.data.created_card_ids.length}, ${r.replayed ? '幂等重放' : '新提交'}) | operation_id=${r.operation_id}`,
         ...formatWarnings(r.warnings),
       ].join('\n');
     }

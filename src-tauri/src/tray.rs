@@ -1,7 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    Manager,
+    Emitter, Manager,
 };
 
 pub fn setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -33,7 +33,24 @@ pub fn setup(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                     eprintln!("quickbar: {e}");
                 }
             }
-            "exit" => app.exit(0),
+            "exit" => {
+                if super::quick_save::is_main_ready(app) {
+                    if let Err(e) = app.emit_to("main", "app-exit-requested", ()) {
+                        eprintln!("exit request: {e}");
+                    }
+                } else {
+                    let app = app.clone();
+                    tauri::async_runtime::spawn(async move {
+                        if let Err(error) = super::quick_save::perform_app_exit_from_tray(app.clone()).await {
+                            let _ = super::quick_save::focus_dirty_window(
+                                app.clone(),
+                                app.state::<super::quick_save::QuickSaves>(),
+                            );
+                            let _ = app.emit("native-error", error);
+                        }
+                    });
+                }
+            }
             "mini" => {
                 let app = app.clone();
                 tauri::async_runtime::spawn(async move {

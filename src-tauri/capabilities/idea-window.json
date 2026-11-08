@@ -1,0 +1,21 @@
+{
+  "identifier": "idea-window",
+  "windows": [
+    "idea-*"
+  ],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-is-maximized",
+    "core:window:allow-set-focus",
+    "allow-open-external-url",
+    "allow-idea-window-hello",
+    "allow-idea-window-send",
+    "allow-close-idea-window",
+    "allow-ack-draft-check",
+    "allow-evidence"
+  ]
+}

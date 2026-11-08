@@ -1,0 +1,307 @@
+{
+  "version": "0.3.3",
+  "generatedAt": "2026-11-08T09:08:19.417Z",
+  "notes": "Measured on real disk FS + RecordRepo summary-first architecture (ADR 0026). Cold start reads files to verify SHA-256 hashes and extract frontmatter summaries without retaining body strings in committed cache or transaction clones.",
+  "scenarios": [
+    {
+      "scenario": "100x2KiB",
+      "recordCount": 100,
+      "detailsBytesPerRecord": 2048,
+      "coldStart": {
+        "elapsedMs": 41.67,
+        "heapDeltaBytes": 2117560,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 274992,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 63.78,
+        "io": {
+          "readCalls": 115,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 276907,
+          "bytesWritten": 11712
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 1.74,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 2750,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 62.45,
+        "io": {
+          "readCalls": 116,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 287196,
+          "bytesWritten": 13402
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 172.09,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 275000,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 108,
+        "totalBytes": 284332
+      }
+    },
+    {
+      "scenario": "100x64KiB",
+      "recordCount": 100,
+      "detailsBytesPerRecord": 65536,
+      "coldStart": {
+        "elapsedMs": 82.38,
+        "heapDeltaBytes": 0,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 7814192,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 87.35,
+        "io": {
+          "readCalls": 115,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 7816107,
+          "bytesWritten": 11712
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 4.92,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 78142,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 117.22,
+        "io": {
+          "readCalls": 116,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 8127964,
+          "bytesWritten": 243546
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 637.39,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 7814200,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 108,
+        "totalBytes": 7823532
+      }
+    },
+    {
+      "scenario": "1000x2KiB",
+      "recordCount": 1000,
+      "detailsBytesPerRecord": 2048,
+      "coldStart": {
+        "elapsedMs": 356.51,
+        "heapDeltaBytes": 20001344,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 2750893,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 394.17,
+        "io": {
+          "readCalls": 1015,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 2752808,
+          "bytesWritten": 11682
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 1.78,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 2751,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 404.11,
+        "io": {
+          "readCalls": 1016,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 2763101,
+          "bytesWritten": 13405
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 1563.55,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 2750900,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 1008,
+        "totalBytes": 2760218
+      }
+    },
+    {
+      "scenario": "1000x64KiB",
+      "recordCount": 1000,
+      "detailsBytesPerRecord": 65536,
+      "coldStart": {
+        "elapsedMs": 631.07,
+        "heapDeltaBytes": 94874088,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 78142893,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 649.85,
+        "io": {
+          "readCalls": 1015,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 78144808,
+          "bytesWritten": 11712
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 5.77,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 78143,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 796.4,
+        "io": {
+          "readCalls": 1016,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 78456669,
+          "bytesWritten": 243549
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 6449.06,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 78142900,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 1008,
+        "totalBytes": 78152233
+      }
+    },
+    {
+      "scenario": "2000x256B-baseline",
+      "recordCount": 2000,
+      "detailsBytesPerRecord": 256,
+      "coldStart": {
+        "elapsedMs": 709.62,
+        "heapDeltaBytes": 32745328,
+        "io": {
+          "readCalls": 2000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 1246893,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 897.82,
+        "io": {
+          "readCalls": 2015,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 1248808,
+          "bytesWritten": 11682
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 1.43,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 624,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 820.16,
+        "io": {
+          "readCalls": 2016,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 1250593,
+          "bytesWritten": 6912
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 2471.64,
+        "io": {
+          "readCalls": 2000,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 1246899,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 2008,
+        "totalBytes": 1256218
+      }
+    }
+  ]
+}

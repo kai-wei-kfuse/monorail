@@ -6,7 +6,7 @@ import type { CallerAgent } from './application.ts';
  */
 
 /** 手动操作从哪个窗口发起；page 由调用页面传入，缺省按动作前缀推导（ADR 0019 第 5 条）。 */
-export type ManualVia = 'main' | 'mini' | 'quickbar';
+export type ManualVia = 'main' | 'mini' | 'quickbar' | 'idea-window';
 /** 软件按规则自己做的后台改动（ADR 0019 第 5 条「系统」）。 */
 export type SystemTrigger = 'dayChange' | 'resume' | 'reconcile';
 
@@ -73,7 +73,7 @@ export const historyActions = {
   'home.rest': A('休息一下', 'entry'), 'home.answerIdle': A('说明空闲时段', 'entry'),
   'card.split': A('缩小（拆成两项）', 'card'), 'card.keepGoing': A('接着做', 'card'),
   // 想法（ideaService）
-  'idea.convertToTask': A('想法转任务', 'task'), 'idea.convert': A('想法转卡片', 'card'), 'idea.delete': A('删除想法', 'record'),
+  'idea.create': A('新建想法', 'record'), 'idea.convertToTask': A('想法转任务', 'task'), 'idea.convert': A('想法转卡片', 'card'), 'idea.delete': A('删除想法', 'record'),
   'idea.edit': A('改想法', 'record'), 'idea.expire': A('想法进冷库', 'record'), 'idea.revive': A('从冷库捞回', 'record'), 'idea.resolveDuel': A('想法对决', 'record'),
   'idea.complete': A('完成想法', 'record'), 'idea.uncomplete': A('撤销完成想法', 'record'),
   // 收藏、项目、标签（presetService）
@@ -95,8 +95,10 @@ export const historyActions = {
   'entry.setShowIdle': A('显示待机', 'settings'), 'entry.saveAsCard': A('存为卡', 'card'),
   // 系统（后台）
   'system.dayChange': A('活动日切换'), 'system.resume': A('补记离线时段', 'entry'), 'system.reconcile': A('整理记录'),
-  // 自动化（MCP / CLI 写方法；0.3.2 扩展至 26 个写方法）
-  'auto.save_idea': A('保存想法', 'record'), 'auto.capture_todo': A('捕获待办', 'record'), 'auto.start_timer': A('开始计时', 'entry'),
+  // 自动化（MCP / CLI 写方法；0.3.3 扩展至 30 个写方法）
+  'auto.save_idea': A('保存想法', 'record'), 'auto.create_idea': A('新建想法', 'record'), 'auto.update_idea': A('改想法', 'record'),
+  'auto.capture_todo': A('捕获待办', 'record'), 'auto.create_task': A('新建任务', 'task'), 'auto.convert_idea_to_task': A('想法转任务', 'task'),
+  'auto.start_timer': A('开始计时', 'entry'),
   'auto.start_task_item': A('开始事项', 'card'), 'auto.pause_timer': A('暂停', 'entry'), 'auto.resume_timer': A('继续', 'entry'),
   'auto.stop_timer': A('停止计时', 'entry'), 'auto.start_break': A('开始临时活动', 'entry'), 'auto.return_from_break': A('回来', 'entry'),
   'auto.add_time_entry': A('补录条目', 'entry'), 'auto.update_time_entry': A('改计时记录', 'entry'), 'auto.complete_idea': A('完成想法', 'record'),

@@ -12,9 +12,13 @@ import {
   completeTaskItemResult,
   completeTaskResult,
   contextResult,
+  convertIdeaToTaskResult,
+  createIdeaResult,
+  createTaskResult,
   drawTaskItemResult,
   endOriginalTaskResult,
   findItemsResult,
+  getIdeaDetailsResult,
   getRecapResult,
   getTaskDetailsResult,
   getTaskPlanResult,
@@ -30,6 +34,7 @@ import {
   splitTaskItemResult,
   timeSummaryResult,
   timerMutationResult,
+  updateIdeaResult,
 } from '../shared/application';
 
 const saveIdeaReq = (args: unknown) => ({ method: 'save_idea', arguments: args });
@@ -49,7 +54,9 @@ it('saves an idea through the journal, replays case-insensitively by operation_i
   expect(first.replayed).toBe(false);
   expect(first.operation_id).toBe(context.operation_id.toLowerCase());
   expect(result).toMatchObject({ text: '做一个聊天灵感收集器 #产品\n保留正文', tags: ['产品'], pool: '活跃池' });
-  expect((await f.ctx.repos.records.get(result.id))!.value).toMatchObject({ kind: '想法', needs: '减少遗忘', attachments: [], card_id: null });
+  expect((await f.ctx.repos.records.get(result.id))!.value).toMatchObject({ kind: '想法', text: '做一个聊天灵感收集器 #产品', needs: '减少遗忘', attachments: [], card_id: null });
+  expect((await f.ctx.repos.records.get(result.id))!.hasDetails).toBe(true);
+  expect((await f.ctx.repos.records.getDetails(result.id))!.body).toBe('\n保留正文');
   const replay = saveIdeaResult.parse(await handleApplicationRequest(f.ctx, saveIdeaReq({
     operation_id: context.operation_id,
     text: '做一个聊天灵感收集器 #产品\n保留正文',
@@ -74,7 +81,7 @@ it('saves an idea through the journal, replays case-insensitively by operation_i
   expect(missing).toEqual({ status: 'not_found', operation_id: missingId.toLowerCase() });
   expect(transact).toHaveBeenCalledOnce();
   expect(f.publish).toHaveBeenCalledOnce();
-  expect(f.ctx.snapshot()!.backpack.ideas).toContainEqual(expect.objectContaining({ id: result.id, text: result.text }));
+  expect(f.ctx.snapshot()!.backpack.ideas).toContainEqual(expect.objectContaining({ id: result.id, text: '做一个聊天灵感收集器 #产品', hasDetails: true }));
   expect(await f.ctx.repos.cards.list()).toEqual([]);
   expect(await f.ctx.repos.tasks.list()).toEqual([]);
   expect(f.ctx.repos.times.snapshot()).toEqual(before);
@@ -383,11 +390,20 @@ it('R2 & D1: isolates reads from in-flight/failed journal writes, survives post-
   }).then(v => ({ value: v }), e => ({ error: e as Error }));
 
   await reached;
-  const during = findItemsResult.parse(await handleApplicationRequest(f.ctx, {
+  const duringContext = contextResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'get_context',
+    arguments: {},
+  }));
+  expect(duringContext.timer?.mode).toBe('idle');
+  let duringFindSettled = false;
+  const duringFind = handleApplicationRequest(f.ctx, {
     method: 'find_items',
     arguments: { kind: 'idea', query: '未完成提交的想法' },
-  }));
-  expect(during.ideas).toEqual([]);
+  }).finally(() => {
+    duringFindSettled = true;
+  });
+  await Promise.resolve();
+  expect(duringFindSettled).toBe(false);
 
   releaseReceipt();
   const failedOutcome = await pendingSave;
@@ -398,6 +414,7 @@ it('R2 & D1: isolates reads from in-flight/failed journal writes, survives post-
     expect(structured).toMatchObject({ status: 'error', code: 'JOURNAL_BLOCKED', category: 'result_unknown' });
   }
 
+  await expect(duringFind).rejects.toThrow('提交已阻塞');
   await expect(handleApplicationRequest(f.ctx, {
     method: 'find_items',
     arguments: { kind: 'idea', query: '未完成提交的想法' },
@@ -881,4 +898,307 @@ it('0.3.2 Module C & D: reopen_idea, get_recap (bucket validation & cached compu
     method: 'reopen_idea',
     subject: { type: 'record', id: saved.data.id },
   });
+});
+
+it('0.3.3 ADR 0026 & ADR 0029: create_idea, get_idea_details, update_idea, create_task, convert_idea_to_task, legacy multiline C(title,details), and durable receipt replay', async () => {
+  const f = fixture();
+  await seed(f, []);
+  await createProject(f.ctx, '学习', at(0));
+
+  // 1. Legacy save_idea multiline sample: data.text echoes full multiline, stored as title + first-LF details, find_items matches body
+  const legacySaved = saveIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'save_idea',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      text: '看视频\n稍后看 https://example.com/a\n#服务器',
+    },
+  }));
+  expect(legacySaved.data.text).toBe('看视频\n稍后看 https://example.com/a\n#服务器');
+  expect(legacySaved.data.tags).toEqual(['服务器']);
+
+  const legacyDoc = getIdeaDetailsResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'get_idea_details',
+    arguments: { idea_id: legacySaved.data.id },
+  }));
+  expect(legacyDoc.idea.title).toBe('看视频');
+  expect(legacyDoc.idea.details_markdown).toBe('\n稍后看 https://example.com/a\n#服务器');
+  expect(legacyDoc.idea.has_details).toBe(true);
+
+  const foundLegacy = findItemsResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'find_items',
+    arguments: { kind: 'idea', query: '稍后看' },
+  }));
+  expect(foundLegacy.ideas).toHaveLength(1);
+  expect(foundLegacy.ideas[0].text).toBe('看视频\n稍后看 https://example.com/a\n#服务器');
+
+  // Legacy complete_idea / reopen_idea also return compatible full text C(title, details)
+  const completedLegacy = completeIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'complete_idea',
+    arguments: { operation_id: crypto.randomUUID(), idea_id: legacySaved.data.id },
+  }));
+  expect(completedLegacy.data.text).toBe('看视频\n稍后看 https://example.com/a\n#服务器');
+  const reopenedLegacy = reopenIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'reopen_idea',
+    arguments: { operation_id: crypto.randomUUID(), idea_id: legacySaved.data.id },
+  }));
+  expect(reopenedLegacy.data.text).toBe('看视频\n稍后看 https://example.com/a\n#服务器');
+
+  // 2. create_idea + get_idea_details + update_idea (preserve / clear / RECORD_CHANGED / replay)
+  const createOpId = crypto.randomUUID();
+  const created = createIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'create_idea',
+    arguments: {
+      operation_id: createOpId,
+      title: '多主线架构演进 #架构',
+      details_markdown: '## 阶段目标\r\n- 拆分标题与详情 #存储\r\n- 支持独立窗口',
+      needs: ' 整块下午 ',
+    },
+  }));
+  expect(created.data.idea).toMatchObject({
+    title: '多主线架构演进 #架构',
+    tags: ['架构', '存储'],
+    needs: '整块下午',
+    has_details: true,
+    pool: '活跃池',
+  });
+  const rev1 = created.data.idea.record_revision;
+  expect(rev1).toMatch(/^ir3:[0-9a-f]{64}$/);
+
+  const details1 = getIdeaDetailsResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'get_idea_details',
+    arguments: { idea_id: created.data.idea.id },
+  }));
+  expect(details1.idea.details_markdown).toBe('## 阶段目标\n- 拆分标题与详情 #存储\n- 支持独立窗口');
+  expect(details1.idea.record_revision).toBe(rev1);
+
+  // Title-only update preserves details_markdown and non-first-line #存储 tag!
+  const updateOpId = crypto.randomUUID();
+  const updated1 = updateIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'update_idea',
+    arguments: {
+      operation_id: updateOpId,
+      idea_id: created.data.idea.id,
+      record_revision: rev1,
+      title: '多主线架构演进 v2 #架构',
+    },
+  }));
+  expect(updated1.data.noop).toBe(false);
+  expect(updated1.data.idea.title).toBe('多主线架构演进 v2 #架构');
+  expect(updated1.data.idea.tags).toEqual(['架构', '存储']);
+  expect(updated1.data.idea.has_details).toBe(true);
+  const rev2 = updated1.data.idea.record_revision;
+  expect(rev2).not.toBe(rev1);
+
+  // Stale rev1 rejected with RECORD_CHANGED and latest_context.idea summary
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'update_idea',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      idea_id: created.data.idea.id,
+      record_revision: rev1,
+      title: '过期修订写入',
+    },
+  })).rejects.toMatchObject({
+    failure: {
+      code: 'RECORD_CHANGED',
+      category: 'not_executed',
+      latest_context: {
+        idea: expect.objectContaining({ id: created.data.idea.id, record_revision: rev2 }),
+      },
+    },
+  });
+
+  // Replay updateOpId with original rev1 succeeds with replayed=true even though current revision is rev2!
+  const replayedUpdate = updateIdeaResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'update_idea',
+    arguments: {
+      operation_id: updateOpId,
+      idea_id: created.data.idea.id,
+      record_revision: rev1,
+      title: '多主线架构演进 v2 #架构',
+    },
+  }));
+  expect(replayedUpdate.replayed).toBe(true);
+  expect(replayedUpdate.data.idea.record_revision).toBe(rev2);
+
+  // Same updateOpId with different title -> OPERATION_CONFLICT
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'update_idea',
+    arguments: {
+      operation_id: updateOpId,
+      idea_id: created.data.idea.id,
+      record_revision: rev1,
+      title: '篡改标题',
+    },
+  })).rejects.toThrow('OPERATION_CONFLICT');
+
+  // 3. create_task: 2 coexisting main tasks (default mainTasks = 2), 3rd rejected with TASK_CAPACITY_FULL
+  const task1Res = createTaskResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'create_task',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      name: '主线一：核心存储',
+      slot: '主线',
+      default_project: '学习',
+      items: [
+        { content: '实现 v3 迁移', type: '结果卡', timebox_minutes: null },
+        { content: '压测 1000 条记录', type: '时间盒卡', timebox_minutes: 45 },
+      ],
+    },
+  }));
+  expect(task1Res.data.task).toMatchObject({ name: '主线一：核心存储', slot: '主线', slot_index: 1, status: '进行中', default_project: '学习' });
+  expect(task1Res.data.created_card_ids).toHaveLength(2);
+
+  const task2Res = createTaskResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'create_task',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      name: '主线二：独立窗口',
+      slot: '主线',
+    },
+  }));
+  expect(task2Res.data.task).toMatchObject({ name: '主线二：独立窗口', slot: '主线', slot_index: 2, status: '进行中' });
+  expect(task2Res.data.created_card_ids).toEqual([]);
+
+  // 3rd main task rejected with TASK_CAPACITY_FULL and task_capacity context
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'create_task',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      name: '主线三：超限',
+      slot: '主线',
+    },
+  })).rejects.toMatchObject({
+    failure: {
+      code: 'TASK_CAPACITY_FULL',
+      category: 'not_executed',
+      latest_context: {
+        task_capacity: {
+          slot: '主线',
+          limit: 2,
+          active_tasks: [
+            { id: task1Res.data.task.id, name: '主线一：核心存储' },
+            { id: task2Res.data.task.id, name: '主线二：独立窗口' },
+          ],
+        },
+      },
+    },
+  });
+
+  // 4. convert_idea_to_task into explicit 2nd main task (task2Res.data.task.id): preserves idea details & creates typed items
+  const convertOpId = crypto.randomUUID();
+  const converted = convertIdeaToTaskResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'convert_idea_to_task',
+    arguments: {
+      operation_id: convertOpId,
+      idea_id: created.data.idea.id,
+      record_revision: rev2,
+      target: { kind: 'existing_task', task_id: task2Res.data.task.id },
+      items: [
+        { content: '多主线架构演进 v2 #架构', type: '结果卡', timebox_minutes: null },
+        { content: '验证跨窗口修订同步', type: '时间盒卡', timebox_minutes: 30 },
+      ],
+    },
+  }));
+  expect(converted.data.created_new_task).toBe(false);
+  expect(converted.data.task.id).toBe(task2Res.data.task.id);
+  expect(converted.data.idea.pool).toBe('已转任务');
+  expect(converted.data.idea.has_details).toBe(true);
+  expect(converted.data.created_card_ids).toHaveLength(2);
+
+  // Original idea details remain intact after conversion, and card content only contains the single-line item!
+  const detailsAfterConvert = getIdeaDetailsResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'get_idea_details',
+    arguments: { idea_id: created.data.idea.id },
+  }));
+  expect(detailsAfterConvert.idea.details_markdown).toBe('## 阶段目标\n- 拆分标题与详情 #存储\n- 支持独立窗口');
+  const firstCreatedCard = await getCard(f, converted.data.created_card_ids[0]);
+  expect(firstCreatedCard.content).toBe('多主线架构演进 v2 #架构');
+  expect(firstCreatedCard.task_id).toBe(task2Res.data.task.id);
+
+  // Replaying convertOpId after task is completed still returns original receipt without re-executing!
+  await handleApplicationRequest(f.ctx, {
+    method: 'complete_task',
+    arguments: { operation_id: crypto.randomUUID(), task_id: task2Res.data.task.id },
+  });
+  const replayedConvert = convertIdeaToTaskResult.parse(await handleApplicationRequest(f.ctx, {
+    method: 'convert_idea_to_task',
+    arguments: {
+      operation_id: convertOpId,
+      idea_id: created.data.idea.id,
+      record_revision: rev2,
+      target: { kind: 'existing_task', task_id: task2Res.data.task.id },
+      items: [
+        { content: '多主线架构演进 v2 #架构', type: '结果卡', timebox_minutes: null },
+        { content: '验证跨窗口修订同步', type: '时间盒卡', timebox_minutes: 30 },
+      ],
+    },
+  }));
+  expect(replayedConvert.replayed).toBe(true);
+  expect(replayedConvert.data).toEqual(converted.data);
+});
+
+it('0.3.3 A1–A3: find_items serializes detail reads against concurrent writers, surfaces missing details explicitly, and create_idea/create_task replay receipts before domain checks', async () => {
+  const f = fixture();
+  await seed(f, []);
+
+  const createOpId = crypto.randomUUID();
+  const createReq = {
+    method: 'create_idea',
+    arguments: { operation_id: createOpId, title: '标题A #旧', details_markdown: '正文A' },
+  };
+  const created = createIdeaResult.parse(await handleApplicationRequest(f.ctx, createReq));
+  const id = created.data.idea.id;
+
+  // A1: find_items holds readSerial queue turn across detail reads so concurrent writer cannot commit mid-read
+  const repo = f.ctx.repos.records;
+  const origGetDetails = repo.getDetails.bind(repo);
+  let announceRead!: () => void;
+  let releaseRead!: () => void;
+  const reading = new Promise<void>(r => { announceRead = r; });
+  const gate = new Promise<void>(r => { releaseRead = r; });
+  vi.spyOn(repo, 'getDetails').mockImplementationOnce(async target => {
+    announceRead();
+    await gate;
+    return origGetDetails(target);
+  });
+
+  const pendingFind = handleApplicationRequest(f.ctx, { method: 'find_items', arguments: { kind: 'idea' } });
+  await reading;
+  let writerCommitted = false;
+  const writer = handleApplicationRequest(f.ctx, {
+    method: 'update_idea',
+    arguments: {
+      operation_id: crypto.randomUUID(),
+      idea_id: id,
+      record_revision: created.data.idea.record_revision,
+      title: '标题B #新',
+      details_markdown: '正文B',
+    },
+  }).then(res => { writerCommitted = true; return res; });
+  await new Promise<void>(r => setTimeout(r, 0));
+  expect(writerCommitted).toBe(false);
+  releaseRead();
+  const [foundRaw, updatedRaw] = await Promise.all([pendingFind, writer]);
+  const foundItem = findItemsResult.parse(foundRaw).ideas[0];
+  expect(foundItem.text).toBe('标题A #旧\n正文A');
+  expect(foundItem.tags).toEqual(['旧']);
+  const updated = updateIdeaResult.parse(updatedRaw);
+  expect(updated.data.idea.title).toBe('标题B #新');
+
+  // A2: Missing details in find_items / complete_idea / reopen_idea fails explicitly instead of returning empty body
+  vi.spyOn(repo, 'getDetails').mockResolvedValueOnce(null);
+  await expect(handleApplicationRequest(f.ctx, { method: 'find_items', arguments: { kind: 'idea' } })).rejects.toThrow('IDEA_DETAILS_MISSING');
+  vi.spyOn(repo, 'getDetails').mockResolvedValueOnce(null);
+  await expect(handleApplicationRequest(f.ctx, {
+    method: 'complete_idea',
+    arguments: { operation_id: crypto.randomUUID(), idea_id: id },
+  })).rejects.toThrow(/IDEA_DETAILS_MISSING|External edit/);
+
+  // A3: create_idea replays original receipt even after idea was edited and removed
+  await run(f.ctx, async tx => { tx.removeRecord(id); }, undefined, { action: 'test.direct' });
+  const replayedCreate = createIdeaResult.parse(await handleApplicationRequest(f.ctx, createReq));
+  expect(replayedCreate.replayed).toBe(true);
+  expect(replayedCreate.data).toEqual(created.data);
+  expect(await repo.get(id)).toBeNull();
 });

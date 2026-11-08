@@ -1,0 +1,43 @@
+{
+  "version": "0.3.3",
+  "generatedAt": "2026-11-08T13:05:00.241Z",
+  "explicitRunCommand": "npx vitest run -c evidence/0.3.3-p6-verification.config.ts",
+  "contracts": {
+    "totalMethods": 41,
+    "writeMethods": 30,
+    "readOnlyMethods": 11,
+    "newMethods033": [
+      "create_idea",
+      "get_idea_details",
+      "update_idea",
+      "create_task",
+      "convert_idea_to_task"
+    ],
+    "rustReadOnlySynced": true,
+    "cliHelpSynced": true,
+    "automationGuideSynced": true
+  },
+  "realPipeE2E": {
+    "passed": true,
+    "scopeNote": "Node net.createServer Named Pipe + production ApplicationController + MCP SDK InMemoryTransport + CLI runCli + real Node disk FS. Does not replace native Rust mcp_bridge or installed WebView2 multi-window manual smoke.",
+    "verifiedScenarios": [
+      "CLI idea create with --details-file & MCP get_idea_details readback",
+      "Attachment preservation & record_revision SHA-256 canonical token",
+      "Stale record_revision rejected with RECORD_CHANGED (zero write)",
+      "Title-only update_idea preserves raw Markdown details",
+      "2 coexisting main tasks via CLI task create + MCP create_task (slot_index 1 & 2)",
+      "3rd main task rejected with TASK_CAPACITY_FULL + active_tasks context (zero write)",
+      "convert_idea_to_task into explicit 2nd main task preserves idea details & attachments without copying into cards or starting timer",
+      "Same operation_id replay returns first receipt even after state change; changed args with same operation_id rejected with OPERATION_CONFLICT"
+    ]
+  },
+  "migrationDrill": {
+    "passed": true,
+    "fromSchemaVersion": 2,
+    "toSchemaVersion": 3,
+    "settingsMainTasksMigratedFrom1To2": true,
+    "backupByteVerified": true,
+    "adr0026All6MappingCasesVerified": true,
+    "interruptedJournalStateFirstRecoveryVerified": true
+  }
+}

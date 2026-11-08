@@ -9,11 +9,15 @@
     "core:window:allow-start-dragging",
     "allow-save-quick-record",
     "allow-evidence",
+    "allow-open-external-url",
     "core:window:allow-set-size",
     "allow-save-attachment",
     "allow-quickbar-update-ready",
     "allow-ack-quickbar-update",
+    "allow-ack-draft-check",
     "allow-begin-quick-save",
-    "allow-end-quick-save"
+    "allow-end-quick-save",
+    "allow-open-idea-draft-window",
+    "allow-idea-window-send"
   ]
 }

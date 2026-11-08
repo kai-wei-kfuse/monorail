@@ -149,6 +149,112 @@ async function resolveWriteMeta(
   }
 }
 
+interface ResolvedIdeaRevisionWriteMeta {
+  operationId: string;
+  recordRevision: string;
+}
+
+/**
+ * ADR 0026 §record_revision & ADR 0029 §CLI 格式与长文：
+ * update_idea / convert_idea_to_task 共用的操作 ID 与 record_revision 解析流程：
+ * - 未显式传 --operation-id：
+ *   - 若已显式传 --record-revision：调用 get_context 取 operation_id，保留用户显式修订令牌。
+ *   - 若未传 --record-revision：调用 get_idea_details(idea_id) 一次性取得 operation_id 与当前 record_revision。
+ * - 显式传了 --operation-id（重试路径）：
+ *   - 先调用 get_operation_result(operation_id)；
+ *   - 若已 committed 且用户未显式传 --record-revision：仅从同方法回执 request.arguments.record_revision 恢复原修订令牌，
+ *     同时保留本次命令行业务参数以参与幂等重放与 OPERATION_CONFLICT 比对；
+ *   - 若回执为 not_found 且未显式传 --record-revision：再调用 get_idea_details(idea_id) 取得当前修订令牌。
+ */
+async function resolveIdeaRevisionWriteMeta(
+  client: ApplicationClient,
+  options: {
+    method: 'update_idea' | 'convert_idea_to_task';
+    ideaId: string;
+    operationId?: string;
+    recordRevision?: string;
+    signal?: AbortSignal;
+  },
+): Promise<ResolvedIdeaRevisionWriteMeta> {
+  const { method, ideaId, operationId: explicitOpId, recordRevision: explicitRev, signal } = options;
+
+  if (!explicitOpId) {
+    if (explicitRev !== undefined) {
+      try {
+        const ctx = await client.call('get_context', { sections: ['timer'] }, { signal });
+        return { operationId: ctx.operation_id, recordRevision: explicitRev };
+      } catch (error) {
+        throw new CliExecutionError(error, { method });
+      }
+    }
+    try {
+      const details = await client.call('get_idea_details', { idea_id: ideaId }, { signal });
+      return {
+        operationId: details.operation_id,
+        recordRevision: details.idea.record_revision,
+      };
+    } catch (error) {
+      throw new CliExecutionError(error, { method });
+    }
+  }
+
+  let lookup: ApplicationOutput<'get_operation_result'>;
+  try {
+    lookup = await client.call('get_operation_result', { operation_id: explicitOpId }, { signal });
+  } catch (error) {
+    throw new CliExecutionError(error, { method, operationId: explicitOpId });
+  }
+
+  if (explicitRev !== undefined) {
+    return { operationId: explicitOpId, recordRevision: explicitRev };
+  }
+
+  if (lookup.status === 'committed') {
+    const reqArgs = lookup.request.arguments;
+    const receiptRev =
+      lookup.command === method &&
+      typeof reqArgs === 'object' &&
+      reqArgs !== null &&
+      !Array.isArray(reqArgs) &&
+      typeof (reqArgs as Record<string, unknown>).record_revision === 'string' &&
+      ((reqArgs as Record<string, unknown>).record_revision as string).trim().length > 0
+        ? ((reqArgs as Record<string, unknown>).record_revision as string)
+        : undefined;
+    if (receiptRev !== undefined) {
+      return { operationId: explicitOpId, recordRevision: receiptRev };
+    }
+    if (lookup.command !== method) {
+      throw new CliExecutionError(
+        new ApplicationError({
+          status: 'error',
+          code: 'OPERATION_CONFLICT',
+          category: 'not_executed',
+          message: `OPERATION_CONFLICT：操作 ${explicitOpId} 已用于不同请求（${lookup.command}）`,
+          next_step: '该 operation_id 已绑定到另一条不同请求；新操作请省略 --operation-id 或使用新的 operation_id',
+        }),
+        { method, operationId: explicitOpId },
+      );
+    }
+    throw new CliExecutionError(
+      new ApplicationError({
+        status: 'error',
+        code: 'RECEIPT_INCOMPLETE',
+        category: 'not_executed',
+        message: `RECEIPT_INCOMPLETE：操作 ${explicitOpId} 的历史回执缺少原 record_revision，无法安全重建重试`,
+        next_step: `请运行 monorail operation get ${explicitOpId} 核对已提交结果，不要盲目覆盖重试`,
+      }),
+      { method, operationId: explicitOpId },
+    );
+  }
+
+  try {
+    const details = await client.call('get_idea_details', { idea_id: ideaId }, { signal });
+    return { operationId: explicitOpId, recordRevision: details.idea.record_revision };
+  } catch (error) {
+    throw new CliExecutionError(error, { method, operationId: explicitOpId });
+  }
+}
+
 /** 这个进程的每次调用都带同一个 origin（CLI 只在启动时识别一次调用方；ADR 0019 第 6 条）。 */
 function withOrigin(client: ApplicationClient, origin: CallerOrigin | undefined): ApplicationClient {
   if (!origin) return client;
@@ -308,6 +414,141 @@ export async function executeCliCommand(
         return { kind: 'ok', json: cmd.json, method: 'reopen_idea', operationId: result.operation_id, result };
       } catch (error) {
         throw new CliExecutionError(error, { method: 'reopen_idea', operationId: meta.operationId });
+      }
+    }
+
+    case 'create_idea': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'create_idea',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'create_idea',
+          {
+            operation_id: meta.operationId,
+            title: cmd.title,
+            ...(cmd.detailsMarkdown !== undefined ? { details_markdown: cmd.detailsMarkdown } : {}),
+            ...(cmd.needs !== undefined ? { needs: cmd.needs } : {}),
+          },
+          { signal },
+        );
+        return {
+          kind: 'ok',
+          json: cmd.json,
+          method: 'create_idea',
+          operationId: result.operation_id,
+          result,
+        };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'create_idea', operationId: meta.operationId });
+      }
+    }
+
+    case 'get_idea_details': {
+      try {
+        const result = await client.call('get_idea_details', { idea_id: cmd.ideaId }, { signal });
+        return { kind: 'ok', json: cmd.json, method: 'get_idea_details', result };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'get_idea_details' });
+      }
+    }
+
+    case 'update_idea': {
+      const meta = await resolveIdeaRevisionWriteMeta(client, {
+        method: 'update_idea',
+        ideaId: cmd.ideaId,
+        operationId: cmd.operationId,
+        recordRevision: cmd.recordRevision,
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'update_idea',
+          {
+            operation_id: meta.operationId,
+            idea_id: cmd.ideaId,
+            record_revision: meta.recordRevision,
+            ...(cmd.title !== undefined ? { title: cmd.title } : {}),
+            ...(cmd.detailsMarkdown !== undefined ? { details_markdown: cmd.detailsMarkdown } : {}),
+            ...(cmd.needs !== undefined ? { needs: cmd.needs } : {}),
+          },
+          { signal },
+        );
+        return {
+          kind: 'ok',
+          json: cmd.json,
+          method: 'update_idea',
+          operationId: result.operation_id,
+          result,
+        };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'update_idea', operationId: meta.operationId });
+      }
+    }
+
+    case 'convert_idea_to_task': {
+      const meta = await resolveIdeaRevisionWriteMeta(client, {
+        method: 'convert_idea_to_task',
+        ideaId: cmd.ideaId,
+        operationId: cmd.operationId,
+        recordRevision: cmd.recordRevision,
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'convert_idea_to_task',
+          {
+            operation_id: meta.operationId,
+            idea_id: cmd.ideaId,
+            record_revision: meta.recordRevision,
+            target: cmd.target,
+            items: cmd.items,
+          },
+          { signal },
+        );
+        return {
+          kind: 'ok',
+          json: cmd.json,
+          method: 'convert_idea_to_task',
+          operationId: result.operation_id,
+          result,
+        };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'convert_idea_to_task', operationId: meta.operationId });
+      }
+    }
+
+    case 'create_task': {
+      const meta = await resolveWriteMeta(client, {
+        method: 'create_task',
+        operationId: cmd.operationId,
+        expectedStateMode: 'none',
+        signal,
+      });
+      try {
+        const result = await client.call(
+          'create_task',
+          {
+            operation_id: meta.operationId,
+            name: cmd.name,
+            slot: cmd.slot,
+            ...(cmd.defaultProject !== undefined ? { default_project: cmd.defaultProject } : {}),
+            ...(cmd.items !== undefined ? { items: cmd.items } : {}),
+          },
+          { signal },
+        );
+        return {
+          kind: 'ok',
+          json: cmd.json,
+          method: 'create_task',
+          operationId: result.operation_id,
+          result,
+        };
+      } catch (error) {
+        throw new CliExecutionError(error, { method: 'create_task', operationId: meta.operationId });
       }
     }
 

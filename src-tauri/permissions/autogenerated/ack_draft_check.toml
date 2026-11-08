@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ack-draft-check"
+description = "Enables the ack_draft_check command without any pre-configured scope."
+commands.allow = ["ack_draft_check"]
+
+[[permission]]
+identifier = "deny-ack-draft-check"
+description = "Denies the ack_draft_check command without any pre-configured scope."
+commands.deny = ["ack_draft_check"]

@@ -1,3 +1,4 @@
+import { sha256Hex } from '../shared/sha256';
 import type { FileSnapshot, FileSystem } from './fs';
 import { safeRelative } from './fs';
 
@@ -10,7 +11,7 @@ export class MemoryFs implements FileSystem {
   async atomicWrite(path: string, text: string): Promise<void> {
     safeRelative(path);
     this.beforeWrite?.(path);
-    this.files.set(path, { text, version: String(++this.revision) });
+    this.files.set(path, { text, version: String(++this.revision), byteHash: sha256Hex(text) });
   }
   async remove(path: string): Promise<void> {
     if (!this.files.delete(safeRelative(path))) throw new Error(`File missing: ${path}`);

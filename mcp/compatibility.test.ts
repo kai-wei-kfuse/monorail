@@ -43,6 +43,9 @@ const toolNames = [
   'get_context',
   'get_operation_result',
   'save_idea',
+  'create_idea',
+  'get_idea_details',
+  'update_idea',
   'capture_todo',
   'find_items',
   'get_time_summary',
@@ -74,6 +77,8 @@ const toolNames = [
   'get_task_details',
   'complete_task',
   'reopen_task',
+  'create_task',
+  'convert_idea_to_task',
   'get_recap',
   'list_operation_history',
 ];
@@ -124,7 +129,7 @@ for (const era of ['legacy', 'modern'] as const) for (const transportKind of ['s
       const client = era === 'legacy' ? legacy : modern;
       const { tools } = await client.listTools();
       assert.deepEqual(tools.map(t => t.name), toolNames);
-      assert.equal(tools.length, 36);
+      assert.equal(tools.length, 41);
       assert.deepEqual(new Set(toolNames), new Set(Object.keys(applicationContracts)));
       for (const tool of tools) {
         const contract = applicationContracts[tool.name as ApplicationMethod];

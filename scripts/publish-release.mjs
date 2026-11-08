@@ -6,7 +6,8 @@ import { parseArgs } from 'node:util';
 
 const STABLE_VERSION_RE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const BETA_VERSION_RE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-beta\.([1-9]\d*)$/;
-const DATA_SCHEMA_VERSION = 2;
+const DATA_SCHEMA_VERSION = 3;
+const READABLE_DATA_SCHEMA_VERSIONS = [2, DATA_SCHEMA_VERSION];
 
 const { values } = parseArgs({
   options: {
@@ -110,7 +111,7 @@ const manifest = {
   monorail: {
     channel: releaseChannel,
     dataSchemaVersion: DATA_SCHEMA_VERSION,
-    readableDataSchemaVersions: [DATA_SCHEMA_VERSION],
+    readableDataSchemaVersions: READABLE_DATA_SCHEMA_VERSIONS,
   },
 };
 const manifestPath = join(directory, 'latest.json');

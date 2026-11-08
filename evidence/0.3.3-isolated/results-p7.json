@@ -1,0 +1,147 @@
+{
+  "startedAt": "2026-11-08T12:32:26.690Z",
+  "isolatedEnv": {
+    "identifier": "local.pixelrecord.v033test.t98dfce7e8ed8",
+    "productName": "单轨0.3.3隔离测试",
+    "root": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8",
+    "data": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\data",
+    "profile": "C:\\Users\\kai_wei\\AppData\\Roaming\\local.pixelrecord.v033test.t98dfce7e8ed8",
+    "webview": "C:\\Users\\kai_wei\\AppData\\Local\\local.pixelrecord.v033test.t98dfce7e8ed8",
+    "pipe": "\\\\.\\pipe\\local.pixelrecord.v033test.t98dfce7e8ed8.mcp",
+    "exe": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\Monorail-0.3.3-isolated.exe",
+    "cdpPort": 19433
+  },
+  "matrix": {
+    "multiMainTasks": {
+      "passed": true,
+      "task1Id": "f9ccc4a3-ba29-411a-a300-89f7ced503cb",
+      "task2Id": "e4ae0b22-7746-4a59-bd19-2495c5d48fd7",
+      "screenshot": "shots/01-main-multi-main-tasks.png"
+    },
+    "openFocusCoexist": {
+      "passed": true,
+      "openA1": {
+        "action": "opened",
+        "windowLabel": "idea-2d220112-46ca-4f3d-beda-81fdfa7c1529",
+        "windowSession": "ws-2d220112-46ca-4f3d-beda-81fdfa7c1529-1",
+        "mainEpoch": 1,
+        "recordId": "2d220112-46ca-4f3d-beda-81fdfa7c1529",
+        "draftId": null
+      },
+      "openA2": {
+        "action": "focused",
+        "windowLabel": "idea-2d220112-46ca-4f3d-beda-81fdfa7c1529",
+        "windowSession": "ws-2d220112-46ca-4f3d-beda-81fdfa7c1529-1",
+        "mainEpoch": 1,
+        "recordId": "2d220112-46ca-4f3d-beda-81fdfa7c1529",
+        "draftId": null
+      },
+      "countLabelA": 1,
+      "openB1": {
+        "action": "opened",
+        "windowLabel": "idea-efc27d95-46f3-405a-a7dc-e0e6b654fc55",
+        "windowSession": "ws-efc27d95-46f3-405a-a7dc-e0e6b654fc55-2",
+        "mainEpoch": 1,
+        "recordId": "efc27d95-46f3-405a-a7dc-e0e6b654fc55",
+        "draftId": null
+      },
+      "openTargets": [
+        "idea-efc27d95-46f3-405a-a7dc-e0e6b654fc55",
+        "idea-2d220112-46ca-4f3d-beda-81fdfa7c1529",
+        "quickbar",
+        "main"
+      ],
+      "safeMarkdownRender": {
+        "hasH2": true,
+        "hasTable": true,
+        "hasCode": true,
+        "links": [
+          {
+            "text": "安全链接 ↗",
+            "href": "https://example.com/alpha"
+          }
+        ],
+        "hasJavascriptHref": false
+      },
+      "screenshots": [
+        "shots/02-ideaA-read-markdown.png",
+        "shots/03-ideaB-coexisting-window.png"
+      ]
+    },
+    "dirtyCloseThreeChoices": {
+      "passed": true,
+      "continueEditPreservedDraft": "## 脏关闭三选实测\n- 已修改未保存草稿",
+      "saveAndCloseClosedWindow": true,
+      "saveAndClosePersistedDetails": "## 脏关闭三选实测\n- 已修改未保存草稿",
+      "discardAndCloseClosedWindow": true,
+      "discardAndCloseDetailsUnchanged": "## 脏关闭三选实测\n- 已修改未保存草稿",
+      "screenshot": "shots/04-dirty-close-dialog-3choices.png"
+    },
+    "saveSyncAndConflict": {
+      "passed": true,
+      "cleanSyncHasConflictBanner": false,
+      "conflictPreservedLocalDraft": "## 独立窗口本地脏草稿\n- 我正在独立窗口撰写的长文",
+      "savedDetailsAfterContinueOnLatest": "## 独立窗口本地脏草稿\n- 我正在独立窗口撰写的长文",
+      "loadedExternalValue": "## 外部最新版覆盖验证\n- 点击加载外部最新版后生效",
+      "screenshot": "shots/05-ideaA-revision-conflict-banner.png"
+    },
+    "quickbarHandoffAndAttachments": {
+      "passed": true,
+      "handoff1CountBeforeQbSave": 1,
+      "handoff1CountAfterQbSave": 1,
+      "handoff1Attachments": [
+        "attachments/999d275f-8cb1-4589-9bd0-0bdfeb175036/handoff-attach.png"
+      ],
+      "attachmentDiskExists": true,
+      "hadTaskAssociationInitially": true,
+      "taskAssociationClearedToNull": true,
+      "handoffFinalDetails": "## 来自 QuickBar 的草稿详情\n- 独立窗首次保存后，由 QuickBar 端显式清空所属项目关联（taskId=null）",
+      "screenshots": [
+        "shots/06-quickbar-before-handoff.png",
+        "shots/07-idea-draft-window-opened.png"
+      ]
+    },
+    "hiddenMainSaveAndStaleEpochReject": {
+      "passed": true,
+      "mainVisibleWhileHidden": false,
+      "hiddenSavePersistedOnDisk": true,
+      "staleEpochErrorText": "OUTCOME_UNKNOWN：无法向主窗口回查保存回执（结果未知：EPOCH_MISMATCH：主窗口会话已刷新（当前纪元 2，请求纪元 1），旧窗口会话拒绝写入），草稿与原操作 ID 已保留，请重试以幂等确认",
+      "staleEpochDidNotOverwriteDisk": true,
+      "screenshots": [
+        "shots/08-ideaA-saved-while-main-hidden.png",
+        "shots/09-ideaA-stale-epoch-rejected.png"
+      ]
+    },
+    "detailsOnlyDirtyAndExitCancelRestore": {
+      "passed": true,
+      "openAFreshEpoch": 2,
+      "draftCheckResult": {
+        "dirty": true,
+        "blockedMessage": "想法笔记窗口还有未保存内容，请先保存或放弃修改后重试维护操作"
+      },
+      "lockedStateDuringCheck": {
+        "titleDisabled": true,
+        "detailsDisabled": true
+      },
+      "unlockedStateAfterCancel": {
+        "titleDisabled": false,
+        "detailsDisabled": false,
+        "titleValue": "架构笔记 Alpha #架构",
+        "detailsValue": "## 仅修改正文 Dirty 检测与退出取消恢复实测\n- 标题未改动，仅改动 Markdown 详情"
+      },
+      "savedDetailsAfterRestore": "## 仅修改正文 Dirty 检测与退出取消恢复实测\n- 标题未改动，仅改动 Markdown 详情",
+      "screenshots": [
+        "shots/10-ideaA-details-only-dirty-maintenance-locked.png",
+        "shots/11-ideaA-maintenance-cancel-restored-and-saved.png"
+      ]
+    }
+  },
+  "completedAt": "2026-11-08T12:32:51.105Z",
+  "baselineComparison": {
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyProcessUntouched": true
+  },
+  "allPassed": true
+}

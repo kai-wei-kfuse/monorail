@@ -1,6 +1,6 @@
-# 单轨（MONORAIL）共享应用接口与 CLI 指南（0.3.2）
+# 单轨（MONORAIL）共享应用接口与 CLI 指南（0.3.3）
 
-当前版本 **0.3.2**。单轨以桌面端单写入者（`ApplicationController`）为核心，向上暴露一套由 [src/shared/application.ts](../../src/shared/application.ts) 统一定义、由 [client/applicationClient.ts](../../client/applicationClient.ts) 强类型校验的 **36 项共享应用方法（26 写、10 读）**，同时驱动两个并列外部适配器：
+当前版本 **0.3.3**。单轨以桌面端单写入者（`ApplicationController`）为核心，向上暴露一套由 [src/shared/application.ts](../../src/shared/application.ts) 统一定义、由 [client/applicationClient.ts](../../client/applicationClient.ts) 强类型校验的 **41 项共享应用方法（30 写、11 读）**，同时驱动两个并列外部适配器：
 
 - **MCP 适配器**（`mcp/` → `dist-mcp/monorail-mcp.mjs`）：面向原生支持 MCP（`2025-11-25` / `2026-07-28`，stdio 或本机 Streamable HTTP）的宿主。详见 [mcp/README.md](../../mcp/README.md)。
 - **CLI 适配器**（`cli/` → `dist-cli/monorail-cli.mjs`）：面向具备命令行/Shell 执行能力的代理、自动化脚本与终端用户。自包含单文件包**不打包** `@modelcontextprotocol/*` 依赖。
@@ -16,7 +16,7 @@
 ## 1. 架构与代码阅读路径（面向新 Session）
 
 1. **权威契约注册表**：[src/shared/application.ts](../../src/shared/application.ts)
-   - `applicationContracts` 将全部 36 个方法名映射到 `{ input, output, readOnly }`。
+   - `applicationContracts` 将全部 41 个方法名映射到 `{ input, output, readOnly }`。
    - `ApplicationMethod`、`ApplicationInput<M>`、`ApplicationOutput<M>` 与 `applicationRequest` 均从同一契约派生，无第二份手写请求/返回类型。
    - `lookupResult`（`get_operation_result`）在 `committed` 分支包含 `request: { method, arguments }`，直接读取持久化回执 `receipts/<uuid>.json` 中的规范化请求参数。
 2. **结构化错误模型**：[src/shared/appError.ts](../../src/shared/appError.ts)
@@ -32,7 +32,7 @@
 
 ---
 
-## 2. CLI 命令对照表（36 个应用方法）
+## 2. CLI 命令对照表（41 个应用方法）
 
 运行方式：
 - 开发源码：`node cli/main.ts <command> ...`（或 `npm run cli -- <command> ...`）
@@ -41,11 +41,15 @@
 | CLI 命令 | 对应应用方法 | 参数说明 |
 |---|---|---|
 | `monorail context` | `get_context` | 可选重复 `--section timer\|pending_actions\|options` |
-| `monorail idea add [<text>]` | `save_idea` | 正文三选一（`<text>` / `--text-file <path>` / `--stdin`），可选 `--needs <text>`、`--operation-id <uuid>` |
+| `monorail idea add [<text>]` | `save_idea` | 正文三选一（`<text>` / `--text-file <path>` / `--stdin`），可选 `--needs <text>`、`--operation-id <uuid>`；多行时首行映射为标题、其余行进入详情，回执仍返回完整 `text` |
+| `monorail idea create` | `create_idea` | 可选 `--title <title>`（单行，仅写详情可省略）、`--details-file <path> \| --details-stdin`（多行 Markdown 详情）、`--needs <text>`、`--operation-id <uuid>`；返回 `IdeaSummary` 与 `record_revision`（0.3.3，ADR 0026/0029） |
+| `monorail idea show <idea-id>` | `get_idea_details` | 必填 `<idea-id>`（UUID）；只读返回 `IdeaDocument`（含 `details_markdown` 与 `record_revision`）及签发给后续写调用的 `operation_id`（0.3.3，ADR 0026/0029） |
+| `monorail idea edit <idea-id>` | `update_idea` | 必填 `<idea-id>`（UUID）；至少一项：`--title <title>`、`--details-file <path> \| --details-stdin \| --clear-details`、`--needs <text> \| --clear-needs`；可选 `--record-revision <token>`、`--operation-id <uuid>`（0.3.3，ADR 0026/0029） |
+| `monorail idea convert <idea-id>` | `convert_idea_to_task` | 必填 `<idea-id>`（UUID）；目标二选一：`--task-id <task-id>`（放入指定进行中任务，多主线时按 ID 选择）或 `--new-task-name <name> --slot 主线\|支线 [--default-project <name>]`（同事务新建任务）；事项三选一：重复 `--item <content>`、`--items-file <path>` 或 `--items-stdin`；可选 `--record-revision <token>`、`--operation-id <uuid>`（0.3.3，ADR 0029） |
 | `monorail idea done <idea-id>` | `complete_idea` | 必填 `<idea-id>`（UUID，通过 `find --kind idea` 获取）；可选 `--operation-id <uuid>`。只有想法池里的想法能标记；已完成的再标记返回 `noop: true`（0.3.0-beta.4，ADR 0020） |
 | `monorail idea reopen <idea-id>` | `reopen_idea` | 必填 `<idea-id>`（UUID）；撤销想法完成并放回活跃池（0.3.2，ADR 0023） |
 | `monorail todo add [<text>]` | `capture_todo` | 正文三选一，可选 `--task-id <id>`、`--due-at <iso>`、`--operation-id <uuid>`；`--blocking` 0.3.1 起不起作用（删除阻塞机制），仍接受以兼容旧脚本 |
-| `monorail find [<query>]` | `find_items` | 可选 `--kind idea\|todo_card\|task\|all`、`--include-archived` |
+| `monorail find [<query>]` | `find_items` | 可选 `--kind idea\|todo_card\|task\|all`、`--include-archived`；想法按兼容全文 `C(title, details)`、标签与 `needs` 检索并返回兼容全文 `text` |
 | `monorail time summary` | `get_time_summary` | 可选 `--day today\|yesterday\|this_week\|YYYY-MM-DD`、`--day-mode activity\|calendar` |
 | `monorail time entries` | `list_time_entries` | 必填 `--from <iso>`、`--to <iso>`（带时区偏移） |
 | `monorail time add [<description>]` | `add_time_entry` | 正文三选一，必填 `--start <iso>`、`--end <iso>`；可选 `--project <name>`、重复 `--tag <tag>`、`--operation-id <uuid>` |
@@ -70,6 +74,7 @@
 | `monorail item reopen <card-id>` | `reopen_task_item` | 取消单个已完成子项的完成状态并恢复为待做（父任务已完成时同事务恢复父任务，满格可传 `--make-room freeze\|abandon:<task-id>`）（0.3.2，ADR 0022/0023） |
 | `monorail item keep <card-id>` | `keep_going_task_item` | 当前卡片记录进度笔记并放回待做；可选 `--note <text>\|--note-file <path>\|--stdin`、`--operation-id <uuid>`、`--expected-state <token>`（0.3.2） |
 | `monorail item split <card-id>` | `split_task_item` | 必填 `--today-content <text>`、`--rest-content <text>`，可选 `--rest-minutes <N>`、`--operation-id <uuid>`、`--expected-state <token>`（0.3.2） |
+| `monorail task create` | `create_task` | 必填 `--name <name>`、`--slot 主线\|支线`；可选 `--default-project <name>`、事项来源（重复 `--item <content>` / `--items-file <path>` / `--items-stdin`，省略则创建空任务）、`--operation-id <uuid>`；不自动开始计时（0.3.3，ADR 0029） |
 | `monorail task show <task-id>` | `get_task_details` | 只读查询单个任务详情、全部子项、完成批次 `completion_id` 与重新打开前置条件（0.3.2） |
 | `monorail task done <task-id>` | `complete_task` | 整张完成背包中的主/支线任务（含剩余未完成子项并生成完成批次快照，释放背包槽位）（0.3.2，ADR 0022） |
 | `monorail task reopen <task-id>` | `reopen_task` | 必填 `--completion-id <uuid>` 或 `--legacy`，满格可选 `--make-room freeze\|abandon:<task-id>`；重新打开已完成任务（0.3.2，ADR 0022） |
@@ -83,9 +88,9 @@
 
 ---
 
-## 3. 多行、中文与特殊字符输入规范
+## 3. 多行、中文、Markdown 长详情与结构化事项输入规范
 
-对需要正文的 5 个命令（`idea add`、`todo add`、`time add`、`timer start`、`break start`），输入来源严格**三选一**（同时传多个或全部省略均返回退出码 `2`）：
+对需要单字段正文的 5 个命令（`idea add`、`todo add`、`time add`、`timer start`、`break start`），输入来源严格**三选一**（同时传多个或全部省略均返回退出码 `2`）：
 
 1. **位置参数**：`node dist-cli/monorail-cli.mjs idea add "简短想法 #产品"`
 2. **文件读取（推荐用于多行/含引号/`$`/反引号/`&`/`|` 内容）**：
@@ -95,6 +100,22 @@
 3. **标准输入（`--stdin`）**：
    ```powershell
    Get-Content -Raw -Encoding utf8 ./note.txt | node dist-cli/monorail-cli.mjs todo add --stdin --json
+   ```
+
+对 0.3.3 新增的想法 Markdown 详情（`idea create`、`idea edit`）与任务事项列表（`task create`、`idea convert`）：
+
+1. **Markdown 详情字面输入（`--details-file` / `--details-stdin` / `--clear-details`）**：
+   ```powershell
+   Set-Content -Path ./details.md -Value "第一段说明`n- https://example.com`n#标签" -Encoding utf8
+   node dist-cli/monorail-cli.mjs idea create --title "想法标题 #架构" --details-file ./details.md --json
+   Get-Content -Raw -Encoding utf8 ./details.md | node dist-cli/monorail-cli.mjs idea edit <idea-id> --details-stdin --json
+   node dist-cli/monorail-cli.mjs idea edit <idea-id> --clear-details --json
+   ```
+2. **任务事项输入（重复 `--item` 结果卡，或 `--items-file` / `--items-stdin` JSON 数组）**：
+   ```powershell
+   node dist-cli/monorail-cli.mjs task create --name "第二主线：编译器实验" --slot 主线 --item "搭建词法分析器" --json
+   Set-Content -Path ./items.json -Value '[{"content":"精读论文第 3 节","type":"时间盒卡","timebox_minutes":45},{"content":"写出实验总结","type":"结果卡","timebox_minutes":null}]' -Encoding utf8
+   node dist-cli/monorail-cli.mjs idea convert <idea-id> --task-id <task-id> --items-file ./items.json --json
    ```
 
 CLI 内部直接通过结构化 JSON 管道发送请求，从不对用户文本执行 shell 拼接或 `eval`。

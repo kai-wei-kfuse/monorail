@@ -1,0 +1,207 @@
+/* 独立想法笔记窗口（ADR 0028 §独立窗外观，UI风格规范 §11.17）：
+   无主窗口顶栏/底栏/外边距，整个独立窗本身就是直角笔记框（border: 1px solid var(--ink) + 顶部 3px 强调色边），
+   正文编辑区外围仅保留 6px 紧凑内边距，撑满剩余视口高度，全窗口零圆角。 */
+
+.note-win-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 36px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.note-win-stage {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--paper);
+}
+
+.note-win-head {
+  display: grid;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-2);
+  box-shadow: inset 0 3px 0 var(--yellow);
+}
+
+.note-win-toprow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.note-win-topmeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.note-win-acts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.note-win-acts .seg button {
+  min-width: 68px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.note-win-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.note-win-title {
+  margin: 0;
+  font: 630 22px/1.28 var(--f-cn);
+  letter-spacing: .02em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.note-win-title-inp.inp {
+  width: 100%;
+  font: 630 19px/1.3 var(--f-cn);
+  padding: 6px 10px;
+}
+
+.note-win-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font: 330 12px/1.4 var(--f-cn);
+  color: var(--mute);
+}
+
+.note-win-meta .tag-pill {
+  padding: 1px 6px;
+  border: 1px solid var(--line-2);
+  background: var(--paper-2);
+  font: 520 11px/1.3 var(--f-cn);
+  color: var(--ink-3);
+}
+
+.note-win-needs-inp.inp {
+  width: 240px;
+  min-height: 26px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.note-win-conflict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  border-left: 4px solid var(--red);
+  background: var(--paper-2);
+  font: 330 12px/1.5 var(--f-cn);
+  color: var(--ink);
+}
+
+.note-win-conflict-acts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 贴近外框边缘，padding: 6px，编辑框/预览框铺满剩余全部高度 */
+.note-win-body {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 6px;
+  background: var(--paper-2);
+}
+
+.note-win-ta {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  font: 330 14px/1.7 var(--f-cn);
+  color: var(--ink);
+  resize: none;
+  overflow-y: auto;
+}
+
+.note-win-ta:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: inset 4px 0 0 var(--yellow);
+}
+
+.note-win-pv,
+.note-win-read {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.note-win-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line-2);
+  background: var(--paper-2);
+  font: 330 13px/1.5 var(--f-cn);
+  color: var(--mute);
+}
+
+.note-win-dock {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  border-top: 1px solid var(--line-2);
+  background: var(--paper);
+  font: 330 11px/1 var(--f-cn);
+  color: var(--mute);
+}
+
+.note-win-dock-left,
+.note-win-dock-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.note-win-dock code {
+  font-family: var(--f-mono);
+}

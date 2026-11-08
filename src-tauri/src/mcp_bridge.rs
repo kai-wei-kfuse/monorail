@@ -63,6 +63,7 @@ pub const READ_ONLY_METHODS: &[&str] = &[
     "get_context",
     "get_operation_result",
     "find_items",
+    "get_idea_details",
     "get_time_summary",
     "list_time_entries",
     "get_task_plan",
@@ -73,19 +74,7 @@ pub const READ_ONLY_METHODS: &[&str] = &[
 ];
 
 pub fn is_write_method(method: &str) -> bool {
-    !matches!(
-        method,
-        "get_context"
-            | "get_operation_result"
-            | "find_items"
-            | "get_time_summary"
-            | "list_time_entries"
-            | "get_task_plan"
-            | "draw_task_item"
-            | "get_task_details"
-            | "get_recap"
-            | "list_operation_history"
-    )
+    !READ_ONLY_METHODS.contains(&method)
 }
 
 impl BridgeCore {
@@ -566,7 +555,7 @@ mod tests {
 
     #[test]
     fn read_only_methods_are_distinguished_from_writes() {
-        assert_eq!(READ_ONLY_METHODS.len(), 10);
+        assert_eq!(READ_ONLY_METHODS.len(), 11);
         for method in READ_ONLY_METHODS {
             assert!(!is_write_method(method), "expected read-only: {method}");
         }
@@ -597,6 +586,10 @@ mod tests {
             "split_task_item",
             "complete_task",
             "reopen_task",
+            "create_idea",
+            "update_idea",
+            "create_task",
+            "convert_idea_to_task",
             "unknown_method",
             "",
         ] {

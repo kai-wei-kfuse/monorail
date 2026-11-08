@@ -1,0 +1,431 @@
+{
+  "version": "0.3.3",
+  "revision": "r2-corrected-utf8-and-true-cold-start",
+  "historicalR1Path": "evidence/0.3.3-storage-benchmark-historical-r1.json",
+  "historicalR1Note": "Historical r1 used JS string .slice(0, sc.bodyBytes) on multi-byte Chinese characters (actual UTF-8 bytes were 2432 / 77824 / 304 for nominal 2048 / 65536 / 256) and measured list() after an initial run() transaction had already populated the in-memory summary cache. This corrected r2 report generates exact UTF-8 byte lengths (Buffer.byteLength === targetUtf8BodyBytesPerRecord) and reports both trueColdStart (brand-new RecordRepo reading all files cold from disk) and warmCachedList (subsequent list() on warm cache).",
+  "generatedAt": "2026-11-08T13:05:00.243Z",
+  "explicitRunCommand": "npx vitest run -c evidence/0.3.3-p6-verification.config.ts",
+  "notes": "Measured on real disk FS + RecordRepo summary-first architecture (ADR 0026). trueColdStart reads all record files on a brand-new RecordRepo instance to verify SHA-256 hashes and extract frontmatter summaries without retaining body strings in committed cache or transaction clones; warmCachedList measures subsequent list() after initialization.",
+  "scenarios": [
+    {
+      "scenario": "100x2KiB",
+      "recordCount": 100,
+      "targetUtf8BodyBytesPerRecord": 2048,
+      "actualUtf8BodyBytesPerRecord": 2048,
+      "detailsBytesPerRecord": 2048,
+      "trueColdStart": {
+        "elapsedMs": 101.23,
+        "heapDeltaBytes": 26473336,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 236592,
+          "bytesWritten": 0
+        }
+      },
+      "warmCachedList": {
+        "elapsedMs": 31.32,
+        "heapDeltaBytes": 2002704,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 236592,
+          "bytesWritten": 0
+        }
+      },
+      "coldStart": {
+        "elapsedMs": 101.23,
+        "heapDeltaBytes": 26473336,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 236592,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 47.57,
+        "io": {
+          "readCalls": 115,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 238507,
+          "bytesWritten": 11682
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 1.45,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 2366,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 46.77,
+        "io": {
+          "readCalls": 116,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 247260,
+          "bytesWritten": 12228
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 107.64,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 236600,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 108,
+        "totalBytes": 245917
+      }
+    },
+    {
+      "scenario": "100x64KiB",
+      "recordCount": 100,
+      "targetUtf8BodyBytesPerRecord": 65536,
+      "actualUtf8BodyBytesPerRecord": 65536,
+      "detailsBytesPerRecord": 65536,
+      "trueColdStart": {
+        "elapsedMs": 369.95,
+        "heapDeltaBytes": 42456024,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 6585392,
+          "bytesWritten": 0
+        }
+      },
+      "warmCachedList": {
+        "elapsedMs": 71.88,
+        "heapDeltaBytes": 0,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 6585392,
+          "bytesWritten": 0
+        }
+      },
+      "coldStart": {
+        "elapsedMs": 369.95,
+        "heapDeltaBytes": 42456024,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 6585392,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 66.2,
+        "io": {
+          "readCalls": 115,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 6587307,
+          "bytesWritten": 11682
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 4.01,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 65854,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 81.04,
+        "io": {
+          "readCalls": 116,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 6850012,
+          "bytesWritten": 206036
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 439.51,
+        "io": {
+          "readCalls": 100,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 6585400,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 108,
+        "totalBytes": 6594717
+      }
+    },
+    {
+      "scenario": "1000x2KiB",
+      "recordCount": 1000,
+      "targetUtf8BodyBytesPerRecord": 2048,
+      "actualUtf8BodyBytesPerRecord": 2048,
+      "detailsBytesPerRecord": 2048,
+      "trueColdStart": {
+        "elapsedMs": 862.32,
+        "heapDeltaBytes": 0,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 2366893,
+          "bytesWritten": 0
+        }
+      },
+      "warmCachedList": {
+        "elapsedMs": 266.53,
+        "heapDeltaBytes": 0,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 2366893,
+          "bytesWritten": 0
+        }
+      },
+      "coldStart": {
+        "elapsedMs": 862.32,
+        "heapDeltaBytes": 0,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 2366893,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 273.9,
+        "io": {
+          "readCalls": 1015,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 2368808,
+          "bytesWritten": 11682
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 0.91,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 2367,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 271.26,
+        "io": {
+          "readCalls": 1016,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 2377565,
+          "bytesWritten": 12231
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 895.65,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 2366900,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 1008,
+        "totalBytes": 2376218
+      }
+    },
+    {
+      "scenario": "1000x64KiB",
+      "recordCount": 1000,
+      "targetUtf8BodyBytesPerRecord": 65536,
+      "actualUtf8BodyBytesPerRecord": 65536,
+      "detailsBytesPerRecord": 65536,
+      "trueColdStart": {
+        "elapsedMs": 4370.53,
+        "heapDeltaBytes": 61312688,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 65854893,
+          "bytesWritten": 0
+        }
+      },
+      "warmCachedList": {
+        "elapsedMs": 387.57,
+        "heapDeltaBytes": 82311472,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 65854893,
+          "bytesWritten": 0
+        }
+      },
+      "coldStart": {
+        "elapsedMs": 4370.53,
+        "heapDeltaBytes": 61312688,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 65854893,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 447.85,
+        "io": {
+          "readCalls": 1015,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 65856808,
+          "bytesWritten": 11712
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 4.7,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 65855,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 516.48,
+        "io": {
+          "readCalls": 1016,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 66119517,
+          "bytesWritten": 206039
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 4082.92,
+        "io": {
+          "readCalls": 1000,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 65854900,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 1008,
+        "totalBytes": 65864233
+      }
+    },
+    {
+      "scenario": "2000x256B-baseline",
+      "recordCount": 2000,
+      "targetUtf8BodyBytesPerRecord": 256,
+      "actualUtf8BodyBytesPerRecord": 256,
+      "detailsBytesPerRecord": 256,
+      "trueColdStart": {
+        "elapsedMs": 1281.59,
+        "heapDeltaBytes": 69926544,
+        "io": {
+          "readCalls": 2000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 1150893,
+          "bytesWritten": 0
+        }
+      },
+      "warmCachedList": {
+        "elapsedMs": 598.77,
+        "heapDeltaBytes": 0,
+        "io": {
+          "readCalls": 2000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 1150893,
+          "bytesWritten": 0
+        }
+      },
+      "coldStart": {
+        "elapsedMs": 1281.59,
+        "heapDeltaBytes": 69926544,
+        "io": {
+          "readCalls": 2000,
+          "listCalls": 1,
+          "writeCalls": 0,
+          "bytesRead": 1150893,
+          "bytesWritten": 0
+        }
+      },
+      "singleTimerCommit": {
+        "elapsedMs": 704.61,
+        "io": {
+          "readCalls": 2015,
+          "listCalls": 4,
+          "writeCalls": 5,
+          "bytesRead": 1152808,
+          "bytesWritten": 11712
+        }
+      },
+      "openSingleDetails": {
+        "elapsedMs": 1.14,
+        "io": {
+          "readCalls": 1,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 576,
+          "bytesWritten": 0
+        }
+      },
+      "saveSingleTitleOnly": {
+        "elapsedMs": 547.07,
+        "io": {
+          "readCalls": 2016,
+          "listCalls": 4,
+          "writeCalls": 4,
+          "bytesRead": 1154401,
+          "bytesWritten": 6766
+        }
+      },
+      "findItemsFullText": {
+        "elapsedMs": 1637.16,
+        "io": {
+          "readCalls": 2000,
+          "listCalls": 0,
+          "writeCalls": 0,
+          "bytesRead": 1150899,
+          "bytesWritten": 0
+        }
+      },
+      "diskUsage": {
+        "fileCount": 2008,
+        "totalBytes": 1160233
+      }
+    }
+  ]
+}

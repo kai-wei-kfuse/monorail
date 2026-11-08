@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-main-update-ready"
+description = "Enables the main_update_ready command without any pre-configured scope."
+commands.allow = ["main_update_ready"]
+
+[[permission]]
+identifier = "deny-main-update-ready"
+description = "Denies the main_update_ready command without any pre-configured scope."
+commands.deny = ["main_update_ready"]

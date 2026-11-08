@@ -1,0 +1,110 @@
+{
+  "at": "2026-11-08T14:07:53.024Z",
+  "command": "node evidence/0.3.3-coder6-native-supplement-audit-r5.mjs",
+  "methodology": "Read-only saved-artifact and drill-directory verification; not an independent OS rerun.",
+  "artifactMatches": {
+    "isolated033Exe": {
+      "sha256": "e8da6eb9543b67637157bc0acd34c0c81585981076b00cf5f78c54a3a59acc57",
+      "matches": true
+    },
+    "isolated033Cli": {
+      "sha256": "276356edaaf7f15b67dfe907b2935ab4667d3ddbb15cd04431c24d0a8a086f45",
+      "matches": true
+    },
+    "isolated033Mcp": {
+      "sha256": "068d79e8333ff778d73ea2e312df7278ed918015d21dfaf535cee6e15c95ace7",
+      "matches": true
+    },
+    "isolated032Exe": {
+      "sha256": "cde06a7a9fdaabf168331c2ef3287e2b319b44bc5b6f0f418c58bb7172279cfb",
+      "matches": true
+    }
+  },
+  "sourceMatches": {
+    "src/services/ideaService.ts": {
+      "sha256": "b095c3597b897518d76ea3156a937161377ccc55623f6ac43f54741cd015918e",
+      "matches": true
+    },
+    "src/services/updateService.ts": {
+      "sha256": "37c614e82fafcb37d585fc1e5f8ccaf6fe53542c4d4a4d1ede1f4410b622be12",
+      "matches": true
+    },
+    "src/platform/ideaWindows.ts": {
+      "sha256": "c83da12f9f78d20a7ca78a7c22d09211e0820643f054e4d03e7689ba74a62346",
+      "matches": true
+    },
+    "src/app/IdeaWindowApp.tsx": {
+      "sha256": "8202970b6bd47c8e28246a030be8a23a9666ac8022fea5bdf5bc46880775d274",
+      "matches": true
+    },
+    "src/app/QuickBarApp.tsx": {
+      "sha256": "eb3f61fee4a1d12d871a1f5d9c04df944c9d351c3402ca1b4cf76f501cb96d8c",
+      "matches": true
+    },
+    "src/app/MainApp.tsx": {
+      "sha256": "c856d3bc18ee664ddbfaba895cbdf066ed582919dbe90faea6f84e489bd8c6dd",
+      "matches": true
+    },
+    "src/app/SettingsScreen.tsx": {
+      "sha256": "d95ac7aad9cb7d4391920df9be2479eae2aed2d771e1b34d902fafc363af9c5a",
+      "matches": true
+    },
+    "src/app/BagScreen.tsx": {
+      "sha256": "dcfffdbe356006a3af273ddd1c0c57d5e0defbfde8cf2dd18e024d1c06ef237a",
+      "matches": true
+    },
+    "src/pages/home/drawer/BagDrawer.tsx": {
+      "sha256": "257f9d01ead077c4879573142348d3c472ec4ff13dadb08c1e27f8825d122cbc",
+      "matches": true
+    },
+    "src/pages/home/drawer/IdeaPool.tsx": {
+      "sha256": "37ce431fd2c07f0bcf935ede29b55885713883f455ff578e3a896409d3460299",
+      "matches": true
+    },
+    "src-tauri/src/idea_windows.rs": {
+      "sha256": "1fb80617b523bec90cc829bf9c33307ed9b311a54eafe737d50a6e57826f155f",
+      "matches": true
+    },
+    "src-tauri/src/quick_save.rs": {
+      "sha256": "911863e076144a126ac6206bb029f244ddd523b60e2b5b759b1992c4518c34a5",
+      "matches": true
+    },
+    "src-tauri/src/updates.rs": {
+      "sha256": "e1a8af20896b98c9aee38b3aed63f10086c4516fd35a36024b4d097d683065bb",
+      "matches": true
+    },
+    "src-tauri/src/update_state.rs": {
+      "sha256": "068b3ec8224e2b4469dcb5eaa88dfc71d8bbd5c80a658f54c3a87a218781284c",
+      "matches": true
+    },
+    "src-tauri/src/tray.rs": {
+      "sha256": "90bd4f86316a3cc0262c14f4d7c5ec8ae88d88dba10fe115b00462f8cd0d265a",
+      "matches": true
+    },
+    "src/data/migrations/v3.ts": {
+      "sha256": "f151b64693e0077dca764530624a6d65c98d278b26dd5071c9114ef116cb2a45",
+      "matches": true
+    }
+  },
+  "historicalP7Preserved": {
+    "evidence/0.3.3-isolated/results-p7.json": true,
+    "evidence/0.3.3-isolated/baseline-after-p7.json": true
+  },
+  "baselineComparison": {
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyProcessUntouched": true
+  },
+  "v3ManifestFileCount": 12,
+  "currentV3ManifestMatchesRecordedAfter": true,
+  "restoredRecordMatchesBackup": true,
+  "restoredHistoricalTimelogMatchesBackup": true,
+  "restoredStateAndSettingsSchema2": true,
+  "observedWmCloseTargetCounts": {
+    "wmClose1": 3,
+    "wmClose2": 1,
+    "wmClose3": 1
+  },
+  "implementationAcceptance": "N1/N2 targeted tests passed; M1 maintenance request/target correlation remains blocked by lead ruling."
+}

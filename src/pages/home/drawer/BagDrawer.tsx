@@ -14,7 +14,8 @@ import { CardEditor } from '../../../widgets/CardEditor';
 import type { SlotTask } from '../../../widgets/TaskDialog';
 import { MakeRoomPicker, RestoreDialog, TaskDialog } from '../../../widgets/TaskDialog';
 import { ConvertIdea } from '../../../widgets/ConvertIdea';
-import type { IdeaTaskInput } from '../../../services/ideaService';
+import type { IdeaDocument, IdeaTaskInput, UpdateIdeaInput } from '../../../services/ideaService';
+import type { IdeaInitialEditDraft } from '../../../shared/ideaWindow';
 import { TodayBoard } from './TodayBoard';
 import type { PlanDay } from './TodayBoard';
 import { QuestCard, QuestDetail, dueLabel } from './QuestCard';
@@ -48,6 +49,10 @@ export interface BagActions {
   deleteIdea: (ideaId: string) => void;
   completeIdea: (ideaId: string, text: string) => void;
   uncompleteIdea: (ideaId: string) => void;
+  loadIdeaDetails?: (ideaId: string) => Promise<IdeaDocument>;
+  updateIdea?: (input: UpdateIdeaInput) => Promise<IdeaDocument>;
+  openIdeaWindow?: (recordId: string, title?: string, initialDraft?: IdeaInitialEditDraft | null) => void;
+  onIdeaEditDirtyChange?: (dirty: boolean) => void;
   createProject: (name: string) => void;
   createTag: (tag: string) => void;
 }
@@ -61,6 +66,7 @@ export interface BagData {
   /** 插入等待的原卡 ID（仅禁用该卡与所属任务的完成/腾位，不禁用其他任务） */ interruptedCardId?: string | null;
   /** 待确认计时关联的当前卡 ID（仅禁用该卡与所属任务的完成/腾位） */ pendingCardId?: string | null;
   /** 当前首页正在计时或已暂停的卡 ID（用于判断时间盒是否需要提前完成确认） */ activeOrPausedCardId?: string | null;
+  /** 维护检查锁定（退出/更换目录/安装更新检查草稿期间锁定主窗编辑输入） */ maintenanceLocked?: boolean;
 }
 
 type Open = { kind: 'task'; slot: BackpackSlot } | { kind: 'card'; cardId: string } | { kind: 'idea'; idea: IdeaView }
@@ -218,7 +224,9 @@ export function BagDrawer({ open, onClose, data, actions, children }:
                   <p className="bp-done-note">主线和支线完成后都收到这里，不占背包格。可点「重新打开」恢复本批事项，或进「详情 ›」单独取消完成某一项。</p>
                 </>}
               </> : <IdeaPool ideas={data.ideas} done={data.doneIdeas} limit={data.ideaLimit} onConvert={idea => setDlg({ kind: 'idea', idea })}
-                onDelete={idea => setDlg({ kind: 'deleteIdea', idea })} onComplete={idea => actions.completeIdea(idea.id, idea.text)} onUncomplete={idea => actions.uncompleteIdea(idea.id)} />}
+                onDelete={idea => setDlg({ kind: 'deleteIdea', idea })} onComplete={idea => actions.completeIdea(idea.id, idea.text)} onUncomplete={idea => actions.uncompleteIdea(idea.id)}
+                onLoadIdeaDetails={actions.loadIdeaDetails} onUpdateIdea={actions.updateIdea} onOpenIdeaWindow={actions.openIdeaWindow}
+                onEditDirtyChange={actions.onIdeaEditDirtyChange} maintenanceLocked={data.maintenanceLocked} />}
             </>}
         </div>
       </div>

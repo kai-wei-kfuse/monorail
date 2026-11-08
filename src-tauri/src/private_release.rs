@@ -12,7 +12,7 @@ use url::Url;
 use super::update_channel::{Channel, UpdateIntent};
 use super::update_state::{Candidate, CompatibilityInfo, ReleaseInfo, Step, TargetPermit};
 
-pub const CURRENT_DATA_SCHEMA_VERSION: u32 = 2;
+pub const CURRENT_DATA_SCHEMA_VERSION: u32 = 3;
 // 0.3.1 round-trip evidence: evidence/0.3.1-g9-roundtrip and release-0.3.1.
 pub const AUDITED_COMPATIBLE_STABLE_VERSIONS: &[(&str, u32)] = &[("0.2.5", 2), ("0.3.0", 2)];
 
@@ -881,7 +881,7 @@ mod tests {
         let target_v024 = parse_product_version("0.2.4").unwrap();
         let target_b2 = parse_product_version("0.3.0-beta.2").unwrap();
 
-        // 1. Audited stable releases without metadata are admitted by exact version.
+        // 1. Legacy stable releases with schema v2 in AUDITED_COMPATIBLE_STABLE_VERSIONS are blocked when CURRENT_DATA_SCHEMA_VERSION == 3.
         for version in ["0.2.5", "0.3.0"] {
             let target = parse_product_version(version).unwrap();
             let legacy_manifest = serde_json::to_vec(&serde_json::json!({
@@ -903,9 +903,67 @@ mod tests {
                 &current_beta,
             )
             .unwrap();
-            assert!(compatibility.compatible);
-            assert_eq!(compatibility.source, "auditedTable");
+            assert!(!compatibility.compatible);
+            assert_eq!(compatibility.source, "unverifiedMissingMetadata");
         }
+
+        // 1b. Schema v3 manifest with readableDataSchemaVersions [2, 3] is compatible with CURRENT_DATA_SCHEMA_VERSION == 3,
+        // while a schema v2-only manifest ([2]) is blocked from downgrading over a schema v3 directory.
+        let target_033 = parse_product_version("0.3.3").unwrap();
+        let manifest_033 = serde_json::to_vec(&serde_json::json!({
+            "version": "0.3.3",
+            "platforms": {
+                "windows-x86_64": {
+                    "url": "https://api.github.com/repos/owner/project/releases/assets/99",
+                    "signature": "sig-content"
+                }
+            },
+            "monorail": {
+                "channel": "stable",
+                "dataSchemaVersion": 3,
+                "readableDataSchemaVersions": [2, 3]
+            }
+        }))
+        .unwrap();
+        let (_, compat_033) = validate_manifest_and_compatibility(
+            &manifest_033,
+            &target_033,
+            false,
+            repository,
+            &current_beta,
+        )
+        .unwrap();
+        assert!(compat_033.compatible);
+        assert_eq!(compat_033.source, "manifest");
+        assert_eq!(compat_033.data_schema_version, Some(3));
+        assert_eq!(compat_033.readable_data_schema_versions, vec![2, 3]);
+
+        let target_032 = parse_product_version("0.3.2").unwrap();
+        let manifest_032 = serde_json::to_vec(&serde_json::json!({
+            "version": "0.3.2",
+            "platforms": {
+                "windows-x86_64": {
+                    "url": "https://api.github.com/repos/owner/project/releases/assets/98",
+                    "signature": "sig-content"
+                }
+            },
+            "monorail": {
+                "channel": "stable",
+                "dataSchemaVersion": 2,
+                "readableDataSchemaVersions": [2]
+            }
+        }))
+        .unwrap();
+        let (_, compat_032) = validate_manifest_and_compatibility(
+            &manifest_032,
+            &target_032,
+            false,
+            repository,
+            &current_beta,
+        )
+        .unwrap();
+        assert!(!compat_032.compatible);
+        assert_eq!(compat_032.source, "manifest");
 
         // 2. Unaudited legacy v0.2.4 without monorail namespace is blocked from downgrade.
         let legacy_024_manifest = serde_json::to_vec(&serde_json::json!({

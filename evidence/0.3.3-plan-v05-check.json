@@ -1,0 +1,201 @@
+{
+  "status": "PASS",
+  "generatedAt": "2026-11-08T05:17:19.490Z",
+  "scope": "Author document versions, revision rows, links, table columns, code fences, whitespace, live 36-method baseline and proposed method arithmetic. Not production migration, receipt, browser or Tauri validation.",
+  "reproduction": "node C:/Users/kai_wei/.codex/tmp/monorail-v033-plan-v05/verify-documents.mjs",
+  "documents": [
+    {
+      "file": "docs/stages/0.3.3-execution-plan.md",
+      "sha256": "743416a275771c1864231d8abb116b92900a7e56b3b79ebf8aca20e7c874155d"
+    },
+    {
+      "file": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "sha256": "3c52ca5b78863c8fc8e6bccc91059abd37f02a77494581439059b19b42ee5201"
+    },
+    {
+      "file": "docs/adr/0026-record-title-and-markdown-details.md",
+      "sha256": "74c3ba18fae507e435abe72e286db469bc3baaa57a25ebb5c614873305233f02"
+    },
+    {
+      "file": "docs/adr/0027-multiple-main-tasks.md",
+      "sha256": "e31c916b966e475e7748f78e03e6c22153fa14cb5974686f64b6f443919dcd98"
+    },
+    {
+      "file": "docs/adr/0028-idea-document-window.md",
+      "sha256": "8030e0d253e63e59674942c912360493c1bae94f2fb493c3a47998acb22e5233"
+    },
+    {
+      "file": "docs/adr/0029-v033-automation-parity.md",
+      "sha256": "8bf99662d62164c63142f516eb00d5f3c2e373e05c590e9225115d1a87db1779"
+    }
+  ],
+  "tables": [
+    {
+      "file": "docs/stages/0.3.3-execution-plan.md",
+      "tables": 2
+    },
+    {
+      "file": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "tables": 3
+    },
+    {
+      "file": "docs/adr/0026-record-title-and-markdown-details.md",
+      "tables": 4
+    },
+    {
+      "file": "docs/adr/0027-multiple-main-tasks.md",
+      "tables": 2
+    },
+    {
+      "file": "docs/adr/0028-idea-document-window.md",
+      "tables": 3
+    },
+    {
+      "file": "docs/adr/0029-v033-automation-parity.md",
+      "tables": 4
+    }
+  ],
+  "relativeLinksChecked": 26,
+  "links": [
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "0.3.3.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "changes/0.3.3-title-details-main-tasks.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../adr/0026-record-title-and-markdown-details.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../adr/0027-multiple-main-tasks.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../adr/0028-idea-document-window.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../adr/0029-v033-automation-parity.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-requirements-review.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-storage-review.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-plan-technical-check.json"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-plan-v04-check.json"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-plan-v05-check.json"
+    },
+    {
+      "source": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "target": "../../adr/0028-idea-document-window.md"
+    },
+    {
+      "source": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "target": "../../adr/0029-v033-automation-parity.md"
+    },
+    {
+      "source": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "target": "../../adr/0027-multiple-main-tasks.md"
+    },
+    {
+      "source": "docs/adr/0026-record-title-and-markdown-details.md",
+      "target": "../stages/changes/0.3.3-title-details-main-tasks.md"
+    },
+    {
+      "source": "docs/adr/0026-record-title-and-markdown-details.md",
+      "target": "../stages/0.3.3-execution-plan.md"
+    },
+    {
+      "source": "docs/adr/0026-record-title-and-markdown-details.md",
+      "target": "0028-idea-document-window.md"
+    },
+    {
+      "source": "docs/adr/0026-record-title-and-markdown-details.md",
+      "target": "0029-v033-automation-parity.md"
+    },
+    {
+      "source": "docs/adr/0027-multiple-main-tasks.md",
+      "target": "../stages/0.3.3-execution-plan.md"
+    },
+    {
+      "source": "docs/adr/0027-multiple-main-tasks.md",
+      "target": "../stages/changes/0.3.3-title-details-main-tasks.md"
+    },
+    {
+      "source": "docs/adr/0027-multiple-main-tasks.md",
+      "target": "0029-v033-automation-parity.md"
+    },
+    {
+      "source": "docs/adr/0028-idea-document-window.md",
+      "target": "0026-record-title-and-markdown-details.md"
+    },
+    {
+      "source": "docs/adr/0028-idea-document-window.md",
+      "target": "0029-v033-automation-parity.md"
+    },
+    {
+      "source": "docs/adr/0029-v033-automation-parity.md",
+      "target": "../stages/0.3.3-execution-plan.md"
+    },
+    {
+      "source": "docs/adr/0029-v033-automation-parity.md",
+      "target": "0026-record-title-and-markdown-details.md"
+    },
+    {
+      "source": "docs/adr/0029-v033-automation-parity.md",
+      "target": "0027-multiple-main-tasks.md"
+    }
+  ],
+  "currentMethods": {
+    "total": 36,
+    "writes": 26,
+    "reads": 10
+  },
+  "proposedMethods": {
+    "total": 41,
+    "writes": 30,
+    "reads": 11,
+    "added": [
+      {
+        "name": "create_idea",
+        "readOnly": false
+      },
+      {
+        "name": "get_idea_details",
+        "readOnly": true
+      },
+      {
+        "name": "update_idea",
+        "readOnly": false
+      },
+      {
+        "name": "create_task",
+        "readOnly": false
+      },
+      {
+        "name": "convert_idea_to_task",
+        "readOnly": false
+      }
+    ]
+  },
+  "packageVersion": "0.3.2",
+  "productionDiff": [],
+  "diffArtifact": "evidence/0.3.3-plan-v05.diff",
+  "productionValidation": "NOT_RUN: documentation-only change; formal implementation awaits coder approval"
+}

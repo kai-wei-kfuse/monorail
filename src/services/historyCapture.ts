@@ -7,7 +7,7 @@ import type { RecordEntry } from '../domain/record/record';
 import type { TimeEntry } from '../domain/timeline/entry';
 import { activityDay } from '../domain/timeline/day';
 import { compareAll, splitSubject } from '../domain/history/compare';
-import type { Captured } from '../domain/history/compare';
+import type { Captured, CapturedRecord } from '../domain/history/compare';
 import type { DayChange, HistoryWrite, Repositories } from '../data/repos';
 import { HISTORY_PARAMS_LIMIT, HISTORY_RETENTION_DAYS, PAGE_OF_PREFIX, SYSTEM_WHY, historyActions } from '../shared/history';
 import type { HistoryChange, HistoryIntent, HistoryObjectType, HistoryRecord, HistorySource, HistoryActionSpec } from '../shared/history';
@@ -21,7 +21,7 @@ export interface CaptureInput {
   at: string; boundaryHour: number; id: () => string;
   before: { state: Record<string, unknown>; settings: Settings };
   after: { state: Record<string, unknown>; settings: Settings; cards: readonly Card[]; tasks: readonly Task[]; entries: readonly TimeEntry[] };
-  changed: { cards: Captured<Card>[]; tasks: Captured<Task>[]; reviews: Captured<Review>[]; records: Captured<RecordEntry>[]; days: DayChange[];
+  changed: { cards: Captured<Card>[]; tasks: Captured<Task>[]; reviews: Captured<Review>[]; records: CapturedRecord[]; days: DayChange[];
     /** 今日任务板：本事务写过的那几天（ADR 0021 第 11 条） */
     plans?: { before: DayPlan; after: DayPlan }[] };
 }
@@ -108,7 +108,8 @@ export function captureHistory(repos: Pick<Repositories, 'history'>, input: Capt
 /* ---------- 快速记录条：先补记、再消费（ADR 0019 第 5 条，执行方案 E8a3 第 3 条） ---------- */
 
 interface Tracker<T> { changed(): Captured<T>[]; rebase(): void }
-export interface Trackers { cards: Tracker<Card>; tasks: Tracker<Task>; reviews: Tracker<Review>; records: Tracker<RecordEntry> }
+interface RecordTracker extends Tracker<RecordEntry> { changed(): CapturedRecord[]; summaryOf?(id: string): { detailsDigest?: string } | null | undefined }
+export interface Trackers { cards: Tracker<Card>; tasks: Tracker<Task>; reviews: Tracker<Review>; records: RecordTracker }
 /** 吸收时要用到的事务能力（Transaction 的子集，避免这里依赖 commit.ts）。 */
 export interface AbsorbTx {
   readonly at: string; readonly settings: Settings; readonly records: RecordEntry[]; readonly cards: Card[]; readonly tasks: Task[];
@@ -142,7 +143,9 @@ export function absorbQuickbarInTx(tx: AbsorbTx, trackers: Trackers, repos: Pick
       const names = { tasks: new Map(tx.tasks.map(t => [t.id, t.name])), cards: new Map(tx.cards.map(c => [c.id, c.content])), entries: new Map<string, string>() };
       const effects = compareAll({ cards: trackers.cards.changed(), tasks: trackers.tasks.changed(), reviews: [], records: [],
         entries: { before: [], after: [] }, state: { before: {}, after: {} }, settings: { before: {}, after: {} }, names });
-      const changes = compareAll({ cards: [], tasks: [], reviews: [], records: [{ id: original.id, before: null, after: original }],
+      const afterDetailsDigest = trackers.records.summaryOf?.(original.id)?.detailsDigest ?? '';
+      const changes = compareAll({ cards: [], tasks: [], reviews: [],
+        records: [{ id: original.id, before: null, after: original, beforeDetailsDigest: '', afterDetailsDigest }],
         entries: { before: [], after: [] }, state: { before: {}, after: {} }, settings: { before: {}, after: {} }, names });
       const action = original.kind === '待办' ? 'quickbar.capture' : 'quickbar.idea';
       const record: HistoryRecord = { version: 1, id: id(), at: original.created_at, day, action, label: specOf(action)!.label,

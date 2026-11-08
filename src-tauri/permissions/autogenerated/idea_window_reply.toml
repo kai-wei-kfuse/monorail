@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-idea-window-reply"
+description = "Enables the idea_window_reply command without any pre-configured scope."
+commands.allow = ["idea_window_reply"]
+
+[[permission]]
+identifier = "deny-idea-window-reply"
+description = "Denies the idea_window_reply command without any pre-configured scope."
+commands.deny = ["idea_window_reply"]

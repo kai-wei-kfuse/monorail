@@ -1,5 +1,5 @@
 import type { RecordEntry, RecordInput } from '../domain/record/record';
-import { createRecord } from '../domain/record/record';
+import { createRecordWithDetails } from '../domain/record/record';
 import type { Card } from '../domain/card/card';
 import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
@@ -16,9 +16,9 @@ export async function saveRecord(ctx: Ctx, record: RecordInput): Promise<void> {
 
 export function saveRecordInTx(tx: Transaction, record: RecordInput): RecordEntry {
   if (tx.records.some(item => item.id === record.id)) throw new Error('记录已经存在');
-  const created = createRecord(record);
-  tx.saveRecord(created);
-  return created;
+  const created = createRecordWithDetails(record);
+  tx.saveRecord(created.record, created.details);
+  return created.record;
 }
 
 export interface CaptureTodoInput {

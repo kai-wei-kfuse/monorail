@@ -21,6 +21,7 @@ export function viaLabel(s: HistorySource): string {
   if (s.kind === 'manual') {
     if (s.via === 'mini') return '小窗';
     if (s.via === 'quickbar') return '快速记录条';
+    if (s.via === 'idea-window') return '想法窗口';
     return s.page && PAGE_LABEL[s.page] ? `主窗口 · ${PAGE_LABEL[s.page]}` : '主窗口';
   }
   if (s.kind === 'system') return TRIGGER_LABEL[s.trigger];

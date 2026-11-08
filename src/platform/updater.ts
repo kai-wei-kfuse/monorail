@@ -13,6 +13,7 @@ export interface UpdatesPort {
   prepareInstall(): Promise<UpdateState>;
   install(): Promise<UpdateState>;
   cancelInstall(error: string): Promise<UpdateState>;
+  focusDirtyWindow?(): Promise<string | null>;
 }
 
 export const nativeUpdates: UpdatesPort = {
@@ -26,4 +27,5 @@ export const nativeUpdates: UpdatesPort = {
   prepareInstall: () => invoke('prepare_update_install'),
   install: () => invoke('install_update'),
   cancelInstall: error => invoke('cancel_update_install', { error }),
+  focusDirtyWindow: () => invoke('focus_dirty_window'),
 };

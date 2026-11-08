@@ -3,6 +3,7 @@ import { activityDay } from '../domain/timeline/day';
 import type { Task } from '../domain/task/task';
 import { inBackpack } from '../domain/task/task';
 import { verifyTaskReopen } from '../domain/task/complete';
+import { computeRecordRevision } from '../domain/record/record';
 import type { RecordEntry } from '../domain/record/record';
 import type { BackpackSlice, QueueCard, PoolTask } from '../store/backpackSlice';
 import type { TimeEntry } from '../domain/timeline/entry';
@@ -13,7 +14,21 @@ import { projectOptions } from '../domain/timeline/project';
 import { coldOffer, doneIdeas } from '../domain/idea/pool';
 import { LOOSE } from '../shared/backpack';
 
-export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEntry[], entries: TimeEntry[], settings: Settings, at: string): BackpackSlice {
+export interface ProjectedRecordSummary {
+  hasDetails: boolean;
+  detailsDigest: string;
+  recordRevision: string;
+}
+
+export function projectBackpack(
+  cards: Card[],
+  tasks: Task[],
+  records: RecordEntry[],
+  entries: TimeEntry[],
+  settings: Settings,
+  at: string,
+  recordSummaries?: ReadonlyMap<string, ProjectedRecordSummary>,
+): BackpackSlice {
   const active = cards.filter(card => card.status === '待做' || card.status === '进行中');
   const queueCard = (card: Card): QueueCard => ({ id: card.id, status: card.status as QueueCard['status'],
     fields: { content: card.content, type: card.type, timeboxMinutes: card.timebox_minutes, blocking: card.blocking,
@@ -81,12 +96,43 @@ export function projectBackpack(cards: Card[], tasks: Task[], records: RecordEnt
       slotLabel: String(task.slot_index).padStart(2, '0'), cards: queue(task.id) })), { taskId: null, name: LOOSE.group, slotLabel: LOOSE.slot, cards: queue(null) }],
     ideas: records.filter(record => record.kind === '想法' && (record.pool === '活跃池' || record.pool === '已转任务'))
       .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))
-      .map(record => ({ id: record.id, text: record.text, tags: record.tags, needs: record.needs,
-        pool: record.pool as '活跃池' | '已转任务', createdAt: record.created_at, lastTouchedAt: record.last_touched_at })),
+      .map(record => {
+        const sum = recordSummaries?.get(record.id);
+        return {
+          id: record.id, text: record.text, tags: record.tags, needs: record.needs,
+          pool: record.pool as '活跃池' | '已转任务', createdAt: record.created_at, lastTouchedAt: record.last_touched_at,
+          hasDetails: sum?.hasDetails ?? false,
+          recordRevision: sum?.recordRevision ?? computeRecordRevision({
+            id: record.id, text: record.text, details_markdown: '', needs: record.needs, tags: record.tags, attachments: record.attachments,
+          }),
+          attachments: record.attachments,
+        };
+      }),
     // ADR 0020：已完成的想法单独一组，按完成时间新到旧
-    doneIdeas: doneIdeas(records).map(record => ({ id: record.id, text: record.text, tags: record.tags, needs: record.needs,
-      completedAt: record.completed_at!, completedBy: record.completed_by ?? { kind: 'manual', agent: null } })),
+    doneIdeas: doneIdeas(records).map(record => {
+      const sum = recordSummaries?.get(record.id);
+      return {
+        id: record.id, text: record.text, tags: record.tags, needs: record.needs,
+        completedAt: record.completed_at!, completedBy: record.completed_by ?? { kind: 'manual', agent: null },
+        hasDetails: sum?.hasDetails ?? false,
+        recordRevision: sum?.recordRevision ?? computeRecordRevision({
+          id: record.id, text: record.text, details_markdown: '', needs: record.needs, tags: record.tags, attachments: record.attachments,
+        }),
+        attachments: record.attachments,
+      };
+    }),
     coldIdeas: coldOffer(records)
-      .map(record => ({ id: record.id, text: record.text, needs: record.needs, coldSince: record.cold_since! })),
+      .map(record => {
+        const sum = recordSummaries?.get(record.id);
+        return {
+          id: record.id, text: record.text, needs: record.needs, coldSince: record.cold_since!,
+          tags: record.tags,
+          hasDetails: sum?.hasDetails ?? false,
+          recordRevision: sum?.recordRevision ?? computeRecordRevision({
+            id: record.id, text: record.text, details_markdown: '', needs: record.needs, tags: record.tags, attachments: record.attachments,
+          }),
+          attachments: record.attachments,
+        };
+      }),
   };
 }

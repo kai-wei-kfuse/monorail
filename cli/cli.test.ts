@@ -17,9 +17,13 @@ import {
   completeTaskItemResult,
   completeTaskResult,
   contextResult,
+  convertIdeaToTaskResult,
+  createIdeaResult,
+  createTaskResult,
   drawTaskItemResult,
   endOriginalTaskResult,
   findItemsResult,
+  getIdeaDetailsResult,
   getRecapResult,
   getTaskDetailsResult,
   getTaskPlanResult,
@@ -35,6 +39,7 @@ import {
   splitTaskItemResult,
   timeSummaryResult,
   timerMutationResult,
+  updateIdeaResult,
   updateTimeEntryResult,
   type ApplicationMethod,
   type ApplicationRequest,
@@ -82,6 +87,9 @@ function createStatefulPeer() {
   const ideas: Array<{
     id: string;
     text: string;
+    details?: string;
+    revision?: number;
+    updated_at?: string;
     tags: string[];
     needs: string | null;
     pool: '活跃池' | '冷库' | '已转任务' | '已完成';
@@ -1088,6 +1096,200 @@ function createStatefulPeer() {
           ],
         };
       }
+
+      case 'create_idea': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'create_idea', rest, () => {
+          const id = randomUUID();
+          const details = req.arguments.details_markdown ?? '';
+          const rev = 'ir3:1111111111111111111111111111111111111111111111111111111111111111';
+          const summary = {
+            id,
+            title: req.arguments.title,
+            tags: ['架构'],
+            needs: req.arguments.needs ?? null,
+            attachments: [] as string[],
+            pool: '活跃池' as const,
+            created_at: now,
+            last_touched_at: now,
+            has_details: details.length > 0,
+            record_revision: rev,
+          };
+          ideas.push({
+            id,
+            text: summary.title,
+            details,
+            revision: 1,
+            updated_at: now,
+            tags: summary.tags,
+            needs: summary.needs,
+            pool: summary.pool,
+            created_at: summary.created_at,
+          });
+          return { idea: summary };
+        });
+      }
+
+      case 'get_idea_details': {
+        const idea = ideas.find(i => i.id === req.arguments.idea_id);
+        if (!idea) {
+          throw new ApplicationError({
+            status: 'error',
+            code: 'IDEA_NOT_FOUND',
+            category: 'not_executed',
+            message: 'IDEA_NOT_FOUND：找不到这个想法',
+            next_step: '先用 find_items 查到准确 ID',
+          });
+        }
+        const details = idea.details ?? '';
+        const rev = `ir3:${String(idea.revision ?? 1).padStart(64, '1')}`;
+        return {
+          as_of: now,
+          operation_id: randomUUID(),
+          idea: {
+            id: idea.id,
+            title: idea.text,
+            tags: idea.tags,
+            needs: idea.needs,
+            attachments: [],
+            pool: idea.pool,
+            created_at: idea.created_at,
+            last_touched_at: idea.updated_at ?? idea.created_at,
+            has_details: details.length > 0,
+            record_revision: rev,
+            details_markdown: details,
+          },
+        };
+      }
+
+      case 'update_idea': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'update_idea', rest, () => {
+          const idea = ideas.find(i => i.id === req.arguments.idea_id);
+          if (!idea) {
+            throw new ApplicationError({
+              status: 'error',
+              code: 'IDEA_NOT_FOUND',
+              category: 'not_executed',
+              message: 'IDEA_NOT_FOUND：找不到这个想法',
+              next_step: '先用 find_items 查到准确 ID',
+            });
+          }
+          const currentRev = `ir3:${String(idea.revision ?? 1).padStart(64, '1')}`;
+          if (req.arguments.record_revision !== currentRev) {
+            throw new ApplicationError({
+              status: 'error',
+              code: 'RECORD_CHANGED',
+              category: 'not_executed',
+              message: `RECORD_CHANGED：想法版本已变`,
+              next_step: '请先调用 get_idea_details 读取最新 record_revision 后重试',
+            });
+          }
+          const nextTitle = req.arguments.title ?? idea.text;
+          const nextDetails =
+            req.arguments.details_markdown !== undefined
+              ? req.arguments.details_markdown.replace(/\r\n?/g, '\n')
+              : (idea.details ?? '');
+          const nextNeeds = req.arguments.needs !== undefined ? req.arguments.needs : idea.needs;
+          const noop =
+            nextTitle === idea.text && nextDetails === (idea.details ?? '') && nextNeeds === idea.needs;
+          if (!noop) {
+            idea.text = nextTitle;
+            idea.details = nextDetails;
+            idea.needs = nextNeeds;
+            idea.revision = (idea.revision ?? 1) + 1;
+            idea.updated_at = now;
+          }
+          const details = idea.details ?? '';
+          const nextRev = `ir3:${String(idea.revision ?? 1).padStart(64, '1')}`;
+          return {
+            noop,
+            idea: {
+              id: idea.id,
+              title: idea.text,
+              tags: idea.tags,
+              needs: idea.needs,
+              attachments: [],
+              pool: idea.pool,
+              created_at: idea.created_at,
+              last_touched_at: idea.updated_at ?? now,
+              has_details: details.length > 0,
+              record_revision: nextRev,
+            },
+          };
+        });
+      }
+
+      case 'create_task': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'create_task', rest, () => {
+          const taskId = randomUUID();
+          const createdIds = (req.arguments.items ?? []).map(() => randomUUID());
+          return {
+            task: {
+              id: taskId,
+              name: req.arguments.name,
+              slot: req.arguments.slot,
+              slot_index: 2,
+              status: '进行中' as const,
+              created_at: now,
+              completed_at: null,
+              bet_ends_at: null,
+              default_project: req.arguments.default_project ?? null,
+            },
+            created_card_ids: createdIds,
+          };
+        });
+      }
+
+      case 'convert_idea_to_task': {
+        const { operation_id, ...rest } = req.arguments;
+        return runWrite(operation_id, 'convert_idea_to_task', rest, () => {
+          const idea = ideas.find(i => i.id === req.arguments.idea_id);
+          if (!idea) {
+            throw new ApplicationError({
+              status: 'error',
+              code: 'IDEA_NOT_FOUND',
+              category: 'not_executed',
+              message: 'IDEA_NOT_FOUND：找不到这个想法',
+              next_step: '先用 find_items 查到准确 ID',
+            });
+          }
+          idea.pool = '已转任务';
+          const taskId = req.arguments.target.kind === 'existing_task' ? req.arguments.target.task_id : randomUUID();
+          const createdIds = req.arguments.items.map(() => randomUUID());
+          const details = idea.details ?? '';
+          const rev = `ir3:${String(idea.revision ?? 1).padStart(64, '1')}`;
+          return {
+            idea: {
+              id: idea.id,
+              title: idea.text,
+              tags: idea.tags,
+              needs: idea.needs,
+              attachments: [],
+              pool: '已转任务' as const,
+              created_at: idea.created_at,
+              last_touched_at: idea.updated_at ?? now,
+              has_details: details.length > 0,
+              record_revision: rev,
+            },
+            task: {
+              id: taskId,
+              name: req.arguments.target.kind === 'new_task' ? req.arguments.target.name : '编译原理主线',
+              slot: req.arguments.target.kind === 'new_task' ? req.arguments.target.slot : ('主线' as const),
+              slot_index: 2,
+              status: '进行中' as const,
+              created_at: now,
+              completed_at: null,
+              bet_ends_at: null,
+              default_project:
+                req.arguments.target.kind === 'new_task' ? (req.arguments.target.default_project ?? null) : '学习',
+            },
+            created_card_ids: createdIds,
+            created_new_task: req.arguments.target.kind === 'new_task',
+          };
+        });
+      }
     }
   }
 
@@ -1247,6 +1449,12 @@ test('CLI usage validation rejects unknown commands, unknown/duplicate flags, co
     { argv: ['recap', 'show', '--period', 'week', '--from', '2026-11-01'] }, // non-custom forbids --from/--to
     { argv: ['history', 'list', '--from-day', '2026-11-08', '--to-day', '2026-11-07'] }, // from_day > to_day
     { argv: ['idea', 'reopen', 'not-a-uuid'] },
+    { argv: ['idea', 'create', '第一行\n第二行'] }, // multiline title rejected
+    { argv: ['idea', 'create', '--stdin', '--details-stdin'], stdin: 'both stdin' }, // stdin conflict
+    { argv: ['idea', 'edit', '11111111-1111-4111-8111-111111111111', '--record-revision', '1'] }, // no edit fields
+    { argv: ['idea', 'edit', '11111111-1111-4111-8111-111111111111', '--record-revision', '1', '--details', 'a', '--clear-details'] }, // details + clear-details conflict
+    { argv: ['task', 'create', '新主线', '--slot', '主线'] }, // missing --item / --items-file
+    { argv: ['idea', 'convert', '11111111-1111-4111-8111-111111111111', '--slot', '主线'] }, // missing --item / --items-file
   ];
 
   for (const c of invalidCases) {
@@ -1551,6 +1759,88 @@ test('CLI reaches all 36 application methods and preserves multiline Chinese tex
   const historyRes = await execCli(['history', 'list', '--source', 'all_automation', '--json'], peer);
   assert.equal(historyRes.exitCode, 0);
   listOperationHistoryResult.parse(JSON.parse(historyRes.stdout).result);
+
+  // 37. idea create (create_idea) with --details-file
+  const ideaCreateRes = await execCli(
+    ['idea', 'create', '--title', '0.3.3 想法长文设计 #架构', '--details-file', 'details.md', '--needs', '整块时间', '--json'],
+    peer,
+    { files: { 'details.md': '## 方案背景\n- 支持标题+正文\n- [外链](https://example.com)' } },
+  );
+  assert.equal(ideaCreateRes.exitCode, 0);
+  const createdIdeaDoc = createIdeaResult.parse(JSON.parse(ideaCreateRes.stdout).result);
+  assert.equal(createdIdeaDoc.data.idea.has_details, true);
+  assert.match(createdIdeaDoc.data.idea.record_revision, /^ir3:/);
+
+  // 38. idea show (get_idea_details)
+  const ideaShowRes = await execCli(['idea', 'show', createdIdeaDoc.data.idea.id, '--json'], peer);
+  assert.equal(ideaShowRes.exitCode, 0);
+  const shownIdea = getIdeaDetailsResult.parse(JSON.parse(ideaShowRes.stdout).result);
+  assert.equal(shownIdea.idea.id, createdIdeaDoc.data.idea.id);
+  assert.match(shownIdea.idea.details_markdown, /方案背景/);
+
+  // 39. idea edit (update_idea) without --record-revision (auto-loads via get_idea_details) and with --details-stdin
+  const ideaEditRes = await execCli(
+    ['idea', 'edit', createdIdeaDoc.data.idea.id, '--title', '0.3.3 想法长文设计（修订版） #架构', '--details-stdin', '--json'],
+    peer,
+    { stdin: '## 修订后正文\r\n保留换行与列表\r\n' },
+  );
+  assert.equal(ideaEditRes.exitCode, 0);
+  const updatedIdeaDoc = updateIdeaResult.parse(JSON.parse(ideaEditRes.stdout).result);
+  assert.equal(updatedIdeaDoc.data.noop, false);
+  assert.equal(updatedIdeaDoc.data.idea.title, '0.3.3 想法长文设计（修订版） #架构');
+
+  // 40. task create (create_task) with --items-file
+  const taskCreateRes = await execCli(
+    [
+      'task',
+      'create',
+      '--name',
+      '第二主线：完成 0.3.3 交付',
+      '--slot',
+      '主线',
+      '--default-project',
+      '工作',
+      '--items-file',
+      'items.json',
+      '--json',
+    ],
+    peer,
+    {
+      files: {
+        'items.json': JSON.stringify([
+          { content: '编写 v3 迁移测试', type: '结果卡', timebox_minutes: null },
+          { content: '运行全量回归套件', type: '时间盒卡', timebox_minutes: 45 },
+        ]),
+      },
+    },
+  );
+  assert.equal(taskCreateRes.exitCode, 0);
+  const createdTask = createTaskResult.parse(JSON.parse(taskCreateRes.stdout).result);
+  assert.equal(createdTask.data.task.slot_index, 2);
+  assert.equal(createdTask.data.created_card_ids.length, 2);
+
+  // 41. idea convert (convert_idea_to_task)
+  const ideaConvertRes = await execCli(
+    [
+      'idea',
+      'convert',
+      createdIdeaDoc.data.idea.id,
+      '--new-task-name',
+      '想法转化主线',
+      '--slot',
+      '主线',
+      '--item',
+      '落地第一步行动卡',
+      '--json',
+    ],
+    peer,
+  );
+  assert.equal(ideaConvertRes.exitCode, 0);
+  const convertedIdeaTask = convertIdeaToTaskResult.parse(JSON.parse(ideaConvertRes.stdout).result);
+  assert.equal(convertedIdeaTask.data.idea.pool, '已转任务');
+  assert.equal(convertedIdeaTask.data.idea.has_details, true);
+  assert.equal(convertedIdeaTask.data.task.slot, '主线');
+  assert.equal(convertedIdeaTask.data.created_new_task, true);
 
   const calledMethods = new Set(peer.calls.map((c) => c.method));
   for (const method of Object.keys(applicationContracts) as ApplicationMethod[]) {

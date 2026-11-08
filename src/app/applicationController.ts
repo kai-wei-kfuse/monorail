@@ -12,10 +12,17 @@ import {
   completeTaskItemResult,
   completeTaskResult,
   contextResult,
+  convertIdeaToTaskData,
+  convertIdeaToTaskResult,
+  createIdeaData,
+  createIdeaResult,
+  createTaskData,
+  createTaskResult,
   drawTaskItemResult,
   endOriginalTaskData,
   endOriginalTaskResult,
   findItemsResult,
+  getIdeaDetailsResult,
   getRecapResult,
   getTaskDetailsResult,
   getTaskPlanResult,
@@ -36,16 +43,32 @@ import {
   saveIdeaResult,
   splitTaskItemData,
   splitTaskItemResult,
+  taskMutationSummarySchema,
   taskPlanBoardSchema,
   timeSummaryResult,
   timerContextSchema,
   timerMutationData,
   timerMutationResult,
   todoResult,
+  updateIdeaData,
+  updateIdeaResult,
 } from '../shared/application';
 import type { z } from 'zod';
 import { captureTodoInTx, saveRecordInTx } from '../services/recordService';
-import { completeIdeaInTx, completedBy, uncompleteIdeaInTx } from '../services/ideaService';
+import {
+  RecordChangedError,
+  completeIdeaInTx,
+  completedBy,
+  convertIdeaInTx,
+  createIdeaInTx,
+  getIdeaDetails,
+  ideaSummaryInTx,
+  normalizeCreateIdeaOperationInput,
+  normalizeUpdateIdeaOperationInput,
+  uncompleteIdeaInTx,
+  updateIdeaInTx,
+} from '../services/ideaService';
+import { compatibleRecordText } from '../domain/record/record';
 import { ideaStatus } from '../domain/idea/pool';
 import {
   addTimeEntryCheckedInTx,
@@ -73,7 +96,14 @@ import {
 } from '../services/planService';
 import { drawFromPlanInSerial } from '../services/dealService';
 import { completeTaskItemInTx, keepGoingCheckedInTx, splitInTx } from '../services/cardService';
-import { completeTaskInTx, reopenTaskInTx, reopenTaskItemInTx } from '../services/backpackService';
+import {
+  MainTaskItemsFullError,
+  TaskCapacityFullError,
+  completeTaskInTx,
+  createTaskWithItemsInTx,
+  reopenTaskInTx,
+  reopenTaskItemInTx,
+} from '../services/backpackService';
 import { query as queryRecap } from '../services/recapService';
 import { isAutomation, shiftDay as shiftHistoryDay } from '../services/historyService';
 import type { Ctx, Snapshot, Transaction } from '../services/commit';
@@ -314,6 +344,33 @@ function readCommittedView(ctx: Ctx): {
   };
 }
 
+class ContextDetailError extends Error {
+  readonly code: string;
+  readonly extraContext: Record<string, JsonValue>;
+  readonly customNextStep?: string;
+  constructor(code: string, message: string, extraContext: Record<string, JsonValue>, customNextStep?: string) {
+    super(`${code}：${message}`);
+    this.name = 'ContextDetailError';
+    this.code = code;
+    this.extraContext = extraContext;
+    this.customNextStep = customNextStep;
+  }
+}
+
+function summarizeTaskMutation(task: Task): z.infer<typeof taskMutationSummarySchema> {
+  return taskMutationSummarySchema.parse({
+    id: task.id,
+    name: task.name,
+    slot: task.slot,
+    slot_index: task.slot_index,
+    status: task.status,
+    created_at: task.created_at,
+    completed_at: task.completed_at ?? null,
+    bet_ends_at: task.bet_ends_at ? task.bet_ends_at.slice(0, 10) : null,
+    default_project: task.default_project,
+  });
+}
+
 function nextStepForCode(code: string): string {
   switch (code) {
     case 'STATE_CHANGED':
@@ -343,9 +400,9 @@ function nextStepForCode(code: string): string {
     case 'CARD_NOT_DRAWABLE':
       return '该事项不在当前可抽取候选集合中；请先调用 get_task_plan 查看 drawable_card_ids 或排入今天任务板';
     case 'TASK_CAPACITY_FULL':
-      return '目标类别背包槽位已满；请调用 get_task_details 查看 make_room_candidates 并显式传入 make_room 腾位';
+      return '目标类别背包槽位已满；请在单轨界面完成、冷藏或放弃一个同类别任务，或（若为恢复任务）调用 get_task_details 查看 make_room_candidates 并传入 make_room';
     case 'MAIN_TASK_ITEMS_FULL':
-      return '主线任务待做事项已达上限；请先完成或移出其他待做事项后再恢复';
+      return '主线任务待做事项已达上限；请先完成或移出其他待做事项后再操作';
     case 'MAKE_ROOM_NOT_NEEDED':
       return '目标任务已在背包进行中或事项已是待做状态，无需腾位；请去掉 make_room 参数后重试';
     case 'INVALID_MAKE_ROOM_TARGET':
@@ -355,7 +412,8 @@ function nextStepForCode(code: string): string {
     case 'TASK_COMPLETION_CHANGED':
       return '任务或事项在完成后已被修改（或任务有完成快照却传入了 completion_id=null）；请调用 get_task_details 检查最新状态';
     case 'TASK_NOT_ACTIVE':
-      return '目标任务不在背包进行中（可能已完成、已冷藏或已放弃）；请先用 get_task_details 检查任务状态';
+    case 'TASK_NOT_IN_BACKPACK':
+      return '目标任务不在当前背包进行中（可能已完成、已冷藏或已放弃）；请先用 find_items 或 get_task_details 检查任务状态';
     case 'TASK_NOT_COMPLETED':
       return '目标任务当前未处于已完成状态，无需重新打开';
     case 'TASK_NOT_REOPENABLE':
@@ -370,19 +428,38 @@ function nextStepForCode(code: string): string {
       return '所选 bucket 不在当前回看周期的可用分桶列表中；请先不传 bucket 调用 get_recap 查看 buckets 列表';
     case 'IDEA_NOT_COMPLETED':
       return '该想法当前不是已完成状态，无法撤销完成';
+    case 'IDEA_NOT_FOUND':
+      return '找不到指定的想法；请先调用 find_items 查到准确的想法 ID';
+    case 'IDEA_ALREADY_CONVERTED':
+      return '该想法已经转为任务事项，无需重复转换';
+    case 'RECORD_CHANGED':
+      return '想法内容修订已变化；请查看 latest_context.idea 摘要，如需核对最新正文请调用 get_idea_details 后再用新 operation_id 与最新 record_revision 提交';
     case 'UNKNOWN_PROJECT':
     case 'RESERVED_PROJECT':
       return '请从 latest_context.options.projects 中选择合法项目名称（或省略以使用「未分类」）';
     case 'OPERATION_CONFLICT':
       return '该 operation_id 已绑定到另一条不同请求；新操作请使用 latest_context.operation_id';
+    case 'INVALID_COMMITTED_RECEIPT':
+      return '该操作已提交落盘，但回执输出结构校验失败；请使用原 operation_id 调用 get_operation_result 核对，切勿换新 operation_id 重复执行';
     default:
       return '请根据错误码与说明修正参数，或检查单轨当前状态后重试';
   }
 }
 
+function parseCommittedResult<T>(schema: z.ZodType<T>, value: unknown): T {
+  const parsed = schema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error(`INVALID_COMMITTED_RECEIPT：已提交操作回执结构不符合共享输出契约（${parsed.error.message}）`);
+  }
+  return parsed.data;
+}
+
 function inferErrorCode(rawMessage: string): string {
+  if (rawMessage.includes('想法不存在')) return 'IDEA_NOT_FOUND';
+  if (rawMessage.includes('已经转为')) return 'IDEA_ALREADY_CONVERTED';
   if (rawMessage.includes('卡片不存在')) return 'CARD_NOT_FOUND';
   if (rawMessage.includes('任务不存在')) return 'TASK_NOT_FOUND';
+  if (rawMessage.includes('任务不在任务池')) return 'TASK_NOT_IN_BACKPACK';
   if (rawMessage.includes('不在背包')) return 'CARD_NOT_IN_BACKPACK';
   if (rawMessage.includes('不在板子上')) return 'CARD_NOT_ON_PLAN';
   if (rawMessage.includes('已经在今天') || rawMessage.includes('已经在明天')) return 'ALREADY_ON_PLAN';
@@ -398,14 +475,44 @@ function enrichError(ctx: Ctx, error: unknown): Error {
   let queueFault: ApplicationFailure | undefined;
   try { assertQueueHealthy(ctx); } catch (failure) { queueFault = applicationFailure(failure); }
   const codeMatch = /^([A-Z][A-Z0-9_]+)[：:]\s*(.*)$/s.exec(rawMessage);
-  const code = codeMatch
-    ? codeMatch[1]
-    : (rawMessage.includes('正在安装更新')
-      ? 'UPDATE_IN_PROGRESS'
-      : queueFault || rawMessage.includes('提交已阻塞')
-        ? queueFault?.code ?? 'JOURNAL_BLOCKED'
-        : inferErrorCode(rawMessage));
+  const code = error instanceof RecordChangedError
+    ? error.code
+    : error instanceof TaskCapacityFullError
+      ? error.code
+      : error instanceof MainTaskItemsFullError
+        ? error.code
+        : error instanceof ContextDetailError
+          ? error.code
+          : codeMatch
+            ? codeMatch[1]
+            : (rawMessage.includes('正在安装更新')
+              ? 'UPDATE_IN_PROGRESS'
+              : queueFault || rawMessage.includes('提交已阻塞')
+                ? queueFault?.code ?? 'JOURNAL_BLOCKED'
+                : inferErrorCode(rawMessage));
   const category = queueFault?.category ?? applicationFailure(new Error(`${code}：${rawMessage}`)).category;
+  const extra: Record<string, JsonValue> = {};
+  if (error instanceof RecordChangedError) {
+    extra.idea = error.idea as unknown as JsonValue;
+  }
+  if (error instanceof TaskCapacityFullError) {
+    extra.task_capacity = {
+      slot: error.slot,
+      limit: error.limit,
+      active_tasks: error.activeTasks,
+    };
+  }
+  if (error instanceof MainTaskItemsFullError) {
+    extra.item_capacity = {
+      task_id: error.taskId,
+      limit: error.limit,
+      active_count: error.activeCount,
+      requested_count: error.requestedCount,
+    };
+  }
+  if (error instanceof ContextDetailError) {
+    Object.assign(extra, error.extraContext);
+  }
   let latestContext: JsonValue | undefined;
   const snap = ctx.snapshot();
   if (!queueFault && snap) {
@@ -420,14 +527,17 @@ function enrichError(ctx: Ctx, error: unknown): Error {
         projects: ['未分类', ...view.settings.lists.projects.map(p => p.name)],
         known_tags: knownTags([...view.entries, ...view.settings.lists.presets, ...view.cards], view.settings.lists.tags),
       },
+      ...extra,
     };
+  } else if (Object.keys(extra).length > 0) {
+    latestContext = { ...extra };
   }
   const structured = {
     status: 'error' as const,
     code,
     category,
     message: rawMessage,
-    next_step: nextStepForCode(code),
+    next_step: error instanceof ContextDetailError && error.customNextStep ? error.customNextStep : nextStepForCode(code),
     ...(latestContext ? { latest_context: latestContext } : {}),
   };
   return new ApplicationError(structured, error);
@@ -605,79 +715,94 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
       }
 
       case 'find_items': {
-        const view = readCommittedView(ctx);
-        const asOf = ctx.now();
-        const kind = request.arguments.kind ?? 'all';
-        const query = request.arguments.query?.trim() ?? '';
-        const includeArchived = request.arguments.include_archived ?? false;
+        return readSerial(ctx, async () => {
+          const view = readCommittedView(ctx);
+          const asOf = ctx.now();
+          const kind = request.arguments.kind ?? 'all';
+          const query = request.arguments.query?.trim() ?? '';
+          const includeArchived = request.arguments.include_archived ?? false;
 
-        const ideas = (kind === 'all' || kind === 'idea')
-          ? view.records
-            .filter(r => r.kind === '想法' && r.pool !== null && (includeArchived || r.pool === '活跃池'))
-            .flatMap(r => {
-              const m = matchesQuery(query, [r.text, r.needs, ...r.tags]);
-              return m.matched ? [{
-                id: r.id, text: r.text, tags: [...r.tags], needs: r.needs,
-                pool: ideaStatus(r)!, created_at: r.created_at, exact_match: m.exact,
-              }] : [];
-            })
-            .sort((a, b) => Number(b.exact_match) - Number(a.exact_match) || b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))
-          : [];
+          const ideas: z.infer<typeof findItemsResult>['ideas'] = [];
+          if (kind === 'all' || kind === 'idea') {
+            const candidateRecords = view.records
+              .filter(r => r.kind === '想法' && r.pool !== null && (includeArchived || r.pool === '活跃池'));
+            for (const r of candidateRecords) {
+              const detail = await ctx.repos.records.getDetails(r.id);
+              if (!detail) {
+                throw new Error(`IDEA_DETAILS_MISSING：想法详情文件缺失（${r.id}）`);
+              }
+              const fullText = compatibleRecordText(r.text, detail.body);
+              const m = matchesQuery(query, [fullText, r.text, detail.body, r.needs, ...r.tags]);
+              if (m.matched) {
+                ideas.push({
+                  id: r.id,
+                  text: fullText,
+                  tags: [...r.tags],
+                  needs: r.needs,
+                  pool: ideaStatus(r)!,
+                  created_at: r.created_at,
+                  exact_match: m.exact,
+                });
+              }
+            }
+            ideas.sort((a, b) => Number(b.exact_match) - Number(a.exact_match) || b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id));
+          }
 
-        const todoCards = (kind === 'all' || kind === 'todo_card')
-          ? view.cards
-            .filter(c => includeArchived || c.status === '待做' || c.status === '进行中')
-            .flatMap(c => {
-              const task = c.task_id ? view.tasks.find(t => t.id === c.task_id) : undefined;
-              const timing = cardTiming(c, task);
-              const m = matchesQuery(query, [c.content, c.content.replace(/[[\]]/g, ''), task?.name, timing.project, ...timing.tags]);
-              if (!m.matched) return [];
-              const slot: '主线' | '支线' | '游离' = task ? task.slot : '游离';
-              return [{
-                id: c.id,
-                content: c.content,
-                status: c.status,
-                type: c.type,
-                task_id: c.task_id,
-                task_name: task?.name ?? LOOSE.name,
-                slot,
-                project: timing.project,
-                tags: timing.tags,
-                due_at: c.due_at,
-                blocking: c.blocking,
-                exact_match: m.exact,
-              }];
-            })
-          : [];
+          const todoCards = (kind === 'all' || kind === 'todo_card')
+            ? view.cards
+              .filter(c => includeArchived || c.status === '待做' || c.status === '进行中')
+              .flatMap(c => {
+                const task = c.task_id ? view.tasks.find(t => t.id === c.task_id) : undefined;
+                const timing = cardTiming(c, task);
+                const m = matchesQuery(query, [c.content, c.content.replace(/[[\]]/g, ''), task?.name, timing.project, ...timing.tags]);
+                if (!m.matched) return [];
+                const slot: '主线' | '支线' | '游离' = task ? task.slot : '游离';
+                return [{
+                  id: c.id,
+                  content: c.content,
+                  status: c.status,
+                  type: c.type,
+                  task_id: c.task_id,
+                  task_name: task?.name ?? LOOSE.name,
+                  slot,
+                  project: timing.project,
+                  tags: timing.tags,
+                  due_at: c.due_at,
+                  blocking: c.blocking,
+                  exact_match: m.exact,
+                }];
+              })
+            : [];
 
-        const tasks = (kind === 'all' || kind === 'task')
-          ? view.tasks
-            .filter(t => includeArchived || inBackpack(t))
-            .flatMap(t => {
-              const m = matchesQuery(query, [t.name, t.default_project]);
-              if (!m.matched) return [];
-              const openCount = view.cards.filter(c => c.task_id === t.id && (c.status === '待做' || c.status === '进行中')).length;
-              return [{
-                id: t.id,
-                name: t.name,
-                slot: t.slot,
-                status: t.status,
-                default_project: t.default_project,
-                open_card_count: openCount,
-                exact_match: m.exact,
-              }];
-            })
-          : [];
+          const tasks = (kind === 'all' || kind === 'task')
+            ? view.tasks
+              .filter(t => includeArchived || inBackpack(t))
+              .flatMap(t => {
+                const m = matchesQuery(query, [t.name, t.default_project]);
+                if (!m.matched) return [];
+                const openCount = view.cards.filter(c => c.task_id === t.id && (c.status === '待做' || c.status === '进行中')).length;
+                return [{
+                  id: t.id,
+                  name: t.name,
+                  slot: t.slot,
+                  status: t.status,
+                  default_project: t.default_project,
+                  open_card_count: openCount,
+                  exact_match: m.exact,
+                }];
+              })
+            : [];
 
-        const totalMatched = ideas.length + todoCards.length + tasks.length;
-        return findItemsResult.parse({
-          as_of: asOf,
-          query,
-          ambiguous: query.length > 0 && totalMatched > 1,
-          ideas,
-          todo_cards: todoCards,
-          tasks,
-        });
+          const totalMatched = ideas.length + todoCards.length + tasks.length;
+          return findItemsResult.parse({
+            as_of: asOf,
+            query,
+            ambiguous: query.length > 0 && totalMatched > 1,
+            ideas,
+            todo_cards: todoCards,
+            tasks,
+          });
+        }, signal);
       }
 
       case 'get_time_summary': {
@@ -710,9 +835,186 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
             id: tx.id(), text: normalized.text, kind: '想法', created_at: tx.at, needs: normalized.needs,
             due_at: null, blocking: false, task_id: null, card_id: null, tags: [], attachments: [],
           });
-          return ideaResult.parse({ id: record.id, text: record.text, created_at: record.created_at, tags: record.tags, pool: record.pool });
+          return ideaResult.parse({ id: record.id, text: normalized.text, created_at: record.created_at, tags: record.tags, pool: record.pool });
         }, undefined, signal, { action: 'auto.save_idea', source });
         return saveIdeaResult.parse({ ...result, next_operation_id: ctx.id() });
+      }
+
+      case 'create_idea': {
+        const args = request.arguments;
+        const normalized = normalizeCreateIdeaOperationInput({
+          title: args.title,
+          details_markdown: args.details_markdown,
+          needs: args.needs,
+        });
+        const intent: HistoryIntent = { action: 'auto.create_idea', source };
+        const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
+          const created = createIdeaInTx(tx, {
+            title: normalized.title,
+            details_markdown: normalized.details_markdown,
+            needs: normalized.needs,
+          });
+          intent.subject = { type: 'record', id: created.record.id };
+          return createIdeaData.parse({ idea: created.idea });
+        }, undefined, signal, intent);
+        return parseCommittedResult(createIdeaResult, { ...result, next_operation_id: ctx.id() });
+      }
+
+      case 'get_idea_details': {
+        const ideaId = request.arguments.idea_id.toLowerCase();
+        const raw = await getIdeaDetails(ctx, ideaId, signal);
+        const idea = {
+          id: raw.id,
+          title: raw.title,
+          tags: raw.tags,
+          needs: raw.needs,
+          attachments: raw.attachments,
+          pool: raw.pool,
+          created_at: raw.created_at,
+          last_touched_at: raw.last_touched_at,
+          has_details: raw.has_details,
+          record_revision: raw.record_revision,
+          details_markdown: raw.details_markdown,
+        };
+        return getIdeaDetailsResult.parse({
+          idea,
+          operation_id: ctx.id(),
+          as_of: ctx.now(),
+        });
+      }
+
+      case 'update_idea': {
+        const args = request.arguments;
+        const normalized = normalizeUpdateIdeaOperationInput({
+          idea_id: args.idea_id,
+          record_revision: args.record_revision,
+          title: args.title,
+          details_markdown: args.details_markdown,
+          needs: args.needs,
+        });
+        const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
+          const outcome = await updateIdeaInTx(tx, {
+            id: normalized.idea_id,
+            recordRevision: normalized.record_revision,
+            ...(normalized.title !== undefined ? { title: normalized.title } : {}),
+            ...(normalized.details_markdown !== undefined ? { details_markdown: normalized.details_markdown } : {}),
+            ...(normalized.needs !== undefined ? { needs: normalized.needs } : {}),
+          });
+          return updateIdeaData.parse({
+            idea: outcome.idea,
+            noop: outcome.noop,
+          });
+        }, undefined, signal, { action: 'auto.update_idea', subject: { type: 'record', id: normalized.idea_id }, source });
+        return parseCommittedResult(updateIdeaResult, { ...result, next_operation_id: ctx.id() });
+      }
+
+      case 'create_task': {
+        const args = request.arguments;
+        const normalized = {
+          name: args.name.trim(),
+          slot: args.slot,
+          default_project: args.default_project?.trim() || null,
+          ...(args.items !== undefined
+            ? {
+                items: args.items.map(item => ({
+                  content: item.content.trim(),
+                  type: item.type,
+                  timebox_minutes: item.type === '时间盒卡' ? item.timebox_minutes : null,
+                })),
+              }
+            : {}),
+        };
+        const intent: HistoryIntent = { action: 'auto.create_task', source };
+        const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
+          const { task: savedTask, items } = await createTaskWithItemsInTx(
+            tx,
+            {
+              name: normalized.name,
+              slot: normalized.slot,
+              makeRoom: null,
+              defaultProject: normalized.default_project,
+              items: normalized.items
+                ? normalized.items.map(item => ({
+                    content: item.content,
+                    type: item.type,
+                    minutes: item.timebox_minutes,
+                  }))
+                : undefined,
+            },
+            { validateProject: true },
+          );
+          intent.subject = { type: 'task', id: savedTask.id };
+          return createTaskData.parse({
+            task: summarizeTaskMutation(savedTask),
+            created_card_ids: items.map(c => c.id),
+          });
+        }, undefined, signal, intent);
+        return createTaskResult.parse({ ...result, next_operation_id: ctx.id() });
+      }
+
+      case 'convert_idea_to_task': {
+        const args = request.arguments;
+        const normalizedTarget:
+          | { kind: 'existing_task'; task_id: string }
+          | { kind: 'new_task'; name: string; slot: '主线' | '支线'; default_project: string | null } =
+          args.target.kind === 'existing_task'
+            ? { kind: 'existing_task', task_id: args.target.task_id.trim() }
+            : {
+                kind: 'new_task',
+                name: args.target.name.trim(),
+                slot: args.target.slot,
+                default_project: args.target.default_project?.trim() || null,
+              };
+        const normalized = {
+          idea_id: args.idea_id.toLowerCase(),
+          record_revision: args.record_revision,
+          target: normalizedTarget,
+          items: args.items.map(item => ({
+            content: item.content.trim(),
+            type: item.type,
+            timebox_minutes: item.type === '时间盒卡' ? item.timebox_minutes : null,
+          })),
+        };
+        const intent: HistoryIntent = { action: 'auto.convert_idea_to_task', subject: { type: 'record', id: normalized.idea_id }, source };
+        const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
+          const createdNewTask = normalized.target.kind === 'new_task';
+          const cardIds = convertIdeaInTx(
+            tx,
+            normalized.idea_id,
+            normalized.target.kind === 'existing_task'
+              ? {
+                  taskId: normalized.target.task_id,
+                  recordRevision: normalized.record_revision,
+                  items: normalized.items.map(item => ({
+                    content: item.content,
+                    type: item.type,
+                    minutes: item.timebox_minutes,
+                  })),
+                }
+              : {
+                  name: normalized.target.name,
+                  slot: normalized.target.slot,
+                  defaultProject: normalized.target.default_project,
+                  recordRevision: normalized.record_revision,
+                  items: normalized.items.map(item => ({
+                    content: item.content,
+                    type: item.type,
+                    minutes: item.timebox_minutes,
+                  })),
+                },
+            { validateProject: true },
+          );
+          const firstCard = tx.cards.find(c => c.id === cardIds[0])!;
+          const finalTask = tx.tasks.find(t => t.id === firstCard.task_id)!;
+          const updatedIdea = tx.records.find(r => r.id === normalized.idea_id)!;
+          return convertIdeaToTaskData.parse({
+            idea: ideaSummaryInTx(tx, updatedIdea),
+            task: summarizeTaskMutation(finalTask),
+            created_card_ids: cardIds,
+            created_new_task: createdNewTask,
+          });
+        }, undefined, signal, intent);
+        return convertIdeaToTaskResult.parse({ ...result, next_operation_id: ctx.id() });
       }
 
       case 'capture_todo': {
@@ -912,8 +1214,13 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
           if (!idea || idea.kind !== '想法') throw new Error(`IDEA_NOT_FOUND：找不到这个想法（${args.idea_id}），请先用 find_items 查到准确 ID`);
           const status = ideaStatus(idea);
           if (status !== '活跃池' && status !== '已完成') throw new Error(`IDEA_NOT_ACTIVE：这个想法当前是「${status}」，只有想法池里的想法能标记完成`);
+          const detail = await tx.readRecordDetails(idea.id);
+          if (!detail) {
+            throw new Error(`IDEA_DETAILS_MISSING：想法详情文件缺失（${idea.id}）`);
+          }
           const { record, noop } = completeIdeaInTx(tx, idea.id, completedBy(source));
-          return completeIdeaData.parse({ id: record.id, text: record.text, status: '已完成', completed_at: record.completed_at, noop });
+          const fullText = compatibleRecordText(record.text, detail.body);
+          return completeIdeaData.parse({ id: record.id, text: fullText, status: '已完成', completed_at: record.completed_at, noop });
         }, undefined, signal, { action: 'auto.complete_idea', subject: { type: 'record', id: normalized.idea_id }, source });
         return completeIdeaResult.parse({ ...result, next_operation_id: ctx.id() });
       }
@@ -924,15 +1231,21 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
         const result = await runOperation(ctx, { id: args.operation_id, command: request.method, input: normalized }, async tx => {
           const idea = tx.records.find(r => r.id.toLowerCase() === normalized.idea_id);
           if (!idea || idea.kind !== '想法') throw new Error(`IDEA_NOT_FOUND：找不到这个想法（${args.idea_id}），请先用 find_items 查到准确 ID`);
+          const detail = await tx.readRecordDetails(idea.id);
+          if (!detail) {
+            throw new Error(`IDEA_DETAILS_MISSING：想法详情文件缺失（${idea.id}）`);
+          }
           const status = ideaStatus(idea);
           if (status === '活跃池') {
-            return reopenIdeaData.parse({ id: idea.id, text: idea.text, pool: '活跃池', noop: true });
+            const fullText = compatibleRecordText(idea.text, detail.body);
+            return reopenIdeaData.parse({ id: idea.id, text: fullText, pool: '活跃池', noop: true });
           }
           if (status !== '已完成') {
             throw new Error(`IDEA_NOT_COMPLETED：这个想法当前是「${status}」，只有已完成的想法能撤销完成`);
           }
           const { record, noop } = uncompleteIdeaInTx(tx, idea.id);
-          return reopenIdeaData.parse({ id: record.id, text: record.text, pool: '活跃池', noop });
+          const fullText = compatibleRecordText(record.text, detail.body);
+          return reopenIdeaData.parse({ id: record.id, text: fullText, pool: '活跃池', noop });
         }, undefined, signal, { action: 'auto.reopen_idea', subject: { type: 'record', id: normalized.idea_id }, source });
         return reopenIdeaResult.parse({ ...result, next_operation_id: ctx.id() });
       }
@@ -1474,7 +1787,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
               status: task.status,
               created_at: task.created_at,
               completed_at: task.completed_at,
-              bet_ends_at: task.bet_ends_at,
+              bet_ends_at: task.bet_ends_at ? task.bet_ends_at.slice(0, 10) : null,
               default_project: task.default_project,
               completion_id: task.completion?.id ?? null,
               reopen_mode: reopenMode,
@@ -1519,7 +1832,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
               slot: outcome.task.slot,
               status: '已完成',
               completed_at: outcome.task.completed_at,
-              bet_ends_at: outcome.task.bet_ends_at,
+              bet_ends_at: outcome.task.bet_ends_at ? outcome.task.bet_ends_at.slice(0, 10) : null,
             },
             expected_state: timer.expected_state,
             timer,
@@ -1565,7 +1878,7 @@ export async function handleApplicationRequest(ctx: Ctx, input: unknown, signal?
               slot: outcome.task.slot,
               slot_index: outcome.task.slot_index!,
               status: '进行中',
-              bet_ends_at: outcome.task.bet_ends_at,
+              bet_ends_at: outcome.task.bet_ends_at ? outcome.task.bet_ends_at.slice(0, 10) : null,
               open_card_count: openCount,
             },
             expected_state: timer.expected_state,

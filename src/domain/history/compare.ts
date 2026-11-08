@@ -12,8 +12,12 @@ import type { HistoryChange, HistoryObjectType, HistorySubject } from '../../sha
 import { SETTING_LABELS } from '../../shared/history';
 
 export interface Captured<T> { id: string; before: T | null; after: T | null }
+export interface CapturedRecord extends Captured<RecordEntry> {
+  beforeDetailsDigest?: string;
+  afterDetailsDigest?: string;
+}
 export interface CompareInput {
-  cards: Captured<Card>[]; tasks: Captured<Task>[]; reviews: Captured<Review>[]; records: Captured<RecordEntry>[];
+  cards: Captured<Card>[]; tasks: Captured<Task>[]; reviews: Captured<Review>[]; records: CapturedRecord[];
   /** 改动过的活动日上，改前、改后的全部条目（按 id 配对，跨日移动也认得出） */
   entries: { before: TimeEntry[]; after: TimeEntry[] };
   state: { before: Record<string, unknown>; after: Record<string, unknown> };
@@ -120,11 +124,34 @@ export function compareAll(input: CompareInput): HistoryChange[] {
     ...objectChanges('card', input.cards, CARD, c => c.content, input.names),
     ...objectChanges('task', input.tasks, TASK, t => t.name, input.names),
     ...objectChanges('record', input.records, RECORD, r => r.text, input.names),
+    ...recordDetailChanges(input.records),
     ...objectChanges('review', input.reviews, REVIEW, r => r.period, input.names),
     ...state,
     ...settingsChanges(input.settings.before, input.settings.after),
     ...planChanges(input.plans ?? [], input.names),
   ];
+}
+
+function recordDetailChanges(items: CapturedRecord[]): HistoryChange[] {
+  const out: HistoryChange[] = [];
+  for (const item of items) {
+    if (item.beforeDetailsDigest === undefined && item.afterDetailsDigest === undefined) continue;
+    const bDigest = item.beforeDetailsDigest ?? '';
+    const aDigest = item.afterDetailsDigest ?? '';
+    if (bDigest === aDigest) continue;
+    const target = (item.after ?? item.before)!;
+    const name = cut(target.text || '（无标题）', 40);
+    if (item.before === null && item.after !== null) {
+      if (aDigest !== '') out.push({ type: 'record', id: item.id, name, field: '详情', before: null, after: '有详情' });
+    } else if (item.before !== null && item.after === null) {
+      if (bDigest !== '') out.push({ type: 'record', id: item.id, name, field: '详情', before: '有详情', after: null });
+    } else {
+      const bShow = bDigest === '' ? '空' : '有详情';
+      const aShow = aDigest === '' ? '空' : (bDigest === '' ? '有详情' : '已更新');
+      out.push({ type: 'record', id: item.id, name, field: '详情', before: bShow, after: aShow });
+    }
+  }
+  return out;
 }
 
 /**

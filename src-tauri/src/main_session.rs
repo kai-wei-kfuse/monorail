@@ -7,6 +7,8 @@ static EPOCH: AtomicU64 = AtomicU64::new(0);
 
 fn next() -> u64 { EPOCH.fetch_add(1, Ordering::SeqCst) + 1 }
 
+pub fn current_main_epoch() -> u64 { EPOCH.load(Ordering::SeqCst).max(1) }
+
 #[tauri::command]
 pub fn begin_main_session() -> u64 { next() }
 

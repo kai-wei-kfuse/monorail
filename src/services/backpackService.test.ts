@@ -216,6 +216,7 @@ it('0.3.2 completeTask & reopenTask: preserves bet_ends_at, snapshots only remai
 it('0.3.2 reopenTask & reopenTaskItem: enforces dynamic mainItems capacity, makeRoom S2 local timer guards, and single-item reopen from completed task', async () => {
   const f = fixture();
   f.ctx.settings.mainItems = 2;
+  f.ctx.settings.mainTasks = 1;
   await seed(
     f,
     [

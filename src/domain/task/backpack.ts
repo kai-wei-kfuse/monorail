@@ -1,13 +1,13 @@
 import { inBackpack } from './task';
 import type { Task } from './task';
+import { canAddTask } from './pool';
 import type { Settings } from '../../shared/settings';
 import type { BackpackSlot } from '../../shared/backpack';
 
 export function putInBackpack(task: Task, slot: BackpackSlot, tasks: Task[], settings: Settings, at: string): Task {
   if (inBackpack(task) && task.slot === slot) return { ...task };
   const active = tasks.filter(item => item.id !== task.id && inBackpack(item));
-  const main = active.filter(item => item.slot === '主线').length, side = active.length - main;
-  if (slot === '主线' ? main >= settings.mainTasks : side >= settings.sideTasks) {
+  if (!canAddTask(active, slot, settings)) {
     throw new Error('背包格已满，请先冷藏或放弃项目');
   }
   const used = new Set(active.map(item => item.slot_index));

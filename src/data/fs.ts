@@ -1,4 +1,8 @@
-export interface FileSnapshot { text: string; version: string }
+import { sha256HexBytes } from '../shared/sha256';
+
+const strictUtf8Decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+
+export interface FileSnapshot { text: string; version: string; byteHash?: string }
 export interface FileSystem {
   read(path: string): Promise<FileSnapshot | null>;
   list(directory: string, recursive?: boolean): Promise<string[]>;
@@ -64,8 +68,9 @@ export async function tauriFs(root: string): Promise<FileSystem> {
     async read(path) {
       const full = resolve(path);
       if (!await fs.exists(full)) return null;
-      const [info, text] = await Promise.all([fs.stat(full), fs.readTextFile(full)]);
-      return { text, version: `${info.mtime?.getTime()}:${info.size}` };
+      const [info, bytes] = await Promise.all([fs.stat(full), fs.readFile(full)]);
+      const text = strictUtf8Decoder.decode(bytes);
+      return { text, version: `${info.mtime?.getTime()}:${info.size}`, byteHash: sha256HexBytes(bytes) };
     },
     async list(directory, recursive = false) {
       const full = directory ? resolve(directory) : root;

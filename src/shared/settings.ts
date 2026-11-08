@@ -1,7 +1,7 @@
 export interface QuickActivity { id: string; name: string; project: string; tags: string[]; mode: '切换' | '插入'; place: '计时条' | '弹层' }
 export interface RestItem { id: string; name: string }
 export const settingDefinitions = {
-  mainTasks: { type: 'number', default: 1, min: 1, max: 3, step: 1, unit: 'slots' },
+  mainTasks: { type: 'number', default: 2, min: 1, max: 3, step: 1, unit: 'slots' },
   sideTasks: { type: 'number', default: 10, min: 1, max: 30, step: 1, unit: 'slots' },
   mainItems: { type: 'number', default: 5, min: 1, max: 10, step: 1, unit: 'items' },
   homeLayout: { type: 'enum', default: 'fused', options: ['split', 'fused'], unit: 'layout' },
@@ -48,10 +48,10 @@ export type SettingValues = { [K in SettingKey]: Value<(typeof settingDefinition
 export type SettingEntry = { [K in SettingKey]: (typeof settingDefinitions)[K] & { key: K } }[SettingKey];
 export const settingEntries = Object.entries(settingDefinitions).map(([key, definition]) => ({ ...definition, key })) as SettingEntry[];
 export type Settings = SettingValues & {
-  schemaVersion: 2;
+  schemaVersion: 3;
   lists: { presets: QuickActivity[]; projects: { name: string; color: string }[]; tags: string[]; restPool: RestItem[]; idleName: string };
 };
 export const defaults: Settings = {
   ...Object.fromEntries(settingEntries.map(entry => [entry.key, entry.default])) as SettingValues,
-  schemaVersion: 2, lists: { presets: [], projects: [], tags: [], restPool: [], idleName: '待机' },
+  schemaVersion: 3, lists: { presets: [], projects: [], tags: [], restPool: [], idleName: '待机' },
 };

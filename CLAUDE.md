@@ -32,7 +32,7 @@
 ## 术语
 - record：输入记录；card：任务卡；task/backpack：任务/背包；project：计时项目。
 - entry：可编辑计时条目；day：活动日；pending：待确认；resume target：回到目标；align：对齐。
-- 数据 schemaVersion 2，tasks/ 与 task_id；迁移冻结 v1 读法，备份、对账后通过一份 journal 切换。
+- 数据 schemaVersion 3（兼容迁移 v1→v2→v3），tasks/ 与 task_id；想法记录 text 存单行标题、body 存 Markdown 详情；迁移先完整备份并校验，再经同一份 journal（state.yaml 首条）原子切换。
 - reconcile：幂等补齐记录生成的卡；InTx：现有事务内编排，不再次排队。
 - journal/transact：可恢复的多文件提交；publish：提交后投影更新。
 

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-idea-window-hello"
+description = "Enables the idea_window_hello command without any pre-configured scope."
+commands.allow = ["idea_window_hello"]
+
+[[permission]]
+identifier = "deny-idea-window-hello"
+description = "Denies the idea_window_hello command without any pre-configured scope."
+commands.deny = ["idea_window_hello"]

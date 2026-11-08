@@ -20,7 +20,7 @@ import type { PlanSlice } from '../store/planSlice';
 import { minutesOnDay, shiftDay } from '../domain/plan/plan';
 import { activeRefInTx } from './tracking/api';
 import type { BackpackSlice } from '../store/backpackSlice';
-import { entityChanges } from './entityChanges';
+import { entityChanges, recordChanges } from './entityChanges';
 import type { SettingsPlatform } from '../platform/settings';
 import type { ReviewSlice } from '../store/reviewSlice';
 import { projectReview } from './reviewProjection';
@@ -62,7 +62,9 @@ export interface Transaction {
   state: AppState; entries: TimeEntry[]; writes: Write[]; notices: Notice[];
   readonly cards: Card[]; readonly tasks: Task[]; readonly reviews: Review[]; readonly records: RecordEntry[];
   random(): number; saveCard(card: Card): void; saveReview(review: Review): void;
-  saveTask(task: Task): void; saveRecord(record: RecordEntry): void; removeRecord(id: string): void;
+  saveTask(task: Task): void; saveRecord(record: RecordEntry, details?: string): void; removeRecord(id: string): void;
+  recordSummary(id: string): { hasDetails: boolean; detailsDigest: string; recordRevision: string } | null;
+  readRecordDetails(id: string): Promise<{ body: string; rawBody: string; recordRevision: string; hasDetails: boolean; detailsDigest: string } | null>;
   saveSettings(settings: Settings): Promise<void>;
   /** 今日任务板（ADR 0021 第 1 条）：今天那份在建事务时预读（同步的 InTx 可用）；「今天」按 tx.at 算。 */
   readonly todayPlan: DayPlan;
@@ -284,8 +286,7 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
     const [entities, taskEntities, reviewEntities, recordEntities] = await Promise.all([ctx.repos.cards.list(), ctx.repos.tasks.list(), ctx.repos.reviews.list(), ctx.repos.records.list()]);
     const cards = entityChanges(ctx.repos.cards, entities), tasks = entityChanges(ctx.repos.tasks, taskEntities);
     const reviews = entityChanges(ctx.repos.reviews, reviewEntities);
-    const records = entityChanges(ctx.repos.records, recordEntities, (record, original) =>
-      !original || record.text !== original.value.text ? record.text : undefined);
+    const records = recordChanges(ctx.repos.records, recordEntities);
     let settings = structuredClone(ctx.settings);
     let settingsWrite: Write | undefined;
     // 今日任务板：载入时的原文留着做 journal 的 before；改过的才写（ADR 0021 第 1 条）
@@ -310,7 +311,11 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
         cards.save(previous ? { ...card, progress_noted_at: previous.progress_note !== card.progress_note
           ? commandAt : previous.progress_noted_at } : card);
       }, saveReview: review => reviews.save(review),
-      saveTask: task => tasks.save(task), saveRecord: record => records.save(record), removeRecord: id => records.remove(id),
+      saveTask: task => tasks.save(task),
+      saveRecord: (record, details) => records.save(record, details),
+      removeRecord: id => records.remove(id),
+      recordSummary: id => records.summaryOf(id),
+      readRecordDetails: id => records.readTargetDetails(id),
       async saveSettings(value) { settingsWrite = await ctx.repos.settings.write(value); settings = structuredClone(value); },
       get todayPlan() { return plans.get(todayKey)!.value; },
       async plan(day) { return (await loadPlan(day)).value; },
@@ -385,7 +390,7 @@ function execute<T>(ctx: Ctx | Transaction, work: (tx: Transaction) => Promise<T
       const entriesSnapshot = ctx.repos.times.snapshot();
       const home = projectHome({ cards: tx.cards, tasks: tx.tasks, reviews: tx.reviews, state: tx.state, settings: ctx.settings, entries: entriesSnapshot, at: ctx.now(), version: ++queue.version,
         planToday: plans.get(todayKey)!.value });
-      const backpack = projectBackpack(tx.cards, tx.tasks, tx.records, entriesSnapshot, ctx.settings, ctx.now());
+      const backpack = projectBackpack(tx.cards, tx.tasks, tx.records, entriesSnapshot, ctx.settings, ctx.now(), records.summaries());
       const review = projectReview({ cards: tx.cards, tasks: tx.tasks, records: tx.records, reviews: tx.reviews, entries: entriesSnapshot, state: tx.state, settings: ctx.settings, at: ctx.now() });
       const plan = projectPlan({ today: plans.get(todayKey)!.value, tomorrow: plans.get(shiftDay(todayKey, 1))!.value, cards: tx.cards, tasks: tx.tasks,
         entries: entriesSnapshot, runningCard: activeRefInTx(tx), boundaryHour: ctx.settings.dayBoundaryHour, at: ctx.now() });

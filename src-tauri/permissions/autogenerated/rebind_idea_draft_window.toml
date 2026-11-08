@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-rebind-idea-draft-window"
+description = "Enables the rebind_idea_draft_window command without any pre-configured scope."
+commands.allow = ["rebind_idea_draft_window"]
+
+[[permission]]
+identifier = "deny-rebind-idea-draft-window"
+description = "Denies the rebind_idea_draft_window command without any pre-configured scope."
+commands.deny = ["rebind_idea_draft_window"]

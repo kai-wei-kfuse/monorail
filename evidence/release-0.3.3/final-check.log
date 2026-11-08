@@ -1,0 +1,72 @@
+
+> pixel-record@0.3.3 check
+> tsc --noEmit && npm run mcp:check && eslint src client cli mcp && npm test && npm run mcp:build && npm run mcp:smoke && npm run cli:smoke
+
+
+> pixel-record@0.3.3 mcp:check
+> tsc --noEmit -p mcp/tsconfig.json
+
+
+> pixel-record@0.3.3 test
+> node test-runner.mjs
+
+
+ RUN  v5.0.5 C:/Users/kai_wei/Documents/1026(4)/app
+
+
+ Test Files  104 passed (104)
+      Tests  780 passed (780)
+   Start at  00:45:24
+   Duration  16.84s (tests 48%, import 33%, transform 18%, worker 1%)
+
+    Isolate  104 workers spawned · ~534ms startup each (spawn + environment, per file)
+             at least ~4.51s faster with isolate: false — reuses workers across files instead of one per file
+
+
+> pixel-record@0.3.3 mcp:build
+> node scripts/build-mcp.mjs
+
+
+> pixel-record@0.3.3 mcp:smoke
+> node --test --test-timeout=60000 mcp/compatibility.test.ts mcp/windowsLauncher.test.ts
+
+✔ legacy stdio: discovery, save, validation and desktop failures (1641.2616ms)
+✔ legacy http: discovery, save, validation and desktop failures (1410.0486ms)
+✔ modern stdio: discovery, save, validation and desktop failures (1717.5605ms)
+✔ modern http: discovery, save, validation and desktop failures (601.9354ms)
+✔ ApplicationClient validates input before transport and rejects malformed transport responses (1.8881ms)
+✔ A3 mixed entrypoints: MCP and CLI share state, replay receipts across entrypoints, and reject stale timer state without silent retry (51.5851ms)
+✔ EBUSY is a busy existing host and never starts another desktop process (2.4105ms)
+✔ HTTP rejects untrusted browser origins and Host before business dispatch (21.0867ms)
+✔ pipe client distinguishes setup_required, corrupted config, startup failure, cancellation and coalesced --background launch (72.2108ms)
+✔ self-contained dist-mcp/monorail-mcp.mjs runs from a clean path with spaces and Chinese characters over stdio and HTTP (1697.2513ms)
+✔ Windows independent launcher reports WMI launch failure and preserves literal paths (1804.2634ms)
+✔ Windows independent launcher observes a real target that exits before readiness (2413.7575ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8106.5542
+
+> pixel-record@0.3.3 cli:smoke
+> node --test --test-timeout=60000 cli/cli.test.ts
+
+✔ CLI --help and --version (human and --json) succeed with exit 0 without touching the application client or starting background host (6.8292ms)
+✔ CLI usage validation rejects unknown commands, unknown/duplicate flags, conflicting text sources, missing timezone offsets and file errors with exit code 2 before calling backend (9.7299ms)
+✔ CLI reaches all 36 application methods and preserves multiline Chinese text and shell metacharacters (& | ` $()) across positional, --text-file, and --stdin (84.6572ms)
+✔ CLI idempotent retry (§5.2) replays committed timer mutations after state advances and rejects conflicting business parameters (1.5149ms)
+✔ CLI maps exit codes 3 (business rejection), 4 (environment/setup), 5 (result_unknown + operation_id preservation), and 130 (cancelled before send) (1.1748ms)
+✔ self-contained dist-cli/monorail-cli.mjs and dist-mcp/monorail-mcp.mjs run from a clean directory with spaces and Chinese characters, share state, and CLI bundle excludes @modelcontextprotocol (824.2504ms)
+✔ origin (ADR 0019 §6) travels as an optional top-level request field: per-call wins over the client default, absent stays absent, bad values are dropped instead of failing the call (2.2245ms)
+✔ caller agent (ADR 0019 §6): --agent / MONORAIL_AGENT win over known env variables, otherwise none; every request of one process carries the same origin (2.7439ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1297.0164

@@ -224,10 +224,14 @@ pub fn prepare_update_install(app: tauri::AppHandle) -> Result<Snapshot, String>
                     store.fail(error.clone());
                     return Err(error);
                 }
-                if let Err(error) = super::quick_save::begin_prepare_install(&app) {
-                    store.session = Session::Ready(candidate, bytes);
-                    return Err(error);
-                }
+                let prep_req_id = match super::quick_save::begin_prepare_install(&app) {
+                    Ok(id) => id,
+                    Err(error) => {
+                        store.session = Session::Ready(candidate, bytes);
+                        return Err(error);
+                    }
+                };
+                store.install_check_request_id = Some(prep_req_id);
                 store.session = Session::Preparing(candidate, bytes);
                 store.error = None;
                 store.step(Step::Commits);
@@ -246,7 +250,9 @@ pub fn cancel_update_install(app: tauri::AppHandle, error: String) -> Result<Sna
     update_state::change(&app, |store| {
         match std::mem::replace(&mut store.session, Session::Idle) {
             Session::Preparing(candidate, bytes) | Session::Ready(candidate, bytes) => {
-                super::quick_save::cancel_install(&app)?;
+                if let Some(req_id) = store.install_check_request_id.take() {
+                    super::quick_save::cancel_install_with_request(&app, Some(&req_id))?;
+                }
                 store.session = Session::Ready(candidate, bytes);
                 store.fail(error);
                 Ok(())
@@ -261,20 +267,23 @@ pub fn cancel_update_install(app: tauri::AppHandle, error: String) -> Result<Sna
 
 #[tauri::command]
 pub async fn install_update(app: tauri::AppHandle) -> Result<Snapshot, String> {
-    let (_, (candidate, bytes, channel, intent)) = update_state::transition(&app, |store| {
+    let (_, (candidate, bytes, channel, intent, prep_req_id)) = update_state::transition(&app, |store| {
         match std::mem::replace(&mut store.session, Session::Idle) {
             Session::Preparing(candidate, bytes) => {
                 if let Err(error) = store.verify_candidate_allowed(&candidate) {
-                    let _ = super::quick_save::cancel_install(&app);
+                    if let Some(req_id) = store.install_check_request_id.take() {
+                        let _ = super::quick_save::cancel_install_with_request(&app, Some(&req_id));
+                    }
                     store.session = Session::Idle;
                     store.downloaded = 0;
                     store.total = None;
                     store.fail(error.clone());
                     return Err(error);
                 }
+                let prep_req_id = store.install_check_request_id.clone();
                 store.session = Session::Finishing(candidate.clone());
                 store.step(Step::Draft);
-                Ok((candidate, bytes, store.selected_channel, store.intent))
+                Ok((candidate, bytes, store.selected_channel, store.intent, prep_req_id))
             }
             previous => {
                 store.session = previous;
@@ -283,8 +292,19 @@ pub async fn install_update(app: tauri::AppHandle) -> Result<Snapshot, String> {
         }
     })?;
     let current_version = app.package_info().version.to_string();
+    let mut owned_req_id = prep_req_id.clone();
     let result = async {
-        super::quick_save::prepare_install(&app).await?;
+        match super::quick_save::prepare_install(&app, prep_req_id.as_deref()).await {
+            Ok(check_req_id) => {
+                owned_req_id = Some(check_req_id);
+            }
+            Err((maybe_owned, err)) => {
+                if maybe_owned.is_some() {
+                    owned_req_id = maybe_owned;
+                }
+                return Err(err);
+            }
+        }
         update_state::step(&app, Step::Lifecycle)?;
         let lifecycle_json = super::power::checkpoint_snapshot()?;
         let reminders_json = super::reminders::snapshot_bytes(&app)?;
@@ -316,8 +336,11 @@ pub async fn install_update(app: tauri::AppHandle) -> Result<Snapshot, String> {
     }
     .await;
     // On Windows the successful path exits the process after launching the verified installer.
-    super::quick_save::cancel_install(&app)?;
+    if let Some(req_id) = owned_req_id.as_deref() {
+        super::quick_save::cancel_install_with_request(&app, Some(req_id))?;
+    }
     update_state::change(&app, |store| {
+        store.install_check_request_id = None;
         store.session = Session::Ready(candidate, bytes);
         if let Err(error) = result {
             store.fail(error);

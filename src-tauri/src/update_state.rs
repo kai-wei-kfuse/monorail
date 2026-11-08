@@ -160,6 +160,7 @@ pub struct Store {
     pub permit: Option<TargetPermit>,
     pub inspected_release: Option<ReleaseInfo>,
     pub last_backup: Option<BackupInfo>,
+    pub install_check_request_id: Option<String>,
     pub step: Step,
     pub downloaded: u64,
     pub total: Option<u64>,

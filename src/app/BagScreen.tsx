@@ -22,6 +22,7 @@ import { startCard } from '../services/homeService';
 import { checkComplete, completeItem, pass } from '../services/cardService';
 import { changeLists } from '../services/settingsService';
 import type { HistorySource } from '../shared/history';
+import type { IdeaInitialEditDraft } from '../shared/ideaWindow';
 
 const HOME: HistorySource = { kind: 'manual', via: 'main', page: 'home' };
 type Ask = { kind: 'plan' } | { kind: 'done' } | { kind: 'blocked'; reason: 'inserting' | 'rest' } | { kind: 'carry' } | null;
@@ -37,10 +38,13 @@ export interface BagStartPresentation {
  * 背包抽屉和抽卡的接线（ADR 0021 第 2 条）：数据来自 store 的 backpack / plan 投影，动作走 backpack / plan / idea / deal service。
  * 取代原来的背包页（BackpackScreen）。抽卡：drawFromPlan 只读拿结果，翻卡演完点〔开始〕走 startFromBag，〔换一张〕走 skipCard 再抽一次。
  */
-export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, onBagStarted, report, onInfo, children }:
+export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, onBagStarted, onOpenIdeaWindow, onIdeaEditDirtyChange, maintenanceLocked, report, onInfo, children }:
   { ctx: Ctx; open: boolean; onOpen: () => void; onClose: () => void;
     /** 外壳给的抽卡请求（首页〔今日任务板〕旁的抽卡、板子底部〔抽一张〕）：每次变成新值就抽一次 */ drawAt: string | null; onDrawn: () => void;
     onBagStarted?: (req: BagStartPresentation) => void;
+    onOpenIdeaWindow?: (recordId: string, title?: string, initialDraft?: IdeaInitialEditDraft | null) => void;
+    onIdeaEditDirtyChange?: (dirty: boolean) => void;
+    maintenanceLocked?: boolean;
     report: (error: unknown) => void; onInfo?: (title: string, text: string) => void; children: ReactNode }) {
   const view = useStore(appStore, s => s.backpack), planView = useStore(appStore, s => s.plan), home = useStore(appStore, s => s.home), cards = useStore(appStore, s => s.cards);
   // 设置从 store 读：改了设置就跟着重新渲染（不靠别的投影顺带刷新）
@@ -108,6 +112,7 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, onBagSt
     interruptedCardId: home.insert?.over.kind === 'card' ? home.insert.over.cardId : null,
     pendingCardId: home.pending && home.card ? home.card.id : null,
     activeOrPausedCardId: home.card?.id ?? null,
+    maintenanceLocked,
     now: home.insert ? { title: home.insert.name, startedAt: home.insert.startedAt ?? new Date().toISOString() }
       : running ? { title: home.card?.status === '进行中' ? home.card.content : running.description, startedAt: running.startedAt } : null,
   };
@@ -139,6 +144,10 @@ export function BagScreen({ ctx, open, onOpen, onClose, drawAt, onDrawn, onBagSt
       onInfo?.(`已完成「${text.length > 16 ? text.slice(0, 15) + '…' : text}」`, '收进「已完成」；在那里可以撤销。');
     }),
     uncompleteIdea: ideaId => call(() => ideas.uncomplete(ctx, ideaId, now())),
+    loadIdeaDetails: ideaId => ideas.getIdeaDetails(ctx, ideaId),
+    updateIdea: input => ideas.updateIdea(ctx, input, now()),
+    openIdeaWindow: onOpenIdeaWindow,
+    onIdeaEditDirtyChange: onIdeaEditDirtyChange,
     createProject: name => call(() => preset.createProject(ctx, name, now())),
     createTag: tag => call(() => ctx.settings.lists.tags.includes(tag) ? Promise.resolve() : changeLists(ctx, { tags: [...ctx.settings.lists.tags, tag] }, now(), HOME)),
   };

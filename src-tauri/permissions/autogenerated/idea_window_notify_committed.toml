@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-idea-window-notify-committed"
+description = "Enables the idea_window_notify_committed command without any pre-configured scope."
+commands.allow = ["idea_window_notify_committed"]
+
+[[permission]]
+identifier = "deny-idea-window-notify-committed"
+description = "Denies the idea_window_notify_committed command without any pre-configured scope."
+commands.deny = ["idea_window_notify_committed"]

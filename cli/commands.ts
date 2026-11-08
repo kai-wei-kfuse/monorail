@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { operationId } from '../src/shared/operation.ts';
-import type { ApplicationMethod } from '../src/shared/application.ts';
+import { taskItemInputSchema, type ApplicationMethod, type TaskItemInput } from '../src/shared/application.ts';
 import { ApplicationError, type ApplicationFailure } from '../src/shared/appError.ts';
 import { AGENT_RULES_NEXT_STEP } from '../src/shared/agentRules.ts';
 
@@ -80,6 +80,32 @@ type ParsedCommandBody =
   | {
       kind: 'call';
       json: boolean;
+      method: 'create_idea';
+      title: string;
+      detailsMarkdown?: string;
+      needs?: string;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'get_idea_details';
+      ideaId: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'update_idea';
+      ideaId: string;
+      recordRevision?: string;
+      title?: string;
+      detailsMarkdown?: string;
+      needs?: string | null;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
       method: 'complete_idea';
       ideaId: string;
       operationId?: string;
@@ -89,6 +115,28 @@ type ParsedCommandBody =
       json: boolean;
       method: 'reopen_idea';
       ideaId: string;
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'convert_idea_to_task';
+      ideaId: string;
+      recordRevision?: string;
+      target:
+        | { kind: 'existing_task'; task_id: string }
+        | { kind: 'new_task'; name: string; slot: '主线' | '支线'; default_project?: string };
+      items: TaskItemInput[];
+      operationId?: string;
+    }
+  | {
+      kind: 'call';
+      json: boolean;
+      method: 'create_task';
+      name: string;
+      slot: '主线' | '支线';
+      defaultProject?: string;
+      items?: TaskItemInput[];
       operationId?: string;
     }
   | {
@@ -594,6 +642,128 @@ async function resolveOptionalNoteInput(
   }
 }
 
+async function resolveOptionalDetailsInput(
+  raw: RawFlags,
+  options: ParseOptions,
+  allowClear = false,
+): Promise<string | undefined> {
+  const detailsFile = raw.singles.get('--details-file');
+  const hasStdin = raw.booleans.has('--details-stdin');
+  const hasClear = allowClear && raw.booleans.has('--clear-details');
+
+  const sourceCount = (detailsFile !== undefined ? 1 : 0) + (hasStdin ? 1 : 0) + (hasClear ? 1 : 0);
+  if (sourceCount === 0) return undefined;
+  if (sourceCount > 1) {
+    throw new CliUsageError(
+      allowClear
+        ? 'USAGE_ERROR：详情输入来源互斥；--details-file、--details-stdin 与 --clear-details 只能三选一'
+        : 'USAGE_ERROR：详情输入来源互斥；--details-file 与 --details-stdin 只能二选一',
+    );
+  }
+  if (hasClear) {
+    return '';
+  }
+  if (detailsFile !== undefined) {
+    if (detailsFile.trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：--details-file 路径不能为空');
+    }
+    const reader = options.readTextFile ?? defaultReadTextFile;
+    try {
+      return reader(detailsFile);
+    } catch (error) {
+      if (error instanceof CliUsageError) throw error;
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new CliUsageError(`USAGE_ERROR：无法读取文件 "${detailsFile}"：${msg}`);
+    }
+  }
+  const stdinReader = options.readStdin ?? defaultReadStdin;
+  try {
+    return await stdinReader();
+  } catch (error) {
+    if (error instanceof CliUsageError) throw error;
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new CliUsageError(`USAGE_ERROR：无法读取标准输入：${msg}`);
+  }
+}
+
+const taskSlotSchema = z.enum(['主线', '支线']);
+const taskItemsArraySchema = z.array(taskItemInputSchema).min(1, '事项列表至少需要包含 1 项');
+
+function parseTaskItemsJson(rawJson: string, sourceLabel: string): TaskItemInput[] {
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(rawJson);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new CliUsageError(
+      `USAGE_ERROR：${sourceLabel} JSON 解析失败：${msg}；请提供合法的 TaskItemInput 数组 JSON，如 [{"content":"...","type":"结果卡","timebox_minutes":null}]`,
+    );
+  }
+  const parsed = taskItemsArraySchema.safeParse(decoded);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    throw new CliUsageError(
+      `USAGE_ERROR：${sourceLabel} 事项格式无效（${issue ? `${issue.path.join('.') || 'items'}: ${issue.message}` : '不符合 TaskItemInput[] 契约'}）`,
+    );
+  }
+  return parsed.data;
+}
+
+async function resolveTaskItemsInput(
+  raw: RawFlags,
+  options: ParseOptions,
+  required: boolean,
+): Promise<TaskItemInput[] | undefined> {
+  const itemList = raw.multis.get('--item');
+  const itemsFile = raw.singles.get('--items-file');
+  const hasStdin = raw.booleans.has('--items-stdin');
+
+  const sourceCount = (itemList !== undefined ? 1 : 0) + (itemsFile !== undefined ? 1 : 0) + (hasStdin ? 1 : 0);
+  if (sourceCount === 0) {
+    if (required) {
+      throw new CliUsageError('USAGE_ERROR：必须提供至少一项任务事项（--item <content>、--items-file <path> 或 --items-stdin 三选一）');
+    }
+    return undefined;
+  }
+  if (sourceCount > 1) {
+    throw new CliUsageError('USAGE_ERROR：任务事项来源互斥；--item、--items-file 与 --items-stdin 只能三选一');
+  }
+  if (itemList !== undefined) {
+    return itemList.map((rawContent, idx) => {
+      const content = rawContent.trim();
+      if (!content) {
+        throw new CliUsageError(`USAGE_ERROR：第 ${idx + 1} 个 --item 内容不能为空白`);
+      }
+      return { content, type: '结果卡' as const, timebox_minutes: null };
+    });
+  }
+  if (itemsFile !== undefined) {
+    if (itemsFile.trim().length === 0) {
+      throw new CliUsageError('USAGE_ERROR：--items-file 路径不能为空');
+    }
+    const reader = options.readTextFile ?? defaultReadTextFile;
+    let rawText: string;
+    try {
+      rawText = reader(itemsFile);
+    } catch (error) {
+      if (error instanceof CliUsageError) throw error;
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new CliUsageError(`USAGE_ERROR：无法读取文件 "${itemsFile}"：${msg}`);
+    }
+    return parseTaskItemsJson(rawText, `--items-file (${itemsFile})`);
+  }
+  const stdinReader = options.readStdin ?? defaultReadStdin;
+  let rawStdin: string;
+  try {
+    rawStdin = await stdinReader();
+  } catch (error) {
+    if (error instanceof CliUsageError) throw error;
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new CliUsageError(`USAGE_ERROR：无法读取标准输入：${msg}`);
+  }
+  return parseTaskItemsJson(rawStdin, '--items-stdin');
+}
+
 function parseMakeRoomOption(raw: RawFlags): MakeRoomOption | undefined {
   const combined = raw.singles.get('--make-room');
   const actionFlag = raw.singles.get('--make-room-action');
@@ -774,6 +944,181 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
 
   if (cmd === 'idea') {
     const [sub, ...args] = subTokens;
+    if (sub === 'create') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--details-stdin']),
+        singleFlags: new Set(['--title', '--details-file', '--needs', '--operation-id']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length > 0) {
+        throw new CliUsageError(
+          `USAGE_ERROR：idea create 不接受位置参数（收到 "${raw.positionals[0]}"）；请使用 --title <title> 与可选 --details-file <path> / --details-stdin`,
+        );
+      }
+      const title = raw.singles.get('--title') ?? '';
+      if (title.includes('\n') || title.includes('\r')) {
+        throw new CliUsageError('USAGE_ERROR：--title 必须是单行文本，不能包含换行');
+      }
+      const detailsMarkdown = await resolveOptionalDetailsInput(raw, options, false);
+      if (title.trim().length === 0 && (detailsMarkdown ?? '').trim().length === 0) {
+        throw new CliUsageError(
+          'USAGE_ERROR：idea create 至少需要提供非空的 --title <title> 或通过 --details-file / --details-stdin 提供非空详情正文',
+        );
+      }
+      const needs = raw.singles.get('--needs');
+      return {
+        kind: 'call',
+        json,
+        method: 'create_idea',
+        title,
+        ...(detailsMarkdown !== undefined ? { detailsMarkdown } : {}),
+        ...(needs !== undefined ? { needs } : {}),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+    if (sub === 'show') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(),
+        singleFlags: new Set(),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1) {
+        throw new CliUsageError(
+          `USAGE_ERROR：idea show 需要且只接受 1 个想法 ID（收到 ${raw.positionals.length} 个）；先用 monorail find --kind idea 查到 ID`,
+        );
+      }
+      const ideaId = z.uuid().safeParse(raw.positionals[0]);
+      if (!ideaId.success) {
+        throw new CliUsageError(`USAGE_ERROR：想法 ID 必须是 UUID（收到 "${raw.positionals[0]}"）`);
+      }
+      return { kind: 'call', json, method: 'get_idea_details', ideaId: ideaId.data };
+    }
+    if (sub === 'edit') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--details-stdin', '--clear-details', '--clear-needs']),
+        singleFlags: new Set(['--title', '--details-file', '--needs', '--record-revision', '--operation-id']),
+        multiFlags: new Set(),
+      });
+      if (raw.positionals.length !== 1) {
+        throw new CliUsageError(
+          `USAGE_ERROR：idea edit 需要且只接受 1 个想法 ID（收到 ${raw.positionals.length} 个）；先用 monorail find --kind idea 查到 ID`,
+        );
+      }
+      const ideaId = z.uuid().safeParse(raw.positionals[0]);
+      if (!ideaId.success) {
+        throw new CliUsageError(`USAGE_ERROR：想法 ID 必须是 UUID（收到 "${raw.positionals[0]}"）`);
+      }
+      const title = raw.singles.get('--title');
+      if (title !== undefined && (title.includes('\n') || title.includes('\r'))) {
+        throw new CliUsageError('USAGE_ERROR：--title 必须是单行文本，不能包含换行');
+      }
+      const detailsMarkdown = await resolveOptionalDetailsInput(raw, options, true);
+      const rawNeeds = raw.singles.get('--needs');
+      const clearNeeds = raw.booleans.has('--clear-needs');
+      if (rawNeeds !== undefined && clearNeeds) {
+        throw new CliUsageError('USAGE_ERROR：--needs 不能与 --clear-needs 同时使用');
+      }
+      const needs: string | null | undefined = clearNeeds ? null : rawNeeds;
+      if (title === undefined && detailsMarkdown === undefined && needs === undefined) {
+        throw new CliUsageError(
+          'USAGE_ERROR：idea edit 至少需要修改一项：--title、--details-file / --details-stdin / --clear-details、--needs 或 --clear-needs',
+        );
+      }
+      const rawRev = raw.singles.get('--record-revision');
+      if (rawRev !== undefined && rawRev.trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：--record-revision 不能为空字符串');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'update_idea',
+        ideaId: ideaId.data,
+        ...(rawRev !== undefined ? { recordRevision: rawRev.trim() } : {}),
+        ...(title !== undefined ? { title } : {}),
+        ...(detailsMarkdown !== undefined ? { detailsMarkdown } : {}),
+        ...(needs !== undefined ? { needs } : {}),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
+    if (sub === 'convert') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--items-stdin']),
+        singleFlags: new Set([
+          '--task-id',
+          '--new-task-name',
+          '--slot',
+          '--default-project',
+          '--items-file',
+          '--record-revision',
+          '--operation-id',
+        ]),
+        multiFlags: new Set(['--item']),
+      });
+      if (raw.positionals.length !== 1) {
+        throw new CliUsageError(
+          `USAGE_ERROR：idea convert 需要且只接受 1 个想法 ID（收到 ${raw.positionals.length} 个）；先用 monorail find --kind idea 查到 ID`,
+        );
+      }
+      const ideaId = z.uuid().safeParse(raw.positionals[0]);
+      if (!ideaId.success) {
+        throw new CliUsageError(`USAGE_ERROR：想法 ID 必须是 UUID（收到 "${raw.positionals[0]}"）`);
+      }
+      const taskId = raw.singles.get('--task-id');
+      const newTaskName = raw.singles.get('--new-task-name');
+      const rawSlot = raw.singles.get('--slot');
+      const defaultProject = raw.singles.get('--default-project');
+      if (taskId !== undefined && (newTaskName !== undefined || rawSlot !== undefined || defaultProject !== undefined)) {
+        throw new CliUsageError(
+          'USAGE_ERROR：--task-id（放入现有任务）不能与 --new-task-name、--slot 或 --default-project（新建任务）同时使用',
+        );
+      }
+      let target:
+        | { kind: 'existing_task'; task_id: string }
+        | { kind: 'new_task'; name: string; slot: '主线' | '支线'; default_project?: string };
+      if (taskId !== undefined) {
+        if (taskId.trim().length === 0) {
+          throw new CliUsageError('USAGE_ERROR：--task-id 不能为空字符串');
+        }
+        target = { kind: 'existing_task', task_id: taskId.trim() };
+      } else {
+        if (newTaskName === undefined || rawSlot === undefined) {
+          throw new CliUsageError(
+            'USAGE_ERROR：idea convert 必须指定 --task-id <task-id>（放入现有任务），或同时指定 --new-task-name <name> 与 --slot 主线|支线（新建任务）',
+          );
+        }
+        if (newTaskName.trim().length === 0) {
+          throw new CliUsageError('USAGE_ERROR：--new-task-name 不能为空白');
+        }
+        const slotParsed = taskSlotSchema.safeParse(rawSlot);
+        if (!slotParsed.success) {
+          throw new CliUsageError(`USAGE_ERROR：--slot 仅支持 主线 或 支线（收到 "${rawSlot}"）`);
+        }
+        if (defaultProject !== undefined && defaultProject.trim().length === 0) {
+          throw new CliUsageError('USAGE_ERROR：--default-project 不能为空字符串');
+        }
+        target = {
+          kind: 'new_task',
+          name: newTaskName.trim(),
+          slot: slotParsed.data,
+          ...(defaultProject !== undefined ? { default_project: defaultProject.trim() } : {}),
+        };
+      }
+      const items = await resolveTaskItemsInput(raw, options, true);
+      const rawRev = raw.singles.get('--record-revision');
+      if (rawRev !== undefined && rawRev.trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：--record-revision 不能为空字符串');
+      }
+      return {
+        kind: 'call',
+        json,
+        method: 'convert_idea_to_task',
+        ideaId: ideaId.data,
+        ...(rawRev !== undefined ? { recordRevision: rawRev.trim() } : {}),
+        target,
+        items: items!,
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
     if (sub === 'done') {
       // 0.3.0-beta.4 D2（ADR 0020）：把想法池里的一个想法标记为已完成
       const raw = parseTokens(args, { booleanFlags: new Set(), singleFlags: new Set(['--operation-id']), multiFlags: new Set() });
@@ -795,7 +1140,7 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     }
     if (sub !== 'add') {
       throw new CliUsageError(
-        `USAGE_ERROR：未知子命令 "${`idea ${sub ?? ''}`.trim()}"；请使用 monorail idea add <text>、monorail idea done <idea_id> 或 monorail idea reopen <idea_id>`,
+        `USAGE_ERROR：未知子命令 "${`idea ${sub ?? ''}`.trim()}"；请使用 monorail idea add、idea create、idea show、idea edit、idea convert、idea done 或 idea reopen`,
       );
     }
     const raw = parseTokens(args, {
@@ -1393,6 +1738,43 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
 
   if (cmd === 'task') {
     const [sub, ...args] = subTokens;
+    if (sub === 'create') {
+      const raw = parseTokens(args, {
+        booleanFlags: new Set(['--items-stdin']),
+        singleFlags: new Set(['--name', '--slot', '--default-project', '--items-file', '--operation-id']),
+        multiFlags: new Set(['--item']),
+      });
+      if (raw.positionals.length > 0) {
+        throw new CliUsageError(`USAGE_ERROR：task create 不接受位置参数（收到 "${raw.positionals[0]}"）；请使用 --name <name> --slot 主线|支线`);
+      }
+      const rawName = raw.singles.get('--name');
+      const rawSlot = raw.singles.get('--slot');
+      if (rawName === undefined || rawSlot === undefined) {
+        throw new CliUsageError('USAGE_ERROR：task create 必须同时提供 --name <name> 与 --slot 主线|支线');
+      }
+      if (rawName.trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：--name 不能为空白');
+      }
+      const slotParsed = taskSlotSchema.safeParse(rawSlot);
+      if (!slotParsed.success) {
+        throw new CliUsageError(`USAGE_ERROR：--slot 仅支持 主线 或 支线（收到 "${rawSlot}"）`);
+      }
+      const rawProject = raw.singles.get('--default-project');
+      if (rawProject !== undefined && rawProject.trim().length === 0) {
+        throw new CliUsageError('USAGE_ERROR：--default-project 不能为空字符串');
+      }
+      const items = await resolveTaskItemsInput(raw, options, false);
+      return {
+        kind: 'call',
+        json,
+        method: 'create_task',
+        name: rawName.trim(),
+        slot: slotParsed.data,
+        ...(rawProject !== undefined ? { defaultProject: rawProject.trim() } : {}),
+        ...(items !== undefined ? { items } : {}),
+        operationId: validateOperationId(raw.singles.get('--operation-id')),
+      };
+    }
     if (sub === 'show') {
       const raw = parseTokens(args, {
         booleanFlags: new Set(),
@@ -1462,7 +1844,7 @@ async function parseCommand({ json, help, version, rest }: GlobalFlags, options:
     }
 
     throw new CliUsageError(
-      `USAGE_ERROR：未知子命令 "${`task ${sub ?? ''}`.trim()}"；支持 task show、task done、task reopen`,
+      `USAGE_ERROR：未知子命令 "${`task ${sub ?? ''}`.trim()}"；支持 task create、task show、task done、task reopen`,
     );
   }
 

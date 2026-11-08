@@ -1,0 +1,72 @@
+   Compiling pixel-record v0.3.3 (C:\Users\kai_wei\Documents\1026(4)\app\src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.37s
+     Running unittests src\lib.rs (src-tauri\target\debug\deps\pixel_record_lib-f86a64b3407ae6e9.exe)
+
+running 65 tests
+test idea_windows::coder6_native_close_review::unknown_target_fails_without_calling_native_destroy_or_changing_other_registrations ... ok
+test idea_windows::coder6_native_close_review::successful_destroy_runs_without_holding_registry_lock_and_removes_only_its_target ... ok
+test idea_windows::coder6_native_close_review::failed_native_destroy_keeps_both_exact_registrations_and_clears_closing_marker ... ok
+test idea_windows::tests::failed_native_destroy_keeps_registration_and_success_removes_only_its_window ... ok
+test idea_windows::tests::fits_idea_window_within_work_area_and_centers_it ... ok
+test idea_windows::tests::validates_uuid_and_constructs_safe_window_labels ... ok
+test mcp_bridge::tests::phase_updates_persist_before_any_subscriber_attaches ... ok
+test mcp_bridge::tests::clean_reconnect_advances_generation_and_isolates_stale_replies ... ok
+test mcp_bridge::tests::reload_or_destroy_during_active_write_locks_host_lost_and_reports_unknown ... ok
+test mcp_bridge::tests::read_only_methods_are_distinguished_from_writes ... ok
+test mini_visibility::tests::failed_attachment_releases_the_callback ... ok
+test idea_windows::tests::verifies_sender_label_session_epoch_and_supports_draft_to_record_rebinding ... ok
+test mini_window::tests::clamp_to_work_area_keeps_window_above_taskbar_and_inside_monitor ... ok
+test main_session::tests::epochs_are_positive_and_strictly_increasing_even_across_threads ... ok
+test mini_window::tests::popup_opens_down_when_it_fits_and_flips_up_only_when_above_is_roomier ... ok
+test mini_window::tests::resize_border_child_cannot_start_a_vertical_resize ... ok
+test mini_window::tests::resize_hits_disable_vertical_edges_and_keep_corners_horizontal ... ok
+test private_release::tests::credentials_only_go_to_the_configured_https_asset_api ... ok
+test attachments::tests::rejects_bad_record_ids_and_empty_names ... ok
+test private_release::tests::semver_ordering_ranks_beta_10_above_beta_9_and_stable_above_same_base_beta ... ok
+test private_release::tests::paginated_unordered_releases_filter_drafts_test_tags_and_contradictory_flags ... ok
+test private_release::tests::single_target_comparator_allows_downgrade_only_for_permitted_compatible_stable_target ... ok
+test quick_save::coder6_maintenance_review::a_completed_dirty_round_never_authorizes_exit ... ok
+test private_release::tests::manifest_validation_checks_version_match_channel_contradiction_and_legacy_compatibility_table ... ok
+test quick_save::coder6_maintenance_review::a_second_begin_does_not_replace_an_in_progress_round ... ok
+test quick_save::coder6_maintenance_review::an_unexpected_caller_does_not_satisfy_an_expected_window ... ok
+test quick_save::coder6_maintenance_review::empty_request_token_never_counts_as_a_response ... ok
+test quick_save::coder6_maintenance_review::a_duplicate_clean_ack_cannot_replace_the_first_dirty_response ... ok
+test quick_save::coder6_maintenance_review::unbound_cancel_cannot_cancel_someone_elses_current_round ... ok
+test quick_save::tests::draft_check_rejects_missing_stale_or_wrong_target_acks_and_keeps_same_round_duplicates_idempotent ... ok
+test mini_window::tests::geometry_round_trip_and_corruption_are_explicit ... ok
+test quick_save::coder6_maintenance_review::old_round_ack_does_not_advance_the_new_round ... ok
+test quick_save::coder6_maintenance_review::only_a_completed_clean_round_can_authorize_exit_and_cancel_revokes_it ... ok
+test quick_save::coder6_maintenance_review::stale_cancel_does_not_unlock_the_current_round ... ok
+test quick_save::coder6_maintenance_review::a_missing_request_token_never_counts_as_a_response ... ok
+test quick_save::tests::migration_blocks_new_saves_and_preserves_existing_sessions ... ok
+test quick_save::tests::multi_window_draft_check_collects_all_acks_and_identifies_dirty_or_saving_window ... ok
+test reminders::tests::delivered_ids_are_not_due_again ... ok
+test reminders::tests::prune_keeps_only_planned_ids ... ok
+test tests::allows_only_http_and_https_external_urls ... ok
+test update_backup::tests::sha256_matches_nist_vectors ... ok
+test attachments::tests::names_cannot_escape_and_are_deduplicated ... ok
+test power::tests::owner_locked_snapshot_remains_immutable_when_subsequent_heartbeat_or_power_events_write_to_disk ... ok
+test recap_view::tests::missing_file_reads_as_defaults_without_a_notice ... ok
+test mcp_bridge::tests::resolve_and_read_host_metadata_verify_existing_files_without_guessing ... ok
+test update_state::tests::busy_phases_reject_channel_switch_and_preserve_active_operation ... ok
+test mini_visibility::tests::actual_hwnd_show_hide_and_destroy_notify_without_focus_or_polling ... ok
+test update_state::tests::downgrade_requires_matching_explicit_stable_return_permit_and_invalidates_on_channel_change ... ok
+test update_state::tests::switching_channel_clears_available_or_ready_candidates_and_bytes ... ok
+test windows::tests::failed_auto_hide_install_releases_the_callback ... ok
+test windows::tests::normalization_only_replaces_whole_modifier_tokens ... ok
+test windows::tests::other_registration_errors_keep_their_details ... ok
+test windows::tests::registration_conflict_preserves_the_displayed_win_name ... ok
+test recap_view::tests::corrupt_file_reads_as_defaults_and_is_reported ... ok
+test windows::tests::win_modifier_matches_super ... ok
+test windows::tests::win_modifier_order_does_not_change_the_shortcut ... ok
+test update_channel::tests::corrupted_channel_file_reports_explicit_error_instead_of_silently_resetting ... ok
+test update_channel::tests::missing_channel_file_defaults_to_stable_without_auto_enrolling_beta_builds ... ok
+test update_backup::tests::unrecovered_journal_file_blocks_backup_and_install ... ok
+test recap_view::tests::round_trip_replaces_the_file_atomically_and_rejects_non_objects ... ok
+test update_channel::tests::channel_preference_persists_atomically_across_restarts ... ok
+test update_backup::tests::owner_locked_config_snapshots_isolate_backup_from_concurrent_disk_mutations_in_lifecycle_and_reminders ... ok
+test update_backup::tests::preserves_nested_directories_named_backups_inside_data_and_never_overwrites_same_timestamp_backup ... ok
+test update_backup::tests::creates_and_verifies_complete_backup_including_attachments_receipts_and_config_without_recursion ... ok
+test windows::tests::quickbar_stays_visible_during_drag_and_hides_only_on_deactivation ... ok
+
+test result: ok. 65 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s

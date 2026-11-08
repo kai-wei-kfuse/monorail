@@ -7,8 +7,15 @@ import type { Notice, NoticeResult } from '../shared/notices';
 import type { Settings } from '../shared/settings';
 import { updatePhaseLabels, updateStepLabels } from '../shared/updates';
 import { miniWindow } from '../platform/miniWindow';
+import {
+  createDraftCheckTracker,
+  getCurrentWindowLabel,
+  nativeIdeaWindows,
+  runAppExitWithMaintenanceCheck,
+} from '../platform/ideaWindows';
 import { mainWindowBus, MINI_HEARTBEAT_MS } from '../platform/windowBus';
 import { connectMini } from '../services/miniController';
+import { connectIdeaWindows } from './ideaWindowController';
 import { createInsertDraftCoordinator } from '../services/insertDraftCoordinator';
 import { timerStateTokenInTx } from '../services/homeService';
 import { windowControls } from '../platform/windowControls';
@@ -122,6 +129,49 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const mainSession = useMemo(() => crypto.randomUUID(), [ctx]);
   const [insertDraft, setInsertDraft] = useState(() => draftCoordinator.current());
   const [mainDraftForm, setMainDraftForm] = useState<{ draftId: string; text: string; project: string }>({ draftId: '', text: '', project: '未分类' });
+  const [maintenanceLocked, setMaintenanceLocked] = useState(false);
+  const maintenanceLockedRef = useRef(false);
+  const insertDraftRef = useRef(insertDraft);
+  const mainDraftTextRef = useRef('');
+  insertDraftRef.current = insertDraft;
+  const ideaDrawerDirty = useRef(false);
+  const mainDraftDirtyRef = useRef(false);
+  useEffect(() => {
+    mainDraftTextRef.current = mainDraftForm.text;
+    mainDraftDirtyRef.current = Boolean(insertDraft && mainDraftForm.text.trim());
+  }, [insertDraft, mainDraftForm.text]);
+  const ideaWindows = useMemo(() => connectIdeaWindows(ctx, nativeIdeaWindows, report), [ctx]);
+  useEffect(() => () => ideaWindows.dispose(), [ideaWindows]);
+  useEffect(() => {
+    const tracker = createDraftCheckTracker();
+    const offCheck = listen('update-check-draft', event => {
+      const myLabel = getCurrentWindowLabel() ?? 'main';
+      const reqId = tracker.acceptCheck(event.payload, myLabel);
+      if (!reqId) return;
+      maintenanceLockedRef.current = true;
+      setMaintenanceLocked(true);
+      const dirty =
+        ideaDrawerDirty.current ||
+        mainDraftDirtyRef.current ||
+        Boolean(insertDraftRef.current && mainDraftTextRef.current.trim());
+      void nativeIdeaWindows.ackDraftCheck('main', dirty, reqId).catch(report);
+    });
+    const offRestore = listen('draft-check-restore', event => {
+      const myLabel = getCurrentWindowLabel() ?? 'main';
+      if (!tracker.acceptRestore(event.payload, myLabel)) return;
+      maintenanceLockedRef.current = false;
+      setMaintenanceLocked(false);
+    });
+    const offExit = listen('app-exit-requested', () => {
+      void runAppExitWithMaintenanceCheck(nativeIdeaWindows).catch(report);
+    });
+    void Promise.all([offCheck, offRestore, offExit]).then(() => nativeIdeaWindows.mainUpdateReady()).catch(report);
+    return () => {
+      void offCheck.then(fn => fn());
+      void offRestore.then(fn => fn());
+      void offExit.then(fn => fn());
+    };
+  }, []);
   // 操作历史的跳转与定位（执行方案 E8c 第 4 条）：列表看的是哪一种、从设置 09 要打开哪一条、◎ 要看哪一天
   const [listView, setListView] = useState<ListView>('entries');
   const [historyFocus, setHistoryFocus] = useState<HistoryFocus | null>(null);
@@ -213,8 +263,16 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
   const insertDraftProps: HomeInsertDraftProps = {
     draft: insertDraft,
     form: { text: mainDraftForm.text, project: mainDraftForm.project },
-    onFormChange: patch => setMainDraftForm(f => ({ ...f, ...patch })),
+    onFormChange: patch => {
+      if (maintenanceLockedRef.current) return;
+      if (patch.text !== undefined) {
+        mainDraftTextRef.current = patch.text;
+        mainDraftDirtyRef.current = Boolean(insertDraftRef.current && patch.text.trim());
+      }
+      setMainDraftForm(f => ({ ...f, ...patch }));
+    },
     onBegin: async at => {
+      if (maintenanceLockedRef.current) return;
       try {
         const snap = ctx.snapshot();
         const open = snap?.entries.find(e => e.ended_at === null) ?? null;
@@ -341,6 +399,9 @@ function Shell({ ctx, actions, root, platformErrors, report, errors, onErrorClos
           onDraw={at => { setBagOpen(false); setDealAt(at); }} onOpenBag={openBag}
           drawer={stageContent => <BagScreen ctx={ctx} open={bagOpen} onOpen={() => setBagOpen(true)} onClose={() => setBagOpen(false)} drawAt={dealAt} onDrawn={() => setDealAt(null)}
             onBagStarted={req => { setPage('home'); setBagStart(req); }}
+            onOpenIdeaWindow={(recordId, title, initialDraft) => { void ideaWindows.openIdeaWindow(recordId, title, initialDraft).catch(report); }}
+            onIdeaEditDirtyChange={dirty => { ideaDrawerDirty.current = dirty; }}
+            maintenanceLocked={maintenanceLocked}
             report={error => info('操作没有完成', String(error instanceof Error ? error.message : error))} onInfo={info}>{stageContent}</BagScreen>} />}
         {page === 'calendar' && <CalendarScreen ctx={ctx} report={report} focusDay={dayFocus} />}
         {page === 'list' && <ListScreen ctx={ctx} report={report} view={listView} onView={setListView} historyFocus={historyFocus}

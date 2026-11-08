@@ -1,0 +1,80 @@
+{
+  "at": "2026-11-08T14:01:32.365Z",
+  "methodology": "Runtime MCP SDK listTools over InMemoryTransport and production CLI parser; no application writes or native pipe calls.",
+  "applicationMethodCount": 41,
+  "readCount": 11,
+  "writeCount": 30,
+  "mcpToolCount": 41,
+  "methods": [
+    "add_plan_item",
+    "add_time_entry",
+    "capture_todo",
+    "complete_idea",
+    "complete_task",
+    "complete_task_item",
+    "confirm_plan_carry",
+    "convert_idea_to_task",
+    "create_idea",
+    "create_task",
+    "draw_task_item",
+    "end_original_task",
+    "find_items",
+    "get_context",
+    "get_idea_details",
+    "get_operation_result",
+    "get_recap",
+    "get_task_details",
+    "get_task_plan",
+    "get_time_summary",
+    "keep_going_task_item",
+    "list_operation_history",
+    "list_time_entries",
+    "pause_timer",
+    "remove_plan_item",
+    "reopen_idea",
+    "reopen_task",
+    "reopen_task_item",
+    "resume_timer",
+    "return_from_break",
+    "save_idea",
+    "skip_task_item",
+    "skip_today_plan",
+    "split_task_item",
+    "start_break",
+    "start_task_item",
+    "start_timer",
+    "stop_timer",
+    "update_idea",
+    "update_plan_item",
+    "update_time_entry"
+  ],
+  "mainTasks": {
+    "type": "number",
+    "default": 2,
+    "min": 1,
+    "max": 3,
+    "step": 1,
+    "unit": "slots"
+  },
+  "rejectedCommands": [
+    [
+      "settings",
+      "show"
+    ],
+    [
+      "settings",
+      "set",
+      "--main-tasks",
+      "5"
+    ],
+    [
+      "idea",
+      "delete",
+      "11111111-2222-4333-8444-555555555555"
+    ],
+    [
+      "find",
+      "--include-idea-details"
+    ]
+  ]
+}

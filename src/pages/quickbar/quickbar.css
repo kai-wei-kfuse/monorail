@@ -1,19 +1,87 @@
-/* 快速记录条（设计文档「窗口与唤出」「记录」）：Spotlight 式单行输入，Shift+Enter 换行后变高。不播开场动画。 */
+/* 快速记录条（设计文档「窗口与唤出」「记录」，UI风格规范 §11.17）：
+   想法模式默认单行标题 + 可展开「＋ 写详情」Markdown 编辑区；待办模式支持多行或单行。不播开场动画。 */
 .qb { height: 100%; display: grid; grid-template-rows: auto auto auto; align-content: start; background: var(--paper); border: 1px solid var(--ink); }
 .qb-line { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: start; border-bottom: 1px solid var(--line); }
 .qb-tab { align-self: stretch; display: grid; place-items: start center; padding-top: 16px; background: var(--ink); }
 .qb-tab svg { width: 10px; height: 14px; color: var(--yellow); }
-.qb-input.inp { min-height: 56px; padding: 15px 16px; border: 0; background: transparent; font: 520 20px/1.3 var(--f-cn); }
+.qb-input.inp { min-height: 52px; padding: 13px 16px; border: 0; background: transparent; font: 520 19px/1.3 var(--f-cn); width: 100%; }
 .qb-input.inp:focus { box-shadow: none; }
-.qb-save { display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 14px; font: 330 11px/1 var(--f-cn); color: var(--mute); white-space: nowrap; }
-.qb-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px 10px 44px; }
-.qb-fields .sel-btn { min-width: 160px; }
+.qb-save { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px; font: 330 11px/1 var(--f-cn); color: var(--mute); white-space: nowrap; }
+.qb-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 9px 14px 9px 44px; }
+.qb-fields .sel-btn { min-width: 150px; }
 .qb-fields .inp { width: auto; }
-.qb-toggle { height: 34px; padding: 0 12px; border: 1px solid var(--line-2); background: var(--paper-2); font: 520 13px/1 var(--f-cn); letter-spacing: .04em; display: inline-flex; align-items: center; gap: 8px; }
-.qb-toggle::before { content: ""; width: 8px; height: 8px; border: 1px solid var(--mute); }
-.qb-toggle[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #f6f6f3; }
+.qb-toggle {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  background: var(--paper-2);
+  box-shadow: 0 2px 0 var(--line-2);
+  font: 520 12px/1 var(--f-cn);
+  letter-spacing: .04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.qb-toggle::before { content: ""; width: 7px; height: 7px; border: 1px solid var(--mute); }
+.qb-toggle:hover:not(:disabled) { border-color: var(--ink); }
+.qb-toggle[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #f6f6f3; box-shadow: 0 2px 0 #000; }
 .qb-toggle[aria-pressed="true"]::before { background: var(--yellow); border-color: var(--yellow); }
-.qb-toggle:hover { border-color: var(--ink); }
+.qb-toggle[data-has-draft="true"]:not([aria-pressed="true"]) {
+  border-color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--yellow), 0 2px 0 var(--line-2);
+}
+.qb-right-hint { margin-left: auto; font: 330 11px/1 var(--f-cn); color: var(--mute); display: inline-flex; align-items: center; gap: 6px; }
+
+/* 0.3.3：QuickBar 想法详情折叠编辑区（上限高度 + 内部滚动） */
+.qb-detail-pane {
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px 12px 44px;
+  border-top: 1px dashed var(--line-2);
+  background: var(--paper-2);
+}
+.qb-detail-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.qb-detail-bar .seg button {
+  min-width: 64px;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.qb-detail-ta.inp {
+  width: 100%;
+  min-height: 108px;
+  max-height: 164px;
+  overflow-y: auto;
+  font: 330 13px/1.6 var(--f-cn);
+  resize: vertical;
+}
+.qb-detail-pv {
+  min-height: 108px;
+  max-height: 164px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+}
+.qb-detail-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.qb-detail-hint { font: 330 11px/1.4 var(--f-cn); color: var(--mute); }
+.qb-detail-acts { display: flex; align-items: center; gap: 8px; }
+.sbtn.id-open-win { display: inline-flex; align-items: center; gap: 6px; }
+.sbtn.id-open-win svg { width: 12px; height: 12px; }
+
 .qb-files { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 12px 44px; }
 .qb.drop { outline: 3px solid var(--yellow); outline-offset: -3px; }
 .qb-msg { padding: 0 14px 12px 44px; font: 330 12px/1.4 var(--f-cn); color: var(--red); }

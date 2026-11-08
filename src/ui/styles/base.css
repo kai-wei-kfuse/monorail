@@ -30,3 +30,105 @@ svg { display: block; }
 /* 动效等级「关闭」或系统减少动态效果时，全部静止（§8.1） */
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Markdown 正文排版（UI风格规范 §11.17：直角、墨色代码块、左亮强调色引用） */
+.md-body {
+  font: 330 13px/1.7 var(--f-cn);
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.md-body > :first-child { margin-top: 0; }
+.md-body > :last-child { margin-bottom: 0; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 6px;
+  font: 630 15px/1.35 var(--f-cn);
+  letter-spacing: .04em;
+  color: var(--ink);
+}
+.md-body h1::before, .md-body h2::before, .md-body h3::before, .md-body h4::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: var(--ink);
+  box-shadow: 2px 2px 0 var(--yellow);
+}
+.md-body p { margin: 6px 0; }
+.md-body ul, .md-body ol { margin: 6px 0; padding-left: 20px; }
+.md-body li { margin: 3px 0; }
+.md-body blockquote {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 4px solid var(--yellow);
+  background: var(--paper-2);
+  box-shadow: -1px 0 0 var(--ink);
+  color: var(--ink-3);
+}
+.md-body code {
+  padding: 1px 5px;
+  border: 1px solid var(--line-2);
+  background: var(--paper-2);
+  font: 400 12px/1.4 var(--f-mono);
+  color: var(--ink);
+}
+.md-body pre {
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: var(--ink);
+  color: #f6f6f3;
+  border-left: 4px solid var(--yellow);
+  font: 400 12px/1.55 var(--f-mono);
+  overflow-x: auto;
+}
+.md-body pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+.md-body a.md-link {
+  color: var(--ink);
+  font-weight: 520;
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 3px;
+  box-shadow: inset 0 -2px 0 var(--yellow);
+  padding: 0 2px;
+  cursor: pointer;
+}
+.md-body a.md-link:hover {
+  background: var(--yellow);
+  color: var(--ink);
+  text-decoration: none;
+}
+.md-body .md-unsafe-link {
+  color: var(--mute);
+  text-decoration: line-through;
+}
+.md-body .md-img-blocked {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px dashed var(--line-2);
+  background: var(--paper-2);
+  font: 330 12px/1.4 var(--f-cn);
+  color: var(--mute);
+}
+.md-body table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+}
+.md-body th, .md-body td {
+  border: 1px solid var(--line-2);
+  padding: 6px 10px;
+  text-align: left;
+}
+.md-body th {
+  background: var(--paper-2);
+  font-weight: 520;
+  color: var(--ink);
+}

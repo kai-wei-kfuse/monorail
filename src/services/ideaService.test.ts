@@ -100,16 +100,17 @@ it('metadata-only lifecycle edits preserve extended Markdown bodies and repeated
     tx.saveRecord({ ...tx.records[0], last_touched_at: at(1) });
   }, undefined, { action: 'test.direct' });
   expect(write).toHaveBeenCalledTimes(1);
-  expect((await f.ctx.repos.records.get(a.id))!.body).toBe('完整长正文\n附加资料');
-  await editIdea(f.ctx, a.id, { text: '新的全文', needs: null }, at(2));
-  expect((await f.ctx.repos.records.get(a.id))!.body).toBe('新的全文');
+  expect((await f.ctx.repos.records.getDetails(a.id))!.body).toBe('完整长正文\n附加资料');
+  await editIdea(f.ctx, a.id, { text: '新的全文', details: '新的详情正文', needs: null }, at(2));
+  expect((await f.ctx.repos.records.getDetails(a.id))!.value.text).toBe('新的全文');
+  expect((await f.ctx.repos.records.getDetails(a.id))!.body).toBe('新的详情正文');
 });
 
 // ===== 0.3.0-beta.4 D2：想法「已完成」（ADR 0020） =====
 it('D2 complete stores 冷库 + completed_at on disk, leaves the pool and limit, and lists newest first', async () => {
   const f = fixture(), a = idea({ text: 'A' }), b = idea({ text: 'B' }); await ideas(f, [a, b]);
   await complete(f.ctx, a.id, at(5)); await complete(f.ctx, b.id, at(9));
-  const saved = (await f.ctx.repos.records.get(a.id))!;
+  const saved = (await f.ctx.repos.records.getDetails(a.id))!;
   expect(saved.value).toMatchObject({ pool: '冷库', cold_since: at(5), completed_at: at(5), completed_by: { kind: 'manual', agent: null }, last_touched_at: at(5) });
   expect(saved.text).toMatch(/pool: 冷库/);
   expect(ideaStatus(saved.value)).toBe('已完成');
@@ -169,9 +170,9 @@ it('D2 round trip through an older version: revived there (活跃池 + stale com
 it('D2 records written by older versions without completion fields stay byte-compatible after unrelated transitions', async () => {
   const f = fixture(), a = idea(); await ideas(f, [a]);
   await editIdea(f.ctx, a.id, { text: '改一下', needs: null }, at(1));
-  const text = (await f.ctx.repos.records.get(a.id))!.text;
+  const text = (await f.ctx.repos.records.getDetails(a.id))!.text;
   expect(text).not.toMatch(/completed_/);
   const later = new Date(Date.parse(at(1)) + 60 * 86400000).toISOString(); f.clock(later);
   await expire(f.ctx, later);
-  expect((await f.ctx.repos.records.get(a.id))!.text).not.toMatch(/completed_/);
+  expect((await f.ctx.repos.records.getDetails(a.id))!.text).not.toMatch(/completed_/);
 });

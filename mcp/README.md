@@ -1,6 +1,6 @@
 # 单轨（MONORAIL）MCP 服务
 
-版本号以 `package.json` 为准。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 36 项核心工具（26 写、10 读；0.3.0-beta.4 加 `complete_idea`，0.3.1 加 `update_time_entry`，0.3.2 补齐 A–D 全量能力共新增 19 项工具）。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
+版本号以 `package.json` 为准。基于统一的共享应用接口层（[src/shared/application.ts](../src/shared/application.ts) + [client/applicationClient.ts](../client/applicationClient.ts)），已实现官方 SDK v2 双时代（`2025-11-25` / `2026-07-28`）× 双传输（stdio 默认 / 本机 Streamable HTTP 可选）、同 journal 持久化操作回执（`operation_id`）、按需 `--background` 后台启动、宿主生命周期保护、以及 **41 项核心工具（30 写、11 读；0.3.0-beta.4 加 `complete_idea`，0.3.1 加 `update_time_entry`，0.3.2 补齐 A–D 全量能力共新增 19 项工具，0.3.3 新增想法标题/Markdown 详情与多主线任务创建/转换共 5 项工具）**。并列的命令行入口说明见 [docs/application/README.md](../docs/application/README.md)。
 
 ## 给 agent 的规则（0.3.1）
 
@@ -8,17 +8,22 @@
 
 这段话在 MCP 握手的 `instructions` 里，也写在 `get_context` 工具描述的末尾；文案只有一份，在 [src/shared/agentRules.ts](../src/shared/agentRules.ts)。这只是提示词层面的约束，挡不住执意绕过的 agent。
 
-## 工具清单（M4–M8、A1–A4 & 0.3.2 A–D 全量，共 36 项）
+## 工具清单（M4–M8、A1–A4、0.3.2 A–D & 0.3.3 想法详情与多主线，共 41 项）
 
 | 工具名 | 类型 | 作用与核心契约 |
 |---|---|---|
 | `get_context` | 只读 | 获取当前计时状态、待处理通知（`pending_actions`，含累积未消除的离线追问、空闲追问等）、可选项目/标签/快捷离开项、今日任务板（`today_plan`，0.3.1），并签发 `operation_id` 与 `expected_state`。`today_plan` 为 `null` 表示任务模式关掉了；今天还没排是 `items: []`，不是 `null`。（代码里快照缺板子时也给 `null`，但每次提交发布的快照都带板子，启动完成前 `get_context` 直接报 `APP_NOT_READY`，所以正常运行时只有任务模式关掉这一种情况。） |
 | `get_operation_result` | 只读 | 按 `operation_id` 核对操作是否已在 journal 中持久化落盘（`committed` / `not_found`）；`committed` 额外返回持久化规范化请求 `request: { method, arguments }`。 |
-| `save_idea` | 幂等写 | 保存文字到想法池（支持多行与 `#标签`、可选 `needs`），不创建任务、不开始计时。 |
+| `save_idea` | 幂等写 | 保存文字到想法池（支持多行与 `#标签`、可选 `needs`；多行时首行映射为标题、其余行进入详情，回执仍返回完整 `text`），不创建任务、不开始计时。 |
+| `create_idea` | 幂等写 | 按单行 `title` 与可选多行 Markdown `details_markdown`、`needs` 创建想法并返回 `IdeaSummary`（含 `has_details` 与 `record_revision`），不开始计时（0.3.3，ADR 0026/0029）。 |
+| `get_idea_details` | 只读 | 按 `idea_id` 读取完整 `IdeaDocument`（含 `details_markdown` 与 `record_revision`）并签发后续写调用可用的 `operation_id`，不续期、不写历史（0.3.3，ADR 0026/0029）。 |
+| `update_idea` | 幂等写 | 凭 `record_revision` 修改想法的 `title`、`details_markdown` 或 `needs`（省略保持原值，空串清空；校验乐观并发修订令牌，返回 `IdeaSummary` 与 `noop`）（0.3.3，ADR 0026/0029）。 |
 | `complete_idea` | 幂等写 | 把想法池里的一个想法（`idea_id`，先用 `find_items` 查到）标记为已完成，进入想法池的「已完成」列表；已完成的再标记返回 `noop: true`；冷库、已转任务的报 `IDEA_NOT_ACTIVE`（0.3.0-beta.4，ADR 0020）。`find_items` 的想法 `pool` 多一个值「已完成」。 |
 | `reopen_idea` | 幂等写 | 撤销想法的完成状态并放回活跃池（0.3.2，ADR 0023）。 |
 | `capture_todo` | 幂等写 | 捕捉待办记录并在同一事务生成待办卡片（缺省归入单事项支线任务，可选传入背包中已有 `task_id`），不改变当前计时。 |
-| `find_items` | 只读 | 按关键词和类别（`idea` / `todo_card` / `task` / `all`）检索；多项命中时 `ambiguous=true`，不替用户猜测首个 ID。 |
+| `create_task` | 幂等写 | 在背包中新建主线或支线任务（遵循 `mainTasks`/`sideTasks` 与 `mainItems` 容量上限；省略 `items` 创建空任务，提供 `items` 则同事务生成结果卡或时间盒卡），不自动开始计时（0.3.3，ADR 0029）。 |
+| `convert_idea_to_task` | 幂等写 | 凭 `record_revision` 将想法转化为任务事项，放入指定现有进行中任务（`target.kind="existing_task"`，多主线按 ID 选择）或同事务新建主/支线任务（`target.kind="new_task"`）；原想法完整详情保留并标为已转任务（0.3.3，ADR 0029）。 |
+| `find_items` | 只读 | 按关键词和类别（`idea` / `todo_card` / `task` / `all`）检索；想法按兼容全文 `C(title, details)`、标签与 `needs` 匹配并返回兼容全文 `text`；多项命中时 `ambiguous=true`，不替用户猜测首个 ID。 |
 | `get_time_summary` | 只读 | 统计 `today` / `yesterday` / `this_week` / `YYYY-MM-DD`（活动日或自然日）；`non_idle_covered_ms + idle_ms + untracked_ms = interval_elapsed_ms`，并另报并行重复累计量 `overlap_excess_ms`。 |
 | `list_time_entries` | 只读 | 按显式起止时间（带时区 ISO 字符串 `from`/`to`）返回完整明细及区间内裁切时长（`clipped_ms`）。 |
 | `start_timer` | 幂等写 | 开始或切换自由活动计时（需传 `operation_id` 与 `expected_state`；缺省项目为「未分类」，禁止传系统保留项目或未知项目）。 |

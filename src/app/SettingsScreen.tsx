@@ -10,6 +10,7 @@ import * as preset from '../services/presetService';
 import type { SettingsErrors } from '../services/settingsService';
 import { chooseRoot } from '../platform/dialog';
 import { readAutomationHost } from '../platform/automation';
+import { nativeIdeaWindows, runDirectoryChangeWithMaintenanceCheck } from '../platform/ideaWindows';
 import type { SettingKey, Settings } from '../shared/settings';
 import { UpdatePanel } from '../widgets/UpdatePanel';
 import { RecentCalls } from '../widgets/history/RecentCalls';
@@ -75,8 +76,19 @@ export function SettingsScreen({ ctx, root, initialErrors, onSaved, report, upda
   const onCreateProject = (name: string) => { void preset.createProject(ctx, name, now()).then(onSaved).catch(report); };
   const onCreateTag = (tag: string) => { void preset.createTag(ctx, tag, now()).then(onSaved).catch(report); };
   const onChangeDir = () => {
-    // 重载前先关掉旧数据目录上的维护任务（例如清理过期操作历史），正在执行的等它做完（0.3.0-beta.3 E8a1）
-    void changeDataDirectory({ async changeDataDirectory() { if (await chooseRoot()) { await closeMaintenance(ctx); window.location.reload(); } } }).catch(report);
+    // 0.3.3 D1：更换数据目录前先执行多窗口未保存草稿检查；通过并选好目录后，在 closeMaintenance 与 reload 之前关闭全部绑定旧目录的 idea-* 窗口（ADR 0028）
+    void changeDataDirectory({
+      async changeDataDirectory() {
+        await runDirectoryChangeWithMaintenanceCheck(
+          chooseRoot,
+          async () => {
+            await closeMaintenance(ctx);
+            window.location.reload();
+          },
+          nativeIdeaWindows,
+        );
+      },
+    }).catch(report);
   };
   return <SettingsPage section={section} onSection={onSelectSection} settings={settings} onChange={onChange}
     onListsChange={onListsChange} projects={projects} knownTags={knownTags} onCreateProject={onCreateProject} onCreateTag={onCreateTag} dataDir={root} onChangeDir={onChangeDir} errors={errors} version={updates.state?.currentVersion ?? '读取中'}

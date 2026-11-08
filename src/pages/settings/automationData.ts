@@ -69,9 +69,15 @@ const CLI_EXAMPLE_SPECS: ReadonlyArray<{ id: string; title: string; desc: string
   },
   {
     id: 'idea-add',
-    title: '保存想法记录',
-    desc: '将文本保存至想法池（支持 #标签），不创建待办事项卡片，不改变当前计时状态。',
-    args: ['idea add'.split(' ')[0], 'idea add'.split(' ')[1], '整理季度复盘提纲 #规划', '--json'],
+    title: '保存或创建带详情的想法记录',
+    desc: '将单行标题或带 Markdown 详情的想法保存至想法池（支持 #标签，详情建议用 --details-file 读取），不创建待办事项卡片，不改变当前计时状态。',
+    args: ['idea', 'create', '--title', '整理季度复盘提纲 #规划', '--json'],
+  },
+  {
+    id: 'task-create',
+    title: '创建主线或支线任务',
+    desc: '在背包中新建主线或支线任务（遵循主线/支线容量上限，可附带初始结果卡或通过 --items-file 传入时间盒卡），不自动开始计时。',
+    args: ['task', 'create', '--name', '第二主线：架构演进', '--slot', '主线', '--item', '梳理核心模块边界', '--json'],
   },
   {
     id: 'time-summary',
@@ -94,7 +100,7 @@ const CLI_EXAMPLE_SPECS: ReadonlyArray<{ id: string; title: string; desc: string
   {
     id: 'help',
     title: '查看命令行帮助',
-    desc: '查看全部 34 个子命令（对应 36 项应用方法）与参数说明；本地帮助查询不会连接或拉起单轨后台进程。',
+    desc: '查看全部 39 个子命令（对应 41 项应用方法：30 写、11 读）与参数说明；本地帮助查询不会连接或拉起单轨后台进程。',
     args: ['--help'],
   },
 ];
@@ -119,9 +125,9 @@ export const CAPABILITY_CATEGORIES: ReadonlyArray<{ title: string; methods: stri
     summary: '读取今天或明天的任务板（实时计算今日已计分钟、达标状态与可抽候选）；排入、移出或修改任务板项；确认昨日未完成带入；今天先不排、按权重只读抽卡以及换一张（记入本轮 seen）。',
   },
   {
-    title: '想法、待办、子任务与整张任务（B & C）',
-    methods: 'save_idea · complete_idea · reopen_idea · capture_todo · find_items · get_task_details · complete_task_item · reopen_task_item · keep_going_task_item · split_task_item · complete_task · reopen_task',
-    summary: '保存/完成/撤销完成想法；捕获待办并入包；检索条目与查看任务详情（含 completion_id）；完成当前计时卡或待做子项、取消完成子项恢复待做（支持主线容量校验与父任务同事务恢复）、记录进度接着做、拆分卡片；整张完成主/支线任务与按快照批次重新打开（满格支持显式 make_room 腾位）。',
+    title: '想法、待办、子任务与整张任务（B & C & 0.3.3）',
+    methods: 'save_idea · create_idea · get_idea_details · update_idea · complete_idea · reopen_idea · convert_idea_to_task · capture_todo · create_task · find_items · get_task_details · complete_task_item · reopen_task_item · keep_going_task_item · split_task_item · complete_task · reopen_task',
+    summary: '创建/查看/编辑带单行标题与 Markdown 详情的想法（含 record_revision 乐观并发保护）、完成/撤销完成想法与转任务（支持指定并存主线）；捕获待办并入包、直接新建主/支线任务；检索条目与查看任务详情（含 completion_id）；完成/恢复/接着做/拆分子任务与整张完成/重新打开任务。',
   },
   {
     title: '计时、临时离开、时间记录与统计回看（B & D）',

@@ -1,0 +1,39 @@
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.3.3
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.3.3
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/v0.3.3-beta.1
+ok
+ok
+ok
+Published https://github.com/example/monorail/releases/tag/update-test-v0.1.3
+(node:56848) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ publishes signed stable assets for a public repository using the existing tag (86.028ms)
+✔ publishes signed stable assets for a private repository using the existing tag (37.6024ms)
+✔ publishes product beta release with prerelease=true, latest=false, and product monorail asset naming (9.5596ms)
+✔ keeps update-test release isolated with update-test prefix and channel metadata (4.2673ms)
+✔ rejects mismatched tag, contradictory channel flags, or mismatched installer version (7.3969ms)
+Validated aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; signed build will use tagged commit bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+(node:16820) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ accepts test and release-tool changes (23.6062ms)
+✔ rejects a changed product source (5.541ms)
+✔ rejects publishing from a recovery build (4.9448ms)
+✔ rejects an unpinned validation ref (42.118ms)
+✔ rejects a different checked-out commit (13.6549ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 479.0642

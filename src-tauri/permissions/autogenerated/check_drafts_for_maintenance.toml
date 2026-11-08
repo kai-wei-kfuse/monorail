@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-check-drafts-for-maintenance"
+description = "Enables the check_drafts_for_maintenance command without any pre-configured scope."
+commands.allow = ["check_drafts_for_maintenance"]
+
+[[permission]]
+identifier = "deny-check-drafts-for-maintenance"
+description = "Denies the check_drafts_for_maintenance command without any pre-configured scope."
+commands.deny = ["check_drafts_for_maintenance"]

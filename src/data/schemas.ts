@@ -9,7 +9,7 @@ const attachmentPath = z.string().refine(value => {
   // Attachments are copied into the data directory by the platform boundary.
   try { return safeRelative(value).startsWith('attachments/'); } catch { return false; }
 }, '附件必须是 attachments/ 下的相对路径');
-export const recordSchema = z.object({
+export const recordV2Schema = z.object({
   id: z.uuid(), text: z.string(), kind: z.enum(['待办', '想法']), created_at: iso,
   due_at: iso.nullable(), blocking: z.boolean(), task_id: nullableText,
   card_id: nullableText, tags: z.array(z.string()), attachments: z.array(attachmentPath),
@@ -21,6 +21,10 @@ export const recordSchema = z.object({
 }).passthrough().refine(record => record.kind === '想法' ? record.pool !== null : record.pool === null, '记录类型与想法池状态不一致')
   .refine(record => record.pool === '冷库' ? record.cold_since !== null : record.cold_since === null, '冷库时间与状态不一致')
   .refine(record => record.pool !== '已转任务' || record.card_id !== null, '已转任务的想法缺少卡片');
+export const recordSchema = recordV2Schema.refine(
+  record => record.kind !== '想法' || (!record.text.includes('\n') && !record.text.includes('\r')),
+  '想法标题不能包含换行',
+);
 export const cardSchema = z.object({
   id: z.string().min(1), source_record_id: z.uuid().nullable(), content: z.string(), created_at: iso,
   due_at: iso.nullable(), blocking: z.boolean(), task_id: nullableText,
@@ -83,7 +87,8 @@ const settingShape = Object.fromEntries(settingEntries.map(entry => {
   if (entry.type === 'enum') return [entry.key, withDefault(entry, z.enum(entry.options))];
   return [entry.key, withDefault(entry, entry.type === 'boolean' ? z.boolean() : z.string().min(1))];
 })) as { [K in SettingKey]: z.ZodType<SettingValues[K]> };
-export const settingsSchema = z.object({ ...settingShape, schemaVersion: z.literal(2), lists: listsSchema }).passthrough();
+export const settingsV2Schema = z.object({ ...settingShape, schemaVersion: z.literal(2), lists: listsSchema }).passthrough();
+export const settingsSchema = z.object({ ...settingShape, schemaVersion: z.literal(3), lists: listsSchema }).passthrough();
 
 export const entrySchema = z.object({
   id: z.string().min(1), started_at: z.iso.datetime({ offset: true }), ended_at: z.iso.datetime({ offset: true }).nullable(),

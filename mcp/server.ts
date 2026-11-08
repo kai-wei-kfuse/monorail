@@ -17,12 +17,20 @@ import {
   confirmPlanCarryInput,
   contextInput,
   contextResult,
+  convertIdeaToTaskInput,
+  convertIdeaToTaskResult,
+  createIdeaInput,
+  createIdeaResult,
+  createTaskInput,
+  createTaskResult,
   drawTaskItemInput,
   drawTaskItemResult,
   endOriginalTaskInput,
   endOriginalTaskResult,
   findItemsInput,
   findItemsResult,
+  getIdeaDetailsInput,
+  getIdeaDetailsResult,
   getRecapInput,
   getRecapResult,
   getTaskDetailsInput,
@@ -58,6 +66,8 @@ import {
   timeSummaryResult,
   timerControlInput,
   timerMutationResult,
+  updateIdeaInput,
+  updateIdeaResult,
 } from '../src/shared/application.ts';
 import type { ApplicationInput, ApplicationMethod } from '../src/shared/application.ts';
 import { z } from 'zod';
@@ -109,11 +119,35 @@ export function createServer(client: ApplicationClient) {
 
   server.registerTool('save_idea', {
     title: '保存想法到单轨',
-    description: '当用户要求记下想法或保存聊天中的灵感时调用（进入想法池，不创建待办任务、不开始计时）。operation_id 复制自 get_context 或上次结果的 next_operation_id；重试必须沿用原 ID。',
+    description: '当用户要求记下想法或保存聊天中的灵感时调用（进入想法池，不创建待办任务、不开始计时；首行映射为标题、其余行进入详情，若要显式传结构化 title + details 请改用 create_idea）。operation_id 复制自 get_context 或上次结果的 next_operation_id；重试必须沿用原 ID。',
     inputSchema: ideaInput,
     outputSchema: withError(saveIdeaResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, async (args, ctx) => call('save_idea', args, ctx));
+
+  server.registerTool('create_idea', {
+    title: '创建带标题与 Markdown 详情的想法',
+    description: '显式按单行标题（title）与可选多行 Markdown 详情（details_markdown）、需要什么（needs）创建想法并放入活跃想法池（标题与详情中的 #标签 均会自动提取；回执返回 IdeaSummary 摘要与 record_revision）。operation_id 复制自 get_context 或上次结果的 next_operation_id；重试必须沿用原 ID。',
+    inputSchema: createIdeaInput,
+    outputSchema: withError(createIdeaResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('create_idea', args, ctx));
+
+  server.registerTool('get_idea_details', {
+    title: '读取单条想法的完整详情与修订令牌',
+    description: '按 idea_id 只读读取想法的单行标题（title）、完整 Markdown 详情（details_markdown）、需要什么（needs）、所在池（活跃池/冷库/已转任务/已完成）与内容修订令牌（record_revision），同时签发下一步写操作可用的 operation_id。调用 update_idea 或 convert_idea_to_task 前请先调用本工具获取最新 record_revision。',
+    inputSchema: getIdeaDetailsInput,
+    outputSchema: withError(getIdeaDetailsResult),
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  }, async (args, ctx) => call('get_idea_details', args, ctx));
+
+  server.registerTool('update_idea', {
+    title: '修改已有想法的标题、详情或需要',
+    description: '凭 get_idea_details 返回的 record_revision 修改已有想法的 title、details_markdown 或 needs（省略字段保持原值，清空详情传 details_markdown=""，清空需要传 needs=null 或 ""；不改变想法池状态或任务卡）。若遇到 RECORD_CHANGED，请读取 latest_context.idea 摘要或调用 get_idea_details 查看最新内容后再决定是否重试。',
+    inputSchema: updateIdeaInput,
+    outputSchema: withError(updateIdeaResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('update_idea', args, ctx));
 
   server.registerTool('capture_todo', {
     title: '捕捉待办事项到单轨',
@@ -362,6 +396,22 @@ export function createServer(client: ApplicationClient) {
     outputSchema: withError(reopenTaskResult),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, async (args, ctx) => call('reopen_task', args, ctx));
+
+  server.registerTool('create_task', {
+    title: '直接创建主线或支线任务',
+    description: '在背包中新建一张主线或支线任务（可同时附带初始子事项 items；主线任务活跃子事项上限遵循顶层设置 mainItems，默认 5，可调范围 1–10；主线槽位上限遵循顶层设置 mainTasks，默认 2，可调范围 1–3；支线槽位上限遵循顶层设置 sideTasks，默认 10，可调范围 1–30）。不改动当前计时。',
+    inputSchema: createTaskInput,
+    outputSchema: withError(createTaskResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('create_task', args, ctx));
+
+  server.registerTool('convert_idea_to_task', {
+    title: '将想法转化为任务事项',
+    description: '凭 get_idea_details 返回的 record_revision，将一条想法转化为至少 1 项可执行子事项（items：支持结果卡与时间盒卡），归入已有进行中背包任务（target={kind:"existing_task",task_id}，多主线并存时按 ID 明确指定）或同一事务新建主线/支线任务（target={kind:"new_task",name,slot,default_project?}），原想法的完整 Markdown 详情与附件继续保留，状态变为「已转任务」。',
+    inputSchema: convertIdeaToTaskInput,
+    outputSchema: withError(convertIdeaToTaskResult),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async (args, ctx) => call('convert_idea_to_task', args, ctx));
 
   server.registerTool('get_recap', {
     title: '查询时间回看统计',

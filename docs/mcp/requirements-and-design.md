@@ -79,12 +79,12 @@ AI 客户端 → MCP 适配器 → 连接已有单轨后台
 
 | 能力 | 选择理由与规则 |
 |---|---|
-| 编辑想法正文/需求 | ideaService.editIdea；必须命中明确目标与版本，避免覆盖用户刚编辑的内容 |
-| 建任务并添加事项 | backpackService.createTask/addItem；主线/支线及容量遵循现有规则；满了返回选择，不自动放弃旧任务腾位 |
-| 把想法转成待办/拆分任务 | ideaService.convertIdeaToTask；返回待创建清单，用户有明确目标才执行，保留原想法关联 |
+| 编辑想法正文/需求 | `create_idea` / `get_idea_details` / `update_idea`（0.3.3 已交付，见 ADR 0026 / ADR 0029）；必须命中明确目标与 `record_revision`，避免覆盖用户刚编辑的内容 |
+| 建任务并添加事项 | `create_task`（0.3.3 已交付，见 ADR 0029）；主线/支线及容量遵循现有规则；满了返回 `TASK_CAPACITY_FULL` / `MAIN_TASK_ITEMS_FULL`，不自动放弃旧任务腾位 |
+| 把想法转成待办/拆分任务 | `convert_idea_to_task`（0.3.3 已交付，见 ADR 0029）；明确目标（指定现有 `task_id` 或新建主/支线任务）与 `record_revision` 才执行，保留原想法完整 Markdown 详情与关联 |
 | 完成指定事项并记录进展 | cardService.checkComplete/complete；时间盒不足、非当前卡等遵循领域规则；不能静默替用户选 keepGoing、跳过 note 或触发额外行为 |
 | 创建计时项目、保存常用活动 | presetService；明确用户意图时新增；start_timer 不因模型猜出名称而自动改设置 |
-| 获取周回顾素材 | 只读周区间统计、完成事项和想法；AI 帮用户整理，但不自动把单轨的回顾状态机标为完成 |
+| 获取周回顾素材 | 只读周区间统计、完成事项和想法（`get_recap` 0.3.2 已交付）；AI 帮用户整理，但不自动把单轨的回顾状态机标为完成 |
 
 暂不开放批量删除、重置数据、改数据目录、安装更新、任意文件读写、自动放弃/冷藏任务、擂台淘汰和替用户更换主线。这是当前产品范围选择，并非 MCP 协议的限制。
 
@@ -207,3 +207,4 @@ https://v2.tauri.app/reference/config/
 | v2.3 | 2026-11-03 | 用户最终指定 0.3.0，执行移交 coder-3；M5a 工作区状态见专门交接记录 |
 | v2.4 | 2026-11-03 | 用户扩展为统一接口、MCP 与 CLI 同版交付；关联 application 执行方案及 ADR 0014 |
 | v2.5 | 2026-11-03 | M9 固定模型矩阵、重复与双宿主/原生生命周期验收完成，更新历史未测试表述，关联最终报告及 ADR 0015 |
+| v2.6 | 2026-11-08 | 0.3.3 同步新增 `create_idea`、`get_idea_details`、`update_idea`、`create_task`、`convert_idea_to_task` 共 41 项共享应用方法（30 写、11 读），关联 ADR 0026 / ADR 0029 |

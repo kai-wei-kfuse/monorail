@@ -1,0 +1,25 @@
+{
+  "at": "2026-11-08T14:19:19.9207367Z",
+  "gitHead": "0dc6d464905dcaa5524e530119c18edd79d2eb8b",
+  "scope": "Independent source and controlled-test review baseline; final native rebuild is pending",
+  "sourceAndEvidenceHashes": {
+    "src/platform/ideaWindows.ts": "059a79b94792985bad5db972de7491eb86a123697d6fabc46a7211be8d1dcabb",
+    "src-tauri/src/idea_windows.rs": "44fbc3296afefb8ceaa65e3ae2eb84e4da7be401c05ae53abd481317ea73a054",
+    "src-tauri/src/quick_save.rs": "911863e076144a126ac6206bb029f244ddd523b60e2b5b759b1992c4518c34a5",
+    "src-tauri/src/updates.rs": "e1a8af20896b98c9aee38b3aed63f10086c4516fd35a36024b4d097d683065bb",
+    "src-tauri/src/update_state.rs": "068b3ec8224e2b4469dcb5eaa88dfc71d8bbd5c80a658f54c3a87a218781284c",
+    "src/app/MainApp.tsx": "c856d3bc18ee664ddbfaba895cbdf066ed582919dbe90faea6f84e489bd8c6dd",
+    "src/app/SettingsScreen.tsx": "d95ac7aad9cb7d4391920df9be2479eae2aed2d771e1b34d902fafc363af9c5a",
+    "src/services/updateService.ts": "37c614e82fafcb37d585fc1e5f8ccaf6fe53542c4d4a4d1ede1f4410b622be12",
+    "src/app/QuickBarApp.tsx": "eb3f61fee4a1d12d871a1f5d9c04df944c9d351c3402ca1b4cf76f501cb96d8c",
+    "src/app/IdeaWindowApp.tsx": "8202970b6bd47c8e28246a030be8a23a9666ac8022fea5bdf5bc46880775d274",
+    "evidence/0.3.3-coder6-native-close-review-r8.rs": "fcba4d69349426fdc356cc86144bd3f4223fff1e83dea816c96fd6a7da957982",
+    "evidence/0.3.3-coder6-native-close-review-r8.log": "62ddf1207d3d5d8cf65668330b78d64a7fe48a01a6d8a2848f105c006e86e57a",
+    "evidence/0.3.3-coder6-maintenance-owner-review-r7.test.ts": "ecc2d064ce2349e66c1f2a2c4c1e7b00fd6ae6293ce998290bf7bf28f3298fc4",
+    "evidence/0.3.3-coder6-maintenance-owner-review-r8-fixed.log": "b9f302b23a90f92075d0d7196951148d1513310bfa1cedd77e8e46416641111d",
+    "evidence/0.3.3-coder6-maintenance-window-review-r6.test.ts": "61a50af9611100e53271df6dd7e413567097a33985270f42df2bdd95da4ab9dc",
+    "evidence/0.3.3-coder6-maintenance-window-review-r8.log": "701de065dfbc7de88880952d6f389153887bebb31ee2983207432e009de5f5ac",
+    "evidence/0.3.3-coder6-maintenance-gate-review-r6.rs": "70d3659b8dd51eb8b34475cf5ee9930d8e44af69630c2d944e95d9521a2a39cf",
+    "evidence/0.3.3-coder6-maintenance-gate-review-r7-exit.log": "616d88bf1ca4f806c06d78ec713de28d0b68476502a2de596619b371a2dcc3cf"
+  }
+}

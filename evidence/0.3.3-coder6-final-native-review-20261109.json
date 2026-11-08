@@ -1,0 +1,23 @@
+{
+  "at": "2026-11-08T16:34:05.278Z",
+  "command": "node evidence/0.3.3-coder6-final-native-review-20261109.mjs",
+  "methodology": "Independent read-only saved-artifact, source and drill-directory review; native execution was performed by coder.",
+  "exeSha256": "089cbfa9e93059cfa768662c5fcac561f74a0d21bf4db664a739660cba6b214b",
+  "artifactCountVerified": 4,
+  "sourceCountVerified": 16,
+  "frozenSourceCountVerified": 10,
+  "nativeItemCountVerified": 3,
+  "duplicateResultFilesAreOneRun": true,
+  "baselineComparison": {
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyProcessUntouched": true
+  },
+  "v3ManifestFileCount": 12,
+  "restoredRecordAndHistoricalTimelogMatchBackup": true,
+  "historicalP7AndPreFinalOutputsPreserved": true,
+  "finalResultSha256": "063cffeba89f99643450fc4dda9fe2c46120d8f3b788084f7360a7464a453640",
+  "finalScriptSha256": "3ae44b03bdf9b87fef2bf2ca0766fbba94ba310d2b88949d692a08fed46fb061",
+  "conclusion": "Final native evidence matches the reviewed frozen source and supports the three reported acceptance paths."
+}

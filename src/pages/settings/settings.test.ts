@@ -107,7 +107,7 @@ describe('settings defaults & UI', () => {
     ]);
   });
 
-  it('09 AI 与自动化排在 10 关于之前，且能力列表严格对齐 applicationContracts 全部 17 项方法', () => {
+  it('09 AI 与自动化排在 10 关于之前，且能力列表严格对齐 applicationContracts 全部 41 项方法', () => {
     const autoSec = SECTIONS.find(s => s.id === 'automation');
     const aboutSec = SECTIONS.find(s => s.id === 'about');
     expect(autoSec?.no).toBe('09');
@@ -133,6 +133,7 @@ describe('settings defaults & UI', () => {
     expect(examples.map(e => e.id)).toEqual([
       'context',
       'idea-add',
+      'task-create',
       'time-summary',
       'timer-start',
       'timer-stop',
@@ -141,7 +142,7 @@ describe('settings defaults & UI', () => {
 
     const ideaCmd = examples.find(e => e.id === 'idea-add')!.command!;
     expect(ideaCmd).toBe(
-      "node 'C:\\Users\\o''connor\\单轨 测试(4)\\$env:TEMP\\`n\\monorail-cli.mjs' idea add '整理季度复盘提纲 #规划' --json",
+      "node 'C:\\Users\\o''connor\\单轨 测试(4)\\$env:TEMP\\`n\\monorail-cli.mjs' idea create --title '整理季度复盘提纲 #规划' --json",
     );
 
     const httpCmd = formatPowerShellNodeCommand(trickyMcpPath, ['--http', '--port', '8765']);
@@ -160,7 +161,14 @@ describe('settings defaults & UI', () => {
         encoding: 'utf8',
       }).trim();
       const receivedArgs = JSON.parse(rawOut) as string[];
-      expect(receivedArgs).toEqual([trickyCliPath, 'idea', 'add', '整理季度复盘提纲 #规划', '--json']);
+      expect(receivedArgs).toEqual([
+        trickyCliPath,
+        'idea',
+        'create',
+        '--title',
+        '整理季度复盘提纲 #规划',
+        '--json',
+      ]);
     }
   });
 
@@ -301,7 +309,7 @@ describe('settings defaults & UI', () => {
         copyButtonsDisabled.push(Boolean(el.props.disabled));
       }
     });
-    expect(copyButtonsDisabled.length).toBe(8); // 1 MCP stdio + 1 MCP HTTP + 6 CLI examples
+    expect(copyButtonsDisabled.length).toBe(9); // 1 MCP stdio + 1 MCP HTTP + 7 CLI examples
     expect(copyButtonsDisabled.every(Boolean)).toBe(true);
 
     // R2: 当 mcp-host.json 可读但入口文件缺失（mcp_entry/cli_entry 为 null）时，指引从托盘完全退出重启或构建后重启开发应用

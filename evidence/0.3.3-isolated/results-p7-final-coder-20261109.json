@@ -1,0 +1,189 @@
+{
+  "startedAt": "2026-11-08T16:23:05.555Z",
+  "buildAndArtifactBindings": {
+    "buildCommand": "node evidence/0.3.3-isolated/setup.mjs --build",
+    "isolated033Exe": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\Monorail-0.3.3-isolated.exe",
+      "sha256": "089cbfa9e93059cfa768662c5fcac561f74a0d21bf4db664a739660cba6b214b",
+      "sizeBytes": 33379840,
+      "lastWriteTimeUtc": "2026-11-08T16:22:48.140Z"
+    },
+    "isolated033Cli": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\monorail-cli.mjs",
+      "sha256": "276356edaaf7f15b67dfe907b2935ab4667d3ddbb15cd04431c24d0a8a086f45",
+      "sizeBytes": 1005832,
+      "lastWriteTimeUtc": "2026-11-08T16:22:04.982Z"
+    },
+    "isolated033Mcp": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\monorail-mcp.mjs",
+      "sha256": "068d79e8333ff778d73ea2e312df7278ed918015d21dfaf535cee6e15c95ace7",
+      "sizeBytes": 1620290,
+      "lastWriteTimeUtc": "2026-11-08T16:22:04.084Z"
+    },
+    "isolated032Exe": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v032-9050f8e9d817\\Monorail-0.3.2-isolated.exe",
+      "sha256": "cde06a7a9fdaabf168331c2ef3287e2b319b44bc5b6f0f418c58bb7172279cfb",
+      "sizeBytes": 32669696,
+      "lastWriteTimeUtc": "2026-11-07T14:26:02.930Z"
+    },
+    "sourceHashes": {
+      "src/services/ideaService.ts": "b095c3597b897518d76ea3156a937161377ccc55623f6ac43f54741cd015918e",
+      "src/services/updateService.ts": "37c614e82fafcb37d585fc1e5f8ccaf6fe53542c4d4a4d1ede1f4410b622be12",
+      "src/platform/ideaWindows.ts": "059a79b94792985bad5db972de7491eb86a123697d6fabc46a7211be8d1dcabb",
+      "src/app/IdeaWindowApp.tsx": "8202970b6bd47c8e28246a030be8a23a9666ac8022fea5bdf5bc46880775d274",
+      "src/app/QuickBarApp.tsx": "eb3f61fee4a1d12d871a1f5d9c04df944c9d351c3402ca1b4cf76f501cb96d8c",
+      "src/app/MainApp.tsx": "c856d3bc18ee664ddbfaba895cbdf066ed582919dbe90faea6f84e489bd8c6dd",
+      "src/app/SettingsScreen.tsx": "d95ac7aad9cb7d4391920df9be2479eae2aed2d771e1b34d902fafc363af9c5a",
+      "src/app/BagScreen.tsx": "dcfffdbe356006a3af273ddd1c0c57d5e0defbfde8cf2dd18e024d1c06ef237a",
+      "src/pages/home/drawer/BagDrawer.tsx": "257f9d01ead077c4879573142348d3c472ec4ff13dadb08c1e27f8825d122cbc",
+      "src/pages/home/drawer/IdeaPool.tsx": "37ce431fd2c07f0bcf935ede29b55885713883f455ff578e3a896409d3460299",
+      "src-tauri/src/idea_windows.rs": "44fbc3296afefb8ceaa65e3ae2eb84e4da7be401c05ae53abd481317ea73a054",
+      "src-tauri/src/quick_save.rs": "911863e076144a126ac6206bb029f244ddd523b60e2b5b759b1992c4518c34a5",
+      "src-tauri/src/updates.rs": "e1a8af20896b98c9aee38b3aed63f10086c4516fd35a36024b4d097d683065bb",
+      "src-tauri/src/update_state.rs": "068b3ec8224e2b4469dcb5eaa88dfc71d8bbd5c80a658f54c3a87a218781284c",
+      "src-tauri/src/tray.rs": "90bd4f86316a3cc0262c14f4d7c5ec8ae88d88dba10fe115b00462f8cd0d265a",
+      "src/data/migrations/v3.ts": "f151b64693e0077dca764530624a6d65c98d278b26dd5071c9114ef116cb2a45"
+    }
+  },
+  "items": {
+    "osCloseDirtyThreeChoicesAndCleanCopy": {
+      "passed": true,
+      "uiCopyCheck": {
+        "hasReadViewLabel": true,
+        "hasShortcutHint": true,
+        "hasSingleWriterJargon": false,
+        "hasRevJargon": false,
+        "dockLeftText": "想法笔记30 字 · 0 个链接\n快捷键：Ctrl+Enter 保存 · Esc 关闭",
+        "dockRightText": "已与主窗口同步",
+        "topMetaText": "阅读视图 · 点击链接在浏览器中打开\n所属池活跃池"
+      },
+      "wmCloseTargets": {
+        "wmClose1": [
+          "0xC0C5A:单轨 · 想法笔记",
+          "0x5604AE:单轨",
+          "0x20116A:local.pixelrecord.v033test.t98dfce7e8ed8-siw"
+        ],
+        "wmClose2": [
+          "0xC0C5A:单轨 · 想法笔记"
+        ],
+        "wmClose3": [
+          "0xD0C5A:单轨 · 想法笔记"
+        ]
+      },
+      "draftAfterContinue": "## OS 级窗口关闭三选实测\n- 触发真实 Win32 WM_CLOSE / CloseRequested 事件",
+      "closeCheckAfterSave": {
+        "closed": true,
+        "mainAlive": true,
+        "remainingLabels": [
+          "quickbar",
+          "main"
+        ]
+      },
+      "persistedAfterSaveClose": "## OS 级窗口关闭三选实测\n- 触发真实 Win32 WM_CLOSE / CloseRequested 事件",
+      "closeCheckAfterDiscard": {
+        "closed": true,
+        "mainAlive": true,
+        "remainingLabels": [
+          "quickbar",
+          "main"
+        ]
+      },
+      "persistedAfterDiscardClose": "## OS 级窗口关闭三选实测\n- 触发真实 Win32 WM_CLOSE / CloseRequested 事件",
+      "screenshots": [
+        "shots-final-coder-20261109/12-clean-ui-copy-no-jargon.png",
+        "shots-final-coder-20261109/13-os-close-dirty-dialog.png"
+      ]
+    },
+    "realExitBlockedThenSaveThenCleanExit": {
+      "passed": true,
+      "triggerMechanism": "plugin:event|emit_to('main', 'app-exit-requested') -> MainApp offExit listener -> checkDraftsForMaintenance + performAppExit",
+      "missingTokenReject": {
+        "rejected": true,
+        "error": "缺少草稿检查请求号"
+      },
+      "emptyTokenReject": {
+        "rejected": true,
+        "error": "缺少草稿检查请求号"
+      },
+      "mainToastCheckAfterBlockedExit": {
+        "hasDirtyBlockMessage": true,
+        "hasSpuriousNoPendingError": false,
+        "hasSpuriousExpiredError": false,
+        "hasSpuriousMissingTokenError": false,
+        "toasts": [
+          "ERROR\n出错了\n\n想法笔记窗口还有未保存内容，请先保存或放弃修改后重试维护操作",
+          "ERROR\n出错了\n\n想法笔记窗口还有未保存内容，请先保存或放弃修改后重试维护操作"
+        ]
+      },
+      "processAliveAfterBlockedExit": true,
+      "ideaStateAfterBlockedExit": {
+        "titleDisabled": false,
+        "detailsDisabled": false,
+        "detailsValue": "## 真实退出处理链（app-exit-requested）拦截后保存再退出\n- 仅修改正文，未改动标题"
+      },
+      "cleanExitOutcome": {
+        "code": 0,
+        "signal": null
+      },
+      "screenshot": "shots-final-coder-20261109/14-real-exit-blocked-toast-on-main.png"
+    },
+    "old032ExeRejectsV3AndRestoresV2Backup": {
+      "passed": true,
+      "scenarioScope": "clean post-migration v3 directory (no active .journal files)",
+      "migratedStateSchemaV3": true,
+      "migratedSettingsSchemaV3": true,
+      "migratedMainTasksUpgradedTo2": true,
+      "migratedIdeaTitle": "旧版v2多行想法首行标题 #迁移实测",
+      "migratedIdeaDetails": "\n第二行自动拆入v3详情正文\n- 第三行列表项保留\n",
+      "backupRelativePath": "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16",
+      "v3DrillDir": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v032-9050f8e9d817\\data\\v3-drill",
+      "v2RestoredDrillDir": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v032-9050f8e9d817\\data\\v2-restored-drill",
+      "activeJournalFilesAfterCleanMigration": 0,
+      "activeJournalFilesBefore032Open": 0,
+      "activeJournalFilesAfter032Open": 0,
+      "old032RejectMessage": "打不开这个数据目录：state.yaml: invalid state",
+      "v3HashesBefore032Open": {
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/迁移记录.md": "3b15b810ac0f132ad14a86db7d9d31110b8397ebfdb7dbf5e3dfc9042fa18c3d",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/records/11111111-2222-4333-8444-555555555555.md": "b600e2346def7674a39f68ddfdf3d75df1bef6953d2970a7d8d216d7656dda74",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/settings.yaml": "cb720e4f8cf01a18fe914c44a8388ecb0d8866dbddc50580f943a9544a5e17c3",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/state.yaml": "715f59a5cabfd561f7ce970e7feabe5b5f00321f1d3fa549a2d1e29b25ba0fdb",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/timelog/2026-10-01.md": "405081033c38c7e437b22a03197cac97d4fa57493bda0e784009966ef7e3b886",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/timelog/2026-11-08.md": "b8e57c88fb802bba04f078ce1b6c381fe20b03a04b059e75347ce7f789f9bf6a",
+        "plans/2026-11-08.yaml": "63412cfb3483f4ab7eba79871671f5d8369ee45cd3455be02038241cd96db0ab",
+        "records/11111111-2222-4333-8444-555555555555.md": "98c34d06db45b4bbc5b226004d9ede9492e7aa6d0a2cf27a9f75fb109cd5b40d",
+        "settings.yaml": "d03cedd979820b5bdaf95cda0afdd2a1466a63122276cda5ac1a43f778190234",
+        "state.yaml": "a0b5ee29e4f3adb1699ae169b8542a36c1f79d9f648bf31f9fcc0625fe0e672c",
+        "timelog/2026-10-01.md": "405081033c38c7e437b22a03197cac97d4fa57493bda0e784009966ef7e3b886",
+        "timelog/2026-11-08.md": "b8e57c88fb802bba04f078ce1b6c381fe20b03a04b059e75347ce7f789f9bf6a"
+      },
+      "v3HashesAfter032Open": {
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/迁移记录.md": "3b15b810ac0f132ad14a86db7d9d31110b8397ebfdb7dbf5e3dfc9042fa18c3d",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/records/11111111-2222-4333-8444-555555555555.md": "b600e2346def7674a39f68ddfdf3d75df1bef6953d2970a7d8d216d7656dda74",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/settings.yaml": "cb720e4f8cf01a18fe914c44a8388ecb0d8866dbddc50580f943a9544a5e17c3",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/state.yaml": "715f59a5cabfd561f7ce970e7feabe5b5f00321f1d3fa549a2d1e29b25ba0fdb",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/timelog/2026-10-01.md": "405081033c38c7e437b22a03197cac97d4fa57493bda0e784009966ef7e3b886",
+        "backup/v2-2026-11-08T16-23-27-344Z-e9f94b25-8b42-44ff-b718-4f5f4cfdbb16/timelog/2026-11-08.md": "b8e57c88fb802bba04f078ce1b6c381fe20b03a04b059e75347ce7f789f9bf6a",
+        "plans/2026-11-08.yaml": "63412cfb3483f4ab7eba79871671f5d8369ee45cd3455be02038241cd96db0ab",
+        "records/11111111-2222-4333-8444-555555555555.md": "98c34d06db45b4bbc5b226004d9ede9492e7aa6d0a2cf27a9f75fb109cd5b40d",
+        "settings.yaml": "d03cedd979820b5bdaf95cda0afdd2a1466a63122276cda5ac1a43f778190234",
+        "state.yaml": "a0b5ee29e4f3adb1699ae169b8542a36c1f79d9f648bf31f9fcc0625fe0e672c",
+        "timelog/2026-10-01.md": "405081033c38c7e437b22a03197cac97d4fa57493bda0e784009966ef7e3b886",
+        "timelog/2026-11-08.md": "b8e57c88fb802bba04f078ce1b6c381fe20b03a04b059e75347ce7f789f9bf6a"
+      },
+      "v3HashesUnchangedAfter032Reject": true,
+      "restoredBodyShowsV2Idea": true,
+      "screenshots": [
+        "shots-final-coder-20261109/15-old-032-exe-rejects-v3-data.png",
+        "shots-final-coder-20261109/16-old-032-exe-opens-restored-v2-backup.png"
+      ]
+    }
+  },
+  "completedAt": "2026-11-08T16:23:56.411Z",
+  "baselineComparison": {
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyProcessUntouched": true
+  },
+  "allPassed": true
+}

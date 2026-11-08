@@ -36,13 +36,18 @@ export interface QueueCard {
 export interface QueueGroup { taskId: string | null; name: string; slotLabel: string; cards: QueueCard[] }
 export interface IdeaView {
   id: string; text: string; tags: string[]; needs: string | null; pool: '活跃池' | '已转任务'; createdAt: string; lastTouchedAt: string;
+  hasDetails?: boolean; recordRevision?: string; attachments?: string[];
 }
 /** 已完成的想法（ADR 0020）。completedBy 只用于显示是谁标的。 */
 export interface DoneIdeaView {
   id: string; text: string; tags: string[]; needs: string | null; completedAt: string;
   completedBy: { kind: 'manual' | 'mcp' | 'cli' | 'automation'; agent: string | null };
+  hasDetails?: boolean; recordRevision?: string; attachments?: string[];
 }
-export interface ColdIdea { id: string; text: string; needs: string | null; coldSince: string }
+export interface ColdIdea {
+  id: string; text: string; needs: string | null; coldSince: string;
+  tags?: string[]; hasDetails?: boolean; recordRevision?: string; attachments?: string[];
+}
 export interface BackpackSlice { tasks: TaskView[]; queue: QueueGroup[]; ideas: IdeaView[]; doneIdeas: DoneIdeaView[]; coldIdeas: ColdIdea[]; pool: PoolView }
 export const initialBackpack: BackpackSlice = { tasks: [], queue: [], ideas: [], doneIdeas: [], coldIdeas: [], pool: {
   mains: [], sides: [], parked: [], doneTasks: [], mainMax: defaults.mainTasks, sideMax: defaults.sideTasks,

@@ -58,12 +58,71 @@ async function makeRoomInTx(tx: Transaction, slot: TaskDraft['slot'], room: Make
   await removeTaskInTx(tx, room.id, room.action === '放弃' ? '已放弃' : '冷藏');
 }
 
-export async function createTaskInTx(tx: Transaction, draft: TaskDraft): Promise<string> {
+export class TaskCapacityFullError extends Error {
+  readonly code = 'TASK_CAPACITY_FULL' as const;
+  readonly slot: '主线' | '支线';
+  readonly limit: number;
+  readonly activeTasks: Array<{ id: string; name: string }>;
+  constructor(slot: '主线' | '支线', limit: number, activeTasks: Array<{ id: string; name: string }>, message?: string) {
+    super(message ?? `TASK_CAPACITY_FULL：${slot}背包槽位已满（上限 ${limit} 条），请先在界面完成、冷藏或放弃一个同类别任务`);
+    this.name = 'TaskCapacityFullError';
+    this.slot = slot;
+    this.limit = limit;
+    this.activeTasks = activeTasks;
+  }
+}
+
+export class MainTaskItemsFullError extends Error {
+  readonly code = 'MAIN_TASK_ITEMS_FULL' as const;
+  readonly taskId: string;
+  readonly limit: number;
+  readonly activeCount: number;
+  readonly requestedCount: number;
+  constructor(taskId: string, limit: number, activeCount: number, requestedCount: number, message?: string) {
+    super(message ?? `MAIN_TASK_ITEMS_FULL：主线任务待做事项已满（上限 ${limit} 项，已有 ${activeCount} 项，本次请求 ${requestedCount} 项）`);
+    this.name = 'MainTaskItemsFullError';
+    this.taskId = taskId;
+    this.limit = limit;
+    this.activeCount = activeCount;
+    this.requestedCount = requestedCount;
+  }
+}
+
+export async function createTaskWithItemsInTx(
+  tx: Transaction,
+  draft: TaskDraft,
+  options?: { validateProject?: boolean },
+): Promise<{ task: Task; items: Card[] }> {
+  const defaultProject = draft.defaultProject?.trim() || null;
+  if (
+    options?.validateProject &&
+    defaultProject !== null &&
+    defaultProject !== '未分类' &&
+    !tx.settings.lists.projects.some(p => p.name === defaultProject)
+  ) {
+    throw new Error(`UNKNOWN_PROJECT：未知项目「${defaultProject}」，请从已有项目中选择`);
+  }
   await makeRoomInTx(tx, draft.slot, draft.makeRoom);
+  if (draft.slot !== '不在背包' && !canAddTask(tx.tasks, draft.slot, tx.settings)) {
+    const limit = draft.slot === '主线' ? tx.settings.mainTasks : tx.settings.sideTasks;
+    const activeTasks = tx.tasks
+      .filter(t => inBackpack(t) && t.slot === draft.slot)
+      .sort((a, b) => (a.slot_index ?? 0) - (b.slot_index ?? 0) || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+      .map(t => ({ id: t.id, name: t.name }));
+    throw new TaskCapacityFullError(draft.slot, limit, activeTasks);
+  }
+  if (draft.slot === '主线' && (draft.items?.length ?? 0) > tx.settings.mainItems) {
+    throw new MainTaskItemsFullError('new_task', tx.settings.mainItems, 0, draft.items!.length);
+  }
   const { task, items } = taskWithItems(draft, tx.tasks, tx.cards, tx.settings, tx.at, tx.id);
   tx.saveTask(task); items.forEach(item => tx.saveCard(item));
   refreshInTx(tx);
-  return task.id;
+  const savedTask = tx.tasks.find(t => t.id === task.id) ?? task;
+  return { task: savedTask, items };
+}
+
+export async function createTaskInTx(tx: Transaction, draft: TaskDraft): Promise<string> {
+  return (await createTaskWithItemsInTx(tx, draft)).task.id;
 }
 export const createTask = (ctx: Ctx, draft: TaskDraft, at: string) => run(ctx, tx => createTaskInTx(tx, draft), at, { action: 'backpack.createTask' });
 

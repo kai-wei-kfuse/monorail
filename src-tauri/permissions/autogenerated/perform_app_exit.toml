@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-perform-app-exit"
+description = "Enables the perform_app_exit command without any pre-configured scope."
+commands.allow = ["perform_app_exit"]
+
+[[permission]]
+identifier = "deny-perform-app-exit"
+description = "Denies the perform_app_exit command without any pre-configured scope."
+commands.deny = ["perform_app_exit"]

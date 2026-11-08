@@ -1,0 +1,158 @@
+{
+  "scope": "Author-only document links/version check and illustrative D2 byte-rule fixtures. Not production migration, state-machine, browser, receipt or Tauri validation.",
+  "generatedAt": "2026-11-08T04:36:53.004Z",
+  "status": "PASS",
+  "documents": [
+    {
+      "path": "docs/stages/0.3.3-execution-plan.md",
+      "version": "Draft v0.4"
+    },
+    {
+      "path": "docs/adr/0026-record-title-and-markdown-details.md",
+      "version": "Proposed v0.4"
+    },
+    {
+      "path": "docs/adr/0027-multiple-main-tasks.md",
+      "version": "Proposed v0.1"
+    },
+    {
+      "path": "docs/adr/0028-idea-document-window.md",
+      "version": "Proposed v0.2"
+    },
+    {
+      "path": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "version": "Discussion Draft v0.3"
+    }
+  ],
+  "relativeLinksChecked": 15,
+  "links": [
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "0.3.3.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "changes/0.3.3-title-details-main-tasks.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../adr/0026-record-title-and-markdown-details.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../adr/0027-multiple-main-tasks.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../adr/0028-idea-document-window.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-requirements-review.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-storage-review.md"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-plan-technical-check.json"
+    },
+    {
+      "source": "docs/stages/0.3.3-execution-plan.md",
+      "target": "../../evidence/0.3.3-plan-v04-check.json"
+    },
+    {
+      "source": "docs/adr/0026-record-title-and-markdown-details.md",
+      "target": "../stages/changes/0.3.3-title-details-main-tasks.md"
+    },
+    {
+      "source": "docs/adr/0026-record-title-and-markdown-details.md",
+      "target": "../stages/0.3.3-execution-plan.md"
+    },
+    {
+      "source": "docs/adr/0026-record-title-and-markdown-details.md",
+      "target": "0028-idea-document-window.md"
+    },
+    {
+      "source": "docs/adr/0028-idea-document-window.md",
+      "target": "0026-record-title-and-markdown-details.md"
+    },
+    {
+      "source": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "target": "../../adr/0028-idea-document-window.md"
+    },
+    {
+      "source": "docs/stages/changes/0.3.3-title-details-main-tasks.md",
+      "target": "../0.3.3-execution-plan.md"
+    }
+  ],
+  "byteCases": [
+    {
+      "name": "CRLF",
+      "preservationCases": [
+        "title-only",
+        "needs-only",
+        "lifecycle",
+        "equal-details-patch"
+      ],
+      "originalBodyHash": "21b54bd3c47df5e4d44d7d8445b89873873362f01d56fdd673ae71fd9a51e01a",
+      "semanticBodyHash": "308aa9f5470d29f18a926f0a3afd79ef6ef99fc1fc885cc4e88a94471dcc510c",
+      "explicitChangedBodyUsesLF": true
+    },
+    {
+      "name": "single-CR",
+      "preservationCases": [
+        "title-only",
+        "needs-only",
+        "lifecycle",
+        "equal-details-patch"
+      ],
+      "originalBodyHash": "98d5f42251478e6fa7fa8b910d217740bfa2bb09f37ab2b8fe1e3b0ef3b3aa55",
+      "semanticBodyHash": "a42c635ec9c13f7b9117f5c3cbc719ca917d43376779b209cbdd1fdc7d66b01a",
+      "explicitChangedBodyUsesLF": true
+    },
+    {
+      "name": "mixed-body",
+      "preservationCases": [
+        "title-only",
+        "needs-only",
+        "lifecycle",
+        "equal-details-patch"
+      ],
+      "originalBodyHash": "13a7ff7e61a2f2e1851bcc83999f3ba192ac8b26336ca30a44b12beec11ecc05",
+      "semanticBodyHash": "2ca04d88a9c5668d9cc007f70d5665da0c541e57455e273f8a4af165073c650d",
+      "explicitChangedBodyUsesLF": true
+    },
+    {
+      "name": "BOM-and-body-delimiter",
+      "preservationCases": [
+        "title-only",
+        "needs-only",
+        "lifecycle",
+        "equal-details-patch"
+      ],
+      "originalBodyHash": "7ecf2f4ad40dbb265c54186f38743d35967dea783d4d6036b51097a1a56f2d88",
+      "semanticBodyHash": "d02992f39eab2b6cd44294a970b8db419f926fc4cd30ec7d5bfbec35bb6e2428",
+      "explicitChangedBodyUsesLF": true
+    },
+    {
+      "name": "empty-body",
+      "preservationCases": [
+        "title-only",
+        "needs-only",
+        "lifecycle",
+        "equal-details-patch"
+      ],
+      "originalBodyHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "semanticBodyHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "explicitChangedBodyUsesLF": true
+    }
+  ],
+  "sameSemanticDifferentBytes": {
+    "rawHashesDiffer": true,
+    "semanticDigestsEqual": true
+  },
+  "invalidUTF8ExplicitlyRejected": true,
+  "packageVersion": "0.3.2"
+}

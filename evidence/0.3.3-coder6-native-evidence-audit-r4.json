@@ -1,0 +1,66 @@
+{
+  "at": "2026-11-08T12:46:04.445Z",
+  "command": "node evidence/0.3.3-coder6-native-evidence-audit-r4.mjs",
+  "methodology": "Read-only audit of saved P7 artifacts; controlled failed-fetch probe; not a rerun of OS windows.",
+  "baselineComparison": {
+    "runSame": true,
+    "dailyExeSame": true,
+    "dailyConfigSame": true,
+    "dailyProcessUntouched": true
+  },
+  "matrixKeys": [
+    "multiMainTasks",
+    "openFocusCoexist",
+    "dirtyCloseThreeChoices",
+    "saveSyncAndConflict",
+    "quickbarHandoffAndAttachments",
+    "hiddenMainSaveAndStaleEpochReject",
+    "detailsOnlyDirtyAndExitCancelRestore"
+  ],
+  "failedCdpProbe": {
+    "outcome": "returned",
+    "targets": [],
+    "originalClosePredicateWouldPass": true
+  },
+  "artifacts": {
+    "exe": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\Monorail-0.3.3-isolated.exe",
+      "sha256": "fc3ad3342d05d506804109cc177bfc22bfc87c5c22376949307d2ebbd770be2a",
+      "lastWriteTimeUtc": "2026-11-08T11:44:56.552Z"
+    },
+    "cli": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\monorail-cli.mjs",
+      "sha256": "276356edaaf7f15b67dfe907b2935ab4667d3ddbb15cd04431c24d0a8a086f45",
+      "lastWriteTimeUtc": "2026-11-08T11:44:37.799Z"
+    },
+    "mcp": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\monorail-mcp.mjs",
+      "sha256": "068d79e8333ff778d73ea2e312df7278ed918015d21dfaf535cee6e15c95ace7",
+      "lastWriteTimeUtc": "2026-11-08T11:44:36.972Z"
+    },
+    "config": {
+      "path": "C:\\Users\\kai_wei\\AppData\\Local\\Temp\\monorail-v033-98dfce7e8ed8\\tauri.isolated.json",
+      "sha256": "2b2d01005203ca0dd850409250fbfd8c41dd39ed6e707bcc537a8bcc4a40de98",
+      "lastWriteTimeUtc": "2026-11-08T11:07:20.367Z"
+    }
+  },
+  "historicalBuildBinding": "Contemporaneous artifact hashes only: results-p7.json did not bind its execution to these hashes.",
+  "sourceAndEvidenceHashes": {
+    "src/services/ideaService.ts": "b095c3597b897518d76ea3156a937161377ccc55623f6ac43f54741cd015918e",
+    "src/domain/record/record.ts": "697d14c9ef7b779a5b235f6930a3813a59db3927780a9151d3d6bb9e63e4518c",
+    "src/platform/ideaWindows.ts": "263e171fc3ef4da4cb9f983657aaaf6a37fe32f263a324deeaac5a038ae4201f",
+    "src-tauri/src/idea_windows.rs": "1fb80617b523bec90cc829bf9c33307ed9b311a54eafe737d50a6e57826f155f",
+    "src/app/IdeaWindowApp.tsx": "00c9efea5822881c8db391be69706f0f25dec98201943dcbb5e18a735b326ca7",
+    "src/app/QuickBarApp.tsx": "e8beb8161cffac3e072a7a9da1c9ad9b3319cf7a7c2239710682ec3abbeb4fec",
+    "evidence/0.3.3-coder6-api-review.test.ts": "f1eec05789b91835da97606e761e9df672623a1797dbcde83a0539e963c2324a",
+    "evidence/0.3.3-coder6-api-review-r4.log": "30d01eb9db52a4984edbbed611e5f5e25993655991069bf632af3ea03138382e",
+    "evidence/0.3.3-coder6-window-interop-review.test.ts": "d75332ac9a3274e95d9015f5df92b8389c3cb4a7b0fb4e83ba1a5fecdf259712",
+    "evidence/0.3.3-coder6-window-interop-review-r4.log": "67573f74b131ff8dbab908a1798cc585d19c2e21107ede3eb14028d8b99c5a07",
+    "evidence/0.3.3-isolated/setup.mjs": "606feac52999fe4babd4f64c2fa8feb6d5eb3a288a32112ee97400c6446fc9b5",
+    "evidence/0.3.3-isolated/lib.mjs": "a23bcf528fea087b8cc0d48417612c094e214d927607e56e871bf6b9e8cfcaff",
+    "evidence/0.3.3-isolated/run-p7-native.mjs": "d9243c143d773ab3caeb3ae92ff93b88b51ebfab16f77af3addfcd39e41a5910",
+    "evidence/0.3.3-isolated/results-p7.json": "b3429228b1309cfc8e4fc85fc71054f4b4225aca4d5a795f4e194ebce24173d9",
+    "evidence/0.3.3-isolated/baseline-before.json": "efb1e20dc5ae556e40c9a995a969502495aacf964701fd38bb286a7db9665732",
+    "evidence/0.3.3-isolated/baseline-after-p7.json": "25fe94f071bb1e72ce159521926eee9641d34a1ddc8a308b9462b868c15a7061"
+  }
+}

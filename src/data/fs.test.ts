@@ -1,9 +1,12 @@
 import { posix, win32 } from 'node:path';
 import { beforeEach, expect, it, vi } from 'vitest';
+import { sha256Hex, sha256HexBytes } from '../shared/sha256';
 import { parentLocal, resolveLocal, tauriFs } from './fs';
 
+const encoder = new TextEncoder();
+
 const native = vi.hoisted(() => ({
-  exists: vi.fn(), stat: vi.fn(), readTextFile: vi.fn(), readDir: vi.fn(),
+  exists: vi.fn(), stat: vi.fn(), readFile: vi.fn(), readTextFile: vi.fn(), readDir: vi.fn(),
   mkdir: vi.fn(), writeTextFile: vi.fn(), rename: vi.fn(), remove: vi.fn(),
 }));
 vi.mock('@tauri-apps/plugin-fs', () => native);
@@ -14,6 +17,7 @@ beforeEach(() => {
   for (const mock of Object.values(native)) mock.mockReset();
   native.exists.mockResolvedValue(true);
   native.stat.mockResolvedValue(info);
+  native.readFile.mockResolvedValue(encoder.encode('content'));
   native.readTextFile.mockResolvedValue('content');
   native.readDir.mockResolvedValue([]);
 });
@@ -46,18 +50,31 @@ it('keeps the existing relative-path boundary and rejects relative data-director
   }
 });
 
-it('reads existing files with exactly three FS requests, starting stat and text together', async () => {
-  let readingText = false;
+it('reads existing files with exactly three FS requests, starting stat and raw byte read together, and preserves UTF-8 BOM & CRLF bytes', async () => {
+  let readingBytes = false;
   native.stat.mockImplementation(() => new Promise((resolve, reject) => queueMicrotask(() => {
-    if (!readingText) reject(new Error('stat and text were serialized'));
+    if (!readingBytes) reject(new Error('stat and readFile were serialized'));
     else resolve(info);
   })));
-  native.readTextFile.mockImplementation(async () => { readingText = true; return 'content'; });
+  native.readFile.mockImplementation(async () => { readingBytes = true; return encoder.encode('content'); });
   const fs = await tauriFs('C:\\data');
-  expect(await fs.read('settings.yaml')).toEqual({ text: 'content', version: `${info.mtime.getTime()}:7` });
+  expect(await fs.read('settings.yaml')).toEqual({
+    text: 'content',
+    version: `${info.mtime.getTime()}:7`,
+    byteHash: sha256Hex('content'),
+  });
   expect(native.exists).toHaveBeenCalledExactlyOnceWith('C:\\data\\settings.yaml');
   expect(native.stat).toHaveBeenCalledExactlyOnceWith('C:\\data\\settings.yaml');
-  expect(native.readTextFile).toHaveBeenCalledExactlyOnceWith('C:\\data\\settings.yaml');
+  expect(native.readFile).toHaveBeenCalledExactlyOnceWith('C:\\data\\settings.yaml');
+  expect(native.readTextFile).not.toHaveBeenCalled();
+
+  // Verify UTF-8 BOM (EF BB BF) and CRLF are preserved in both text and byteHash
+  const bomCrlfBytes = new Uint8Array([0xef, 0xbb, 0xbf, ...encoder.encode('第一行\r\n第二行\r\n')]);
+  native.stat.mockResolvedValueOnce({ mtime: info.mtime, size: bomCrlfBytes.byteLength });
+  native.readFile.mockResolvedValueOnce(bomCrlfBytes);
+  const bomSnap = await fs.read('records/bom.md');
+  expect(bomSnap?.text).toBe('\uFEFF第一行\r\n第二行\r\n');
+  expect(bomSnap?.byteHash).toBe(sha256HexBytes(bomCrlfBytes));
 });
 
 it('returns null only for absent files and propagates disappearance or either read failure', async () => {
@@ -65,8 +82,8 @@ it('returns null only for absent files and propagates disappearance or either re
   native.exists.mockResolvedValueOnce(false);
   expect(await fs.read('missing.md')).toBeNull();
   expect(native.stat).not.toHaveBeenCalled();
-  expect(native.readTextFile).not.toHaveBeenCalled();
-  for (const operation of [native.stat, native.readTextFile]) {
+  expect(native.readFile).not.toHaveBeenCalled();
+  for (const operation of [native.stat, native.readFile]) {
     const error = new Error('file disappeared or access denied');
     operation.mockRejectedValueOnce(error);
     await expect(fs.read('a.md')).rejects.toBe(error);
